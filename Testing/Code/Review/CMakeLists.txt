@@ -141,6 +141,7 @@ set(ReviewTest_SRCS
 
   itkHessianToObjectnessMeasureImageFilterTest.cxx
   itkMultiScaleHessianBasedMeasureImageFilterTest.cxx
+
 )
 
 SET(ReviewTest2_SRCS
@@ -269,6 +270,7 @@ set(ReviewTest6_SRCS
   itkScalarChanAndVeseDenseLevelSetImageFilterTest4.cxx
   itkScalarChanAndVeseSparseLevelSetImageFilterTest1.cxx
   itkScalarChanAndVeseSparseLevelSetImageFilterTest2.cxx
+  itkObjectToObjectMetricTest.cxx
 )
 
 if(ITK_USE_TRANSFORM_IO_FACTORIES)
@@ -1328,6 +1330,7 @@ add_test(itkDiscreteGaussianDerivativeImageFunctionTest01 ${REVIEW_TESTS}
   0.01
   32
 )
+
 
 add_test(itkDiscreteGradientMagnitudeGaussianImageFunctionTest01 ${REVIEW_TESTS}
   --compare ${BASELINE}/itkDiscreteGradientMagnitudeGaussianImageFunctionTest01.png
@@ -2488,6 +2491,11 @@ add_test(itkScalarChanAndVeseDenseLevelSetImageFilterTest4 ${REVIEW_TESTS6}
   1 1 0 0 0
 )
 
+add_test(itkObjectToObjectMetricTest ${REVIEW_TESTS6}
+        itkObjectToObjectMetricTest
+       )
+
+
 add_test(itkMRCImageIOTest ${REVIEW_TESTS5} itkMRCImageIOTest ${TEMP})
 add_test(itkVTKImageIO2Test ${REVIEW_TESTS5} itkVTKImageIO2Test ${TEMP})
 
@@ -2545,6 +2553,7 @@ target_link_libraries(itkReviewHeaderTest
   )
 
 add_test(itkReviewHeaderTest ${REVIEW_HEADER_TESTS})
+
 
 add_executable(itkReviewTests itkReviewTests.cxx ${ReviewTest_SRCS})
 
@@ -2614,7 +2623,5 @@ endif(ITK_USE_TRANSFORM_IO_FACTORIES)
 if(ITK_USE_MINC2 AND MINC2_FOUND)
   set(ReviewTest_LIBS ${ReviewTest_LIBS} ITKIOMINC2)
 endif(ITK_USE_MINC2 AND MINC2_FOUND)
-
 target_link_libraries(itkReviewTests ${ReviewTest_LIBS})
-
 endif(NOT ITK_DISABLE_CXX_TESTING)
