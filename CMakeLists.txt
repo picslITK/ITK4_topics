@@ -1,7 +1,7 @@
 
 cmake_minimum_required(VERSION 2.4)
 #Change PROJECT_NAME to the name of your project
-PROJECT(identity_test)
+PROJECT(functor_speed_test)
 
 # Set up ITK
 IF(USE_ITK)
@@ -31,6 +31,6 @@ INCLUDE_DIRECTORIES(${IDENTITY_TEST_INCLUDE_DIRS})
 LINK_DIRECTORIES( ${ITK_LIBRARY_PATH} )
 
 
-ADD_EXECUTABLE(identity_test ${IDENTITY_TEST_SRC_DIR}identity_test.cxx)
-TARGET_LINK_LIBRARIES(identity_test ITKCommon  ITKIO ITKNumerics  ITKStatistics )
+ADD_EXECUTABLE(functor_speed_test ${IDENTITY_TEST_SRC_DIR}functor_speed_test.cxx)
+TARGET_LINK_LIBRARIES(functor_speed_test ITKCommon  ITKIO ITKNumerics  ITKStatistics )
 

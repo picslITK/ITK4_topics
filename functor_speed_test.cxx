@@ -4,10 +4,11 @@
 #include <time.h>
 #include "itkVector.h"
 
+#define ADDER 0
 //#define PRINT 0
-typedef itk::Vector<float,1000> voxeltype;
+typedef itk::Vector<float,10> voxeltype;
 # ifndef PRINT 
-unsigned long  ITERATIONS=10000000;
+unsigned long  ITERATIONS=1000000000;
 # else 
 unsigned long  ITERATIONS=5;
 # endif
@@ -16,32 +17,18 @@ template<class T>
 class myfunctor
 {
 public:
-  virtual const T& operator()(const T& x) const { return x; }  
   virtual const T& operator()(      T& x) const { return x; }
   myfunctor(){}
   virtual ~myfunctor(){}
 };
 
-
 template<class T>
 class myfunctor_id : public myfunctor<T> 
 {
 public:
-  const T& operator()(const T& x) const { 
+  const T& operator()( T& x) const { 
    return x; 
   } 
-};
-
-template<class T>
-class myfunctor_idb : public myfunctor<T> 
-{
-public:
-  myfunctor_idb(const T& x) : x(x) {}
-  const T& operator()(const T& x) const { 
-   return x; 
-  } 
-private:
-  const T& x;
 };
 
 template<class T>
@@ -56,18 +43,6 @@ private:
   //const T& x;
 };
 
-template<class T>
-class myfunctor_add1b  : public myfunctor<T>
-{
-public:
-  myfunctor_add1b(const T& x) : x(x) { this->x=x; }
- const T& operator()( T& x) const { 
-   x=x+1;
-   return x; 
- } 
-private:
-  const T& x;
-};
 
 template<class T>
 class myVariableFunctorHolder
@@ -75,7 +50,7 @@ class myVariableFunctorHolder
 public:
   void SetFunctor( myfunctor<T>* g )
   {
-    f=g;
+    this->f=g;
   }
  void runf( )  { 
    voxeltype b; b.Fill(0);
@@ -85,11 +60,6 @@ public:
     std::cout << b << std::endl;
 #endif
    }
- } 
- void runf2( )  { 
-   voxeltype b; b.Fill(0);
-   for (unsigned int i=0; i<ITERATIONS; i++) 
-     b=b;
  } 
   
 private :
@@ -114,61 +84,44 @@ public:
 private :
 };
 
-void noop()
-{
-  //unsigned int ct=0;
-  for (unsigned int i=0; i<ITERATIONS; i++) {
-    //  ct=ct+1;
-  }
-}
-
-void idtest()
-{
-  myfunctor_id<voxeltype> a;
-  voxeltype b; b.Fill(0);
-  for (unsigned int i=0; i<ITERATIONS; i++) {
-     a(b); 
-#ifdef PRINT
-    std::cout << b << std::endl;
-#endif
-  }
-  
-}
 
 
-void idtestTemplatedFunctor()
+void optestTemplatedFunctor()
 {
-  voxeltype b; b.Fill(0);
-  myfunctor_id<voxeltype> a;
-  typedef myfunctor_id<voxeltype> voxidtype;
-  typedef myfunctor_add1<voxeltype> voxidtype2;
-  myTemplatedFunctorHolder<voxeltype,voxidtype2> myVFH;
+  typedef myfunctor_id<voxeltype> voxoptype_id;
+  typedef myfunctor_add1<voxeltype> voxoptype_add1;
+#ifdef ADDER
+  myTemplatedFunctorHolder<voxeltype,voxoptype_add1> myVFH;
+#else 
+  myTemplatedFunctorHolder<voxeltype,voxoptype_id> myVFH;
+#endif;
   myVFH.runf();
 }
 
-void idtestVariableFunctor()
+void optestVariableFunctor()
 {
-  voxeltype b; b.Fill(0);
-  myfunctor_id<voxeltype> a;
-  myfunctor_add1<voxeltype> a2;
+  myfunctor_id<voxeltype> id_op;
+  myfunctor_add1<voxeltype> add1_op;
   myVariableFunctorHolder<voxeltype> myVFH;
-  myVFH.SetFunctor( &a2 );
+#ifdef ADDER
+  myVFH.SetFunctor( &add1_op );
+#else 
+  myVFH.SetFunctor( &id_op );
+#endif;
   myVFH.runf();
-}
-void idtestVariableFunctor2()
-{
-  voxeltype b; b.Fill(0);
-  myfunctor_id<voxeltype> a;
-  myVariableFunctorHolder<voxeltype> myVFH;
-  myVFH.SetFunctor( &a );
-  myVFH.runf2();
 }
 
 void modtest()
 {
   voxeltype b; b.Fill(0);
+  myfunctor_id<voxeltype> id_op;
+  myfunctor_add1<voxeltype> add1_op;
   for (unsigned int i=0; i<ITERATIONS; i++) {
-    myfunctor_add1<voxeltype> a; a(b); 
+#ifdef ADDER
+    add1_op(b); 
+#else 
+    id_op(b); 
+#endif;
 #ifdef PRINT
     std::cout << b << std::endl;
 #endif
@@ -182,23 +135,28 @@ int main()
    *   to an  add-1 functor wrt a add-1 counting loop.  The functors 
    *   are templated on voxel type.  
    */
-  // tests organized from fastest to slowest 
+  voxeltype vox;
+ #ifdef ADDER
+  std::cout << " operation-add , vec-length " << vox.Size() << " its " << ITERATIONS << std::endl;
+#else 
+  std::cout << " operation-id , vec-length " << vox.Size() << " its " << ITERATIONS << std::endl;
+#endif;
+ // tests organized from fastest to slowest 
   clock_t t1=clock();
-  idtest();
+  modtest();
   clock_t t2=clock();
 
   clock_t t3=clock();
-  idtestTemplatedFunctor();
-  //  idtestVariableFunctor2();
- clock_t t4=clock();
+  optestTemplatedFunctor();
+  clock_t t4=clock();
 
   clock_t t5=clock();
-  idtestVariableFunctor();
+  optestVariableFunctor();
   clock_t t6=clock();
 
   double nooptesttime=(t2-t1); 
   double idtesttime=(t4-t3); 
   double modtesttime=(t6-t5); 
-  std::cout<< " tem-id-time " << idtesttime << " var-id-time " << modtesttime << std::endl;
-  std::cout<< " temidtime/idtime " << idtesttime/nooptesttime << " varidtime/idtime " << modtesttime/nooptesttime << std::endl;
+  std::cout<< " templated-op-time " << idtesttime << " varifunc-op-time " << modtesttime << std::endl;
+  std::cout<< " templatedtime/basetime " << idtesttime/nooptesttime << " varoptime/basetime " << modtesttime/nooptesttime << std::endl;
 }
