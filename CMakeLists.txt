@@ -29,8 +29,8 @@ INCLUDE_DIRECTORIES(${IDENTITY_TEST_INCLUDE_DIRS})
 LINK_DIRECTORIES( ${ITK_LIBRARY_PATH} )
 
 
-# ADD_EXECUTABLE(itkObjectToObjectMetricTest ${IDENTITY_TEST_SRC_DIR}itkObjectToObjectMetricTest.cxx)
-# TARGET_LINK_LIBRARIES(itkObjectToObjectMetricTest ITKCommon  ITKIO ITKNumerics  ITKStatistics ITKReview)
+ADD_EXECUTABLE(itkDemonsImageToImageMetricTest ${IDENTITY_TEST_SRC_DIR}itkDemonsImageToImageMetricTest.cxx)
+TARGET_LINK_LIBRARIES(itkDemonsImageToImageMetricTest ITKCommon  ITKIO ITKNumerics  ITKStatistics ITKReview)
 
 ADD_EXECUTABLE(itkImageToImageNeighborhoodNormalizedCrossCorrelationTest ${IDENTITY_TEST_SRC_DIR}itkImageToImageNeighborhoodNormalizedCrossCorrelationTest.cxx)
 TARGET_LINK_LIBRARIES(itkImageToImageNeighborhoodNormalizedCrossCorrelationTest ITKCommon  ITKIO ITKNumerics  ITKStatistics ITKReview)
