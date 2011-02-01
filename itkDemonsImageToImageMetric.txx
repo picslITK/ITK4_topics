@@ -36,7 +36,7 @@ DemonsImageToImageMetric<TFixedImage,TMovingImage>
 ::DemonsImageToImageMetric()
 {
 //  this->SetComputeGradient(true);
-
+  this->m_VirtualImage=NULL;
   this->m_ThreaderMSE = NULL;
   this->m_ThreaderDerivatives = NULL;
 //  this->m_WithinThreadPreProcess = false;
