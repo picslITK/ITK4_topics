@@ -1,0 +1,11 @@
+
+We are developing a new metric framework for ITKv4.  
+
+Goals:
+
+--- easier multi-threading for sliding window metrics 
+--- support dense transformations efficiently
+--- provide multi-threaded, efficient neighborhood correlation metric
+--- support unbiased registration implementation and multi-resolution through the metric's virtual reference space
+--- ...
+
