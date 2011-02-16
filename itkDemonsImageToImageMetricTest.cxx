@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
 
   const char * filename1 = argv[1];
   const char * filename2 = argv[2];
-  //  int number_of_threads = atoi(argv[3]);
+  int number_of_threads = atoi(argv[3]);
 
   const int ImageDimension = 2;
   typedef itk::Image< unsigned char, ImageDimension > ImageType;
@@ -98,23 +98,49 @@ int main(int argc, char * argv[])
   transformM->AddTransform(transformM2);
   transformM->AddTransform(transformM1);
 
-  typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
-  ObjectMetricType::Pointer objectMetric = ObjectMetricType::New();
-
   /** Set up the virtual reference space */
-  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
+  /*  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
   objectMetric->SetVirtualDomainSize(fixed_image->GetLargestPossibleRegion().GetSize());
   objectMetric->SetVirtualDomainOrigin(fixed_image->GetOrigin());
   objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
 
-  /** Define the input images and their transforms */
+//   Define the input images and their transforms 
   objectMetric->SetFixedImage(fixed_image);
   objectMetric->SetMovingImage(moving_image);
   objectMetric->SetFixedImageTransform(transformF);
   objectMetric->SetMovingImageTransform(transformM);
 
-  /** Compute one iteration of the metric */
+  // Compute one iteration of the metric 
   objectMetric->ComputeMetricAndDerivative();
+  */
+
+  typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
+  typedef itk::DemonsMetricThreadedHolder<ObjectMetricType, VectorImageType> MetricThreadedHolderType;
+  typedef itk::ImageToData<ImageDimension, MetricThreadedHolderType> MetricThreaderType;
+  itk::Size<ImageDimension> neighborhood_radius;
+  neighborhood_radius.Fill(0);
+
+  // pseudo code
+  MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
+  MetricThreadedHolderType metricHolder;
+  metricHolder.fixed_image = fixed_image;
+  metricHolder.moving_image = moving_image;
+  metricHolder.transformF = transformM2;
+  metricHolder.transformM = transformM3;
+  metricHolder.measure_per_thread.resize(number_of_threads);
+  ImageType::RegionType inboundary_region = fixed_image->GetLargestPossibleRegion();
+  metricThreader->SetNumberOfThreads(number_of_threads);
+  metricThreader->m_OverallRegion = inboundary_region ;
+  metricThreader->m_Holder = &metricHolder;
+  //std::cout <<" thrg 1" <<std::endl;
+  metricThreader->ThreadedGenerateData = MetricThreadedHolderType::ComputeMetricValueInRegionOnTheFlyThreaded;
+  //std::cout <<" thrg 2" <<std::endl;
+  metricThreader->GenerateData();
+  // std::cout <<" thrg 3" <<std::endl;
+
+  float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());
+
+  std::cout << "metric = " << energy << std::endl;
 
   return 1;
 
