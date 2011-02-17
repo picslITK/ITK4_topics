@@ -87,7 +87,7 @@ ImageToImageNeighborhoodNormalizedCrossCorrelationFunction< TFixedImage, TMoving
 template< class TFixedImage, class TMovingImage >
 void
 ImageToImageNeighborhoodNormalizedCrossCorrelationFunction< TFixedImage, TMovingImage >
-::IntializeGradientCalculator()
+::InitializeGradientCalculator()
  {
     // GS: test: don't know if this is thread safe?
     // setup gradient calculator
@@ -104,7 +104,7 @@ ImageToImageNeighborhoodNormalizedCrossCorrelationFunction< TFixedImage, TMoving
 template< class TFixedImage, class TMovingImage >
 void
 ImageToImageNeighborhoodNormalizedCrossCorrelationFunction< TFixedImage, TMovingImage >
-::IntializeScanning(const ImageRegionType &scan_region, ScanningIteratorType &scan_it, ScanMemType &scan_mem, ScanParaType &scan_para)
+::InitializeScanning(const ImageRegionType &scan_region, ScanningIteratorType &scan_it, ScanMemType &scan_mem, ScanParaType &scan_para)
  {
     scan_para.scan_region = scan_region;
     scan_para.I = this->m_FixedImage;

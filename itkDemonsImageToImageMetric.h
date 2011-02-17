@@ -23,6 +23,7 @@
 #include "itkIndex.h"
 #include "itkTransform.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkMultiThreader.h"
 #include "itkInterpolateImageFunction.h"
 #include "itkLinearInterpolateImageFunction.h"
@@ -61,6 +62,7 @@ public:
   typedef typename FixedImageType::DirectionType DirectionType;
   typedef typename FixedImageType::SizeType RadiusType;
   typedef typename FixedImageType::IndexType IndexType;
+  typedef typename FixedImageType::RegionType ImageRegionType;
   itkStaticConstMacro(FixedImageDimension, unsigned int,
       ::itk::GetImageDimension< FixedImageType>::ImageDimension);
   itkStaticConstMacro(MovingImageDimension, unsigned int,
@@ -107,8 +109,6 @@ public:
   itkSetMacro(MovingImage, MovingImagePointer);
   itkGetMacro(MovingImage, MovingImagePointer);
 
-  /** The basic operations required for local and global metric  */
-  virtual void Initialize(void) throw ( itk::ExceptionObject );
 
   virtual unsigned int GetNumberOfParameters() const { return 0; }
 
@@ -128,10 +128,14 @@ public:
     return fabs((double)fpix-(double)mpix);
   }
 
+  virtual void Initialize(void) throw ( itk::ExceptionObject );
+
+  
+
   /** This function is calls the ComputeMetricAndDerivative() function
    *  over the domain of interest.  
    */
-  double ComputeMetricAndDerivative() 
+  double ComputeMetricAndDerivative(const ImageRegionType &thread_region) 
   {
     /** For each location in the virtual domain, map to both the fixed and moving space
      *  and compute the values of the voxels in the corresponding locations.  There should 
@@ -140,42 +144,9 @@ public:
      */
     double metric_sum=0;
     unsigned long ct=0;
-    if ( ! this->m_VirtualImage ) {
-      // std::cout <<" allocate-a " << std::endl;
-      RegionType region;
-      // std::cout <<" allocate-size " << this->GetVirtualDomainSize() << std::endl;
-      region.SetSize(this->GetVirtualDomainSize() );
-      region.SetIndex(this->GetVirtualDomainIndex() );
-      // std::cout <<" allocate-c " << std::endl;
-      this->m_VirtualImage = FixedImageType::New();
-      // std::cout <<" allocate-d " << std::endl;
-      this->m_VirtualImage->SetSpacing( this->GetVirtualDomainSpacing() );
-      // std::cout <<" allocate-e " << std::endl;
-      this->m_VirtualImage->SetOrigin( this->GetVirtualDomainOrigin() );
-      // std::cout <<" allocate-f " << std::endl;
-      this->m_VirtualImage->SetDirection( this->GetVirtualDomainDirection() );
-      // std::cout <<" allocate-g " << std::endl;
-      this->m_VirtualImage->SetRegions( region );
-      // std::cout <<" allocate-h " << std::endl;
-      this->m_VirtualImage->Allocate();
-      // std::cout <<" allocate-i " << std::endl;
-      this->m_VirtualImage->FillBuffer( 0 );
-      // std::cout <<" allocate-j " << std::endl;
-      this->m_FixedInterpolator=FixedInterpolatorType::New();
-      // std::cout <<" allocate-k " << std::endl;
-      this->m_MovingInterpolator=MovingInterpolatorType::New();
-      // std::cout <<" allocate-l " << std::endl;
-      this->m_FixedInterpolator->SetInputImage(m_FixedImage);
-      // std::cout <<" allocate-m " << std::endl;
-      this->m_MovingInterpolator->SetInputImage(m_MovingImage);
-      // std::cout <<" allocate-n " << std::endl;
-    }
-    // std::cout <<" allocate-done " << std::endl;
-
-    ImageRegionIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
-        this->m_VirtualImage->GetRequestedRegion() );
+    ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
+        thread_region );
     ItV.GoToBegin();
-    //    std::cout << "Iterate from Ind " <<  ItV.GetIndex() << std::endl;
     while( !ItV.IsAtEnd() )
     {
       /** use the fixed and moving transforms to compute the corresponding points.*/
@@ -184,36 +155,19 @@ public:
       PointType mappedPoint;
       PointType mappedFixedPoint;
       PointType mappedMovingPoint;
-      //      std::cout << "Tx-1 " <<std::endl;
       this->m_VirtualImage->TransformIndexToPhysicalPoint(ItV.GetIndex(),mappedPoint);
-
-      //      std::cout << "Tx-2 " <<std::endl;
-      // Use generic transform to compute mapped position
       mappedFixedPoint = this->m_FixedImageTransform->TransformPoint(mappedPoint);
       mappedMovingPoint = this->m_MovingImageTransform->TransformPoint(mappedPoint);
-      //      std::cout << "Tx-3 " <<std::endl;
       if ( !this->m_FixedInterpolator->IsInsideBuffer(mappedFixedPoint) ||  
            !this->m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint) ) 
 	sampleOk=false;
       if ( sampleOk )
         {
-	  //      std::cout << "Samp-1 " <<std::endl;
 	  double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint);
-	  //	  std::cout << "Samp-2 " << metricval << std::endl;
-	  // std::cout << " fpt " <<mappedFixedPoint << std::endl;
-	  // std::cout << " mpt " << mappedMovingPoint << std::endl;
-	  //	   std::cout <<" ct " << ct << " mv " << metricval <<  " ind " << ItV.GetIndex() << " buf-check " << this->m_MovingInterpolator->IsInsideBuffer(mappedPoint) <<  " point " << mappedPoint << std::endl;
           metric_sum+=metricval;	  
-	  //      std::cout << "Samp-3 " <<std::endl;
 	  ct++;
         }
       ++ItV;
-      //      if ( ItV.IsAtEnd() ){
-      //	--ItV;
-      //   std::cout << " ItV end " << ItV.GetIndex() << std::endl;
-      //   ++ItV;
-      // }
-      //  std::cout << "It-2 " <<std::endl;
     }
     if ( ct > 0 ) {
       std::cout << " metric_sum " << metric_sum << " ct " << ct <<std::endl;
@@ -324,28 +278,9 @@ public:
 
     //    std::cout << regionForThread << std::endl;
     InternalComputationValueType local_metric;
-    typedef itk::ConstNeighborhoodIterator<ImageType> IteratorType;
-
-    typedef itk::ImageRegionIterator<DeformationFieldType> UpdateIteratorType;
-    //std::cout << " allocate metric " << std::endl;
-    MetricTypePointer objectMetric = MetricType::New();
-    // std::cout << " allocate metric done " << std::endl;
-    objectMetric->SetFixedImage(holder->fixed_image);
-    objectMetric->SetMovingImage(holder->moving_image); 
-    //std::cout << " set t " << std::endl;
-    objectMetric->SetFixedImageTransform(holder->transformF);
-    objectMetric->SetMovingImageTransform(holder->transformM);
-    //    std::cout << " set done " << std::endl;
- 
-    //    std::cout << " setv size " << regionForThread.GetSize() << " ind " << regionForThread.GetIndex() << std::endl;
-    objectMetric->SetVirtualDomainSize(regionForThread.GetSize());
-    objectMetric->SetVirtualDomainIndex(regionForThread.GetIndex());
-    objectMetric->SetVirtualDomainSpacing(holder->fixed_image->GetSpacing());
-    objectMetric->SetVirtualDomainOrigin(holder->fixed_image->GetOrigin());
-    objectMetric->SetVirtualDomainDirection(holder->fixed_image->GetDirection());
     holder->measure_per_thread[threadId] = NumericTraits<InternalComputationValueType>::Zero;
     /** Compute one iteration of the metric */
-    local_metric=objectMetric->ComputeMetricAndDerivative();
+    local_metric=holder->metric->ComputeMetricAndDerivative(regionForThread);
     holder->measure_per_thread[threadId] += local_metric;
 
   }

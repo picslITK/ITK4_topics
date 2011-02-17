@@ -91,23 +91,6 @@ DemonsImageToImageMetric<TFixedImage,TMovingImage>
 {
 //  this->Superclass::Initialize();
 //  this->Superclass::MultiThreadingInitialize();
-
-  if(m_ThreaderMSE != NULL)
-    {
-    delete [] m_ThreaderMSE;
-    }
-  m_ThreaderMSE = new double[this->m_NumberOfThreads];
-
-  if(m_ThreaderDerivatives != NULL)
-    {
-    delete [] m_ThreaderDerivatives;
-    }
-  m_ThreaderDerivatives = new DerivativeType[this->m_NumberOfThreads];
-  for(unsigned int threadID=0; threadID<this->m_NumberOfThreads; threadID++)
-    {
-    m_ThreaderDerivatives[threadID].SetSize( this->m_NumberOfParameters );
-    }
-
   // Compute the normalizer
   typename FixedImageType::SpacingType fixedImageSpacing =
     this->m_FixedImage->GetSpacing();
@@ -118,6 +101,28 @@ DemonsImageToImageMetric<TFixedImage,TMovingImage>
     m_Normalizer += fixedImageSpacing[k] * fixedImageSpacing[k];
     }
   m_Normalizer /= static_cast< double >( MovingImageDimension );
+
+    if ( ! this->m_VirtualImage ) {
+    std::cout <<" Allocate virtual image " << std::endl;
+      RegionType region;
+      region.SetSize(this->GetVirtualDomainSize() );
+      region.SetIndex(this->GetVirtualDomainIndex() );
+      this->m_VirtualImage = FixedImageType::New();
+      this->m_VirtualImage->SetSpacing( this->GetVirtualDomainSpacing() );
+      this->m_VirtualImage->SetOrigin( this->GetVirtualDomainOrigin() );
+      this->m_VirtualImage->SetDirection( this->GetVirtualDomainDirection() );
+      this->m_VirtualImage->SetRegions( region );
+      this->m_VirtualImage->Allocate();
+      this->m_VirtualImage->FillBuffer( 0 );
+      this->m_FixedInterpolator=FixedInterpolatorType::New();
+      this->m_MovingInterpolator=MovingInterpolatorType::New();
+    }
+    if ( this->m_FixedInterpolator ) 
+      this->m_FixedInterpolator->SetInputImage(m_FixedImage);
+    if ( this->m_MovingInterpolator ) 
+      this->m_MovingInterpolator->SetInputImage(m_MovingImage);
+    // std::cout <<" allocate-done " << std::endl;
+
 }
 
 /*

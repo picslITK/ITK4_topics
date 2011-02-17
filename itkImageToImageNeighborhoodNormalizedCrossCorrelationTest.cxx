@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
   objectMetric->SetFixedImage(fixed_image);
   objectMetric->SetMovingImage(moving_image);
   objectMetric->SetRadius(neighborhood_radius);
-  objectMetric->IntializeGradientCalculator();
+  objectMetric->InitializeGradientCalculator();
 
 //  metricHolder.SetMetricFunction(objectMetric);
   metricHolder.metric = objectMetric;

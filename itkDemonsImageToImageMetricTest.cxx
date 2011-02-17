@@ -104,23 +104,22 @@ int main(int argc, char * argv[])
   transformM->AddTransform(transformM2);
   transformM->AddTransform(transformM1);
 
-  /** Set up the virtual reference space */
-  /*  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
-  objectMetric->SetVirtualDomainSize(fixed_image->GetLargestPossibleRegion().GetSize());
-  objectMetric->SetVirtualDomainOrigin(fixed_image->GetOrigin());
-  objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
-
-//   Define the input images and their transforms 
+  typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
+  typedef ObjectMetricType::Pointer MetricTypePointer;
+  MetricTypePointer objectMetric = ObjectMetricType::New();
   objectMetric->SetFixedImage(fixed_image);
-  objectMetric->SetMovingImage(moving_image);
+  objectMetric->SetMovingImage(moving_image); 
   objectMetric->SetFixedImageTransform(transformF);
   objectMetric->SetMovingImageTransform(transformM);
-
+  objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
+  objectMetric->SetVirtualDomainIndex(fixed_image->GetRequestedRegion().GetIndex());
+  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
+  objectMetric->SetVirtualDomainOrigin(fixed_image->GetOrigin());
+  objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
   // Compute one iteration of the metric 
-  objectMetric->ComputeMetricAndDerivative();
-  */
+  objectMetric->Initialize();
+  //  objectMetric->ComputeMetricAndDerivative();
 
-  typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
   typedef itk::DemonsMetricThreadedHolder<ObjectMetricType, VectorImageType> MetricThreadedHolderType;
   typedef itk::ImageToData<ImageDimension, MetricThreadedHolderType> MetricThreaderType;
   itk::Size<ImageDimension> neighborhood_radius;
@@ -129,12 +128,13 @@ int main(int argc, char * argv[])
   // pseudo code
   MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
   MetricThreadedHolderType metricHolder;
+  metricHolder.metric = objectMetric;
   metricHolder.fixed_image = fixed_image;
   metricHolder.moving_image = moving_image;
   metricHolder.transformF = transformF;
   metricHolder.transformM = transformM;
   metricHolder.measure_per_thread.resize(number_of_threads);
-  ImageType::RegionType inboundary_region = fixed_image->GetLargestPossibleRegion();
+  ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
   metricThreader->m_OverallRegion = inboundary_region ;
   metricThreader->m_Holder = &metricHolder;

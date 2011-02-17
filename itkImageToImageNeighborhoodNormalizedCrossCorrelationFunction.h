@@ -163,9 +163,9 @@ public:
 public:
 
 
-  virtual void IntializeGradientCalculator();
+  virtual void InitializeGradientCalculator();
 
-  virtual inline void IntializeScanning(
+  virtual inline void InitializeScanning(
       const ImageRegionType &scan_region,
       ScanningIteratorType &scan_it,
       ScanMemType &scan_mem,
@@ -282,7 +282,7 @@ public:
     nU.GoToBegin();
     nUinv.GoToBegin();
 
-    holder->metric->IntializeScanning(regionForThread, scan_it, scan_mem, scan_para);
+    holder->metric->InitializeScanning(regionForThread, scan_it, scan_mem, scan_para);
 
     holder->measure_per_thread[threadId] = NumericTraits<InternalComputationValueType>::Zero;
 
