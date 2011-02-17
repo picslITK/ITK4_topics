@@ -74,16 +74,22 @@ int main(int argc, char * argv[])
   ImagePointerType moving_image = reader2->GetOutput();
 
   VectorType zero;
-  float def_value=1.0;
+  float def_value=10.0;
   zero.Fill(def_value);
   FieldType::Pointer field = FieldType::New();
   field->SetRegions(fixed_image->GetLargestPossibleRegion());
+  field->SetSpacing(fixed_image->GetSpacing());
+  field->SetOrigin(fixed_image->GetOrigin());
+  field->SetDirection(fixed_image->GetDirection());
   field->Allocate();
   field->FillBuffer(zero);
 
   FieldType::Pointer fieldInv = FieldType::New();
   zero.Fill(def_value*(-1.0));
   fieldInv->SetRegions(fixed_image->GetLargestPossibleRegion());
+  fieldInv->SetSpacing(fixed_image->GetSpacing());
+  fieldInv->SetOrigin(fixed_image->GetOrigin());
+  fieldInv->SetDirection(fixed_image->GetDirection());
   fieldInv->Allocate();
   fieldInv->FillBuffer(zero);
 
@@ -93,7 +99,7 @@ int main(int argc, char * argv[])
   transformM3->Translate(zero);
 
   transformM1->SetDeformationField(field);
-  transformM1->SetInverseDeformationField(field);
+  transformM1->SetInverseDeformationField(fieldInv);
   
   transformM->AddTransform(transformM2);
   transformM->AddTransform(transformM1);
@@ -125,8 +131,8 @@ int main(int argc, char * argv[])
   MetricThreadedHolderType metricHolder;
   metricHolder.fixed_image = fixed_image;
   metricHolder.moving_image = moving_image;
-  metricHolder.transformF = transformM2;
-  metricHolder.transformM = transformM3;
+  metricHolder.transformF = transformF;
+  metricHolder.transformM = transformM;
   metricHolder.measure_per_thread.resize(number_of_threads);
   ImageType::RegionType inboundary_region = fixed_image->GetLargestPossibleRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
