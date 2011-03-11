@@ -36,6 +36,7 @@ DemonsImageToImageMetric<TFixedImage,TMovingImage>
 ::DemonsImageToImageMetric()
 {
 //  this->SetComputeGradient(true);
+  this->m_InputImageVectorLength=0;
   this->m_VirtualImage=NULL;
   this->m_ThreaderMSE = NULL;
   this->m_ThreaderDerivatives = NULL;
@@ -112,17 +113,20 @@ DemonsImageToImageMetric<TFixedImage,TMovingImage>
       this->m_VirtualImage->SetOrigin( this->GetVirtualDomainOrigin() );
       this->m_VirtualImage->SetDirection( this->GetVirtualDomainDirection() );
       this->m_VirtualImage->SetRegions( region );
+      this->m_VirtualImage->SetVectorLength(1);
       this->m_VirtualImage->Allocate();
       this->m_VirtualImage->FillBuffer( 0 );
       this->m_FixedInterpolator=FixedInterpolatorType::New();
       this->m_MovingInterpolator=MovingInterpolatorType::New();
     }
     if ( this->m_FixedInterpolator ) 
-      this->m_FixedInterpolator->SetInputImage(m_FixedImage);
+      this->m_FixedInterpolator->SetInputImage(this->m_FixedImage);
     if ( this->m_MovingInterpolator ) 
-      this->m_MovingInterpolator->SetInputImage(m_MovingImage);
+      this->m_MovingInterpolator->SetInputImage(this->m_MovingImage);
     // std::cout <<" allocate-done " << std::endl;
-
+  if ( this->m_FixedImage->GetVectorLength() != this->m_MovingImage->GetVectorLength() )
+    itkExceptionMacro( << "Fixed image vector length does not equal moving image vector length." );
+  this->m_InputImageVectorLength=this->m_FixedImage->GetVectorLength();
 }
 
 /*
@@ -131,7 +135,7 @@ inline bool
 DemonsImageToImageMetric<TFixedImage,TMovingImage>
 ::GetValueThreadProcessSample( unsigned int threadID,
                                unsigned long fixedImageSample,
-                               const MovingImagePointType & itkNotUsed(mappedPoint),
+                               const MovingImagePointType & itkNotUsed(mappedPoint),  
                                double movingImageValue) const
 {
   double diff = movingImageValue - this->m_FixedImageSamples[fixedImageSample].value;

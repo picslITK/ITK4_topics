@@ -43,7 +43,7 @@ int main(int argc, char * argv[])
   int number_of_threads = atoi(argv[3]);
 
   const int ImageDimension = 2;
-  typedef itk::Image< unsigned char, ImageDimension > ImageType;
+  typedef itk::VectorImage< float,ImageDimension > ImageType;
   typedef ImageType::Pointer ImagePointerType;
   typedef ImageType::RegionType RegionType;
 
@@ -56,11 +56,13 @@ int main(int argc, char * argv[])
   typedef itk::TranslationTransform<double,ImageDimension>  TranslationTransformType;
   typedef itk::DeformationFieldTransform<double,ImageDimension>  DeformationTransformType;
   typedef DeformationTransformType::DeformationFieldType FieldType;
-  IdentityTransformType::Pointer transformF = IdentityTransformType::New();
+  IdentityTransformType::Pointer transformFId = IdentityTransformType::New();
+  IdentityTransformType::Pointer transformMId = IdentityTransformType::New();
   DeformationTransformType::Pointer transformM1 = DeformationTransformType::New();
   TranslationTransformType::Pointer transformM2 = TranslationTransformType::New();
   TranslationTransformType::Pointer transformM3 = TranslationTransformType::New();
   CompositeTransformType::Pointer transformM = CompositeTransformType::New();
+  CompositeTransformType::Pointer transformF = CompositeTransformType::New();
 
   typedef itk::ImageFileReader<ImageType> ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
@@ -74,7 +76,7 @@ int main(int argc, char * argv[])
   ImagePointerType moving_image = reader2->GetOutput();
 
   VectorType zero;
-  float def_value=10.0;
+  float def_value=1.0;
   zero.Fill(def_value);
   FieldType::Pointer field = FieldType::New();
   field->SetRegions(fixed_image->GetLargestPossibleRegion());
@@ -102,7 +104,10 @@ int main(int argc, char * argv[])
   transformM1->SetInverseDeformationField(fieldInv);
   
   transformM->AddTransform(transformM2);
-  transformM->AddTransform(transformM1);
+  transformM->AddTransform(transformM3);
+
+  transformM->AddTransform(transformMId);
+  transformF->AddTransform(transformFId);
 
   typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
   typedef ObjectMetricType::Pointer MetricTypePointer;
@@ -138,11 +143,8 @@ int main(int argc, char * argv[])
   metricThreader->SetNumberOfThreads(number_of_threads);
   metricThreader->m_OverallRegion = inboundary_region ;
   metricThreader->m_Holder = &metricHolder;
-  //std::cout <<" thrg 1" <<std::endl;
   metricThreader->ThreadedGenerateData = MetricThreadedHolderType::ComputeMetricValueInRegionOnTheFlyThreaded;
-  //std::cout <<" thrg 2" <<std::endl;
   metricThreader->GenerateData();
-  // std::cout <<" thrg 3" <<std::endl;
 
   float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());
 

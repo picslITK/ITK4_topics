@@ -27,6 +27,7 @@
 #include "itkMultiThreader.h"
 #include "itkInterpolateImageFunction.h"
 #include "itkLinearInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkConstNeighborhoodIterator.h"
 
 
@@ -122,10 +123,30 @@ public:
    */
   double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint) 
   {
+    double metricval=0;
     /** Only the voxelwise contribution given the point pairs. */
-    double fpix=this->m_FixedInterpolator->Evaluate(mappedFixedPoint); 
-    double mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
-    return fabs((double)fpix-(double)mpix);
+    
+    FixedImagePixelType fpix=this->m_FixedInterpolator->Evaluate(mappedFixedPoint); 
+    MovingImagePixelType mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
+    FixedImagePixelType diff = fpix - mpix ;
+    
+    // Jacobian should be evaluated at the unmapped (fixed image) point.
+    const TransformJacobianType & jacobian = this->m_MovingImageTransform->GetJacobian(mappedMovingPoint);
+    
+    for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfParameters(); par++ )  
+    {
+      double sum = 0.0;
+      for (unsigned int c=0; c < this->m_InputImageVectorLength; c++) 
+      {
+        metricval+=fabs(diff[c])/(double)FixedImageDimension;
+        for ( unsigned int dim = 0; dim < MovingImageDimension; dim++ )  
+        {
+	  sum += 2.0 *diff[c]*jacobian(dim, par);// * movingImageGradientValue[dim];
+        }
+      }
+    }
+    
+    return metricval;
   }
 
   virtual void Initialize(void) throw ( itk::ExceptionObject );
@@ -170,8 +191,8 @@ public:
       ++ItV;
     }
     if ( ct > 0 ) {
-      std::cout << " metric_sum " << metric_sum << " ct " << ct <<std::endl;
-      return metric_sum/(double)(ct);
+      std::cout << " metric_sum " << metric_sum << " ct " << ct << " thread_region " << thread_region.GetIndex() << " sz " << thread_region.GetSize() << std::endl;
+      return metric_sum; 
     }
     else return 0;
   }
@@ -238,6 +259,8 @@ private:
   FixedInterpolatorPointer m_FixedInterpolator;
   MovingInterpolatorPointer m_MovingInterpolator;
 
+  unsigned int m_InputImageVectorLength;
+
 };
 
 
@@ -271,7 +294,7 @@ public:
   InternalComputationValueType AccumulateMeasuresFromAllThreads() {
     InternalComputationValueType energy = NumericTraits<InternalComputationValueType>::Zero;
     for(unsigned int i=0; i<measure_per_thread.size(); i++) energy += measure_per_thread[i];
-    return energy/(InternalComputationValueType)measure_per_thread.size();
+    return energy;
   }
 
   static void ComputeMetricValueInRegionOnTheFlyThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
