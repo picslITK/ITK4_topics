@@ -79,18 +79,8 @@ TransformVirtualDomainCalculator<TInputImage1, TInputImage2>
     {
     this->m_VirtualDomainOrigin[d] = 0.5 * ( origin1[d] + origin2[d] );
     }
-
-  std::cout << "HERE1" << std::endl;
-
-  std::cout << direction1 << std::endl;
-
-  std::cout << direction2 << std::endl;
-
   this->m_VirtualDomainDirection = this->CalculateUnbiasedDirectionCosineMatrix(
     direction1, direction2 );
-
-
-  std::cout << "HERE2" << std::endl;
 }
 
 template<class TInputImage1, class TInputImage2>
