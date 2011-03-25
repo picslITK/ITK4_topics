@@ -21,6 +21,7 @@
 #include "itkTransformVirtualDomainCalculator.h"
 
 #include "itkCastImageFilter.h"
+#include "itkDecomposeTensorFunction.h"
 #include "itkPointSet.h"
 
 namespace itk
@@ -78,8 +79,18 @@ TransformVirtualDomainCalculator<TInputImage1, TInputImage2>
     {
     this->m_VirtualDomainOrigin[d] = 0.5 * ( origin1[d] + origin2[d] );
     }
+
+  std::cout << "HERE1" << std::endl;
+
+  std::cout << direction1 << std::endl;
+
+  std::cout << direction2 << std::endl;
+
   this->m_VirtualDomainDirection = this->CalculateUnbiasedDirectionCosineMatrix(
     direction1, direction2 );
+
+
+  std::cout << "HERE2" << std::endl;
 }
 
 template<class TInputImage1, class TInputImage2>
@@ -252,6 +263,25 @@ TransformVirtualDomainCalculator<TInputImage1, TInputImage2>
   DirectionType A;
   DirectionType B;
 
+  typedef VariableSizeMatrix<double> MatrixType;
+
+  MatrixType sumD( ImageDimension, ImageDimension );
+  for( unsigned int i = 0; i < ImageDimension; i++ )
+    {
+    for( unsigned int j = 0; j < ImageDimension; j++ )
+      {
+      sumD(i, j) = direction1(i, j) + direction2(i, j);
+      }
+    }
+
+  typedef DecomposeTensorFunction<MatrixType, double> DecomposerType;
+  typename DecomposerType::Pointer decomposer = DecomposerType::New();
+  if( decomposer->EvaluateDeterminant( sumD ) < 1e-6 )
+    {
+    itkExceptionMacro( "The unbiased direction cosine matrix does not "
+      << "exist as the two matrices are completely 180 degrees out of phase." );
+    }
+
   float epsilon = 1.0;
   unsigned int iterations = 0;
   while( epsilon > 1.0e-6 && iterations++ < 1000 )
@@ -267,7 +297,7 @@ TransformVirtualDomainCalculator<TInputImage1, TInputImage2>
     Aold = A;
     Bold = B;
     }
-  if( epsilon > 1.0e6 && iterations >= 1000 )
+  if( epsilon > 1.0e-6 && iterations >= 1000 )
     {
     itkExceptionMacro( "Unbiased cosine matrix estimation failed to converge." );
     }
