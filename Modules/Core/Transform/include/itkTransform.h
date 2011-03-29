@@ -195,6 +195,18 @@ public:
    * */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const = 0;
 
+  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const {
+    j=this->GetJacobian(x);
+  }
+
+  /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
+   *  That is, each threads should only update a sub-range of the transform where i < j and both are less
+   *  than  k, where k is the number of parameters.  If i==j==0 then update all parameters.
+   *  We assume Derivatives are of the same length as Parameters.  Throw exception otherwise.
+   */
+  virtual void UpdateTransformParameters( DerivativeType , unsigned long i=0 , unsigned long j=0 );
+
+
   /** Return the number of parameters that completely define the Transfom  */
   virtual unsigned int GetNumberOfParameters(void) const
   { return this->m_Parameters.Size(); }
