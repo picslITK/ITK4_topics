@@ -188,6 +188,11 @@ public:
   /** Compute the Jacobian Matrix of the transformation at one point */
   virtual const JacobianType & GetJacobian(const InputPointType  & point) const;
 
+  /** Compute the Jacobian Matrix of the transformation at one point,
+   *  allowing for thread-safety. */
+  virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
+                                 JacobianType & jacobian) const;
+
   /** Set a fixed offset: this allow to center the object to be transformed */
   itkGetConstReferenceMacro(FixedOffset, OffsetType);
   itkSetMacro(FixedOffset, OffsetType);

@@ -160,6 +160,10 @@ public:
   /** Compute the Jacobian Matrix of the transformation at one point */
   virtual const JacobianType & GetJacobian(const InputPointType  & point) const;
 
+  /** Compute the Jacobian Matrix of the transformation at one point */
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  & point,
+          JacobianType &j) const;
+
   /** Set the parameters to the IdentityTransform */
   void SetIdentity(void);
 
