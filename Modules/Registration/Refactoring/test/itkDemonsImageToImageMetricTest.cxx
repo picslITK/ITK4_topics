@@ -114,8 +114,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   MetricTypePointer objectMetric = ObjectMetricType::New();
   objectMetric->SetFixedImage(fixed_image);
   objectMetric->SetMovingImage(moving_image);
-  objectMetric->SetFixedImageTransform(transformFId);
-  objectMetric->SetMovingImageTransform(transformM2);
+  objectMetric->SetFixedImageTransform(transformF);
+  objectMetric->SetMovingImageTransform(transformM);
   objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
   objectMetric->SetVirtualDomainIndex(fixed_image->GetRequestedRegion().GetIndex());
   objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
@@ -136,8 +136,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   metricHolder.metric = objectMetric;
   metricHolder.fixed_image = fixed_image;
   metricHolder.moving_image = moving_image;
-  metricHolder.transformF = transformFId;
-  metricHolder.transformM = transformM2;
+  metricHolder.transformF = transformF;
+  metricHolder.transformM = transformM;
   metricHolder.measure_per_thread.resize(number_of_threads);
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
