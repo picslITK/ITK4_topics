@@ -131,7 +131,11 @@ public:
     FixedImagePixelType diff = fpix - mpix ;
     metricval+=fabs(diff)/(double)FixedImageDimension;
     // Jacobian should be evaluated at the unmapped (fixed image) point.
-    const TransformJacobianType & jacobian = this->m_MovingImageTransform->GetJacobian(mappedMovingPoint);
+    // const TransformJacobianType & jacobian = this->m_MovingImageTransform->GetJacobian(mappedMovingPoint);
+     // Jacobian should be evaluated at the unmapped (fixed image) point.
+    TransformJacobianType jacobian(MovingImageDimension,this->m_MovingImageTransform->GetNumberOfParameters());
+    jacobian.Fill(0);
+    //    this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
 
     for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfParameters(); par++ )
     {
