@@ -93,6 +93,7 @@ public:
   /** Type of the input parameters. */
   typedef  typename Superclass::ParametersType      ParametersType;
   typedef  typename Superclass::ParametersValueType ParametersValueType;
+  typedef Array< ParametersValueType > DerivativeType;
 
   /** Type of the Jacobian matrix. */
   typedef  Array2D< double > JacobianType;
@@ -194,6 +195,23 @@ public:
    * \f]
    * */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const = 0;
+
+  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const {
+    j.Fill(0);
+      //this->GetJacobian(x);
+  }
+
+  /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
+   *  That is, each threads should only update a sub-range of the transform where i < j and both are less
+   *  than  k, where k is the number of parameters.  If i==j==0 then update all parameters.
+   *  We assume Derivatives are of the same length as Parameters.  Throw exception otherwise.
+   */
+  virtual void UpdateTransformParameters( DerivativeType update , unsigned long i=0 , unsigned long j=0 ){
+    if ( i == 0 && j == 0 )
+      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++) this->m_Parameters[k]+=update[k];
+    else for (unsigned int k=i; k<j; k++) this->m_Parameters[k]+=update[k];
+  }
+
 
   /** Return the number of parameters that completely define the Transfom  */
   virtual unsigned int GetNumberOfParameters(void) const
