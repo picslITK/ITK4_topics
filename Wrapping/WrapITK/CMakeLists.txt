@@ -169,12 +169,19 @@ set(WRAP_ITK_TYPEDEFS_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Typedefs")
 set(WRAP_ITK_LIB_DIRECTORY  "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+
+###############################################################################
+# Setup test driver
+###############################################################################
+set(ITK_TEST_DRIVER "itkTestDriver")
+
 ###############################################################################
 # The real work on wrappers
 ###############################################################################
 
 include(ConfigureWrapping.cmake)
-
 
 ###############################################################################
 # let the different languages running some code before begining to parse the
