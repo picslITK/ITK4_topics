@@ -1,6 +1,7 @@
 itk_module_test()
 set(ITK-QuadEdgeMeshFilteringTests
 itkAutomaticTopologyQuadEdgeMeshSourceTest.cxx
+itkBorderQuadEdgeMeshFilterTest.cxx
 itkBinaryMask3DQuadEdgeMeshSourceTest.cxx
 itkCleanQuadEdgeMeshFilterTest.cxx
 itkDelaunayConformingQuadEdgeMeshFilterTest.cxx
@@ -21,7 +22,31 @@ itkSquaredEdgeLengthDecimationQuadEdgeMeshFilterTest.cxx
 CreateTestDriver(ITK-QuadEdgeMeshFiltering  "${ITK-QuadEdgeMeshFiltering-Test_LIBRARIES}" "${ITK-QuadEdgeMeshFilteringTests}")
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
-set(TEMP ${ITKTesting_BINARY_DIR}/Temporary)
+set(TEMP ${ITK_TEST_OUTPUT_DIR})
+
+add_test(NAME itkBorderQuadEdgeMeshFilterTest00
+      COMMAND ITK-QuadEdgeMeshFilteringTestDriver
+              itkBorderQuadEdgeMeshFilterTest
+            ${INPUTDATA}/mushroom.vtk 0 0 ${TEMP}/border00.vtk
+)
+
+add_test(NAME itkBorderQuadEdgeMeshFilterTest01
+      COMMAND ITK-QuadEdgeMeshFilteringTestDriver
+              itkBorderQuadEdgeMeshFilterTest
+            ${INPUTDATA}/mushroom.vtk 0 1 ${TEMP}/border01.vtk
+)
+
+add_test(NAME itkBorderQuadEdgeMeshFilterTest10
+      COMMAND ITK-QuadEdgeMeshFilteringTestDriver
+              itkBorderQuadEdgeMeshFilterTest
+            ${INPUTDATA}/mushroom.vtk 1 0 ${TEMP}/border10.vtk
+)
+
+add_test(NAME itkBorderQuadEdgeMeshFilterTest11
+      COMMAND ITK-QuadEdgeMeshFilteringTestDriver
+              itkBorderQuadEdgeMeshFilterTest
+            ${INPUTDATA}/mushroom.vtk 1 1 ${TEMP}/border11.vtk
+)
 
 add_test(NAME itkSquaredEdgeLengthDecimationQuadEdgeMeshFilterTest
       COMMAND ITK-QuadEdgeMeshFilteringTestDriver
