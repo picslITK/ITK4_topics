@@ -451,6 +451,44 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   return this->m_Jacobian;
 }
 
+
+
+// Compute the Jacobian in one position, without setting values to m_Jacobian
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
+{
+  // The Jacobian of the affine transform is composed of
+  // subblocks of diagonal matrices, each one of them having
+  // a constant value in the diagonal.
+
+  j.Fill(0.0);
+
+  const InputVectorType v = p - this->GetCenter();
+
+  unsigned int blockOffset = 0;
+
+  for ( unsigned int block = 0; block < NInputDimensions; block++ )
+    {
+    for ( unsigned int dim = 0; dim < NOutputDimensions; dim++ )
+      {
+      j(block, blockOffset + dim) = v[dim];
+      }
+
+    blockOffset += NInputDimensions;
+    }
+
+  for ( unsigned int dim = 0; dim < NOutputDimensions; dim++ )
+    {
+    j(dim, blockOffset + dim) = 1.0;
+    }
+
+  return;
+}
+
+
 // Computes offset based on center, matrix, and translation variables
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >

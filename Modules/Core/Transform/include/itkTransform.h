@@ -21,6 +21,7 @@
 #include "itkTransformBase.h"
 #include "itkVector.h"
 #include "vnl/vnl_vector_fixed.h"
+#include "itkMatrix.h"
 
 
 namespace itk
@@ -121,6 +122,11 @@ public:
     TScalarType, NOutputDimensions, NInputDimensions > InverseTransformBaseType;
 
   typedef typename InverseTransformBaseType::Pointer InverseTransformBasePointer;
+
+  typedef Matrix< TScalarType, itkGetStaticConstMacro(OutputSpaceDimension),
+                  itkGetStaticConstMacro(InputSpaceDimension) >
+  MatrixType;
+
 
   /**  Method to transform a point.
    * \warning This method must be thread-safe. See, e.g., its use
@@ -241,6 +247,13 @@ public:
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;
 
+  /** to be coherent with CompositeTransform::GetLocalJacobian() **/
+  virtual const MatrixType & GetMatrix() const
+  { return m_IdentityMatrix; }
+
+
+
+
   /** Indicates if this transform is linear. A transform is defined to be
    * linear if the transform of a linear combination of points is equal to the
    * linear combination (with the same coefficients) of the individual
@@ -285,6 +298,8 @@ private:
     std::string rval("double");
     return rval;
   }
+
+  MatrixType m_IdentityMatrix;
 };
 } // end namespace itk
 
