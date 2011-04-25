@@ -25,6 +25,9 @@ itkGradientDescentOptimizer.cxx
 itkSingleValuedNonLinearOptimizer.cxx
 itkRegularStepGradientDescentBaseOptimizer.cxx
 itkMultipleValuedVnlCostFunctionAdaptor.cxx
+itkAutomaticGradientDescentOptimizer.cxx
+itkAdaptiveGradientDescentOptimizer.cxx
+itkQuasiNewtonOptimizer.cxx
 )
 
 add_library(ITK-Optimizers ${ITK-Optimizers_SRC})
