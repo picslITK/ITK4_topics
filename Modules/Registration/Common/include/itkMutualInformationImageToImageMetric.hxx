@@ -28,8 +28,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage >
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::MutualInformationImageToImageMetric()
 {
   m_NumberOfSpatialSamples = 0;
@@ -51,9 +51,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
   m_DerivativeCalculator->UseImageDirectionOn();
 }
 
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -70,9 +70,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 /*
  * Set the number of spatial samples
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::SetNumberOfSpatialSamples(
   unsigned int num)
 {
@@ -99,9 +99,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
  * the base class.
  *
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::SampleFixedImageDomain(
   SpatialSampleContainer & samples) const
 {
@@ -197,10 +197,10 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 /*
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage  >
-typename MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::MeasureType
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GetValue(const ParametersType & parameters) const
 {
   // make sure the transform has the current parameters
@@ -272,9 +272,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 /*
  * Get the both Value and Derivative Measure
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GetValueAndDerivative(
   const ParametersType & parameters,
   MeasureType & value,
@@ -422,9 +422,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 /*
  * Get the match measure derivative
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GetDerivative(const ParametersType & parameters, DerivativeType & derivative) const
 {
   MeasureType value;
@@ -443,9 +443,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
  * in the mapper. This solution only works for any transform
  * that support GetJacobian()
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::CalculateDerivatives(
   const FixedImagePointType & point,
   DerivativeType & derivatives) const
@@ -482,9 +482,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 /*
  * Reinitialize the seed of the random number generator
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::ReinitializeSeed()
 {
   Statistics::MersenneTwisterRandomVariateGenerator::GetInstance()->SetSeed();
@@ -493,9 +493,9 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 /*
  * Reinitialize the seed of the random number generator
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
+MutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::ReinitializeSeed(int seed)
 {
   Statistics::MersenneTwisterRandomVariateGenerator::GetInstance()->SetSeed(seed);

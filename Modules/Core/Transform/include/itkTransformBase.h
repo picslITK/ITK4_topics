@@ -22,8 +22,9 @@
 #include "itkPoint.h"
 #include "itkCovariantVector.h"
 #include "vnl/vnl_vector_fixed.h"
-#include "itkArray.h"
+//#include "itkArray.h"
 #include "itkArray2D.h"
+#include "itkTransformParameters.h"
 
 #include "itkObjectFactory.h"
 
@@ -36,6 +37,7 @@ namespace itk
  *
  * \ingroup ITKTransform
  */
+template< typename TParametersValueType = double >
 class ITK_EXPORT TransformBase:public Object
 {
 public:
@@ -46,8 +48,8 @@ public:
   typedef SmartPointer< const Self > ConstPointer;
 
   /** Type of the input parameters. */
-  typedef  double                       ParametersValueType;
-  typedef  Array< ParametersValueType > ParametersType;
+  typedef  TParametersValueType                        ParametersValueType;
+  typedef  TransformParameters< ParametersValueType > ParametersType;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(TransformBase, Object);
