@@ -23,7 +23,7 @@
 #include "itkImage.h"
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkMatrixOffsetTransformBase.h"
-
+#include "itkImageVectorTransformParameters.h"
 
 namespace itk
 {
@@ -108,6 +108,12 @@ public:
   typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
 
+  /** Define the internal parameters type to access the field */
+  typedef ImageVectorTransformParameters< ScalarType,
+                                          OutputVectorType::Dimension,
+                                          itkGetStaticConstMacro( Dimension ) >
+                                            InternalParametersType;
+
   /** Get/Set the deformation field. */
   itkGetObjectMacro( DeformationField, DeformationFieldType );
   /* Create special set accessor to update interpolator */
@@ -119,6 +125,8 @@ public:
 
   /** Get/Set the interpolator. */
   itkGetObjectMacro( Interpolator, InterpolatorType );
+  /* Create out own set accessor that assigns the deformation field
+     to Interpolator and TransformParameter objects */
   /* Create out own set accessor that assigns the deformation field */
   virtual void SetInterpolator( InterpolatorType* interpolator );
 
@@ -141,12 +149,12 @@ public:
    * NOTE if this is implemented eventually, refer first to itkTransform.h
    * for notes on pass by value vs reference.
    */
-  virtual void SetParameters(const ParametersType &)
-    { itkExceptionMacro("SetParameters unimplemented."); }
+  virtual void SetParameters(const ParametersType & params)
+    { m_InternalParameters = params; }
 
   /** Get the Transformation Parameters. */
   virtual const ParametersType & GetParameters(void) const
-    { itkExceptionMacro("GetParameters unimplemented."); }
+    { return m_InternalParameters; }
 
   /** Set the fixed parameters and update internal transformation. */
   virtual void SetFixedParameters(const ParametersType &)
@@ -185,6 +193,9 @@ protected:
   /** The deformation field and its inverse (if it exists). */
   typename DeformationFieldType::Pointer      m_DeformationField;
   typename DeformationFieldType::Pointer      m_InverseDeformationField;
+
+  /** Internal parameters that allow access to field */
+  InternalParametersType                      m_InternalParameters;
 
   /** The interpolator. */
   typename InterpolatorType::Pointer          m_Interpolator;

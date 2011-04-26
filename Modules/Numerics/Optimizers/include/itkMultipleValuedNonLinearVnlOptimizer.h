@@ -51,13 +51,16 @@ public:
    *  It defines a position in the optimization search space. */
   typedef Superclass::ParametersType ParametersType;
 
+  /** Type of the Cost Function   */
+  typedef  MultipleValuedCostFunction<> MultipleValuedCostFunctionType;
+
   /** Set the cost Function. This method has to be overloaded
    *  by derived classes because the CostFunctionAdaptor requires
    *  to know the number of parameters at construction time. This
    *  number of parameters is obtained at run-time from the itkCostFunction.
    *  As a consequence each derived optimizer should construct its own
    *  CostFunctionAdaptor when overloading this method  */
-  virtual void SetCostFunction(MultipleValuedCostFunction *costFunction) = 0;
+  virtual void SetCostFunction(MultipleValuedCostFunctionType *costFunction) = 0;
 
   /**  Define if the Cost function should provide a customized
        Gradient computation or the gradient can be computed internally

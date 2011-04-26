@@ -34,7 +34,7 @@ public:
   /** SmartPointer typedef support */
   typedef TransformFileReader                 Self;
   typedef SmartPointer< Self >                Pointer;
-  typedef TransformBase                       TransformType;
+  typedef TransformBase< double >             TransformType;
 
   typedef TransformType::ParametersType      ParametersType;
   typedef TransformIOBase::TransformPointer  TransformPointer;

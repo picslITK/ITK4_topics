@@ -41,16 +41,16 @@
  *   the solution is the vector | 2 -2 |
  *
  */
-class conjugateCostFunction : public itk::SingleValuedCostFunction
+class conjugateCostFunction : public itk::SingleValuedCostFunction<>
 {
 public:
 
   typedef conjugateCostFunction                    Self;
-  typedef itk::SingleValuedCostFunction     Superclass;
+  typedef itk::SingleValuedCostFunction<>     Superclass;
   typedef itk::SmartPointer<Self>           Pointer;
   typedef itk::SmartPointer<const Self>     ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( conjugateCostFunction, SingleValuedCostFunction );
+  itkTypeMacro( conjugateCostFunction, SingleValuedCostFunction<> );
 
   enum { SpaceDimension=2 };
 

@@ -51,6 +51,9 @@ public:
   /** Internal optimizer type. */
   typedef   vnl_lbfgs InternalOptimizerType;
 
+  /** SingleValuedCostFunction typedef */
+  typedef SingleValuedCostFunction<>  SingleValuedCostFunctionType;
+
   /** Method for getting access to the internal optimizer. */
   vnl_lbfgs * GetOptimizer(void);
 
@@ -58,7 +61,7 @@ public:
   void StartOptimization(void);
 
   /** Plug in a Cost Function into the optimizer  */
-  virtual void SetCostFunction(SingleValuedCostFunction *costFunction);
+  virtual void SetCostFunction(SingleValuedCostFunctionType *costFunction);
 
   /** Set/Get the optimizer trace flag. If set to true, the optimizer
    * prints out information every iteration.

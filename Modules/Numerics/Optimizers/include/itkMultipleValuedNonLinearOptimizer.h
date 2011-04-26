@@ -41,8 +41,8 @@ public:
   typedef SmartPointer< const Self >       ConstPointer;
 
   /** Type of the Cost Function   */
-  typedef  MultipleValuedCostFunction CostFunctionType;
-  typedef  CostFunctionType::Pointer  CostFunctionPointer;
+  typedef  MultipleValuedCostFunction<> CostFunctionType;
+  typedef  CostFunctionType::Pointer    CostFunctionPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);

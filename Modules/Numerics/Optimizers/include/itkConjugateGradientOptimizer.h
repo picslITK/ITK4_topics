@@ -53,6 +53,9 @@ public:
   /** Internal Optimizer Type */
   typedef   vnl_conjugate_gradient InternalOptimizerType;
 
+  /** SingleValuedCostFunction typedef */
+  typedef SingleValuedCostFunction<>  SingleValuedCostFunctionType;
+
   /** Method for getting access to the internal optimizer */
   vnl_conjugate_gradient * GetOptimizer(void);
 
@@ -60,7 +63,7 @@ public:
   void StartOptimization(void);
 
   /** Plug in a Cost Function into the optimizer  */
-  virtual void SetCostFunction(SingleValuedCostFunction *costFunction);
+  virtual void SetCostFunction(SingleValuedCostFunctionType *costFunction);
 
   /** Return the number of iterations performed so far */
   SizeValueType GetNumberOfIterations(void) const;

@@ -42,15 +42,15 @@ namespace itk
  * \ingroup RegistrationMetrics
  * \ingroup ITK-RegistrationCommon
  */
-template< class TFixedPointSet, class TMovingImage >
+template< class TFixedPointSet, class TMovingImage, typename TValueType = double >
 class ITK_EXPORT MeanReciprocalSquareDifferencePointSetToImageMetric:
-  public PointSetToImageMetric< TFixedPointSet, TMovingImage >
+  public PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
 {
 public:
 
   /** Standard class typedefs. */
   typedef  MeanReciprocalSquareDifferencePointSetToImageMetric  Self;
-  typedef PointSetToImageMetric< TFixedPointSet, TMovingImage > Superclass;
+  typedef PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType > Superclass;
   typedef SmartPointer< Self >                                  Pointer;
   typedef SmartPointer< const Self >                            ConstPointer;
 

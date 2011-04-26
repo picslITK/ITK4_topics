@@ -22,10 +22,12 @@
 
 namespace itk
 {
-template< class TFixedImage, class TMovingImage >
-typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage >::MeasureType
-CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage,
+                                                            TMovingImage,
+                                                            TValueType >
+                                                            ::MeasureType
+CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::EvaluateMeasure(HistogramType & histogram) const
 {
   const MeasureType varianceX  = this->VarianceX(histogram);
@@ -35,10 +37,12 @@ CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
   return vcl_fabs( covariance / ( vcl_sqrt(varianceX) * vcl_sqrt(varianceY) ) );
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage >::MeasureType
-CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
+                                                            TMovingImage,
+                                                            TValueType >
+                                                            ::MeasureType
+CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::MeanX(HistogramType & histogram) const
 {
   MeasureType meanX = NumericTraits< MeasureType >::Zero;
@@ -55,10 +59,12 @@ CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
   return meanX;
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage >::MeasureType
-CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
+                                                            TMovingImage,
+                                                            TValueType >
+                                                            ::MeasureType
+CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::MeanY(HistogramType & histogram) const
 {
   MeasureType meanY = NumericTraits< MeasureType >::Zero;
@@ -75,10 +81,12 @@ CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
   return meanY;
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage >::MeasureType
-CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
+                                                            TMovingImage,
+                                                            TValueType >
+                                                            ::MeasureType
+CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::VarianceX(HistogramType & histogram) const
 {
   MeasureType varX = NumericTraits< MeasureType >::Zero;
@@ -93,10 +101,12 @@ CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
   return varX - vcl_pow(MeanX(histogram), 2);
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage >::MeasureType
-CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
+                                                            TMovingImage,
+                                                            TValueType >
+                                                            ::MeasureType
+CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::VarianceY(HistogramType & histogram) const
 {
   MeasureType varY = NumericTraits< MeasureType >::Zero;
@@ -111,10 +121,12 @@ CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
   return varY - vcl_pow(MeanY(histogram), 2);
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 typename CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage >::MeasureType
-CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage >
+                                                            TMovingImage,
+                                                            TValueType >
+                                                            ::MeasureType
+CorrelationCoefficientHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::Covariance(HistogramType & histogram) const
 {
   MeasureType var = NumericTraits< MeasureType >::Zero;

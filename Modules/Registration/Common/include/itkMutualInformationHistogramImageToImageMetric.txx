@@ -23,9 +23,9 @@
 
 namespace itk
 {
-template< class TFixedImage, class TMovingImage >
-typename MutualInformationHistogramImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
-MutualInformationHistogramImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename MutualInformationHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
+MutualInformationHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::EvaluateMeasure(HistogramType & histogram) const
 {
   MeasureType entropyX = NumericTraits< MeasureType >::Zero;

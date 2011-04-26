@@ -27,7 +27,7 @@ public:
   typedef TxtTransformIO                Self;
   typedef TransformIOBase               Superclass;
   typedef SmartPointer< Self >          Pointer;
-  typedef TransformBase                 TransformType;
+  typedef Superclass::TransformType     TransformType;
   typedef Superclass::TransformPointer  TransformPointer;
   typedef Superclass::TransformListType TransformListType;
   /** Run-time type information (and related methods). */

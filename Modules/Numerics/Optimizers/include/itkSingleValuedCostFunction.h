@@ -30,31 +30,32 @@ namespace itk
  * \ingroup Numerics Optimizers
  * \ingroup ITK-Optimizers
  */
+template< class TValueType = double >
 class ITK_EXPORT SingleValuedCostFunction:
-  public CostFunction
+  public CostFunction< TValueType >
 {
 public:
   /** Standard class typedefs. */
   typedef SingleValuedCostFunction   Self;
-  typedef CostFunction               Superclass;
+  typedef CostFunction< TValueType > Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(SingleValuedCostFunction, CostFunction);
+  itkTypeMacro(SingleValuedCostFunction, Superclass);
 
   /**  MeasureType typedef.
    *  It defines a type used to return the cost function value. */
-  typedef double MeasureType;
-
-  /** DerivativeType typedef.
-   *  It defines a type used to return the cost function derivative.  */
-  typedef Array< double > DerivativeType;
+  typedef TValueType MeasureType;
 
   /**  ParametersType typedef.
    *  It defines a position in the optimization search space. */
-  typedef Superclass::ParametersType      ParametersType;
-  typedef Superclass::ParametersValueType ParametersValueType;
+  typedef typename Superclass::ParametersType      ParametersType;
+  typedef typename Superclass::ParametersValueType ParametersValueType;
+
+  /** DerivativeType typedef.
+   *  It defines a type used to return the cost function derivative.  */
+  typedef Array< ParametersValueType > DerivativeType;
 
   /** This method returns the value of the cost function corresponding
     * to the specified parameters.    */

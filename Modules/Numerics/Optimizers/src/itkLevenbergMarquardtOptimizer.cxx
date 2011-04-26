@@ -50,7 +50,7 @@ LevenbergMarquardtOptimizer
  */
 void
 LevenbergMarquardtOptimizer
-::SetCostFunction(MultipleValuedCostFunction *costFunction)
+::SetCostFunction(MultipleValuedCostFunctionType *costFunction)
 {
   const unsigned int numberOfParameters = costFunction->GetNumberOfParameters();
   const unsigned int numberOfValues = costFunction->GetNumberOfValues();
@@ -89,7 +89,7 @@ LevenbergMarquardtOptimizer
 
   if ( adaptor )
     {
-    const MultipleValuedCostFunction *costFunction =
+    const MultipleValuedCostFunctionType *costFunction =
       adaptor->GetCostFunction();
     if ( costFunction )
       {

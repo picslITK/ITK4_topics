@@ -44,19 +44,19 @@
  *        k2 = cos( 45 degrees )
  *
  */
-class versorCostFunction : public itk::SingleValuedCostFunction
+class versorCostFunction : public itk::SingleValuedCostFunction<>
 {
 public:
 
   typedef versorCostFunction                      Self;
-  typedef itk::SingleValuedCostFunction       Superclass;
+  typedef itk::SingleValuedCostFunction<>       Superclass;
   typedef itk::SmartPointer<Self>             Pointer;
   typedef itk::SmartPointer<const Self>       ConstPointer;
 
   typedef itk::VersorTransform<double>        TransformType;
 
   itkNewMacro( Self );
-  itkTypeMacro( versorCostFunction, SingleValuedCostFunction );
+  itkTypeMacro( versorCostFunction, SingleValuedCostFunction<> );
 
   enum { SpaceDimension = 3 };
 

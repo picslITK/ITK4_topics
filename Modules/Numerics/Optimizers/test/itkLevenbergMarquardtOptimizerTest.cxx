@@ -52,11 +52,11 @@ const double rc = 29.0;
  *   whose size is defined by XRange and YRange
  *
  */
-class LMCostFunction : public itk::MultipleValuedCostFunction
+class LMCostFunction : public itk::MultipleValuedCostFunction<>
 {
 public:
   typedef LMCostFunction                    Self;
-  typedef itk::MultipleValuedCostFunction   Superclass;
+  typedef itk::MultipleValuedCostFunction<>   Superclass;
   typedef itk::SmartPointer<Self>           Pointer;
   typedef itk::SmartPointer<const Self>     ConstPointer;
   itkNewMacro( Self );

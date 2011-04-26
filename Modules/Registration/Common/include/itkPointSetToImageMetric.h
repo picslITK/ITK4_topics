@@ -44,18 +44,19 @@ namespace itk
  * \ingroup ITK-RegistrationCommon
  */
 
-template< class TFixedPointSet,  class TMovingImage >
-class ITK_EXPORT PointSetToImageMetric:public SingleValuedCostFunction
+template< class TFixedPointSet,  class TMovingImage, typename TValueType = double >
+class ITK_EXPORT PointSetToImageMetric
+  : public SingleValuedCostFunction< TValueType >
 {
 public:
   /** Standard class typedefs. */
-  typedef PointSetToImageMetric      Self;
-  typedef SingleValuedCostFunction   Superclass;
-  typedef SmartPointer< Self >       Pointer;
-  typedef SmartPointer< const Self > ConstPointer;
+  typedef PointSetToImageMetric                    Self;
+  typedef SingleValuedCostFunction< TValueType >   Superclass;
+  typedef SmartPointer< Self >                     Pointer;
+  typedef SmartPointer< const Self >               ConstPointer;
 
   /** Type used for representing point components  */
-  typedef Superclass::ParametersValueType CoordinateRepresentationType;
+  typedef typename Superclass::ParametersValueType CoordinateRepresentationType;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(PointSetToImageMetric, SingleValuedCostFunction);
@@ -110,13 +111,13 @@ public:
   typedef typename InterpolatorType::Pointer InterpolatorPointer;
 
   /**  Type of the measure. */
-  typedef Superclass::MeasureType MeasureType;
+  typedef typename Superclass::MeasureType MeasureType;
 
   /**  Type of the derivative. */
-  typedef Superclass::DerivativeType DerivativeType;
+  typedef typename Superclass::DerivativeType DerivativeType;
 
   /**  Type of the parameters. */
-  typedef Superclass::ParametersType ParametersType;
+  typedef typename Superclass::ParametersType ParametersType;
 
   /** Connect the Fixed Image.  */
   itkSetConstObjectMacro(FixedPointSet, FixedPointSetType);

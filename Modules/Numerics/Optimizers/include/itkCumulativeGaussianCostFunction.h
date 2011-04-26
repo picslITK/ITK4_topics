@@ -47,18 +47,19 @@ namespace itk
  * \ingroup ITK-Optimizers
  */
 
-class ITK_EXPORT CumulativeGaussianCostFunction:public MultipleValuedCostFunction
+class ITK_EXPORT CumulativeGaussianCostFunction
+  : public MultipleValuedCostFunction<>
 {
 public:
 
   /** Standard typedefs. */
   typedef CumulativeGaussianCostFunction Self;
-  typedef MultipleValuedCostFunction     Superclass;
+  typedef MultipleValuedCostFunction<>     Superclass;
   typedef SmartPointer< Self >           Pointer;
   typedef SmartPointer< const Self >     ConstPointer;
 
   /** Run-time type information (and related methods).   */
-  itkTypeMacro(CumulativeGaussianCostFunction, MultipleValuedCostFunction);
+  itkTypeMacro(CumulativeGaussianCostFunction, Superclass);
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);

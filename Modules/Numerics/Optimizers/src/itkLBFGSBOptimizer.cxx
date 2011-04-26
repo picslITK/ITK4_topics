@@ -339,7 +339,7 @@ LBFGSBOptimizer
  * Connect a Cost Function
  */
 void
-LBFGSBOptimizer::SetCostFunction(SingleValuedCostFunction *costFunction)
+LBFGSBOptimizer::SetCostFunction(SingleValuedCostFunctionType *costFunction)
 {
   m_CostFunction = costFunction;
 
