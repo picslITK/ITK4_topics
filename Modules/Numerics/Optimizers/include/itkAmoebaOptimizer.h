@@ -73,6 +73,9 @@ public:
   /** Internal optimizer type. */
   typedef   vnl_amoeba InternalOptimizerType;
 
+  /** SingleValuedCostFunction typedef */
+  typedef SingleValuedCostFunction<>  SingleValuedCostFunctionType;
+
   /** Method for getting access to the internal optimizer. */
   vnl_amoeba * GetOptimizer(void);
 
@@ -80,7 +83,7 @@ public:
   void StartOptimization(void);
 
   /** Plug in a Cost Function into the optimizer  */
-  virtual void SetCostFunction(SingleValuedCostFunction *costFunction);
+  virtual void SetCostFunction(SingleValuedCostFunctionType *costFunction);
 
   /** Set/Get the maximum number of iterations. The optimization algorithm will
    * terminate after the maximum number of iterations has been reached.

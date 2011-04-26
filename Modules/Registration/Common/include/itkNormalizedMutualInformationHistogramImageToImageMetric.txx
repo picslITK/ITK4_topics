@@ -23,11 +23,14 @@
 
 namespace itk
 {
-template< class TFixedImage, class TMovingImage >
-typename NormalizedMutualInformationHistogramImageToImageMetric< TFixedImage, \
-                                                                 TMovingImage >::MeasureType
-NormalizedMutualInformationHistogramImageToImageMetric< TFixedImage, \
-                                                        TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename NormalizedMutualInformationHistogramImageToImageMetric< TFixedImage,
+                                                                 TMovingImage,
+                                                                 TValueType >
+                                                                 ::MeasureType
+NormalizedMutualInformationHistogramImageToImageMetric< TFixedImage,
+                                                        TMovingImage,
+                                                        TValueType >
 ::EvaluateMeasure(HistogramType & histogram) const
 {
   MeasureType entropyX = NumericTraits< MeasureType >::Zero;

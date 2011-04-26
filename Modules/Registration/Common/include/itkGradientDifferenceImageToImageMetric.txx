@@ -32,8 +32,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage >
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GradientDifferenceImageToImageMetric()
 {
   unsigned int iDimension;
@@ -60,9 +60,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Initialize
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::Initialize(void)
 throw ( ExceptionObject )
 {
@@ -141,9 +141,9 @@ throw ( ExceptionObject )
 /**
  * PrintSelf
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -153,9 +153,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Compute the range of the moved image gradients
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::ComputeMovedGradientRange(void) const
 {
   unsigned int           iDimension;
@@ -196,9 +196,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Compute the gradient variances in each dimension.
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::ComputeVariance(void) const
 {
   unsigned int           iDimension;
@@ -272,9 +272,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the value of the similarity measure
  */
-template< class TFixedImage, class TMovingImage >
-typename GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::ComputeMeasure(const TransformParametersType & parameters,
                  const double *subtractionFactor) const
 {
@@ -339,9 +339,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the value of the similarity measure
  */
-template< class TFixedImage, class TMovingImage >
-typename GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GetValue(const TransformParametersType & parameters) const
 {
   unsigned int iFilter;                        // Index of Sobel filters for
@@ -385,9 +385,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the Derivative Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GetDerivative(const TransformParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -412,9 +412,9 @@ GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get both the match Measure and theDerivative Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
 void
-GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage >
+GradientDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::GetValueAndDerivative(const TransformParametersType & parameters,
                         MeasureType & Value, DerivativeType  & Derivative) const
 {

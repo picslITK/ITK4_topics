@@ -51,6 +51,9 @@ public:
   /** Internal optimizer type. */
   typedef   vnl_levenberg_marquardt InternalOptimizerType;
 
+  /** Type of the Cost Function   */
+  typedef  MultipleValuedCostFunction<> MultipleValuedCostFunctionType;
+
   /** Method for getting access to the internal optimizer. */
   vnl_levenberg_marquardt * GetOptimizer(void) const;
 
@@ -58,7 +61,7 @@ public:
   void StartOptimization(void);
 
   /** Plug in a Cost Function into the optimizer  */
-  virtual void SetCostFunction(MultipleValuedCostFunction *costFunction);
+  virtual void SetCostFunction(MultipleValuedCostFunctionType *costFunction);
 
   void SetNumberOfIterations(unsigned int iterations);
 

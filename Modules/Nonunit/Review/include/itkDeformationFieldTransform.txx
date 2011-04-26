@@ -162,6 +162,8 @@ void DeformationFieldTransform<TScalar, NDimensions>
       {
       this->m_Interpolator->SetInputImage( this->m_DeformationField );
       }
+    //Assign to parameters object
+    m_InternalParameters.SetParameterImage( this->m_DeformationField );
     }
 }
 

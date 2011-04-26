@@ -50,19 +50,19 @@
  *
  *
  */
-class versorRigid3DCostFunction : public itk::SingleValuedCostFunction
+class versorRigid3DCostFunction : public itk::SingleValuedCostFunction<>
 {
 public:
 
   typedef versorRigid3DCostFunction           Self;
-  typedef itk::SingleValuedCostFunction       Superclass;
+  typedef itk::SingleValuedCostFunction<>       Superclass;
   typedef itk::SmartPointer<Self>             Pointer;
   typedef itk::SmartPointer<const Self>       ConstPointer;
 
   typedef itk::VersorRigid3DTransform<double>        TransformType;
 
   itkNewMacro( Self );
-  itkTypeMacro( versorRigid3DCostFunction, SingleValuedCostFunction );
+  itkTypeMacro( versorRigid3DCostFunction, SingleValuedCostFunction<> );
 
   itkStaticConstMacro( SpaceDimension, unsigned int, 6 );
 

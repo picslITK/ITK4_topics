@@ -47,14 +47,17 @@ public:
   /** InternalGradientType typedef. */
   typedef   vnl_matrix< double > InternalDerivativeType;
 
+  /** Type of the Cost Function   */
+  typedef  MultipleValuedCostFunction<> MultipleValuedCostFunctionType;
+
   /** MeasureType of the MultipleValuedCostFunction */
-  typedef MultipleValuedCostFunction::MeasureType MeasureType;
+  typedef MultipleValuedCostFunctionType::MeasureType MeasureType;
 
   /** Parameters of the MultipleValuedCostFunction */
-  typedef MultipleValuedCostFunction::ParametersType ParametersType;
+  typedef MultipleValuedCostFunctionType::ParametersType ParametersType;
 
   /** Derivatives of the MultipleValuedCostFunction */
-  typedef MultipleValuedCostFunction::DerivativeType DerivativeType;
+  typedef MultipleValuedCostFunctionType::DerivativeType DerivativeType;
 
   /** Scales typedef */
   typedef Array< double > ScalesType;
@@ -64,11 +67,11 @@ public:
                                        unsigned int numberOfValues);
 
   /** Set the CostFunction deriving from MultipleValuedCostFunction */
-  void SetCostFunction(MultipleValuedCostFunction *costFunction)
+  void SetCostFunction(MultipleValuedCostFunctionType *costFunction)
   { m_CostFunction = costFunction; }
 
   /** Get the CostFunction deriving from MultipleValuedCostFunction */
-  const MultipleValuedCostFunction * GetCostFunction(void) const
+  const MultipleValuedCostFunctionType * GetCostFunction(void) const
   { return m_CostFunction; }
 
   /**  Delegate computation of the value to the CostFunction. */
@@ -130,7 +133,7 @@ protected:
 
 private:
 
-  MultipleValuedCostFunction::Pointer m_CostFunction;
+  MultipleValuedCostFunctionType::Pointer m_CostFunction;
 
   bool            m_ScalesInitialized;
   ScalesType      m_Scales;

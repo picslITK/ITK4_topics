@@ -22,10 +22,10 @@
 
 namespace itk
 {
-template< class TFixedImage, class TMovingImage >
-typename MeanSquaresHistogramImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType >
+typename MeanSquaresHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::MeasureType
-MeanSquaresHistogramImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::EvaluateMeasure(HistogramType & histogram) const
 {
   MeasureType            measure = NumericTraits< MeasureType >::Zero;

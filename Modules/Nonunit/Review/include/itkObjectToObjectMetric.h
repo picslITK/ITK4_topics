@@ -38,12 +38,12 @@ namespace itk
 
 template< class TFixedObject,  class TMovingObject >
 class ITK_EXPORT ObjectToObjectMetric:
-  public SingleValuedCostFunction
+  public SingleValuedCostFunction<>
 {
 public:
   /** Standard class typedefs. */
   typedef ObjectToObjectMetric       Self;
-  typedef SingleValuedCostFunction   Superclass;
+  typedef SingleValuedCostFunction<> Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 

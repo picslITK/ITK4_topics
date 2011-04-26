@@ -42,12 +42,12 @@
  *   the solution is the vector | 2 -2 |
  *
  */
-class RSGCostFunction : public itk::SingleValuedCostFunction
+class RSGCostFunction : public itk::SingleValuedCostFunction<>
 {
 public:
 
   typedef RSGCostFunction                     Self;
-  typedef itk::SingleValuedCostFunction      Superclass;
+  typedef itk::SingleValuedCostFunction<>      Superclass;
   typedef itk::SmartPointer<Self>            Pointer;
   typedef itk::SmartPointer<const Self>      ConstPointer;
   itkNewMacro( Self );

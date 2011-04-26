@@ -81,7 +81,9 @@ namespace itk
  * \ingroup RegistrationFilters
  * \ingroup ITK-RegistrationCommon
  */
-template< typename TFixedImage, typename TMovingSpatialObject >
+template< typename TFixedImage,
+          typename TMovingSpatialObject,
+          typename TValueType = double >
 class ITK_EXPORT ImageToSpatialObjectRegistrationMethod:public ProcessObject
 {
 public:

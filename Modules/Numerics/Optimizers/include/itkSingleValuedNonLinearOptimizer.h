@@ -53,7 +53,7 @@ public:
   typedef Superclass::ParametersType ParametersType;
 
   /** Type of the Cost Function   */
-  typedef  SingleValuedCostFunction  CostFunctionType;
+  typedef  SingleValuedCostFunction<>  CostFunctionType;
   typedef  CostFunctionType::Pointer CostFunctionPointer;
 
   /**  Measure type.

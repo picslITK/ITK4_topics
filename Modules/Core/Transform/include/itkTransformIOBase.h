@@ -48,7 +48,7 @@ public:
   itkTypeMacro(TransformIOBase, Superclass);
 
   /** Transform types */
-  typedef TransformBase TransformType;
+  typedef TransformBase< double > TransformType;
   /** For writing, a const transform list gets passed in, for
    * reading, a non-const transform list is created from the file.
    */

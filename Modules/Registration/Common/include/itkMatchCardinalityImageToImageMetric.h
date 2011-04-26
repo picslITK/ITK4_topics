@@ -63,15 +63,15 @@ namespace itk
  * \ingroup RegistrationMetrics
  * \ingroup ITK-RegistrationCommon
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType = double >
 class ITK_EXPORT MatchCardinalityImageToImageMetric:
-  public ImageToImageMetric< TFixedImage, TMovingImage >
+  public ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 {
 public:
 
   /** Standard class typedefs. */
   typedef MatchCardinalityImageToImageMetric              Self;
-  typedef ImageToImageMetric< TFixedImage, TMovingImage > Superclass;
+  typedef ImageToImageMetric< TFixedImage, TMovingImage, TValueType > Superclass;
   typedef SmartPointer< Self >                            Pointer;
   typedef SmartPointer< const Self >                      ConstPointer;
 

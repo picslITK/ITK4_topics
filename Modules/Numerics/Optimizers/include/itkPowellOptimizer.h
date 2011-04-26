@@ -78,7 +78,8 @@ public:
   itkTypeMacro(PowellOptimizer, SingleValuedNonLinearOptimizer);
 
   /** Type of the Cost Function   */
-  typedef  SingleValuedCostFunction  CostFunctionType;
+  // Why doesn't this use Superclass::CostFunctionType ?
+  typedef  SingleValuedCostFunction<>  CostFunctionType;
   typedef  CostFunctionType::Pointer CostFunctionPointer;
 
   /** Set if the Optimizer should Maximize the metric */

@@ -87,15 +87,15 @@ namespace itk
  * \wikiexample{Registration/MutualInformation,Mutual Information}
  * \wikiexample{Registration/MutualInformationAffine,Mutual Information Affine}
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, typename TValueType = double >
 class ITK_EXPORT MutualInformationImageToImageMetric:
-  public ImageToImageMetric< TFixedImage, TMovingImage >
+  public ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 {
 public:
 
   /** Standard class typedefs. */
   typedef MutualInformationImageToImageMetric             Self;
-  typedef ImageToImageMetric< TFixedImage, TMovingImage > Superclass;
+  typedef ImageToImageMetric< TFixedImage, TMovingImage, TValueType > Superclass;
   typedef SmartPointer< Self >                            Pointer;
   typedef SmartPointer< const Self >                      ConstPointer;
 

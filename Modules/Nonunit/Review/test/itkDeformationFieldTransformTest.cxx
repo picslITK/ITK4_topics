@@ -24,8 +24,8 @@
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkVectorLinearInterpolateImageFunction.h"
 
-#define NDIMENSIONS 2
-typedef itk::DeformationFieldTransform<double, NDIMENSIONS>
+const unsigned int dimensions = 2;
+typedef itk::DeformationFieldTransform<double, dimensions>
                                               DeformationTransformType;
 typedef DeformationTransformType::ScalarType  ScalarType;
 
@@ -53,8 +53,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
    * vectors as well. Currently this just tests transforming
    * points. */
 
-  typedef  itk::Matrix<ScalarType, NDIMENSIONS, NDIMENSIONS>  Matrix2Type;
-  typedef  itk::Vector<ScalarType, NDIMENSIONS>               Vector2Type;
+  typedef  itk::Matrix<ScalarType, dimensions, dimensions>  Matrix2Type;
+  typedef  itk::Vector<ScalarType, dimensions>               Vector2Type;
 
   /* Create a deformation field transform */
   DeformationTransformType::Pointer deformationTransform =
@@ -65,7 +65,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   FieldType::SizeType size;
   FieldType::IndexType start;
   FieldType::RegionType region;
-  size.Fill( 30 );
+  int dimLength = 30;
+  size.Fill( dimLength );
   start.Fill( 0 );
   region.SetSize( size );
   region.SetIndex( start );
@@ -82,8 +83,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   FieldType::IndexType nonZeroFieldIndex;
   nonZeroFieldIndex[0] = 3;
   nonZeroFieldIndex[1] = 4;
-  ScalarType data1[] = {4,-2.5};
-  DeformationTransformType::OutputVectorType nonZeroFieldVector(data1);
+  ScalarType nonZeroData[] = {4,-2.5};
+  DeformationTransformType::OutputVectorType nonZeroFieldVector(nonZeroData);
   field->SetPixel( nonZeroFieldIndex, nonZeroFieldVector );
 
   deformationTransform->SetDeformationField( field );
@@ -254,6 +255,79 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     return EXIT_FAILURE;
     }
   std::cout << "Passed Jacobian test." << std::endl;
+
+  /* Test parameter access.
+   * Parameters just point to the deformation field, but using
+   * 1D indexing. */
+  DeformationTransformType::ParametersType params;
+  params = deformationTransform->GetParameters();
+  unsigned int expectedParamSize = dimLength * dimLength * dimensions;
+  if( params.Size() != expectedParamSize )
+    {
+    std::cout << "params are not expected size. "
+              << params.Size() << " instead of " << expectedParamSize
+              << std::endl;
+    return EXIT_FAILURE;
+    }
+  /* Test reading */
+  if( params[0] != 0 )
+    {
+    std::cout << "params[0] not of expected value. "
+              << params[0] << " instead of 0." << std::endl;
+    return EXIT_FAILURE;
+    }
+  int nonZeroFieldIndex1D = dimensions *
+            ( nonZeroFieldIndex[1] * dimLength + nonZeroFieldIndex[0] );
+  if( params[nonZeroFieldIndex1D]   != nonZeroData[0] ||
+      params[nonZeroFieldIndex1D+1] != nonZeroData[1] )
+    {
+    std::cout << "params[nonZeroFieldIndex1D] not of expected value. "
+              << std::endl << "Expected: " << nonZeroData[0]
+              << " " << nonZeroData[1]
+              << std::endl << "Retrieved: " << params[nonZeroFieldIndex1D]
+              << " " << params[nonZeroFieldIndex1D+1] << std::endl;
+    for( int xx=0; xx<dimLength; xx++ )
+      {
+      for( int yy=0; yy<dimLength; yy++ )
+        {
+        if(params[yy*dimLength+xx] != 0)
+          std::cout << xx << "," << yy << ": " << params[yy*dimLength+xx]
+                  << std::endl;
+        }
+      }
+    return EXIT_FAILURE;
+    }
+
+  /* Test setting parameters */
+  DeformationTransformType::ParametersType newParams( expectedParamSize );
+  newParams.Fill(13);
+  newParams[0] = 11;
+  newParams[expectedParamSize-1] = 15;
+  deformationTransform->SetParameters( newParams );
+  /* Test that the values got copied to the deformation field image */
+  DeformationTransformType::OutputVectorType readVector;
+  FieldType::IndexType fieldIndex;
+  fieldIndex[0] = fieldIndex[1] = 0;
+  readVector = field->GetPixel(fieldIndex);
+  if( readVector[0] != 11 || readVector[1] != 13 )
+    {
+    std::cout << "Failed setting and reading parameters from field."
+              << std::endl << "Expected 11 13 "
+              << std::endl << "Read " << readVector[0] << " "
+              << readVector[1] << std::endl;
+    return EXIT_FAILURE;
+    }
+  fieldIndex[0] = fieldIndex[1] = dimLength - 1;
+  readVector = field->GetPixel(fieldIndex);
+  if( readVector[0] != 13 || readVector[1] != 15 )
+    {
+    std::cout << "Failed setting and reading parameters from field."
+              << std::endl << "Expected 13 15 "
+              << std::endl << "Read " << readVector[0] << " "
+              << readVector[1] << std::endl;
+    return EXIT_FAILURE;
+    }
+
 
   /* Test that the CreateAnother routine throws an exception.
    * See comments in .h */

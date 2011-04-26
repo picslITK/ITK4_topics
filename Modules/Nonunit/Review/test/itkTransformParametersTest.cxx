@@ -15,14 +15,23 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#include "itkCostFunction.h"
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4786 )
+#endif
 
-namespace itk
+#include "itkTransformParameters.h"
+
+using namespace itk;
+
+int itkTransformParametersTest(int, char *[])
 {
-void
-CostFunction
-::PrintSelf(std::ostream & os, Indent indent) const
-{
-  Superclass::PrintSelf(os, indent);
+  TransformParameters<double> params;
+  params.SetSize(10);
+  std::cout << "GetSize: " << params.GetSize() << std::endl;
+
+  /* Test different ctors */
+
+  /* Test copy operators from different types */
+
+  return EXIT_SUCCESS;
 }
-} // end namespace itk
