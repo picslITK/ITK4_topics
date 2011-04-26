@@ -22,6 +22,8 @@
 
 #include "itkImage.h"
 #include "itkVectorInterpolateImageFunction.h"
+#include "itkMatrixOffsetTransformBase.h"
+
 
 namespace itk
 {
@@ -98,6 +100,13 @@ public:
   typedef VectorInterpolateImageFunction
     <DeformationFieldType, ScalarType> InterpolatorType;
 
+  /** Standard Index type for Deformation Field */
+  typedef typename DeformationFieldType::IndexType IndexType;
+
+  /* Define tranform based upon ImageDirections of Deformation Field */
+  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
+  typedef typename AffineTransformType::Pointer AffineTransformPointer;
+
   /** Get/Set the deformation field. */
   itkGetObjectMacro( DeformationField, DeformationFieldType );
   /* Create special set accessor to update interpolator */
@@ -152,6 +161,10 @@ public:
    * Definition in txx file throws an exception.
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
+
+  virtual JacobianType & GetLocalDeformation( const InputPointType & ) const;
+
+  virtual JacobianType & GetLocalDeformation( const IndexType & ) const;
 
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;

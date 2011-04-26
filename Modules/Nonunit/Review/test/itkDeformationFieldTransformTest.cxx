@@ -43,6 +43,29 @@ bool samePoint( const TPoint & p1, const TPoint & p2 )
   return pass;
   }
 
+template <typename TArray2D>
+bool sameArray2D( const TArray2D & a1, const TArray2D & a2 )
+  {
+  bool pass=true;
+
+  if ( (a1.rows() != a2.rows()) || (a1.cols() != a2.cols()) )
+    {
+    return false;
+    }
+
+  for ( unsigned int i = 0; i < a1.cols(); i++ )
+    {
+    for ( unsigned int j = 0; j < a1.rows(); j++ )
+      {
+        if( vcl_fabs( a1(j,i) - a2(j,i) ) > epsilon )
+          {
+          pass=false;
+          }
+      }
+    }
+  return pass;
+  }
+
 
 int itkDeformationFieldTransformTest(int ,char *[] )
 {
@@ -234,26 +257,27 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   /* Test GetJacobian - Since there are no parameters for this transform,
    * the Jacobian shouldn't be requested and will throw an exception. */
   DeformationTransformType::JacobianType jacobian;
+  DeformationTransformType::JacobianType jacobianTruth(NDIMENSIONS,NDIMENSIONS);
+  jacobianTruth(0,0) = -1.66666674614;
+  jacobianTruth(0,1) = 0;
+  jacobianTruth(1,0) = 1.66666662693;
+  jacobianTruth(1,1) = 1.0;
+
+  //std::cout.precision(12);
   DeformationTransformType::InputPointType inputPoint;
-  inputPoint[0]=1;
-  inputPoint[1]=2;
+  inputPoint[0]=nonZeroFieldIndex[0]+1;
+  inputPoint[1]=nonZeroFieldIndex[1];
   bool caughtException = false;
-  try
-    {
-    jacobian = deformationTransform->GetJacobian( inputPoint );
-    }
-  catch( itk::ExceptionObject & e )
-    {
-    std::string description(e.GetDescription());
-    caughtException =
-      description.find("DeformationFieldTransform") != std::string::npos;
-    }
-  if( !caughtException )
-    {
-    std::cout << "Expected GetJacobian to throw exception." << std::endl;
-    return EXIT_FAILURE;
-    }
-  std::cout << "Passed Jacobian test." << std::endl;
+  jacobian = deformationTransform->GetJacobian( inputPoint );
+  std::cout << "Get Jacobian " << std::endl
+    << "Test point: " << inputPoint << std::endl
+    << "Truth: " << std::endl << jacobianTruth
+    << "Output: " << std::endl << jacobian << std::endl;
+  if( !sameArray2D( jacobian, jacobianTruth ) )
+      {
+      std::cout << "Failed calculating jacobian." << std::endl;
+      return EXIT_FAILURE;
+      }
 
   /* Test that the CreateAnother routine throws an exception.
    * See comments in .h */
