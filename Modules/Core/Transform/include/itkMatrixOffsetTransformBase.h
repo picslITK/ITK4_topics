@@ -197,7 +197,8 @@ public:
    * MatrixOffsetTransformBase.
    * To define an affine transform, you must set the matrix,
    * center, and translation OR the matrix and offset */
-  const MatrixType & GetMatrix() const
+
+  virtual const MatrixType & GetMatrix() const
   { return m_Matrix; }
 
   /** Set offset (origin) of an MatrixOffset TransformBase.

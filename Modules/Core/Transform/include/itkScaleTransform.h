@@ -19,7 +19,8 @@
 #define __itkScaleTransform_h
 
 #include <iostream>
-#include "itkTransform.h"
+//#include "itkTransform.h"
+#include "itkMatrixOffsetTransformBase.h"
 #include "itkMacro.h"
 #include "itkMatrix.h"
 
@@ -40,14 +41,15 @@ template<
                              // double)
   unsigned int NDimensions = 3  >
 // Number of dimensions
-class ITK_EXPORT ScaleTransform:public Transform< TScalarType,
+// class ITK_EXPORT ScaleTransform:public Transform< TScalarType,
+class ITK_EXPORT ScaleTransform:public MatrixOffsetTransformBase< TScalarType,
                                                   NDimensions,
                                                   NDimensions >
 {
 public:
   /** Standard class typedefs.   */
   typedef ScaleTransform                                     Self;
-  typedef Transform< TScalarType, NDimensions, NDimensions > Superclass;
+  typedef MatrixOffsetTransformBase< TScalarType, NDimensions, NDimensions > Superclass;
   typedef SmartPointer< Self >                               Pointer;
   typedef SmartPointer< const Self >                         ConstPointer;
 
@@ -94,6 +96,10 @@ public:
   typedef typename Superclass::InverseTransformBaseType InverseTransformBaseType;
   typedef typename InverseTransformBaseType::Pointer    InverseTransformBasePointer;
 
+
+  typedef typename Superclass::MatrixType      MatrixType;
+
+
   /** Set parameters.  This method sets the parameters for the transform value
    *  specified by the user. The parameters are organized as scale[i] =
    *  parameter[i]. That means that in 3D the scale parameters for the coordinates
@@ -128,7 +134,9 @@ public:
    * scale[0] corresponds to X, scale[1] corresponds to Y and scale[2]
    * corresponds to Z. */
   void SetScale(const ScaleType & scale)
-  { this->Modified(); m_Scale = scale; }
+  { m_Scale = scale; this->ComputeMatrix(); this->Modified(); }
+
+  virtual void ComputeMatrix(void);
 
   /** Compose with another ScaleTransform. */
   void Compose(const Self *other, bool pre = false);

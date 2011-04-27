@@ -82,7 +82,7 @@ double max_distance_between_point_list(const TRawPointList &a, const TRawPointLi
 int main(int argc, char **argv){
 
     const int Dim = 2;
-    int n = 10;
+    int n = 100;
     int nb_iter = 10000;
 
     srand(time(NULL));
@@ -151,7 +151,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
 
 
 
-    float A[Dim*Dim] = { 1.5, -0.8, 0, -0.9 };
+    float A[Dim*Dim] = { 1.5, -0.6, 0.2, -0.9 };
     float c[Dim] = { 0.5, 0.6 };
     float t[Dim] = { 0.4, -1.2 };
 
@@ -184,7 +184,8 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
             for(int f=0; f<Dim; f++) {
                 y[i][d] += A[d*Dim +f ] * (x[i][f]-c[f]);
             }
-            y[i][d] += t[d] + c[d] + (rand() % 1000 ) / 1000000.0;
+            y[i][d] += t[d] + c[d];
+            y[i][d] += (rand() % 1000 ) / 100000.0 * 5.0; //noise
         }
 
     }
@@ -473,12 +474,19 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
 
     // set random to affine
     ParaType aff_para(Dim*Dim+Dim);
-    aff_para[0] = 0.2;
-    aff_para[1] = 0.8;
-    aff_para[3] = 0.8;
-    aff_para[4] = -1.1;
-    aff_para[5] = 0.2;
-    aff_para[6] = 0.3;
+//    aff_para[0] = 0.2;
+//    aff_para[1] = 0.8;
+//    aff_para[3] = 0.8;
+//    aff_para[4] = -1.1;
+//    aff_para[5] = 0.2;
+//    aff_para[6] = 0.3;
+    aff_para[0] = 1;
+    aff_para[1] = 0.;
+    aff_para[2] = 0.;
+    aff_para[3] = 1;
+    aff_para[4] = 0;
+    aff_para[5] = 0;
+
     //    for(int i=0; i<aff_para.Size(); i++) aff_para[i] = (rand() % 100) / 50.0;
     affine->SetParameters(aff_para);
 
@@ -499,17 +507,24 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
 
     // set random to affine2
     ParaType aff2_para(Dim*Dim+Dim);
-    aff2_para[0] = -0.7;
-    aff2_para[1] = -0.2;
-    aff2_para[3] = -0.3;
-    aff2_para[4] = 0.9;
-    aff2_para[5] = 0.1;
-    aff2_para[6] = 0.2;
+//    aff2_para[0] = -0.7;
+//    aff2_para[1] = -0.2;
+//    aff2_para[2] = -0.3;
+//    aff2_para[3] = 0.9;
+//    aff2_para[4] = 0.1;
+//    aff2_para[5] = 0.2;
+    aff2_para[0] = 1;
+    aff2_para[1] = 0;
+    aff2_para[2] = 0.;
+    aff2_para[3] = 1;
+    aff2_para[4] = 0;
+    aff2_para[5] = 0;
+
     //    for(int i=0; i<aff2_para.Size(); i++) aff2_para[i] = (rand() % 100) / 50.0;
     affine2->SetParameters(aff2_para);
 
 
-    comp->AddTransform(affine2);
+//    comp->AddTransform(affine2);
 
 
     typename CompositeType::InputPointType c0;
@@ -657,7 +672,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     typename ScaleTransformType::Pointer scale_transform = ScaleTransformType::New();
     scale_transform->SetIdentity();
     typename ScaleTransformType::ParametersType s1(Dim);
-    for(int i=0; i<Dim; i++) s1[i]=(rand() % 100) / 50.0 ; //
+    for(int i=0; i<Dim; i++) s1[i]=1; //(rand() % 100) / 50.0 ; //
     scale_transform->SetParameters(s1);
 
 
@@ -665,7 +680,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
     typename Shear2DTransformType::Pointer shear_transform = Shear2DTransformType::New();
     typename Shear2DTransformType::ParametersType k1(1);
-    for(int i=0; i<1; i++) k1[i]=(rand() % 100) / 50.0 - 1.0 ; //
+    for(int i=0; i<1; i++) k1[i]=0; //(rand() % 100) / 50.0 - 1.0 ; //
     shear_transform->SetParameters(k1);
 
 
@@ -674,7 +689,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     typename Rotation2DTransformType::ParametersType r1(3);
     //angle: (in radius)
     r1.Fill(0);
-    r1[0] = (rand() % 100) / 200.0 - 0.5;
+    // r1[0] = (rand() % 100) / 200.0 - 0.5;
 
     rotation_transform->SetParameters(r1);
 
@@ -683,7 +698,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
     typename TranslationTransformType::Pointer translation_transform = TranslationTransformType::New();
     typename TranslationTransformType::ParametersType t1(Dim);
-    for(int i=0; i<Dim; i++) t1[i]=(rand() % 100) / 50.0 - 1.0 ; //
+    for(int i=0; i<Dim; i++) t1[i]=0; // (rand() % 100) / 50.0 - 1.0 ; //
     translation_transform->SetParameters(t1);
 
 
@@ -696,6 +711,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     comp->AddTransform(rotation_transform);
     comp->AddTransform(scale_transform);
     comp->AddTransform(shear_transform);
+
 
 
     typename CompositeType::InputPointType c0;
@@ -759,6 +775,14 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
             jac[1][4] = 0;
             jac[1][5] = 0;
 
+            // r t k s ==> s k t r: 2 : 1 : 2 : 3
+//            jac[0][6]=jac[0][7]=jac[1][6]=jac[1][7] = 0;
+
+            // t s k r ==> r k s t : 3 : 1 : 2 : 2
+            // jac[0][1]=jac[0][2]=jac[1][1]=jac[1][2] = 0;
+
+//            const int OFFSET=3;
+//            jac[0][1+OFFSET]=jac[0][2+OFFSET]=jac[1][1+OFFSET]=jac[1][2+OFFSET] = 0;
 
             for(int d=0; d<Dim; d++){
                 for(int k=0; k<kParaDim; k++){
@@ -769,7 +793,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
             }
         }
 
-        delta_para *= 1.0 / nb_pts * 0.5;
+        delta_para *= 1.0 / nb_pts * 0.8;
 
 
         current_para -= delta_para;
