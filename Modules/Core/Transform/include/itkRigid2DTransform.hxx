@@ -293,6 +293,35 @@ Rigid2DTransform< TScalarType >::GetJacobian(const InputPointType & p) const
 
   return this->m_Jacobian;
 }
+
+// Compute transformation Jacobian
+template< class TScalarType >
+void
+Rigid2DTransform< TScalarType >::GetLocalJacobian(const InputPointType & p,
+        JacobianType &j ) const
+{
+  const double ca = vcl_cos( this->GetAngle() );
+  const double sa = vcl_sin( this->GetAngle() );
+
+  j.Fill(0.0);
+
+  const double cx = this->GetCenter()[0];
+  const double cy = this->GetCenter()[1];
+
+  // derivatives with respect to the angle
+  j[0][0] = -sa * ( p[0] - cx ) - ca * ( p[1] - cy );
+  j[1][0] =  ca * ( p[0] - cx ) - sa * ( p[1] - cy );
+
+  // compute derivatives for the translation part
+  unsigned int blockOffset = 1;
+  for ( unsigned int dim = 0; dim < OutputSpaceDimension; dim++ )
+    {
+    j[dim][blockOffset + dim] = 1.0;
+    }
+
+  return;
+}
+
 } // namespace
 
 #endif
