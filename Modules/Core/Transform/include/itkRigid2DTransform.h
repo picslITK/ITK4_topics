@@ -211,6 +211,9 @@ public:
    * \sa Transform::GetJacobian() */
   const JacobianType & GetJacobian(const InputPointType  & point) const;
 
+  void GetLocalJacobian(const InputPointType  & point, JacobianType &j ) const;
+
+
   /**
    * This method creates and returns a new Rigid2DTransform object
    * which is the inverse of self.
