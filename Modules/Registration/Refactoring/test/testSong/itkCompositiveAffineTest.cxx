@@ -83,7 +83,7 @@ int main(int argc, char **argv){
 
     const int Dim = 2;
     int n = 100;
-    int nb_iter = 10000;
+    int nb_iter = 1000;
 
     srand(time(NULL));
     //    srand(1);
@@ -151,7 +151,8 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
 
 
 
-    float A[Dim*Dim] = { 1.5, -0.6, 0.2, -0.9 };
+//    float A[Dim*Dim] = { 1.5, -0.6, 0.2, -0.9 };
+    float A[Dim*Dim] = { 0.12, -1.8, 1.3, -0.3};
     float c[Dim] = { 0.5, 0.6 };
     float t[Dim] = { 0.4, -1.2 };
 
@@ -185,7 +186,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
                 y[i][d] += A[d*Dim +f ] * (x[i][f]-c[f]);
             }
             y[i][d] += t[d] + c[d];
-            y[i][d] += (rand() % 1000 ) / 100000.0 * 5.0; //noise
+            y[i][d] += (rand() % 1000 ) / 1000.0 * 0.2; //noise
         }
 
     }
@@ -612,7 +613,7 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
 
         double dmax = max_distance_between_point_list(y, y1);
 
-        if (cnt % 1000 == 1)
+        if (cnt % 100 == 1)
             std::cout << "iter [" << cnt
             << "]: max ||T(ptx)-pty|| = " << dmax << std::endl;
 
@@ -819,7 +820,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
         double dmax = max_distance_between_point_list(y, y1);
 
-        if (cnt % 1000 == 1)
+        if (cnt % 100 == 1)
             std::cout << "iter [" << cnt
             << "]: max ||T(ptx)-pty|| = " << dmax << std::endl;
 

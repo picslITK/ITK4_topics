@@ -246,6 +246,7 @@ void CenteredCompositeTransform<TScalar, NDimensions>
             if (offset > 0){
                 JacobianType old_j = j.extract(NDimensions,offset,0,0);
                 j.update( transform->GetMatrix() * old_j, 0, 0);
+//                j.update( old_j, 0, 0);
 
                 // std::cout << "["<<tind<<"] transform->GetMatrix(): " << std::endl << transform->GetMatrix() << std::endl;
 
