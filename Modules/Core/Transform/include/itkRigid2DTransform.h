@@ -52,6 +52,7 @@ namespace itk
  * \sa MatrixOffsetTransformBase
  *
  * \ingroup Transforms
+ * \ingroup ITK-Transform
  */
 template< class TScalarType = double >
 // Data type for scalars (float or double)
@@ -209,6 +210,9 @@ public:
    *
    * \sa Transform::GetJacobian() */
   const JacobianType & GetJacobian(const InputPointType  & point) const;
+
+  void GetLocalJacobian(const InputPointType  & point, JacobianType &j ) const;
+
 
   /**
    * This method creates and returns a new Rigid2DTransform object

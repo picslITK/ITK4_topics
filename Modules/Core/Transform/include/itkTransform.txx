@@ -34,6 +34,8 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
   m_FixedParameters(1),
   m_Jacobian(NOutputDimensions, 1)
 {
+  m_IdentityMatrix.SetIdentity();
+
   itkWarningMacro(
     << "Using default transform constructor.  Should specify NOutputDims and NParameters as args to constructor.");
 }
@@ -49,7 +51,9 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
   m_Parameters(numberOfParameters),
   m_FixedParameters(numberOfParameters),
   m_Jacobian(dimension, numberOfParameters)
-{}
+{
+    m_IdentityMatrix.SetIdentity();
+}
 
 /**
  * GenerateName

@@ -108,15 +108,9 @@ target_link_libraries(ITK-CommonTestDriver2 ${ITK-Common_LIBRARIES})
 
 set(BASELINE "${ITK_DATA_ROOT}/Baseline/Common")
 
-set(TEMP "${ITKTesting_BINARY_DIR}/Temporary")
-set(EXAMPLES_DATA_ROOT "${ITK_SOURCE_DIR}/Examples/Data")
+set(TEMP ${ITK_TEST_OUTPUT_DIR})
 
 #-----------------------------------------------------------------------------
-if(ITK_USE_FLOATINGPOINTEXCEPTIONS)
-  set_source_files_properties(itkFloatingPointExceptionsTest.cxx
-    COMPILE_FLAGS -DITK_USE_FPE)
-endif(ITK_USE_FLOATINGPOINTEXCEPTIONS)
-
 add_executable( itkMathTest itkMathTest.cxx )
 add_test(NAME itkMathTest COMMAND itkMathTest)
 target_link_libraries(itkMathTest ${ITK-Common_LIBRARIES})
@@ -138,7 +132,7 @@ if(ITK_BUILD_SHARED_LIBS)
   set(FactoryTest_Source itkFactoryTestLib.cxx)
   add_library(FactoryTestLib MODULE ${FactoryTest_Source})
   target_link_libraries(FactoryTestLib ${ITK-Common_LIBRARIES})
-  set_property(TARGET FactoryTestLib PROPERTY LIBRARY_OUTPUT_DIRECTORY ${ITK_BINARY_DIR}/Testing/Temporary)
+  set_property(TARGET FactoryTestLib PROPERTY LIBRARY_OUTPUT_DIRECTORY ${ITK_TEST_OUTPUT_DIR})
   add_dependencies(ITK-CommonTestDriver2 FactoryTestLib)
 endif(ITK_BUILD_SHARED_LIBS)
 
@@ -241,24 +235,24 @@ add_test(NAME itkVariableLengthVectorTest COMMAND ITK-CommonTestDriver2 itkVaria
 add_test(NAME itkVariableSizeMatrixTest COMMAND ITK-CommonTestDriver2 itkVariableSizeMatrixTest)
 #add_test(NAME itkQuaternionOrientationAdapterTest COMMAND ITK-CommonTestDriver2 itkQuaternionOrientationAdapterTest)
 
-if( ${ITK_COMPUTER_MEMORY_SIZE} GREATER 4 )
+if( "${ITK_COMPUTER_MEMORY_SIZE}" GREATER 4 )
   add_test(NAME itkImageFillBufferTest4.1 COMMAND ITK-CommonTestDriver2 itkImageFillBufferTest 4.1)
-endif( ${ITK_COMPUTER_MEMORY_SIZE} GREATER 4 )
+endif()
 
 #
 # this test depends on being able to raise C++ exceptions from
 # the signal handler. This is apparently not something that
 # works properly
-if(ITK_USE_FLOATINGPOINTEXCEPTIONS)
-  add_test(NAME itkFloatingPointExceptionsTest1 COMMAND ITK-CommonTestDriver2
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+  add_test(NAME itkFloatingPointExceptionsTest1 COMMAND ITK-CommonTestDriver1
     itkFloatingPointExceptionsTest DivByZero)
-  add_test(NAME itkFloatingPointExceptionsTest2 COMMAND ITK-CommonTestDriver2
+  add_test(NAME itkFloatingPointExceptionsTest2 COMMAND ITK-CommonTestDriver1
     itkFloatingPointExceptionsTest ZeroDivByZero)
-  add_test(NAME itkFloatingPointExceptionsTest3 COMMAND ITK-CommonTestDriver2
+  add_test(NAME itkFloatingPointExceptionsTest3 COMMAND ITK-CommonTestDriver1
     itkFloatingPointExceptionsTest FPOverFlow)
-  add_test(NAME itkFloatingPointExceptionsTest4 COMMAND ITK-CommonTestDriver2
+  add_test(NAME itkFloatingPointExceptionsTest4 COMMAND ITK-CommonTestDriver1
     itkFloatingPointExceptionsTest FPUnderFlow)
-  add_test(NAME itkFloatingPointExceptionsTest5 COMMAND ITK-CommonTestDriver2
+  add_test(NAME itkFloatingPointExceptionsTest5 COMMAND ITK-CommonTestDriver1
     itkFloatingPointExceptionsTest IntDivByZero)
 
   set_tests_properties(
@@ -270,38 +264,9 @@ if(ITK_USE_FLOATINGPOINTEXCEPTIONS)
     PROPERTIES WILL_FAIL TRUE
     )
 
-endif(ITK_USE_FLOATINGPOINTEXCEPTIONS)
+endif("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
 
-set(ITK_SYSTEM_INFORMATION_DIR ${ITK_BINARY_DIR})
-
-write_file(
-  "${ITK_SYSTEM_INFORMATION_DIR}/Testing/HTML/TestingResults/Sites/${SITE}/${BUILDNAME}/BuildNameNotes.xml"
-
-  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-  "<Site BuildName=\"CMakeCache\" Name=\"crd\">\n"
-  "<BuildNameNotes>\n"
-  "<Note>\n"
-  "<DateTime>Wed Oct 24 1:00:00 EST</DateTime>\n"
-  "<Text>\n"
-  "The full itkSystemInformationTest did not run.\n"
-  "Here is some basic information:\n"
-  "ITK_SOURCE_DIR = ${ITK_SOURCE_DIR}\n"
-  "ITK_BINARY_DIR = ${ITK_BINARY_DIR}\n"
-  "ITKTesting_SOURCE_DIR = ${ITKTesting_SOURCE_DIR}\n"
-  "ITKTesting_BINARY_DIR = ${ITKTesting_BINARY_DIR}\n"
-  "CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}\n"
-  "CMAKE_C_FLAGS = ${CMAKE_C_FLAGS}\n"
-  "CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}\n"
-  "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}\n"
-  "CMAKE_SYSTEM = ${CMAKE_SYSTEM}\n"
-  "CMAKE_MAKE_PROGRAM = ${CMAKE_MAKE_PROGRAM}\n"
-  "</Text>\n"
-  "</Note>\n"
-  "</BuildNameNotes>\n"
-  "</Site>\n"
-)
-
-configure_file(itkSystemInformationTest.h.in  ${ITK-Common_BINARY_DIR}/itkSystemInformationTest.h)
 add_executable(itkSystemInformationTest itkSystemInformationTest.cxx)
 target_link_libraries(itkSystemInformationTest  ${ITK-Common_LIBRARIES})
-add_test(NAME itkSystemInformationTest COMMAND itkSystemInformationTest)
+add_test(NAME itkSystemInformationTest
+         COMMAND itkSystemInformationTest ${CMAKE_BINARY_DIR})

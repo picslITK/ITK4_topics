@@ -52,6 +52,8 @@ ScaleTransform< ScalarType, NDimensions >
     }
   this->m_Parameters = parameters;
 
+  this->ComputeMatrix();
+
   // Modified is always called since we just have a pointer to the
   // parameters and cannot know if the parameters have changed.
   this->Modified();
@@ -211,10 +213,28 @@ ScaleTransform< ScalarType, NDimensions >
   this->m_Jacobian.Fill(0);
   for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
     {
-    this->m_Jacobian(dim, dim) = p[dim];
+      // note: the original implementation does not include "- m_Center[i]"
+    this->m_Jacobian(dim, dim) = p[dim] - m_Center[dim];
     }
   return this->m_Jacobian;
 }
+
+
+// Compute the Jacobian of the transformation
+// It follows the same order of Parameters vector
+template< class ScalarType, unsigned int NDimensions >
+void
+ScaleTransform< ScalarType, NDimensions >
+::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
+{
+  j.Fill(0);
+  for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
+    {
+    j(dim, dim) = p[dim] - m_Center[dim];
+    }
+}
+
+
 
 template< class ScalarType, unsigned int NDimensions >
 const typename ScaleTransform< ScalarType, NDimensions >::ParametersType &
@@ -224,6 +244,23 @@ ScaleTransform< ScalarType, NDimensions >
     m_FixedParameters.SetSize(0);
     return m_FixedParameters;
   }
+
+template< class ScalarType, unsigned int NDimensions >
+void
+ScaleTransform< ScalarType, NDimensions >
+::ComputeMatrix(void)
+ {
+
+    MatrixType matrix;
+    matrix.SetIdentity();
+    for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
+    {
+        matrix[dim][dim] = m_Scale[dim];
+    }
+
+    this->SetVarMatrix(matrix);
+
+ }
 
 } // namespace
 

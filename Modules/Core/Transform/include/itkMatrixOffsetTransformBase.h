@@ -197,7 +197,8 @@ public:
    * MatrixOffsetTransformBase.
    * To define an affine transform, you must set the matrix,
    * center, and translation OR the matrix and offset */
-  const MatrixType & GetMatrix() const
+
+  virtual const MatrixType & GetMatrix() const
   { return m_Matrix; }
 
   /** Set offset (origin) of an MatrixOffset TransformBase.
@@ -333,6 +334,13 @@ public:
    * vector. The rank of the Jacobian will also indicate if the transform
    * is invertible at this point. */
   const JacobianType & GetJacobian(const InputPointType & point) const;
+
+  /** get local Jacobian for the given point
+   *
+   * This is a thread-safe version for GetJacobian(). Otherwise, m_Jacobian could be
+   * changed for different values in different threads. */
+  void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
+
 
   /** Create inverse of an affine transformation
    *
