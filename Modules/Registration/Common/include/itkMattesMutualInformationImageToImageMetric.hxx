@@ -1273,7 +1273,8 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 
     if ( threadID > 0 )
       {
-      transform = this->m_ThreaderTransform[threadID - 1];
+      //Testing without the transform cloning that had been done in ImageToImageMetric.
+      transform = this->m_Transform; // this->m_ThreaderTransform[threadID - 1];
       }
     else
       {
