@@ -206,6 +206,13 @@ public:
    * */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const = 0;
 
+/** All derived classes should implement
+  virtual void GetJacobian(const InputPointType  &x ) const {
+    this->m_Jacobian.Fill(0);
+    this->GetLocalJacobian(x,this->m_Jacobian);
+  }
+*/
+  /** FIXME: should be pure virtual */
   virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const {
     j.Fill(0);
       //this->GetJacobian(x);
@@ -218,6 +225,7 @@ public:
    * NOTE, remember this is overridden in DeformationFieldTransform, as long as
    * that's using a separate m_InternalParameters member.
    */
+  /** FIXME: should be pure virtual */
   virtual void UpdateTransformParameters( DerivativeType update , unsigned long i=0 , unsigned long j=0 ){
     if ( i == 0 && j == 0 )
       for (unsigned int k=0; k<this->GetNumberOfParameters(); k++) this->m_Parameters[k]+=update[k];
@@ -250,6 +258,7 @@ public:
   virtual std::string GetTransformTypeAsString() const;
 
   /** to be coherent with CompositeTransform::GetLocalJacobian() **/
+  /** FIXME:  Needs documentation and more descriptive name */
   virtual const MatrixType & GetMatrix() const
   { return m_IdentityMatrix; }
 
