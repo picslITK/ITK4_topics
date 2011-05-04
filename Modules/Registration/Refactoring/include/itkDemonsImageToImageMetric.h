@@ -110,6 +110,8 @@ public:
   itkSetMacro(MovingImage, MovingImagePointer);
   itkGetMacro(MovingImage, MovingImagePointer);
 
+  virtual unsigned int GetNumberOfParameters() const { return 0; }
+
   virtual MeasureType GetValue( const ParametersType & parameters ) const { return 0; }
 
   virtual void GetDerivative(const ParametersType &,
@@ -260,57 +262,7 @@ private:
 
   unsigned int m_InputImageVectorLength;
 
-  TransformJacobianType m_Jacobian;
-
 };
-
-
-// functor for threading using the metric function class
-// assuming function has output allocated already
-template<class TMetricFunction>
-struct DemonsMetricThreadedHolder{
-
-  typedef DemonsMetricThreadedHolder          Self;
-
-  typedef TMetricFunction           MetricType;
-  typedef typename MetricType::Pointer  MetricTypePointer;
-  typedef typename MetricType::MeasureType  MeasureType;
-  typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
-  typedef typename MetricType::RegionType ImageRegionType;
-  typedef typename MetricType::FixedImageType ImageType;
-  typedef typename MetricType::FixedImagePointer FixedImagePointer;
-  typedef typename MetricType::MovingImagePointer MovingImagePointer;
-  typedef typename MetricType::TransformPointer TransformPointer;
-
-public:
-  MetricTypePointer           metric;
-  FixedImagePointer fixed_image;
-  MovingImagePointer moving_image;
-  TransformPointer transformF;
-  TransformPointer transformM;
-  std::vector<InternalComputationValueType> measure_per_thread;
-
-  InternalComputationValueType AccumulateMeasuresFromAllThreads() {
-    InternalComputationValueType energy = NumericTraits<InternalComputationValueType>::Zero;
-    for(unsigned int i=0; i<measure_per_thread.size(); i++) energy += measure_per_thread[i];
-    return energy;
-  }
-
-  static void ComputeMetricValueInRegionOnTheFlyThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
-
-    //    std::cout << regionForThread << std::endl;
-    InternalComputationValueType local_metric;
-    holder->measure_per_thread[threadId] = NumericTraits<InternalComputationValueType>::Zero;
-    /** Compute one iteration of the metric */
-    local_metric=holder->metric->ComputeMetricAndDerivative(regionForThread);
-    holder->measure_per_thread[threadId] += local_metric;
-
-  }
-
-
-};
-
-
 
 
 } // end namespace itk
