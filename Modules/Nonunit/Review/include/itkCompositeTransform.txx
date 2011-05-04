@@ -199,7 +199,6 @@ void CompositeTransform<TScalar, NDimensions>
      * as that in which they're applied, i.e. reverse order.
      * M rows = dimensionality of the transforms
      * N cols = total number of parameters in the selected sub transforms. */
-
     j.SetSize( NDimensions, this->GetNumberOfLocalParameters() );
     unsigned int offset = 0;
 //    unsigned int offset_previous = -1;
@@ -216,7 +215,7 @@ void CompositeTransform<TScalar, NDimensions>
 
             // to do: why parameters are listed from N-1 to 1???
             typename TransformType::JacobianType current_jacobian;
-            current_jacobian.SetSize(NDimensions, transform->GetParameters().Size());
+            current_jacobian.SetSize(NDimensions, transform->GetNumberOfLocalParameters());
             transform->GetLocalJacobian( transformedPoint, current_jacobian );
 
             // debug: force only the closes transform to update!!
@@ -228,7 +227,7 @@ void CompositeTransform<TScalar, NDimensions>
 //            std::cout << "cur_tr=" << transform->GetParameters() << std::endl;
 //            std::cout << "new_j=" << std::endl << j << std::endl;
 
-            offset += transform->GetParameters().Size();
+            offset += transform->GetNumberOfLocalParameters();
 
         }
 

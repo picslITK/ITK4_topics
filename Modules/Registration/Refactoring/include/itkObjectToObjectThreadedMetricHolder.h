@@ -61,7 +61,7 @@ public:
     return energy;
   }
 
-  static void ComputeMetricValueInRegionOnTheFlyThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
+  static void ComputeMetricValueInRegionThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
 
     //    std::cout << regionForThread << std::endl;
     InternalComputationValueType local_metric;
