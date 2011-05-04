@@ -19,8 +19,8 @@
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkVector.h"
-// #include "itkObjectToObjectMetric.h"
-
+#include "itkObjectToObjectMetric.h"
+#include "itkObjectToObjectThreadedMetricHolder.h"
 #include "itkDemonsImageToImageMetric.h"
 #include "itkIdentityTransform.h"
 #include "itkDeformationFieldTransform.h"
@@ -43,7 +43,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   const int ImageDimension = 2;
   //  typedef itk::VectorImage< float,ImageDimension > ImageType;
-  typedef itk::Image< float,ImageDimension > ImageType;
+  typedef itk::Image<float, ImageDimension> ImageType;
   typedef ImageType::Pointer ImagePointerType;
   typedef ImageType::RegionType RegionType;
 
@@ -108,8 +108,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   transformMComp->AddTransform(transformMId);
   transformFComp->AddTransform(transformFId);
-
-  typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
+  typedef itk::DemonsImageToImageMetric<ImageType,ImageType> ObjectMetricType;
   typedef ObjectMetricType::Pointer MetricTypePointer;
   MetricTypePointer objectMetric = ObjectMetricType::New();
   objectMetric->SetFixedImage(fixed_image);
@@ -123,9 +122,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
   // Compute one iteration of the metric
   objectMetric->Initialize();
-  //  objectMetric->ComputeMetricAndDerivative();
 
-  typedef itk::DemonsMetricThreadedHolder<ObjectMetricType> MetricThreadedHolderType;
+  typedef itk::ObjectToObjectThreadedMetricHolder<ObjectMetricType> MetricThreadedHolderType;
   typedef itk::ImageToData<ImageDimension, MetricThreadedHolderType> MetricThreaderType;
   itk::Size<ImageDimension> neighborhood_radius;
   neighborhood_radius.Fill(0);
@@ -149,7 +147,6 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());
 
   std::cout << "metric = " << energy << std::endl;
-
   return 1;
 
 }
