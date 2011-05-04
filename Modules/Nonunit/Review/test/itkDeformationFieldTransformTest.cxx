@@ -23,6 +23,7 @@
 #include "itkDeformationFieldTransform.h"
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkVectorLinearInterpolateImageFunction.h"
+#include "itkCenteredAffineTransform.h"
 
 const unsigned int dimensions = 2;
 typedef itk::DeformationFieldTransform<double, dimensions>
@@ -264,20 +265,25 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   jacobianTruth(1,1) = 1.0;
 
   //std::cout.precision(12);
+std::cout << "Jac stuff..." << std::endl;
   DeformationTransformType::InputPointType inputPoint;
   inputPoint[0]=nonZeroFieldIndex[0]+1;
   inputPoint[1]=nonZeroFieldIndex[1];
   bool caughtException = false;
-  jacobian = deformationTransform->GetJacobian( inputPoint );
-  std::cout << "Get Jacobian " << std::endl
-    << "Test point: " << inputPoint << std::endl
-    << "Truth: " << std::endl << jacobianTruth
-    << "Output: " << std::endl << jacobian << std::endl;
-  if( !sameArray2D( jacobian, jacobianTruth ) )
-      {
-      std::cout << "Failed calculating jacobian." << std::endl;
-      return EXIT_FAILURE;
-      }
+  try
+    {
+    DeformationTransformType::JacobianType jacobian = deformationTransform->GetJacobian( inputPoint );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
+    }
+  if( !caughtException )
+    {
+    std::cout << "Expected GetJacobian() to throw exception." << std::endl;
+    return EXIT_FAILURE;
+    }
 
   DeformationTransformType::JacobianType localJ;
   deformationTransform->GetLocalJacobian( inputPoint, localJ );
@@ -291,6 +297,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       return EXIT_FAILURE;
       }
 
+  typedef itk::CenteredAffineTransform<double,2> AffineTransformType;
 
 
   /* TODO

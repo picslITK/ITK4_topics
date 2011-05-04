@@ -174,10 +174,6 @@ public:
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
 
-  virtual JacobianType & GetLocalDeformation( const InputPointType & ) const;
-
-  virtual JacobianType & GetLocalDeformation( const IndexType & ) const;
-
   virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
 
   virtual void GetLocalJacobian(const IndexType  &x, JacobianType &j) const;
