@@ -374,7 +374,7 @@ public:
   /** Return the number of parameters that completely define the Transfom */
   virtual unsigned int GetNumberOfParameters(void) const;
 
-  virtual unsigned int GetNumberOfLocalParameters(void) const;
+//  virtual unsigned int GetNumberOfLocalParameters(void) const;
 
   /** Return the number of parameters per dimension */
   unsigned int GetNumberOfParametersPerDimension(void) const;
