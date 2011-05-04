@@ -178,6 +178,10 @@ public:
 
   virtual JacobianType & GetLocalDeformation( const IndexType & ) const;
 
+  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
+
+  virtual void GetLocalJacobian(const IndexType  &x, JacobianType &j) const;
+
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
 

@@ -279,6 +279,20 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       return EXIT_FAILURE;
       }
 
+  DeformationTransformType::JacobianType localJ;
+  deformationTransform->GetLocalJacobian( inputPoint, localJ );
+  std::cout << "Get LocalJacobian " << std::endl
+    << "Test point: " << inputPoint << std::endl
+    << "Truth: " << std::endl << jacobianTruth
+    << "Output: " << std::endl << localJ << std::endl;
+  if( !sameArray2D( localJ, jacobianTruth ) )
+      {
+      std::cout << "Failed calculating jacobian." << std::endl;
+      return EXIT_FAILURE;
+      }
+
+
+
   /* TODO
    * Test GetNumberOfParameters() which is overloaded, at least as
    * long as we're using a separate m_InternalParameters member */
