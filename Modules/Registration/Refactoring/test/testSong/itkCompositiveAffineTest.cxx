@@ -250,7 +250,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
                 y[i][d] += A[d*Dim +f ] * (x[i][f]-c[f]);
             }
             y[i][d] += t[d] + c[d];
-            y[i][d] += (rand() % 1000 ) / 1000.0 * 0.2; //noise
+            // y[i][d] += (rand() % 1000 ) / 1000.0 * 0.2; //noise
         }
 
     }
@@ -777,6 +777,11 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     comp->AddTransform(scale_transform);
     comp->AddTransform(shear_transform);
 
+    comp->SetNthTransformToOptimize(0, true);
+    comp->SetNthTransformToOptimize(1, false);
+    comp->SetNthTransformToOptimize(2, true);
+    comp->SetNthTransformToOptimize(3, false);
+
 
 
     typename CompositeType::InputPointType c0;
@@ -835,10 +840,10 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
             // manipulate the jacobian w.r.t the translation of the rigid transform
             // k s r t: 1 + 2 + 3 (angle + translation) + 2
-            jac[0][4] = 0;
-            jac[0][5] = 0;
-            jac[1][4] = 0;
-            jac[1][5] = 0;
+//            jac[0][4] = 0;
+//            jac[0][5] = 0;
+//            jac[1][4] = 0;
+//            jac[1][5] = 0;
 
             // r t k s ==> s k t r: 2 : 1 : 2 : 3
 //            jac[0][6]=jac[0][7]=jac[1][6]=jac[1][7] = 0;
