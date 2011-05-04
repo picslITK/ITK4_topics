@@ -187,6 +187,9 @@ public:
   /** This transform is not linear. */
   virtual bool IsLinear() const { return false; }
 
+  virtual unsigned int GetNumberOfLocalParameters(void) const
+  { return Dimension; }
+
   /** Return the number of parameters that completely define the Transfom  */
   virtual unsigned int GetNumberOfParameters(void) const
   { return this->m_InternalParameters.Size(); }

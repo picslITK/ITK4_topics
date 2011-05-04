@@ -121,7 +121,7 @@ public:
   /** This function computes the local voxel-wise contribution of
    *  the metric to the global integral of the metric/derivative.
    */
-  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint)
+  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType &jacobian)
   {
     double metricval=0;
     /** Only the voxelwise contribution given the point pairs. */
@@ -130,12 +130,7 @@ public:
     MovingImagePixelType mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
     FixedImagePixelType diff = fpix - mpix ;
     metricval+=fabs(diff)/(double)FixedImageDimension;
-    // Jacobian should be evaluated at the unmapped (fixed image) point.
-    // const TransformJacobianType & jacobian = this->m_MovingImageTransform->GetJacobian(mappedMovingPoint);
-     // Jacobian should be evaluated at the unmapped (fixed image) point.
-    TransformJacobianType jacobian(MovingImageDimension,this->m_MovingImageTransform->GetNumberOfParameters());
-    jacobian.Fill(0);
-    //    this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
+    this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
 
     for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfParameters(); par++ )
     {
@@ -168,6 +163,8 @@ public:
      *  be a transform between the virtual space and the fixed/moving space s.t. the images
      *  are interpolated in an unbiased manner.
      */
+    TransformJacobianType jacobian(MovingImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
+    jacobian.Fill(0);
     double metric_sum=0;
     unsigned long ct=0;
     ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
@@ -189,7 +186,7 @@ public:
            sampleOk=false;
       if ( sampleOk )
         {
-          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint);
+          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,jacobian);
           metric_sum+=metricval;
           ct++;
         }
@@ -265,6 +262,8 @@ private:
   MovingInterpolatorPointer m_MovingInterpolator;
 
   unsigned int m_InputImageVectorLength;
+
+  TransformJacobianType m_Jacobian;
 
 };
 
