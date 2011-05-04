@@ -1281,7 +1281,7 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
       transform = this->m_Transform;
       }
 
-    const JacobianType & jacobian;
+    JacobianType jacobian;
     transform->GetLocalJacobian( this->m_FixedImageSamples[sampleNumber].point,
                                  jacobian);
 
@@ -1338,7 +1338,7 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
         indicesHelper = &( this->m_BSplineTransformIndices );
         }
 
-      this->m_BSplineTransform->GetLocalJacobian(
+      this->m_BSplineTransform->GetJacobian(
         this->m_FixedImageSamples[sampleNumber].point,
         *weightsHelper, *indicesHelper);
       }
