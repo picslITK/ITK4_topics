@@ -110,6 +110,7 @@ public:
   itkSetMacro(MovingImage, MovingImagePointer);
   itkGetMacro(MovingImage, MovingImagePointer);
 
+
   virtual unsigned int GetNumberOfParameters() const { return 0; }
 
   virtual MeasureType GetValue( const ParametersType & parameters ) const { return 0; }
@@ -120,7 +121,7 @@ public:
   /** This function computes the local voxel-wise contribution of
    *  the metric to the global integral of the metric/derivative.
    */
-  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType &jacobian)
+  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint)
   {
     double metricval=0;
     /** Only the voxelwise contribution given the point pairs. */
@@ -129,7 +130,12 @@ public:
     MovingImagePixelType mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
     FixedImagePixelType diff = fpix - mpix ;
     metricval+=fabs(diff)/(double)FixedImageDimension;
-    this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
+    // Jacobian should be evaluated at the unmapped (fixed image) point.
+    // const TransformJacobianType & jacobian = this->m_MovingImageTransform->GetJacobian(mappedMovingPoint);
+     // Jacobian should be evaluated at the unmapped (fixed image) point.
+    TransformJacobianType jacobian(MovingImageDimension,this->m_MovingImageTransform->GetNumberOfParameters());
+    jacobian.Fill(0);
+    //    this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
 
     for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfParameters(); par++ )
     {
@@ -162,8 +168,6 @@ public:
      *  be a transform between the virtual space and the fixed/moving space s.t. the images
      *  are interpolated in an unbiased manner.
      */
-    TransformJacobianType jacobian(MovingImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
-    jacobian.Fill(0);
     double metric_sum=0;
     unsigned long ct=0;
     ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
@@ -185,7 +189,7 @@ public:
            sampleOk=false;
       if ( sampleOk )
         {
-          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,jacobian);
+          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint);
           metric_sum+=metricval;
           ct++;
         }
@@ -263,6 +267,56 @@ private:
   unsigned int m_InputImageVectorLength;
 
 };
+
+
+// functor for threading using the metric function class
+// assuming function has output allocated already
+template<class TMetricFunction, class TDeformationField>
+struct DemonsMetricThreadedHolder{
+
+  typedef DemonsMetricThreadedHolder          Self;
+
+  typedef TMetricFunction           MetricType;
+  typedef typename MetricType::Pointer  MetricTypePointer;
+  typedef TDeformationField             DeformationFieldType;
+  typedef typename DeformationFieldType::Pointer DeformationFieldPointer;
+  typedef typename MetricType::MeasureType  MeasureType;
+  typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
+  typedef typename MetricType::RegionType ImageRegionType;
+  typedef typename MetricType::FixedImageType ImageType;
+  typedef typename MetricType::FixedImagePointer FixedImagePointer;
+  typedef typename MetricType::MovingImagePointer MovingImagePointer;
+  typedef typename MetricType::TransformPointer TransformPointer;
+
+public:
+  MetricTypePointer           metric;
+  FixedImagePointer fixed_image;
+  MovingImagePointer moving_image;
+  TransformPointer transformF;
+  TransformPointer transformM;
+  std::vector<InternalComputationValueType> measure_per_thread;
+
+  InternalComputationValueType AccumulateMeasuresFromAllThreads() {
+    InternalComputationValueType energy = NumericTraits<InternalComputationValueType>::Zero;
+    for(unsigned int i=0; i<measure_per_thread.size(); i++) energy += measure_per_thread[i];
+    return energy;
+  }
+
+  static void ComputeMetricValueInRegionOnTheFlyThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
+
+    //    std::cout << regionForThread << std::endl;
+    InternalComputationValueType local_metric;
+    holder->measure_per_thread[threadId] = NumericTraits<InternalComputationValueType>::Zero;
+    /** Compute one iteration of the metric */
+    local_metric=holder->metric->ComputeMetricAndDerivative(regionForThread);
+    holder->measure_per_thread[threadId] += local_metric;
+
+  }
+
+
+};
+
+
 
 
 } // end namespace itk

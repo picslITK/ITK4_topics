@@ -25,6 +25,70 @@
 // third test: test the itkCompositeTransform works
 
 
+template<typename,typename> struct ty { };
+
+template<class T, class U> struct X {
+    void f() {
+        f(ty<T, U>());
+    }
+
+private:
+    template<typename Tx, typename Ux>
+    void f(ty<Tx, Ux>) { } // generic
+
+    template<typename Tx>
+    void f(ty<Tx, char>) { } // "specialized"
+};
+
+
+
+template<typename T, int Dim>
+class MyTransform
+{
+public:
+     MyTransform(){std::cout << "general!" << std::endl;};
+     void rotate();
+    T m;
+};
+
+template <typename T>
+class MyTransform <T, 2>{
+public:
+    MyTransform() {
+        std::cout << "2!" << std::endl;
+    }
+    void rotate();
+    int m;
+};
+
+template <typename T, int Dim>
+void
+MyTransform<T, Dim>
+::rotate() {
+    std::cout << " rotate genereal" << std::endl;
+};
+
+template <typename T>
+void
+MyTransform<T, 2>
+::rotate() {
+    std::cout << " rotate 3" << std::endl;
+};
+
+int main1(){
+    MyTransform<bool, 2> m;
+    MyTransform<bool, 3> n;
+    MyTransform<bool, 4> k;
+    k.rotate();
+    m.rotate();
+    n.rotate();
+    return 0;
+}
+
+
+
+
+
 typedef std::vector<double> RawVectorType;
 typedef std::vector< RawVectorType > RawPointListType;
 
@@ -152,7 +216,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
 
 
 //    float A[Dim*Dim] = { 1.5, -0.6, 0.2, -0.9 };
-    float A[Dim*Dim] = { 0.12, -1.8, 1.3, -0.3};
+    float A[Dim*Dim] = { 2, 0, 0, 3 };
     float c[Dim] = { 0.5, 0.6 };
     float t[Dim] = { 0.4, -1.2 };
 

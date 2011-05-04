@@ -228,27 +228,33 @@ void CompositeTransform<TScalar, NDimensions>
 //            std::cout << "cur_tr=" << transform->GetParameters() << std::endl;
 //            std::cout << "new_j=" << std::endl << j << std::endl;
 
-            /** The composite transform needs to compose previous jacobians
-             *  (those closer to the originating point) with the current
-             *  transform's jacobian.  We therefore update the previous
-             *  jacobian by multiplying the current matrix jumping over the first transform
-             *
-             */
-            if (offset > 0){
-                JacobianType old_j = j.extract(NDimensions,offset,0,0);
-                j.update( transform->GetMatrix() * old_j, 0, 0);
-
-//                std::cout << "Ak=" << std::endl << transform->GetMatrix() << std::endl;
-//                std::cout << "old_j=" << std::endl << old_j << std::endl;
-//                std::cout << "new_j2=" << std::endl << j << std::endl;
-            }
-
-//            offset_previous = offset;
             offset += transform->GetParameters().Size();
+
         }
+
+        /** The composite transform needs to compose previous jacobians
+         *  (those closer to the originating point) with the current
+         *  transform's jacobian.  We therefore update the previous
+         *  jacobian by multiplying the current matrix jumping over the
+         *  first transform. The matrix here refers to  dT/dx at the point.
+         *  For example, in the affine transform, this is the affine matrix.
+         *  TODO: for general transform, there should be something like
+         *  GetPartialDerivativeOfPointCoordinates
+         *
+         *  Also, noted the multiplication contains all the affine matrix from
+         *  all transforms no matter they are going to be optimized or not
+         *
+         */
+        if (offset > 0){
+            JacobianType old_j = j.extract(NDimensions,offset,0,0);
+            j.update( transform->GetMatrix() * old_j, 0, 0);
+
+        }
+
         /* Transform the point so it's ready for next transform's Jacobian */
         transformedPoint = transform->TransformPoint( transformedPoint );
     }
+
 
     return;
  }
