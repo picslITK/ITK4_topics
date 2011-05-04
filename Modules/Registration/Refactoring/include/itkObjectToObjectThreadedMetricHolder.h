@@ -14,8 +14,8 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkDemonsImageToImageMetric_h
-#define __itkDemonsImageToImageMetric_h
+#ifndef __itkObjectToObjectThreadedMetricHolder_h
+#define __itkObjectToObjectThreadedMetricHolder_h
 
 #include "itkObjectToObjectMetric.h"
 #include "itkCovariantVector.h"
@@ -53,10 +53,6 @@ struct ObjectToObjectThreadedMetricHolder{
 
 public:
   MetricTypePointer           metric;
-  FixedImagePointer fixed_image;
-  MovingImagePointer moving_image;
-  TransformPointer transformF;
-  TransformPointer transformM;
   std::vector<InternalComputationValueType> measure_per_thread;
 
   InternalComputationValueType AccumulateMeasuresFromAllThreads() {
