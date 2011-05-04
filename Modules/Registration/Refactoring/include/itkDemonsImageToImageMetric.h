@@ -110,9 +110,6 @@ public:
   itkSetMacro(MovingImage, MovingImagePointer);
   itkGetMacro(MovingImage, MovingImagePointer);
 
-
-  virtual unsigned int GetNumberOfParameters() const { return 0; }
-
   virtual MeasureType GetValue( const ParametersType & parameters ) const { return 0; }
 
   virtual void GetDerivative(const ParametersType &,
@@ -270,15 +267,13 @@ private:
 
 // functor for threading using the metric function class
 // assuming function has output allocated already
-template<class TMetricFunction, class TDeformationField>
+template<class TMetricFunction>
 struct DemonsMetricThreadedHolder{
 
   typedef DemonsMetricThreadedHolder          Self;
 
   typedef TMetricFunction           MetricType;
   typedef typename MetricType::Pointer  MetricTypePointer;
-  typedef TDeformationField             DeformationFieldType;
-  typedef typename DeformationFieldType::Pointer DeformationFieldPointer;
   typedef typename MetricType::MeasureType  MeasureType;
   typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
   typedef typename MetricType::RegionType ImageRegionType;
