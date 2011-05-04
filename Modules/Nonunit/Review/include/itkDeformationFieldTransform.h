@@ -174,10 +174,6 @@ public:
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
 
-  virtual JacobianType & GetLocalDeformation( const InputPointType & ) const;
-
-  virtual JacobianType & GetLocalDeformation( const IndexType & ) const;
-
   virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
 
   virtual void GetLocalJacobian(const IndexType  &x, JacobianType &j) const;
@@ -190,6 +186,9 @@ public:
 
   /** This transform is not linear. */
   virtual bool IsLinear() const { return false; }
+
+  virtual unsigned int GetNumberOfLocalParameters(void) const
+  { return Dimension; }
 
   /** Return the number of parameters that completely define the Transfom  */
   virtual unsigned int GetNumberOfParameters(void) const

@@ -19,8 +19,8 @@
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkVector.h"
-// #include "itkObjectToObjectMetric.h"
-
+#include "itkObjectToObjectMetric.h"
+#include "itkObjectToObjectThreadedMetricHolder.h"
 #include "itkDemonsImageToImageMetric.h"
 #include "itkIdentityTransform.h"
 #include "itkDeformationFieldTransform.h"
@@ -43,7 +43,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   const int ImageDimension = 2;
   //  typedef itk::VectorImage< float,ImageDimension > ImageType;
-  typedef itk::Image< float,ImageDimension > ImageType;
+  typedef itk::Image<float, ImageDimension> ImageType;
   typedef ImageType::Pointer ImagePointerType;
   typedef ImageType::RegionType RegionType;
 
@@ -58,11 +58,11 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   typedef DeformationTransformType::DeformationFieldType FieldType;
   IdentityTransformType::Pointer transformFId = IdentityTransformType::New();
   IdentityTransformType::Pointer transformMId = IdentityTransformType::New();
-  DeformationTransformType::Pointer transformM1 = DeformationTransformType::New();
-  TranslationTransformType::Pointer transformM2 = TranslationTransformType::New();
-  TranslationTransformType::Pointer transformM3 = TranslationTransformType::New();
-  CompositeTransformType::Pointer transformM = CompositeTransformType::New();
-  CompositeTransformType::Pointer transformF = CompositeTransformType::New();
+  DeformationTransformType::Pointer transformMdeformation = DeformationTransformType::New();
+  TranslationTransformType::Pointer transformMtranslation = TranslationTransformType::New();
+  TranslationTransformType::Pointer transformMtranslation2 = TranslationTransformType::New();
+  CompositeTransformType::Pointer transformMComp = CompositeTransformType::New();
+  CompositeTransformType::Pointer transformFComp = CompositeTransformType::New();
 
   typedef itk::ImageFileReader<ImageType> ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
@@ -76,7 +76,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   ImagePointerType moving_image = reader2->GetOutput();
 
   VectorType zero;
-  float def_value=1.0;
+  float def_value=2.5;
   zero.Fill(def_value);
   FieldType::Pointer field = FieldType::New();
   field->SetRegions(fixed_image->GetLargestPossibleRegion());
@@ -96,26 +96,25 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   fieldInv->FillBuffer(zero);
 
   zero.Fill(def_value*(1.0));
-  transformM2->Translate(zero);
+  transformMtranslation->Translate(zero);
   zero.Fill(def_value*(1.0));
-  transformM3->Translate(zero);
+  transformMtranslation2->Translate(zero);
 
-  transformM1->SetDeformationField(field);
-  transformM1->SetInverseDeformationField(fieldInv);
+  transformMdeformation->SetDeformationField(field);
+  transformMdeformation->SetInverseDeformationField(fieldInv);
 
-  transformM->AddTransform(transformM2);
-  transformM->AddTransform(transformM3);
+  transformMComp->AddTransform(transformMtranslation);
+  transformMComp->AddTransform(transformMdeformation);
 
-  transformM->AddTransform(transformMId);
-  transformF->AddTransform(transformFId);
-
-  typedef itk::DemonsImageToImageMetric<ImageType, ImageType> ObjectMetricType;
+  transformMComp->AddTransform(transformMId);
+  transformFComp->AddTransform(transformFId);
+  typedef itk::DemonsImageToImageMetric<ImageType,ImageType> ObjectMetricType;
   typedef ObjectMetricType::Pointer MetricTypePointer;
   MetricTypePointer objectMetric = ObjectMetricType::New();
   objectMetric->SetFixedImage(fixed_image);
   objectMetric->SetMovingImage(moving_image);
-  objectMetric->SetFixedImageTransform(transformF);
-  objectMetric->SetMovingImageTransform(transformM);
+  objectMetric->SetFixedImageTransform(transformFComp);
+  objectMetric->SetMovingImageTransform(transformMComp);
   objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
   objectMetric->SetVirtualDomainIndex(fixed_image->GetRequestedRegion().GetIndex());
   objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
@@ -123,9 +122,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
   // Compute one iteration of the metric
   objectMetric->Initialize();
-  //  objectMetric->ComputeMetricAndDerivative();
 
-  typedef itk::DemonsMetricThreadedHolder<ObjectMetricType, VectorImageType> MetricThreadedHolderType;
+  typedef itk::ObjectToObjectThreadedMetricHolder<ObjectMetricType> MetricThreadedHolderType;
   typedef itk::ImageToData<ImageDimension, MetricThreadedHolderType> MetricThreaderType;
   itk::Size<ImageDimension> neighborhood_radius;
   neighborhood_radius.Fill(0);
@@ -136,8 +134,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   metricHolder.metric = objectMetric;
   metricHolder.fixed_image = fixed_image;
   metricHolder.moving_image = moving_image;
-  metricHolder.transformF = transformF;
-  metricHolder.transformM = transformM;
+  metricHolder.transformF = transformFComp;
+  metricHolder.transformM = transformMComp;
   metricHolder.measure_per_thread.resize(number_of_threads);
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
@@ -149,7 +147,6 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());
 
   std::cout << "metric = " << energy << std::endl;
-
   return 1;
 
 }

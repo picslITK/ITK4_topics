@@ -236,6 +236,15 @@ public:
     else for (unsigned int k=i; k<j; k++) this->m_Parameters[k]+=update[k];
   }
 
+  /** Return the number of local parameters that completely defines the Transfom
+   *  at an individual voxel.  For transforms with local support, this will enable
+   *  downstream computation of the jacobian wrt only the local support region.
+   *  For instance, in the case of a deformation field, this will be equal to the
+   *  number of image dimensions. If it is an affine transform, this will be the
+   *  same as the GetNumberOfParameters().
+   */
+  virtual unsigned int GetNumberOfLocalParameters(void) const
+  { return this->GetNumberOfParameters(); }
 
   /** Return the number of parameters that completely define the Transfom  */
   virtual unsigned int GetNumberOfParameters(void) const
