@@ -210,15 +210,9 @@ const typename ScaleTransform< ScalarType, NDimensions >::JacobianType &
 ScaleTransform< ScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
 {
-  this->m_Jacobian.Fill(0);
-  for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
-    {
-      // note: the original implementation does not include "- m_Center[i]"
-    this->m_Jacobian(dim, dim) = p[dim] - m_Center[dim];
-    }
+  GetLocalJacobian( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
-
 
 // Compute the Jacobian of the transformation
 // It follows the same order of Parameters vector
@@ -227,14 +221,13 @@ void
 ScaleTransform< ScalarType, NDimensions >
 ::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
 {
-  j.Fill(0);
+  j.SetSize( SpaceDimension, this->GetNumberOfLocalParameters() );
+  j.Fill(0.0);
   for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
     {
     j(dim, dim) = p[dim] - m_Center[dim];
     }
 }
-
-
 
 template< class ScalarType, unsigned int NDimensions >
 const typename ScaleTransform< ScalarType, NDimensions >::ParametersType &
