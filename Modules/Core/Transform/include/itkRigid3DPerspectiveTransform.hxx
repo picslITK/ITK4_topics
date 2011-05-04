@@ -207,13 +207,22 @@ Rigid3DPerspectiveTransform< TScalarType >::ComputeMatrix(void)
 // Compute the Jacobian in one position
 template< class TScalarType >
 const typename Rigid3DPerspectiveTransform< TScalarType >::JacobianType &
-Rigid3DPerspectiveTransform< TScalarType >::GetJacobian(const InputPointType &) const
+Rigid3DPerspectiveTransform< TScalarType >
+::GetJacobian(const InputPointType & p) const
 {
-  this->m_Jacobian.Fill(0.0);
-
-  // TODO
-
+  //TODO: see GetLocalJacobian
+  GetLocalJacobian( p, this->m_Jacobian );
   return this->m_Jacobian;
+}
+
+template< class TScalarType >
+void
+Rigid3DPerspectiveTransform< TScalarType >
+::GetLocalJacobian(const InputPointType & p, JacobianType & jacobian) const
+{
+  jacobian.SetSize( 3, this->GetNumberOfLocalParameters() );
+  jacobian.Fill(0.0);
+  // TODO
 }
 } // namespace
 

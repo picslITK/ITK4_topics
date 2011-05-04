@@ -398,17 +398,25 @@ KernelTransform< TScalarType, NDimensions >
 // Compute the Jacobian in one position
 template< class TScalarType, unsigned int NDimensions >
 const typename KernelTransform< TScalarType, NDimensions >::JacobianType &
-KernelTransform< TScalarType, NDimensions >::GetJacobian(const InputPointType &) const
+KernelTransform< TScalarType, NDimensions >
+::GetJacobian(const InputPointType & p) const
 {
-  this->m_Jacobian.Fill(0.0);
+  GetLocalJacobian( p, this->m_Jacobian );
+  return this->m_Jacobian;
+}
+
+template< class TScalarType, unsigned int NDimensions >
+void
+KernelTransform< TScalarType, NDimensions >
+::GetLocalJacobian(const InputPointType &, JacobianType & jacobian) const
+{
+  jacobian.Fill(0.0);
 
   // FIXME: TODO
   // The Jacobian should be computable in terms of the matrices
   // used to Transform points...
-  itkExceptionMacro(<< "GetJacobian must be implemented in subclasses"
+  itkExceptionMacro(<< "Get[Local]Jacobian must be implemented in subclasses"
                     << " of KernelTransform.");
-
-  return this->m_Jacobian;
 }
 
 // Set the parameters
