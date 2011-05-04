@@ -24,16 +24,15 @@
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkCenteredAffineTransform.h"
+#include "itkImageRegionIteratorWithIndex.h"
 
 const unsigned int dimensions = 2;
 typedef itk::DeformationFieldTransform<double, dimensions>
                                               DeformationTransformType;
 typedef DeformationTransformType::ScalarType  ScalarType;
 
-const ScalarType epsilon = 1e-10;
-
 template <typename TPoint>
-bool samePoint( const TPoint & p1, const TPoint & p2 )
+bool samePoint( const TPoint & p1, const TPoint & p2, double epsilon=1e-10 )
   {
   bool pass=true;
   for ( unsigned int i = 0; i < TPoint::PointDimension; i++ )
@@ -45,7 +44,7 @@ bool samePoint( const TPoint & p1, const TPoint & p2 )
   }
 
 template <typename TArray2D>
-bool sameArray2D( const TArray2D & a1, const TArray2D & a2 )
+bool sameArray2D( const TArray2D & a1, const TArray2D & a2, double epsilon=1e-10 )
   {
   bool pass=true;
 
@@ -265,7 +264,6 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   jacobianTruth(1,1) = 1.0;
 
   //std::cout.precision(12);
-std::cout << "Jac stuff..." << std::endl;
   DeformationTransformType::InputPointType inputPoint;
   inputPoint[0]=nonZeroFieldIndex[0]+1;
   inputPoint[1]=nonZeroFieldIndex[1];
@@ -285,20 +283,56 @@ std::cout << "Jac stuff..." << std::endl;
     return EXIT_FAILURE;
     }
 
-  DeformationTransformType::JacobianType localJ;
-  deformationTransform->GetLocalJacobian( inputPoint, localJ );
-  std::cout << "Get LocalJacobian " << std::endl
-    << "Test point: " << inputPoint << std::endl
-    << "Truth: " << std::endl << jacobianTruth
-    << "Output: " << std::endl << localJ << std::endl;
-  if( !sameArray2D( localJ, jacobianTruth ) )
+  typedef itk::CenteredAffineTransform<double,2> AffineTransformType;
+  typedef AffineTransformType::MatrixType AffineMatrixType;
+  AffineMatrixType affineMatrix;
+  affineMatrix(0,0) = 1.0;
+  affineMatrix(1,0) = 0.01;
+  affineMatrix(0,1) = 0.02;
+  affineMatrix(1,1) = 1.1;
+  DeformationTransformType::JacobianType fieldJTruth;
+  fieldJTruth.SetSize(2,2);
+  fieldJTruth(0,0) = 1.0;
+  fieldJTruth(1,0) = 0.01;
+  fieldJTruth(0,1) = 0.02;
+  fieldJTruth(1,1) = 1.1;
+  AffineTransformType::Pointer affineTransform = AffineTransformType::New();
+  affineTransform->SetIdentity();
+  affineTransform->SetMatrix( affineMatrix );
+
+  FieldType::Pointer field2 = FieldType::New();
+  field2->SetRegions( field->GetLargestPossibleRegion() );
+  field2->Allocate();
+  itk::ImageRegionIteratorWithIndex<FieldType> it( field2, field2->GetLargestPossibleRegion() );
+  it.GoToBegin();
+
+  while (! it.IsAtEnd() )
+    {
+    FieldType::PointType pt;
+    field->TransformIndexToPhysicalPoint( it.GetIndex(), pt );
+    FieldType::PointType pt2 = affineTransform->TransformPoint( pt );
+    FieldType::PointType::VectorType vec = pt2 - pt;
+    FieldType::PixelType v;
+    v[0] = vec[0];
+    v[1] = vec[1];
+    field2->SetPixel( it.GetIndex(), v );
+    ++it;
+    }
+
+  DeformationTransformType::Pointer transform2 = DeformationTransformType::New();
+  transform2->SetDeformationField( field2 );
+
+  DeformationTransformType::JacobianType fieldJ;
+  transform2->GetLocalJacobian( inputPoint, fieldJ );
+  std::cout << "GetLocalJacobian: " << std::endl
+            << "  Test point: " << testPoint << std::endl
+            << "  Truth: " << std::endl << fieldJTruth << std::endl
+            << "  Output: " << std::endl << fieldJ << std::endl;
+  if( !sameArray2D( fieldJ, fieldJTruth, 0.01 ) )
       {
       std::cout << "Failed calculating jacobian." << std::endl;
       return EXIT_FAILURE;
       }
-
-  typedef itk::CenteredAffineTransform<double,2> AffineTransformType;
-
 
   /* TODO
    * Test GetNumberOfParameters() which is overloaded, at least as
