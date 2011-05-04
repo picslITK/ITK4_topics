@@ -108,8 +108,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   transformMComp->AddTransform(transformMId);
   transformFComp->AddTransform(transformFId);
-  typedef itk::DemonsImageToImageMetric<FImageType, FImageType> ObjectMetricType;
-  typedef typename ObjectMetricType::Pointer MetricTypePointer;
+  typedef itk::DemonsImageToImageMetric<ImageType,ImageType> ObjectMetricType;
+  typedef ObjectMetricType::Pointer MetricTypePointer;
   MetricTypePointer objectMetric = ObjectMetricType::New();
   objectMetric->SetFixedImage(fixed_image);
   objectMetric->SetMovingImage(moving_image);
