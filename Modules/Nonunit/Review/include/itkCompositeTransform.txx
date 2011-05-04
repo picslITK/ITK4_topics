@@ -228,8 +228,12 @@ void CompositeTransform<TScalar, NDimensions>
 //            std::cout << "cur_tr=" << transform->GetParameters() << std::endl;
 //            std::cout << "new_j=" << std::endl << j << std::endl;
 
-            // update the previous jacobain by multiplying current matrix
-            // jumping over the first transform
+            /** The composite transform needs to compose previous jacobians
+             *  (those closer to the originating point) with the current
+             *  transform's jacobian.  We therefore update the previous
+             *  jacobian by multiplying the current matrix jumping over the first transform
+             *
+             */
             if (offset > 0){
                 JacobianType old_j = j.extract(NDimensions,offset,0,0);
                 j.update( transform->GetMatrix() * old_j, 0, 0);

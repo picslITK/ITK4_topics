@@ -44,12 +44,12 @@ namespace itk
  * \ingroup ITK-BiasCorrection
  */
 template< class TImage, class TImageMask, class TBiasField >
-class MRIBiasEnergyFunction:public SingleValuedCostFunction
+class MRIBiasEnergyFunction:public SingleValuedCostFunction<>
 {
 public:
   /** Standard class typedefs. */
   typedef MRIBiasEnergyFunction      Self;
-  typedef SingleValuedCostFunction   Superclass;
+  typedef SingleValuedCostFunction<>   Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
@@ -77,10 +77,10 @@ public:
   typedef typename Superclass::ParametersType ParametersType;
 
   /** Not used, but expected by SingleValuedNonLinearOptimizer class. */
-  typedef Superclass::DerivativeType DerivativeType;
+  typedef typename Superclass::DerivativeType DerivativeType;
 
   /** The cost value type. */
-  typedef Superclass::MeasureType MeasureType;
+  typedef typename Superclass::MeasureType MeasureType;
 
   itkStaticConstMacro(SpaceDimension, unsigned int, 3);
 
