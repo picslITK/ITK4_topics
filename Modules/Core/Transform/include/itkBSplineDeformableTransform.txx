@@ -823,6 +823,24 @@ typename BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 ::GetJacobian(const InputPointType & point) const
 {
+  GetLocalJacobian( point, this->m_Jacobian );
+  return this->m_Jacobian;
+}
+
+template< class TScalarType, unsigned int NDimensions, unsigned int VSplineOrder >
+void
+BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
+::GetLocalJacobian(const InputPointType & point, JacobianType & jacobian) const
+{
+/*
+  //???
+  jacobian.SetSize( NDimensions, this->GetNumberOfLocalParameters() );
+  jacobian.Fill(0.0); //???
+  Where below does m_Jacobian get changed?
+  Change m_Jacobian below to jacobian.
+ */
+ itkExceptionMacro("BSplineDeformableTransform::GetLocalJacobian to be implemented.");
+
   // Zero all components of jacobian
   // NOTE: for efficiency, we only need to zero out the coefficients
   // that got fill last time this method was called.
@@ -858,7 +876,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
   // return the input point
   if( !this->InsideValidRegion(index) )
     {
-    return this->m_Jacobian;
+    return; // this->m_Jacobian;
     }
 
   // Compute interpolation weights
@@ -897,7 +915,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
     }
 
   // Return the results
-  return this->m_Jacobian;
+  return; // this->m_Jacobian;
 }
 
 // Compute the Jacobian in one position

@@ -221,19 +221,9 @@ const typename Shear2DTransform< ScalarType, NDimensions >::JacobianType &
 Shear2DTransform< ScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
  {
-    this->m_Jacobian.Fill(0);
-    //  for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
-    //    {
-    //      // note: the original implementation does not include "- m_Center[i]"
-    //    this->m_Jacobian(dim, dim) = p[dim] - m_Center[dim];
-    //    }
-
-    this->m_Jacobian(0, 0) = p[1] - m_Center[1];
-    this->m_Jacobian(1, 0) = 0;
-
+    GetLocalJacobian( p, this->m_Jacobian );
     return this->m_Jacobian;
  }
-
 
 // Compute the Jacobian of the transformation
 // It follows the same order of Parameters vector
@@ -242,6 +232,7 @@ void
 Shear2DTransform< ScalarType, NDimensions >
 ::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
  {
+    j.SetSize( 2, 1 );
     j.Fill(0);
     //  for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
     //    {
@@ -249,10 +240,7 @@ Shear2DTransform< ScalarType, NDimensions >
     //    }
     j(0, 0) = p[1] - m_Center[1];
     j(1, 0) = 0;
-
  }
-
-
 
 template< class ScalarType, unsigned int NDimensions >
 const typename Shear2DTransform< ScalarType, NDimensions >::ParametersType &
