@@ -57,7 +57,7 @@ ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
   m_NumberOfPixelsCounted = 0;
 
   m_Transform         = NULL; // has to be provided by the user.
-  m_ThreaderTransform = NULL; // constructed at initialization.
+  //m_ThreaderTransform = NULL; // constructed at initialization.
 
   m_Interpolator  = 0; // has to be provided by the user.
 
@@ -97,12 +97,12 @@ ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
     }
   m_ThreaderNumberOfMovingImageSamples = NULL;
 
-  if ( m_ThreaderTransform != NULL )
+  /*if ( m_ThreaderTransform != NULL )
     {
     delete[] m_ThreaderTransform;
     }
   m_ThreaderTransform = NULL;
-
+  */
   if ( this->m_ThreaderBSplineTransformWeights != NULL )
     {
     delete[] this->m_ThreaderBSplineTransformWeights;
@@ -367,6 +367,7 @@ throw ( ExceptionObject )
   m_ThreaderNumberOfMovingImageSamples = new unsigned int[m_NumberOfThreads - 1];
 
   // Allocate the array of transform clones to be used in every thread
+  /*
   if ( m_ThreaderTransform != NULL )
     {
     delete[] m_ThreaderTransform;
@@ -379,13 +380,15 @@ throw ( ExceptionObject )
     // This static_cast should always work since the pointer was created by
     // CreateAnother() called from the transform itself.
     TransformType *transformCopy = static_cast< TransformType * >( anotherTransform.GetPointer() );
+    */
     /** Set the fixed parameters first. Some transforms have parameters which depend on
         the values of the fixed parameters. For instance, the BSplineDeformableTransform
         checks the grid size (part of the fixed parameters) before setting the parameters. */
-    transformCopy->SetFixedParameters( this->m_Transform->GetFixedParameters() );
+   /* transformCopy->SetFixedParameters( this->m_Transform->GetFixedParameters() );
     transformCopy->SetParameters( this->m_Transform->GetParameters() );
     this->m_ThreaderTransform[ithread] = transformCopy;
     }
+    */
 
   m_FixedImageSamples.resize(m_NumberOfFixedImageSamples);
   if ( m_UseSequentialSampling )
@@ -909,7 +912,7 @@ ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 
   if ( threadID > 0 )
     {
-    transform = this->m_ThreaderTransform[threadID - 1];
+    transform = this->m_Transform;// this->m_ThreaderTransform[threadID - 1];
     }
   else
     {
@@ -1027,7 +1030,7 @@ ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 
   if ( threadID > 0 )
     {
-    transform = this->m_ThreaderTransform[threadID - 1];
+    transform = this->m_Transform; // this->m_ThreaderTransform[threadID - 1];
     }
   else
     {
@@ -1582,14 +1585,17 @@ void
 ImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 ::SynchronizeTransforms() const
 {
+  /*
   for ( unsigned int threadID = 0; threadID < m_NumberOfThreads - 1; threadID++ )
     {
+  */
     /** Set the fixed parameters first. Some transforms have parameters which depend on
         the values of the fixed parameters. For instance, the BSplineDeformableTransform
         checks the grid size (part of the fixed parameters) before setting the parameters. */
-    this->m_ThreaderTransform[threadID]->SetFixedParameters( this->m_Transform->GetFixedParameters() );
+  /*  this->m_ThreaderTransform[threadID]->SetFixedParameters( this->m_Transform->GetFixedParameters() );
     this->m_ThreaderTransform[threadID]->SetParameters( this->m_Transform->GetParameters() );
     }
+  */
 }
 } // end namespace itk
 

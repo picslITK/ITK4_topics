@@ -426,14 +426,17 @@ CompositeTransform<TScalar, NDimensions>
      * field transfroms (deformation, bspline) during processing and
      * we wouldn't know that in this class, so this is safest. */
     unsigned int result = 0;
-    typename TransformQueueType::iterator it;
-    TransformQueueType transforms = this->GetTransformsToOptimizeQueue();
+    TransformTypePointer transform;
 
-    for( it = transforms.begin(); it != transforms.end(); ++it )
+    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+            tind >= 0; tind-- )
     {
-        result += (*it)->GetNumberOfParameters();
+        if( this->GetNthTransformToOptimize( tind ) )
+          {
+          transform = this->GetNthTransform( tind );
+          result += transform->GetNumberOfParameters();
+          }
     }
-
     return result;
  }
 

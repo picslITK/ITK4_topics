@@ -255,10 +255,9 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     return EXIT_FAILURE;
     }
 
-  /* Test GetJacobian - Since there are no parameters for this transform,
-   * the Jacobian shouldn't be requested and will throw an exception. */
+  /* Test GetJacobian */
   DeformationTransformType::JacobianType jacobian;
-  DeformationTransformType::JacobianType jacobianTruth(NDIMENSIONS,NDIMENSIONS);
+  DeformationTransformType::JacobianType jacobianTruth(dimensions,dimensions);
   jacobianTruth(0,0) = -1.66666674614;
   jacobianTruth(0,1) = 0;
   jacobianTruth(1,0) = 1.66666662693;
@@ -279,6 +278,10 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       std::cout << "Failed calculating jacobian." << std::endl;
       return EXIT_FAILURE;
       }
+
+  /* TODO
+   * Test GetNumberOfParameters() which is overloaded, at least as
+   * long as we're using a separate m_InternalParameters member */
 
   /* Test parameter access.
    * Parameters just point to the deformation field, but using

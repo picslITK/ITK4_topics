@@ -92,6 +92,9 @@ public:
   typedef typename Superclass::InputVnlVectorType   InputVnlVectorType;
   typedef typename Superclass::OutputVnlVectorType  OutputVnlVectorType;
 
+  /** Derivative type */
+  typedef typename Superclass::DerivativeType       DerivativeType;
+
   /** Dimension of the domain spaces. */
   itkStaticConstMacro( Dimension, unsigned int, NDimensions );
 
@@ -184,6 +187,21 @@ public:
   /** This transform is not linear. */
   virtual bool IsLinear() const { return false; }
 
+  /** Return the number of parameters that completely define the Transfom  */
+  virtual unsigned int GetNumberOfParameters(void) const
+  { return this->m_InternalParameters.Size(); }
+
+  /** Update params. Override this as long as we're using m_InternalParameters.
+   */
+  virtual void UpdateTransformParameters( DerivativeType update , unsigned long i=0 , unsigned long j=0 )
+  {
+    if ( i == 0 && j == 0 )
+      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
+        this->m_InternalParameters[k]+=update[k];
+    else
+      for (unsigned int k=i; k<j; k++)
+        this->m_InternalParameters[k]+=update[k];
+  }
 
 protected:
   DeformationFieldTransform();
