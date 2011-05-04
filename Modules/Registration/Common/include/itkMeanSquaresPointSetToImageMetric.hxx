@@ -145,7 +145,7 @@ MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
       const RealType diff = movingValue - fixedValue;
 
       // Now compute the derivatives
-      const TransformJacobianType & jacobian;
+      TransformJacobianType jacobian;
       this->m_Transform->GetLocalJacobian(inputPoint, jacobian);
 
       // Get the gradient by NearestNeighboorInterpolation:
@@ -244,7 +244,7 @@ MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
       this->m_NumberOfPixelsCounted++;
 
       // Now compute the derivatives
-      const TransformJacobianType & jacobian;
+      TransformJacobianType jacobian;
       this->m_Transform->GetLocalJacobian(inputPoint, jacobian);
 
       const RealType diff = movingValue - fixedValue;
