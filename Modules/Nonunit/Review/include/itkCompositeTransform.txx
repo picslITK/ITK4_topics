@@ -200,7 +200,7 @@ void CompositeTransform<TScalar, NDimensions>
      * M rows = dimensionality of the transforms
      * N cols = total number of parameters in the selected sub transforms. */
 
-    j.SetSize( NDimensions, this->GetNumberOfParameters() );
+    j.SetSize( NDimensions, this->GetNumberOfLocalParameters() );
     unsigned int offset = 0;
 //    unsigned int offset_previous = -1;
     OutputPointType transformedPoint( p );
@@ -440,13 +440,41 @@ CompositeTransform<TScalar, NDimensions>
 
     for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
             tind >= 0; tind-- )
-    {
-        if( this->GetNthTransformToOptimize( tind ) )
-          {
-          transform = this->GetNthTransform( tind );
-          result += transform->GetNumberOfParameters();
-          }
-    }
+      {
+      if( this->GetNthTransformToOptimize( tind ) )
+        {
+        transform = this->GetNthTransform( tind );
+        result += transform->GetNumberOfParameters();
+        }
+      }
+    return result;
+ }
+
+template
+<class TScalar, unsigned int NDimensions>
+unsigned int
+CompositeTransform<TScalar, NDimensions>
+::GetNumberOfLocalParameters(void) const
+ {
+    /* Returns to total number of *local* params in all transforms currently
+     * set to be used for optimized.
+     * NOTE: We might want to optimize this only to store the result and
+     * only re-calc when the composite object has been modified.
+     * However, it seems that number of parameter might change for dense
+     * field transfroms (deformation, bspline) during processing and
+     * we wouldn't know that in this class, so this is safest. */
+    unsigned int result = 0;
+    TransformTypePointer transform;
+
+    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+            tind >= 0; tind-- )
+      {
+      if( this->GetNthTransformToOptimize( tind ) )
+        {
+        transform = this->GetNthTransform( tind );
+        result += transform->GetNumberOfLocalParameters();
+        }
+      }
     return result;
  }
 

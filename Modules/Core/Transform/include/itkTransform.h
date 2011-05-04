@@ -212,11 +212,15 @@ public:
     this->GetLocalJacobian(x,this->m_Jacobian);
   }
 */
-  /** FIXME: should be pure virtual */
-  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const {
-    j.Fill(0);
-      //this->GetJacobian(x);
-  }
+  /** This is a thread-safe version for GetJacobian(). Otherwise,
+   *  m_Jacobian could be changed for different values in different threads.
+   *  This is also used for efficient computation of a point-local jacobian
+   *  for dense transforms.
+   *  'j' is assumed to be thread-local variable, otherwise memory corruption
+   *  will most likely occur during multi-threading.
+   *  To avoid repeatitive memory allocation, pass in 'j' with its size
+   *  already set. */
+  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const = 0;
 
   /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
    *  That is, each threads should only update a sub-range of the transform where i < j and both are less

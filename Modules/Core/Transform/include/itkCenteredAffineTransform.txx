@@ -129,13 +129,22 @@ const typename CenteredAffineTransform< TScalarType, NDimensions >
 ::JacobianType &
 CenteredAffineTransform< TScalarType, NDimensions >::GetJacobian(const InputPointType & p) const
 {
+  GetLocalJacobian( p, this->m_Jacobian );
+  return this->m_Jacobian;
+}
+
+template< class TScalarType, unsigned int NDimensions >
+void
+CenteredAffineTransform< TScalarType, NDimensions >
+::GetLocalJacobian(const InputPointType & p, JacobianType & jacobian) const
+{
   // The Jacobian of the affine transform is composed of
   // subblocks of diagonal matrices, each one of them having
   // a constant value in the diagonal.
   // The block corresponding to the center parameters is
   // composed by ( Identity matrix - Rotation Matrix).
-
-  this->m_Jacobian.Fill(0.0);
+  jacobian.SetSize( NDimensions, this->GetNumberOfLocalParameters() );
+  jacobian.Fill(0.0);
 
   unsigned int blockOffset = 0;
 
@@ -143,7 +152,7 @@ CenteredAffineTransform< TScalarType, NDimensions >::GetJacobian(const InputPoin
     {
     for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
       {
-      this->m_Jacobian(block, blockOffset + dim) = p[dim];
+      jacobian(block, blockOffset + dim) = p[dim];
       }
     blockOffset += SpaceDimension;
     }
@@ -152,10 +161,10 @@ CenteredAffineTransform< TScalarType, NDimensions >::GetJacobian(const InputPoin
   const MatrixType & matrix = this->GetMatrix();
   for ( unsigned int k = 0; k < SpaceDimension; k++ )
     {
-    this->m_Jacobian(k, blockOffset + k) = 1.0;
+    jacobian(k, blockOffset + k) = 1.0;
     for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
       {
-      this->m_Jacobian(k, blockOffset + dim) -= matrix[k][dim];
+      jacobian(k, blockOffset + dim) -= matrix[k][dim];
       }
     }
   blockOffset += SpaceDimension;
@@ -163,10 +172,8 @@ CenteredAffineTransform< TScalarType, NDimensions >::GetJacobian(const InputPoin
   // Block associated with the translations
   for ( unsigned int dim = 0; dim < SpaceDimension; dim++ )
     {
-    this->m_Jacobian(dim, blockOffset + dim) = 1.0;
+    jacobian(dim, blockOffset + dim) = 1.0;
     }
-
-  return this->m_Jacobian;
 }
 
 // Get an inverse of this transform

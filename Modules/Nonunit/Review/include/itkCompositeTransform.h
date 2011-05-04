@@ -335,14 +335,25 @@ public:
       concatenated into a single ParametersType object. */
   virtual const ParametersType & GetParameters(void) const;
 
+  /* SetParameters only for transforms that are set to be optimized */
   virtual void  SetParameters(const ParametersType & p);
 
+  /* GetFixedParameters only for transforms that are set to be optimized */
   virtual const ParametersType & GetFixedParameters(void) const;
 
+  /* SetFixedParameters only for transforms that are set to be optimized */
   virtual void  SetFixedParameters(const ParametersType & fixedParameters);
 
+  /* Get total number of parameters for transforms that are set to be
+   * optimized */
   virtual unsigned int GetNumberOfParameters(void) const;
 
+  /* Get total number of local parameters for transforms that are set
+   * to be optimized */
+  virtual unsigned int GetNumberOfLocalParameters(void) const;
+
+  /* Get total number of fixed parameters for transforms that are set
+   * to be optimized */
   virtual unsigned int GetNumberOfFixedParameters(void) const;
 
 protected:

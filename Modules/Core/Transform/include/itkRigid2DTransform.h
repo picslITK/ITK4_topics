@@ -211,8 +211,10 @@ public:
    * \sa Transform::GetJacobian() */
   const JacobianType & GetJacobian(const InputPointType  & point) const;
 
-  void GetLocalJacobian(const InputPointType  & point, JacobianType &j ) const;
-
+  /** Compute the Jacobian Matrix of the transformation at one point,
+   *  allowing for thread-safety. */
+  virtual void GetLocalJacobian( const InputPointType  &p,
+                                 JacobianType & jacobian) const;
 
   /**
    * This method creates and returns a new Rigid2DTransform object
