@@ -213,7 +213,7 @@ void CenteredCompositeTransform<TScalar, NDimensions>
      * N cols = total number of parameters in the selected sub transforms. */
 
     j.SetSize( NDimensions, this->GetNumberOfParameters() );
-    unsigned int offset = 0;
+//    unsigned int offset = 0;
 //    unsigned int offset_previous = -1;
     OutputPointType transformedPoint = p - this->m_Center;
 

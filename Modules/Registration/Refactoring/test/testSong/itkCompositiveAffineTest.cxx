@@ -17,7 +17,8 @@
 #include "itkScaleTransform.h"
 #include "itkTranslationTransform.h"
 #include "itkShear2DTransform.h"
-#include "itkRigid2DTransform.h"
+// #include "itkRigid2DTransform.h"
+#include "itkRotate2DTransform.h"
 
 // first test: test the MatrixOffsetTransformBase from the old ITK
 // second test: test the scaling transform
@@ -215,8 +216,8 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
 
 
 
-//    float A[Dim*Dim] = { 1.5, -0.6, 0.2, -0.9 };
-    float A[Dim*Dim] = { 2, 0, 0, 3 };
+//    float A[Dim*Dim] = { 0.5, -3.6, 0.2, -2.9 };
+    float A[Dim*Dim] = { 2, 0.5, 0.2, 3 };
     float c[Dim] = { 0.5, 0.6 };
     float t[Dim] = { 0.4, -1.2 };
 
@@ -750,11 +751,14 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
 
     typedef itk::Rigid2DTransform<double> Rotation2DTransformType;
+    // typedef itk::Rotate2DTransform<double> Rotation2DTransformType;
     typename Rotation2DTransformType::Pointer rotation_transform = Rotation2DTransformType::New();
+
     typename Rotation2DTransformType::ParametersType r1(3);
     //angle: (in radius)
     r1.Fill(0);
     // r1[0] = (rand() % 100) / 200.0 - 0.5;
+
 
     rotation_transform->SetParameters(r1);
 
@@ -767,8 +771,6 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     translation_transform->SetParameters(t1);
 
 
-
-
     typename CompositeType::Pointer comp = CompositeType::New();
 
     // add in the reverse order of applying to the point
@@ -777,10 +779,11 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     comp->AddTransform(scale_transform);
     comp->AddTransform(shear_transform);
 
+
     comp->SetNthTransformToOptimize(0, true);
-    comp->SetNthTransformToOptimize(1, false);
+    comp->SetNthTransformToOptimize(1, true);
     comp->SetNthTransformToOptimize(2, true);
-    comp->SetNthTransformToOptimize(3, false);
+    comp->SetNthTransformToOptimize(3, true);
 
 
 
@@ -840,10 +843,10 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
             // manipulate the jacobian w.r.t the translation of the rigid transform
             // k s r t: 1 + 2 + 3 (angle + translation) + 2
-//            jac[0][4] = 0;
-//            jac[0][5] = 0;
-//            jac[1][4] = 0;
-//            jac[1][5] = 0;
+            jac[0][4] = 0;
+            jac[0][5] = 0;
+            jac[1][4] = 0;
+            jac[1][5] = 0;
 
             // r t k s ==> s k t r: 2 : 1 : 2 : 3
 //            jac[0][6]=jac[0][7]=jac[1][6]=jac[1][7] = 0;
@@ -908,6 +911,12 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     std::cout << "current para:" << comp->GetParameters() << std::endl;
     std::cout << "current fixed para: " << comp->GetFixedParameters() << std::endl;
     std::cout << "current combined K " << comp->GetParameters()[0] * comp->GetParameters()[1] << std::endl;
+
+    std::cout << "final rotation : " << rotation_transform->GetParameters() << std::endl;
+    std::cout << "final shear : " << shear_transform->GetParameters() << std::endl;
+    std::cout << "final scale : " << scale_transform->GetParameters() << std::endl;
+    std::cout << "final translation : " << translation_transform->GetParameters() << std::endl;
+
 
     for(int i=0; i<nb_pts; i++){
         typedef typename CompositeType::InputPointType InputPointType;
