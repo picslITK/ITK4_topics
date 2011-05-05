@@ -110,6 +110,7 @@ public:
   itkSetMacro(MovingImage, MovingImagePointer);
   itkGetMacro(MovingImage, MovingImagePointer);
 
+
   virtual unsigned int GetNumberOfParameters() const { return 0; }
 
   virtual MeasureType GetValue( const ParametersType & parameters ) const { return 0; }
@@ -120,7 +121,7 @@ public:
   /** This function computes the local voxel-wise contribution of
    *  the metric to the global integral of the metric/derivative.
    */
-  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType &jacobian)
+  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType jacobian )
   {
     double metricval=0;
     /** Only the voxelwise contribution given the point pairs. */
@@ -131,7 +132,7 @@ public:
     metricval+=fabs(diff)/(double)FixedImageDimension;
     this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
 
-    for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfParameters(); par++ )
+    for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfLocalParameters(); par++ )
     {
       double sum = 0.0;
       for (unsigned int c=0; c < this->m_InputImageVectorLength; c++)
@@ -157,13 +158,14 @@ public:
    */
   double ComputeMetricAndDerivative(const ImageRegionType &thread_region)
   {
+    TransformJacobianType jacobian(FixedImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
+    jacobian.Fill(0);
+
     /** For each location in the virtual domain, map to both the fixed and moving space
      *  and compute the values of the voxels in the corresponding locations.  There should
      *  be a transform between the virtual space and the fixed/moving space s.t. the images
      *  are interpolated in an unbiased manner.
      */
-    TransformJacobianType jacobian(MovingImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
-    jacobian.Fill(0);
     double metric_sum=0;
     unsigned long ct=0;
     ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
@@ -263,6 +265,7 @@ private:
   unsigned int m_InputImageVectorLength;
 
 };
+
 
 
 } // end namespace itk

@@ -17,12 +17,77 @@
 #include "itkScaleTransform.h"
 #include "itkTranslationTransform.h"
 #include "itkShear2DTransform.h"
-#include "itkRigid2DTransform.h"
+// #include "itkRigid2DTransform.h"
+#include "itkRotate2DTransform.h"
 
 // first test: test the MatrixOffsetTransformBase from the old ITK
 // second test: test the scaling transform
 // third test: test my own affine (quaternion) transform
 // third test: test the itkCompositeTransform works
+
+
+template<typename,typename> struct ty { };
+
+template<class T, class U> struct X {
+    void f() {
+        f(ty<T, U>());
+    }
+
+private:
+    template<typename Tx, typename Ux>
+    void f(ty<Tx, Ux>) { } // generic
+
+    template<typename Tx>
+    void f(ty<Tx, char>) { } // "specialized"
+};
+
+
+
+template<typename T, int Dim>
+class MyTransform
+{
+public:
+     MyTransform(){std::cout << "general!" << std::endl;};
+     void rotate();
+    T m;
+};
+
+template <typename T>
+class MyTransform <T, 2>{
+public:
+    MyTransform() {
+        std::cout << "2!" << std::endl;
+    }
+    void rotate();
+    int m;
+};
+
+template <typename T, int Dim>
+void
+MyTransform<T, Dim>
+::rotate() {
+    std::cout << " rotate genereal" << std::endl;
+};
+
+template <typename T>
+void
+MyTransform<T, 2>
+::rotate() {
+    std::cout << " rotate 3" << std::endl;
+};
+
+int main1(){
+    MyTransform<bool, 2> m;
+    MyTransform<bool, 3> n;
+    MyTransform<bool, 4> k;
+    k.rotate();
+    m.rotate();
+    n.rotate();
+    return 0;
+}
+
+
+
 
 
 typedef std::vector<double> RawVectorType;
@@ -151,8 +216,8 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
 
 
 
-//    float A[Dim*Dim] = { 1.5, -0.6, 0.2, -0.9 };
-    float A[Dim*Dim] = { 0.12, -1.8, 1.3, -0.3};
+//    float A[Dim*Dim] = { 0.5, -3.6, 0.2, -2.9 };
+    float A[Dim*Dim] = { 2, 0.5, 0.2, 3 };
     float c[Dim] = { 0.5, 0.6 };
     float t[Dim] = { 0.4, -1.2 };
 
@@ -186,7 +251,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
                 y[i][d] += A[d*Dim +f ] * (x[i][f]-c[f]);
             }
             y[i][d] += t[d] + c[d];
-            y[i][d] += (rand() % 1000 ) / 1000.0 * 0.2; //noise
+            // y[i][d] += (rand() % 1000 ) / 1000.0 * 0.2; //noise
         }
 
     }
@@ -686,11 +751,14 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
 
     typedef itk::Rigid2DTransform<double> Rotation2DTransformType;
+    // typedef itk::Rotate2DTransform<double> Rotation2DTransformType;
     typename Rotation2DTransformType::Pointer rotation_transform = Rotation2DTransformType::New();
+
     typename Rotation2DTransformType::ParametersType r1(3);
     //angle: (in radius)
     r1.Fill(0);
     // r1[0] = (rand() % 100) / 200.0 - 0.5;
+
 
     rotation_transform->SetParameters(r1);
 
@@ -703,8 +771,6 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     translation_transform->SetParameters(t1);
 
 
-
-
     typename CompositeType::Pointer comp = CompositeType::New();
 
     // add in the reverse order of applying to the point
@@ -712,6 +778,12 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     comp->AddTransform(rotation_transform);
     comp->AddTransform(scale_transform);
     comp->AddTransform(shear_transform);
+
+
+    comp->SetNthTransformToOptimize(0, true);
+    comp->SetNthTransformToOptimize(1, true);
+    comp->SetNthTransformToOptimize(2, true);
+    comp->SetNthTransformToOptimize(3, true);
 
 
 
@@ -839,6 +911,12 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     std::cout << "current para:" << comp->GetParameters() << std::endl;
     std::cout << "current fixed para: " << comp->GetFixedParameters() << std::endl;
     std::cout << "current combined K " << comp->GetParameters()[0] * comp->GetParameters()[1] << std::endl;
+
+    std::cout << "final rotation : " << rotation_transform->GetParameters() << std::endl;
+    std::cout << "final shear : " << shear_transform->GetParameters() << std::endl;
+    std::cout << "final scale : " << scale_transform->GetParameters() << std::endl;
+    std::cout << "final translation : " << translation_transform->GetParameters() << std::endl;
+
 
     for(int i=0; i<nb_pts; i++){
         typedef typename CompositeType::InputPointType InputPointType;

@@ -77,6 +77,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   VectorType zero;
   float def_value=2.5;
+  def_value=0.5;
   zero.Fill(def_value);
   FieldType::Pointer field = FieldType::New();
   field->SetRegions(fixed_image->GetLargestPossibleRegion());
@@ -105,8 +106,6 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   transformMComp->AddTransform(transformMtranslation);
   transformMComp->AddTransform(transformMdeformation);
-
-  transformMComp->AddTransform(transformMId);
   transformFComp->AddTransform(transformFId);
   typedef itk::DemonsImageToImageMetric<ImageType,ImageType> ObjectMetricType;
   typedef ObjectMetricType::Pointer MetricTypePointer;
@@ -132,16 +131,12 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
   MetricThreadedHolderType metricHolder;
   metricHolder.metric = objectMetric;
-  metricHolder.fixed_image = fixed_image;
-  metricHolder.moving_image = moving_image;
-  metricHolder.transformF = transformFComp;
-  metricHolder.transformM = transformMComp;
   metricHolder.measure_per_thread.resize(number_of_threads);
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
   metricThreader->m_OverallRegion = inboundary_region ;
   metricThreader->m_Holder = &metricHolder;
-  metricThreader->ThreadedGenerateData = MetricThreadedHolderType::ComputeMetricValueInRegionOnTheFlyThreaded;
+  metricThreader->ThreadedGenerateData = MetricThreadedHolderType::ComputeMetricValueInRegionThreaded;
   metricThreader->GenerateData();
 
   float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());

@@ -213,55 +213,57 @@ void CenteredCompositeTransform<TScalar, NDimensions>
      * N cols = total number of parameters in the selected sub transforms. */
 
     j.SetSize( NDimensions, this->GetNumberOfParameters() );
-    unsigned int offset = 0;
+//    unsigned int offset = 0;
 //    unsigned int offset_previous = -1;
     OutputPointType transformedPoint = p - this->m_Center;
 
+    Superclass::GetLocalJacobian(transformedPoint, j);
 
-    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
-            tind >= 0; tind-- )
-    {
-        TransformTypePointer transform = this->GetNthTransform( tind );
-        if( this->GetNthTransformToOptimize( tind ) )
-        {
-            /* Copy from another matrix, element-by-element */
-            /* The matrices are row-major, so block copy is less obviously better */
-
-            // to do: why parameters are listed from N-1 to 1???
-            typename TransformType::JacobianType current_jacobian;
-            current_jacobian.SetSize(NDimensions, transform->GetParameters().Size());
-            transform->GetLocalJacobian( transformedPoint, current_jacobian );
-
-            // debug: force only the closes transform to update!!
+//
+//    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+//            tind >= 0; tind-- )
+//    {
+//        TransformTypePointer transform = this->GetNthTransform( tind );
+//        if( this->GetNthTransformToOptimize( tind ) )
+//        {
+//            /* Copy from another matrix, element-by-element */
+//            /* The matrices are row-major, so block copy is less obviously better */
+//
+//            // to do: why parameters are listed from N-1 to 1???
+//            typename TransformType::JacobianType current_jacobian;
+//            current_jacobian.SetSize(NDimensions, transform->GetParameters().Size());
+//            transform->GetLocalJacobian( transformedPoint, current_jacobian );
+//
+//            // debug: force only the closes transform to update!!
+////            if (offset > 0){
+////                current_jacobian.Fill(0.0);
+////            }
+//
+//            j.update( current_jacobian, 0, offset );
+////            std::cout << "cur_tr=" << transform->GetParameters() << std::endl;
+////            std::cout << "new_j=" << std::endl << j << std::endl;
+//
+//            // update the previous jacobain by multiplying current matrix
+//            // jumping over the first transform
 //            if (offset > 0){
-//                current_jacobian.Fill(0.0);
+//                JacobianType old_j = j.extract(NDimensions,offset,0,0);
+//                j.update( transform->GetMatrix() * old_j, 0, 0);
+////                j.update( old_j, 0, 0);
+//
+//                // std::cout << "["<<tind<<"] transform->GetMatrix(): " << std::endl << transform->GetMatrix() << std::endl;
+//
+//
+////                std::cout << "Ak=" << std::endl << transform->GetMatrix() << std::endl;
+////                std::cout << "old_j=" << std::endl << old_j << std::endl;
+////                std::cout << "new_j2=" << std::endl << j << std::endl;
 //            }
-
-            j.update( current_jacobian, 0, offset );
-//            std::cout << "cur_tr=" << transform->GetParameters() << std::endl;
-//            std::cout << "new_j=" << std::endl << j << std::endl;
-
-            // update the previous jacobain by multiplying current matrix
-            // jumping over the first transform
-            if (offset > 0){
-                JacobianType old_j = j.extract(NDimensions,offset,0,0);
-                j.update( transform->GetMatrix() * old_j, 0, 0);
-//                j.update( old_j, 0, 0);
-
-                // std::cout << "["<<tind<<"] transform->GetMatrix(): " << std::endl << transform->GetMatrix() << std::endl;
-
-
-//                std::cout << "Ak=" << std::endl << transform->GetMatrix() << std::endl;
-//                std::cout << "old_j=" << std::endl << old_j << std::endl;
-//                std::cout << "new_j2=" << std::endl << j << std::endl;
-            }
-
-//            offset_previous = offset;
-            offset += transform->GetParameters().Size();
-        }
-        /* Transform the point so it's ready for next transform's Jacobian */
-        transformedPoint = transform->TransformPoint( transformedPoint );
-    }
+//
+////            offset_previous = offset;
+//            offset += transform->GetParameters().Size();
+//        }
+//        /* Transform the point so it's ready for next transform's Jacobian */
+//        transformedPoint = transform->TransformPoint( transformedPoint );
+//    }
 
     return;
  }
