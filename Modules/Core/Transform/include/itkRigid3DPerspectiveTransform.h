@@ -190,7 +190,7 @@ public:
 
   /** Compute the Jacobian Matrix of the transformation at one point,
    *  allowing for thread-safety. */
-  virtual void GetLocalJacobian( const InputPointType  &p,
+  virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const;
 
   /** Set a fixed offset: this allow to center the object to be transformed */

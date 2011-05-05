@@ -339,7 +339,8 @@ public:
    *
    * This is a thread-safe version for GetJacobian(). Otherwise,
    * m_Jacobian could be changed for different values in different threads. */
-  void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
+  void GetJacobianWithRespectToParameters(const InputPointType  &x,
+                                          JacobianType &j) const;
 
   /** Create inverse of an affine transformation
    *
