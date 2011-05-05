@@ -342,6 +342,10 @@ public:
   void GetJacobianWithRespectToParameters(const InputPointType  &x,
                                           JacobianType &j) const;
 
+  /** FIXME:  Needs documentation. */
+  virtual const MatrixType & GetJacobianWithRespectToPosition() const
+  { return this->GetMatrix(); }
+
   /** Create inverse of an affine transformation
    *
    * This populates the parameters an affine transform such that

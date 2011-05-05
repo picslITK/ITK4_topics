@@ -215,8 +215,10 @@ void CompositeTransform<TScalar, NDimensions>
 
             // to do: why parameters are listed from N-1 to 1???
             typename TransformType::JacobianType current_jacobian;
-            current_jacobian.SetSize(NDimensions, transform->GetNumberOfLocalParameters());
-            transform->GetLocalJacobian( transformedPoint, current_jacobian );
+            current_jacobian.SetSize(
+              NDimensions, transform->GetNumberOfLocalParameters());
+            transform->GetJacobianWithRespectToParameters(
+              transformedPoint, current_jacobian );
 
             // debug: force only the closes transform to update!!
 //            if (offset > 0){
@@ -247,7 +249,7 @@ void CompositeTransform<TScalar, NDimensions>
 
         if (offset > 0){
             JacobianType old_j = j.extract(NDimensions,offset,0,0);
-            j.update( transform->GetMatrix() * old_j, 0, 0);
+            j.update( transform->GetJacobianWithRespectToPosition() * old_j, 0, 0);
 
         }
 
