@@ -126,10 +126,10 @@ public:
 
   typedef typename InverseTransformBaseType::Pointer InverseTransformBasePointer;
 
-  typedef Matrix< TScalarType, itkGetStaticConstMacro(OutputSpaceDimension),
+  typedef Matrix< TScalarType,
+                  itkGetStaticConstMacro(OutputSpaceDimension),
                   itkGetStaticConstMacro(InputSpaceDimension) >
-  MatrixType;
-
+                                                                MatrixType;
 
   /**  Method to transform a point.
    * \warning This method must be thread-safe. See, e.g., its use
@@ -237,10 +237,16 @@ public:
    * that's using a separate m_InternalParameters member.
    */
   /** FIXME: should be pure virtual */
-  virtual void UpdateTransformParameters( DerivativeType update , unsigned long i=0 , unsigned long j=0 ){
+  virtual void UpdateTransformParameters( DerivativeType update ,
+                                          unsigned long i=0 ,
+                                          unsigned long j=0 )
+  {
     if ( i == 0 && j == 0 )
-      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++) this->m_Parameters[k]+=update[k];
-    else for (unsigned int k=i; k<j; k++) this->m_Parameters[k]+=update[k];
+      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
+        this->m_Parameters[k]+=update[k];
+    else
+      for (unsigned int k=i; k<j; k++)
+        this->m_Parameters[k]+=update[k];
   }
 
   /** Return the number of local parameters that completely defines the Transfom
@@ -277,13 +283,9 @@ public:
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;
 
-  /** to be coherent with CompositeTransform::GetJacobianWithRespectToParameters() **/
-  /** FIXME:  Needs documentation and more descriptive name */
-  virtual const MatrixType & GetMatrix() const
+  /** FIXME:  Needs documentation. */
+  virtual const MatrixType & GetJacobianWithRespectToPosition() const
   { return m_IdentityMatrix; }
-
-
-
 
   /** Indicates if this transform is linear. A transform is defined to be
    * linear if the transform of a linear combination of points is equal to the
