@@ -237,13 +237,14 @@ void CompositeTransform<TScalar, NDimensions>
          *  jacobian by multiplying the current matrix jumping over the
          *  first transform. The matrix here refers to  dT/dx at the point.
          *  For example, in the affine transform, this is the affine matrix.
-         *  TODO: for general transform, there should be something like
+         *  TODO1: for general transform, there should be something like
          *  GetPartialDerivativeOfPointCoordinates
          *
          *  Also, noted the multiplication contains all the affine matrix from
          *  all transforms no matter they are going to be optimized or not
          *
          */
+
         if (offset > 0){
             JacobianType old_j = j.extract(NDimensions,offset,0,0);
             j.update( transform->GetMatrix() * old_j, 0, 0);
