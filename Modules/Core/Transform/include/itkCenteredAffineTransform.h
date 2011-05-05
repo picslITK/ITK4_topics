@@ -104,7 +104,7 @@ public:
   const JacobianType & GetJacobian(const InputPointType  & point) const;
 
   /** Compute the Jacobian Matrix of the transformation at one point */
-  virtual void GetLocalJacobian( const InputPointType  &p,
+  virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const;
 
   /** Get an inverse of this transform. */

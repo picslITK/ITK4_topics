@@ -60,6 +60,9 @@ namespace itk
  *   void                      SetParameters(const ParametersType &)
  *   void                      SetFixedParameters(const ParametersType &)
  *   const                     JacobianType & GetJacobian(const InputPointType  &) const
+ *   void                      GetJacobianWithRespectToParameters(const InputPointType &,
+ *                                                                JacobianType &) const
+ *
  * \ingroup Transforms
  *
  * \ingroup ITK-Transform
@@ -203,15 +206,18 @@ public:
   \end{array}\right]
    *
    * \f]
+   *
+   * All derived classes should implement:
+   *
+   * virtual void GetJacobian(const InputPointType  &x ) const
+   * {
+   *   this->GetJacobianWithRespectToParameters(x,this->m_Jacobian);
+   *   return this->m_Jacobian;
+   * }
+   *
    * */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const = 0;
 
-/** All derived classes should implement
-  virtual void GetJacobian(const InputPointType  &x ) const {
-    this->m_Jacobian.Fill(0);
-    this->GetLocalJacobian(x,this->m_Jacobian);
-  }
-*/
   /** This is a thread-safe version for GetJacobian(). Otherwise,
    *  m_Jacobian could be changed for different values in different threads.
    *  This is also used for efficient computation of a point-local jacobian
@@ -220,7 +226,8 @@ public:
    *  will most likely occur during multi-threading.
    *  To avoid repeatitive memory allocation, pass in 'j' with its size
    *  already set. */
-  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const = 0;
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
+                                                    JacobianType &j) const = 0;
 
   /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
    *  That is, each threads should only update a sub-range of the transform where i < j and both are less
@@ -270,7 +277,7 @@ public:
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;
 
-  /** to be coherent with CompositeTransform::GetLocalJacobian() **/
+  /** to be coherent with CompositeTransform::GetJacobianWithRespectToParameters() **/
   /** FIXME:  Needs documentation and more descriptive name */
   virtual const MatrixType & GetMatrix() const
   { return m_IdentityMatrix; }

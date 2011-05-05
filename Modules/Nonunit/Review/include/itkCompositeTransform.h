@@ -324,9 +324,8 @@ public:
   virtual const JacobianType & GetJacobian(const InputPointType  &) const;
 
 
-  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
-
-
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
+                                                  JacobianType &j) const;
 
   /** Get/Set Parameter functions work on the current list of transforms
       that are set to be optimized (active) using the

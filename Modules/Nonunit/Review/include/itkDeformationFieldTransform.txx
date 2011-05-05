@@ -143,24 +143,26 @@ typename DeformationFieldTransform<TScalar, NDimensions>::JacobianType &
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobian( const InputPointType & point ) const
 {
-  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetLocalJacobian()" );
+  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetJacobianWithRespectToParameters()" );
 }
 
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
-::GetLocalJacobian( const InputPointType & point, JacobianType & jacobian ) const
+::GetJacobianWithRespectToParameters( const InputPointType & point,
+                                      JacobianType & jacobian ) const
 {
   IndexType idx;
   this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetLocalJacobian( idx, jacobian );
+  this->GetJacobianWithRespectToParameters( idx, jacobian );
 }
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
-::GetLocalJacobian( const IndexType & index, JacobianType & jacobian ) const
+::GetJacobianWithRespectToParameters( const IndexType & index,
+                                      JacobianType & jacobian ) const
 {
   jacobian.SetSize(NDimensions,NDimensions);
   jacobian.Fill(0.0);

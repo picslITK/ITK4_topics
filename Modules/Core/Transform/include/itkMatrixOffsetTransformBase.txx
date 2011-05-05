@@ -427,7 +427,7 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   // subblocks of diagonal matrices, each one of them having
   // a constant value in the diagonal.
 
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
@@ -436,7 +436,7 @@ template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
 void
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
-::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
 {
   //This will not reallocate memory if the dimensions are equal
   // to the matrix's current dimensions.

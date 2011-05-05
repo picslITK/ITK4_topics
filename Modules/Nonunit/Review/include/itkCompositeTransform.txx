@@ -191,8 +191,9 @@ CompositeTransform<TScalar, NDimensions>
 
 template
 <class TScalar, unsigned int NDimensions>
-void CompositeTransform<TScalar, NDimensions>
-::GetLocalJacobian( const InputPointType & p, JacobianType &j ) const
+void
+CompositeTransform<TScalar, NDimensions>
+::GetJacobianWithRespectToParameters( const InputPointType & p, JacobianType &j ) const
  {
     /* Returns a concatenated MxN array, holding the Jacobian of each sub
      * transform that is selected for optimization. The order is the same
@@ -212,7 +213,8 @@ void CompositeTransform<TScalar, NDimensions>
         if( this->GetNthTransformToOptimize( tind ) )
         {
             /* Copy from another matrix, element-by-element */
-            /* The matrices are row-major, so block copy is less obviously better */
+            /* The matrices are row-major, so block copy is less
+             * obviously better */
 
             // to do: why parameters are listed from N-1 to 1???
             typename TransformType::JacobianType current_jacobian;

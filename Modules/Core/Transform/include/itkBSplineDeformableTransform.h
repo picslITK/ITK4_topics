@@ -369,7 +369,7 @@ public:
   virtual const JacobianType & GetJacobian(const InputPointType  & point) const;
 
   /** Compute the Jacobian Matrix of the transformation at one point */
-  virtual void GetLocalJacobian(const InputPointType  &p, JacobianType &j) const;
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p, JacobianType &j) const;
 
   /** Return the number of parameters that completely define the Transfom */
   virtual unsigned int GetNumberOfParameters(void) const;
