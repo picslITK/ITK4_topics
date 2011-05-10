@@ -203,7 +203,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 
   // Jacobian should be evaluated at the unmapped (fixed image) point.
   TransformJacobianType jacobian;
-  transform->GetLocalJacobian(fixedImagePoint, jacobian);
+  transform->GetJacobianWithRespectToParameters(fixedImagePoint, jacobian);
 
   for ( unsigned int par = 0; par < this->m_NumberOfParameters; par++ )
     {

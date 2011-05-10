@@ -323,8 +323,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   transform2->SetDeformationField( field2 );
 
   DeformationTransformType::JacobianType fieldJ;
-  transform2->GetLocalJacobian( inputPoint, fieldJ );
-  std::cout << "GetLocalJacobian: " << std::endl
+  transform2->GetJacobianWithRespectToParameters( inputPoint, fieldJ );
+  std::cout << "GetJacobianWithRespectToParameters: " << std::endl
             << "  Test point: " << testPoint << std::endl
             << "  Truth: " << std::endl << fieldJTruth << std::endl
             << "  Output: " << std::endl << fieldJ << std::endl;

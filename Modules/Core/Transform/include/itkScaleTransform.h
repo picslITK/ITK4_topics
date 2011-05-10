@@ -123,7 +123,7 @@ public:
   /** Get the Jacobian matrix. */
   virtual const JacobianType & GetJacobian(const InputPointType & point) const;
 
-  virtual void GetLocalJacobian(const InputPointType &point, JacobianType &j) const;
+  virtual void GetJacobianWithRespectToParameters(const InputPointType &point, JacobianType &j) const;
 
   /** Set the factors of an Scale Transform
    * This method sets the factors of an ScaleTransform to a

@@ -51,7 +51,7 @@ namespace itk
  * transforms, although have their own fixed parameters, must be reset to
  * all zero, when adding to CenteredCompositeTransform. Otherwise, it will
  * not function properly. Also, the transform should guarantee that
- *  GetParameters() don't include m_Center and thus GetLocalJacobian()
+ *  GetParameters() don't include m_Center and thus GetJacobianWithRespectToParameters()
  *
  *
  */
@@ -282,7 +282,7 @@ public:
   virtual const JacobianType & GetJacobian(const InputPointType  &) const;
 
 
-  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &x, JacobianType &j) const;
 
 
 

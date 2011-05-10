@@ -97,6 +97,16 @@ BSplineDeformableTransform<TScalarType, NDimensions, VSplineOrder>
   return ( SpaceDimension * this->GetNumberOfParametersPerDimension() );
 }
 
+// Get the number of local parameters
+template<class TScalarType, unsigned int NDimensions, unsigned int VSplineOrder>
+unsigned int
+BSplineDeformableTransform<TScalarType, NDimensions, VSplineOrder>
+::GetNumberOfLocalParameters() const
+{
+  itkExceptionMacro(
+    "TODO BSplineDeformableTransform::GetNumberOfLocalParameters");
+}
+
 // Get the number of parameters per dimension
 template<class TScalarType, unsigned int NDimensions, unsigned int VSplineOrder>
 unsigned int
@@ -823,14 +833,14 @@ typename BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 ::GetJacobian(const InputPointType & point) const
 {
-  GetLocalJacobian( point, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( point, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 template< class TScalarType, unsigned int NDimensions, unsigned int VSplineOrder >
 void
 BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
-::GetLocalJacobian(const InputPointType & point, JacobianType & jacobian) const
+::GetJacobianWithRespectToParameters(const InputPointType & point, JacobianType & jacobian) const
 {
 /*
   //???
@@ -839,7 +849,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
   Where below does m_Jacobian get changed?
   Change m_Jacobian below to jacobian.
  */
- itkExceptionMacro("BSplineDeformableTransform::GetLocalJacobian to be implemented.");
+ itkExceptionMacro("BSplineDeformableTransform::GetJacobianWithRespectToParameters to be implemented.");
 
   // Zero all components of jacobian
   // NOTE: for efficiency, we only need to zero out the coefficients

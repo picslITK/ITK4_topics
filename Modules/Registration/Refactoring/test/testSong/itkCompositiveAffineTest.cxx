@@ -343,7 +343,7 @@ void test_one_transform( const TRawPointList &x, const TRawPointList &y,
             typedef typename AffineType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            affine->GetLocalJacobian(ptx, jac);
+            affine->GetJacobianWithRespectToParameters(ptx, jac);
 
             JacobianType jac2(Dim, kParaDim);
             jac2 = affine->GetMatrix() * jac;
@@ -482,7 +482,7 @@ void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
             typedef typename AffineType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            comp->GetLocalJacobian(ptx, jac);
+            comp->GetJacobianWithRespectToParameters(ptx, jac);
 
             for(int d=0; d<Dim; d++){
                 for(int k=0; k<kParaDim; k++){
@@ -652,7 +652,7 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
             typedef typename CompositeType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            comp->GetLocalJacobian(ptx, jac);
+            comp->GetJacobianWithRespectToParameters(ptx, jac);
 
             for(int d=0; d<Dim; d++){
                 for(int k=0; k<kParaDim; k++){
@@ -879,7 +879,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
             typedef typename CompositeType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            comp->GetLocalJacobian(ptx, jac);
+            comp->GetJacobianWithRespectToParameters(ptx, jac);
 
             // manipulate the jacobian w.r.t the translation of the rigid transform
             // k s r t: 1 + 2 + 3 (angle + translation) + 2

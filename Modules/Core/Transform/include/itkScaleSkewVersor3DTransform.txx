@@ -258,14 +258,14 @@ template< class TScalarType >
 const typename ScaleSkewVersor3DTransform< TScalarType >::JacobianType &
 ScaleSkewVersor3DTransform< TScalarType >::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 template< class TScalarType >
 void
 ScaleSkewVersor3DTransform< TScalarType >
-::GetLocalJacobian(const InputPointType & p, JacobianType & jacobian) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType & jacobian) const
 {
   typedef typename VersorType::ValueType ValueType;
 
