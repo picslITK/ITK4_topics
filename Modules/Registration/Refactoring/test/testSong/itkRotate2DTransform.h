@@ -178,7 +178,7 @@ public:
 //  /** Set/Get the angle of rotation in radians */
 //  void SetAngle(TScalarType angle);
 
-  itkGetConstReferenceMacro(Angle, TScalarType);
+//  itkGetConstReferenceMacro(Angle, TScalarType);
 
   /** Set the angle of rotation in degrees. */
 //  void SetAngleInDegrees(TScalarType angle);
@@ -272,12 +272,15 @@ protected:
 
   /** Update angle without recomputation of other internal variables. */
   void SetVarAngle(TScalarType angle)
-  { m_Angle = angle; }
+  {
+//      m_Angle = angle;
+      Superclass::SetVarAngle(angle);
+  }
 private:
   Rotate2DTransform(const Self &); //purposely not implemented
   void operator=(const Self &);   //purposely not implemented
 
-  TScalarType m_Angle;
+//  TScalarType m_Angle;
 }; //class Rigid2DTransform
 
 //// Back transform a point

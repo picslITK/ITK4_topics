@@ -51,7 +51,7 @@ void
 Rotate2DTransform< TScalarType >::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
-  os << indent << "Angle       = " << m_Angle        << std::endl;
+  // os << indent << "Angle       = " << m_Angle        << std::endl;
 }
 
 // Set the rotation matrix
@@ -290,7 +290,7 @@ Rotate2DTransform< TScalarType >::GetJacobianWithRespectToParameters(const Input
         JacobianType &j ) const
 {
   j.SetSize( OutputSpaceDimension, this->GetNumberOfLocalParameters() );
-  j.Fill(0.0);
+  // j.Fill(0.0);
 
   const double ca = vcl_cos( this->GetAngle() );
   const double sa = vcl_sin( this->GetAngle() );
