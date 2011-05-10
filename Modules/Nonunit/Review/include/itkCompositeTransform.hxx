@@ -526,6 +526,45 @@ CompositeTransform<TScalar, NDimensions>
     return this->m_TransformsToOptimizeQueue;
  }
 
+/*
+template <class TScalarType, unsigned int NDimensions>
+void
+CompositeTransform<TScalarType, NDimensions>::
+UnifyParameterMemory(void)
+{
+  // For now, order the parameters in reverse queue order, as is done
+  // in GetParameters. This might change in near future.
+  TransformTypePointer transform;
+
+  // Resize the parameter memory
+  this->m_Parameters.SetSize( this->GetNumberOfParameters() );
+
+  ParametersType &  subParameters;
+  unsigned int      offset = 0;
+
+  for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+          tind >= 0; tind-- )
+    {
+    if( this->GetNthTransformToOptimize( tind ) )
+      {
+      transform = this->GetNthTransform( tind );
+      // Copy the transform's parameters
+      subParameters = transform->GetParameters();
+      // use vnl_vector data_block() to get data ptr
+      memcpy( &(this->m_Parameters.data_block())[offset],
+              subParameters.data_block(),
+              subParameters.Size()
+              * sizeof( ParametersValueType ) );
+      offset += subParameters.Size();
+      // Redirect the sub-transform's parameter member to point to
+      // the data within the unified block
+      subParameters =
+      }
+    }
+
+
+}
+*/
 
 template <class TScalarType, unsigned int NDimensions>
 void
