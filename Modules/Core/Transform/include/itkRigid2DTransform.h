@@ -263,11 +263,16 @@ protected:
   /** Update angle without recomputation of other internal variables. */
   void SetVarAngle(TScalarType angle)
   { m_Angle = angle; }
+
+
+
+
 private:
   Rigid2DTransform(const Self &); //purposely not implemented
   void operator=(const Self &);   //purposely not implemented
 
   TScalarType m_Angle;
+
 }; //class Rigid2DTransform
 
 // Back transform a point
