@@ -334,10 +334,6 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       return EXIT_FAILURE;
       }
 
-  /* TODO
-   * Test GetNumberOfParameters() which is overloaded, at least as
-   * long as we're using a separate m_InternalParameters member */
-
   /* Test parameter access.
    * Parameters just point to the deformation field, but using
    * 1D indexing. */

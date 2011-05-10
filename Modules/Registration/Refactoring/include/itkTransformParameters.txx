@@ -28,6 +28,7 @@ template< typename TValueType >
 TransformParameters< TValueType >
 ::TransformParameters() : Array< TValueType >()
 {
+  this->Initialize();
 }
 
 /** Copy constructor */
@@ -36,6 +37,8 @@ TransformParameters< TValueType >
 ::TransformParameters(const TransformParameters& rhs)
   : Array< TValueType >(rhs)
 {
+  this->Initialize();
+  //TODO: Don't copy the TransformParametersHelper?
 }
 
 /** Constructor with size */
@@ -44,16 +47,54 @@ TransformParameters< TValueType >
 ::TransformParameters(unsigned int dimension)
   : Array< TValueType >(dimension)
 {
+  this->Initialize();
+}
+
+/** Constructor with Array assignment */
+template< typename TValueType >
+TransformParameters< TValueType >
+::TransformParameters(const ArrayType& array)
+  : Array< TValueType >(array)
+{
+  this->Initialize();
 }
 
 template< typename TValueType >
 void
 TransformParameters< TValueType >
-::MoveDataPointer( TValueType * pointer)
+::Initialize()
 {
-  this->SetData( pointer, this->GetSize(), false /*LetArrayManageMemory*/);
+  this->m_Helper = NULL;
+  // Set the default TransformParametersHelper
+  TransformParametersHelperType* helper = new TransformParametersHelperType;
+  // TransformParameters will manage this memory.
+  this->SetHelper( helper );
 }
 
+/** Destructor */
+template< typename TValueType >
+TransformParameters< TValueType >
+::~TransformParameters()
+{
+  if( this->m_Helper )
+    {
+    delete this->m_Helper;
+    }
+}
+
+template< typename TValueType >
+void
+TransformParameters< TValueType >
+::SetHelper( TransformParametersHelperType* helper )
+{
+  if( this->m_Helper )
+    {
+    delete this->m_Helper;
+    }
+  this->m_Helper = helper;
+}
+
+/** Copy operator for self */
 template< typename TValueType >
 const typename TransformParameters< TValueType >
 ::Self &
@@ -64,6 +105,8 @@ TransformParameters< TValueType >
 
   // Call the superclass implementation
   this->ArrayType::operator=(rhs);
+
+  //TODO: Don't copy the TransformParametersHelper?
 
   return *this;
 }

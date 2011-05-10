@@ -35,11 +35,19 @@ DeformationFieldTransform() : Superclass( NDimensions, 0 )
   this->m_DeformationField = NULL;
   this->m_InverseDeformationField = NULL;
 
+  //Setup and assign default interpolator
   typedef VectorLinearInterpolateImageFunction<DeformationFieldType, ScalarType>
     DefaultInterpolatorType;
   typename DefaultInterpolatorType::Pointer interpolator
     = DefaultInterpolatorType::New();
   this->m_Interpolator = interpolator;
+
+  //Setup and assign parameter helper. This will hold the deformation field
+  // for access through the common TransformParameters interface.
+  TransformParametersHelperType* helper = new TransformParametersHelperType;
+  //After assigning this, m_Parametes will manage this,
+  // deleting when appropriate.
+  this->m_Parameters.SetHelper( helper );
 }
 
 /**
@@ -297,7 +305,7 @@ void DeformationFieldTransform<TScalar, NDimensions>
       this->m_Interpolator->SetInputImage( this->m_DeformationField );
       }
     //Assign to parameters object
-    m_InternalParameters.SetParameterImage( this->m_DeformationField );
+    this->m_Parameters.SetParametersObject( this->m_DeformationField );
     }
 }
 
