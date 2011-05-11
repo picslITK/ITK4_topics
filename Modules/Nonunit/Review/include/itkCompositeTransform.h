@@ -355,6 +355,12 @@ public:
    * to be optimized */
   virtual unsigned int GetNumberOfFixedParameters(void) const;
 
+  /* Prepare the transform for use, e.g. in registration framework.
+   * Must be called before registration to optimize parameter storage
+   * for more efficient operation, particularly with high-dimensionality
+   * sub-transforms. */
+   //virtual void PrepareForUse(void);
+
 protected:
   CompositeTransform();
   virtual ~CompositeTransform();
@@ -375,6 +381,13 @@ protected:
     this->m_TransformsToOptimizeFlags.push_back( true );
     this->Modified();
   }
+
+  /** Unify the parameter memory be copying all sub-transform parameters
+   * into a single memory block, and redirecting sub-transform's parameter
+   * memory to point within this block.
+   * \warning This will temporarily use twice the memory of all
+   * sub-transform. */
+  //void UnifyParameterMemory(void);
 
   /** Transform container object. */
   mutable TransformQueueType m_TransformQueue;

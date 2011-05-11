@@ -121,7 +121,7 @@ public:
   /** This function computes the local voxel-wise contribution of
    *  the metric to the global integral of the metric/derivative.
    */
-  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType jacobian )
+  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType jacobian , DerivativeType localDerivative )
   {
     double metricval=0;
     /** Only the voxelwise contribution given the point pairs. */
@@ -157,10 +157,18 @@ public:
   /** This function is calls the ComputeMetricAndDerivative() function
    *  over the domain of interest.
    */
-  double ComputeMetricAndDerivative(const ImageRegionType &thread_region)
+  double ComputeMetricAndDerivative(const ImageRegionType &thread_region, DerivativeType& derivative )
   {
+    DerivativeType localDerivative;
+    localDerivative(this->m_MovingImageTransform->GetNumberOfLocalParameters());
+    typedef typename MovingImageType::OffsetValueType OffsetValueType;
     TransformJacobianType jacobian(FixedImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
     jacobian.Fill(0);
+    /** TODO
+     *  1. Define derivative type and how to access its entries
+     *  2. How do we compute image gradients in both moving & fixed space for both
+     *  random and dense derivative estimates?
+     */
 
     /** For each location in the virtual domain, map to both the fixed and moving space
      *  and compute the values of the voxels in the corresponding locations.  There should
@@ -171,6 +179,30 @@ public:
     unsigned long ct=0;
     ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
         thread_region );
+
+    /* compute the image gradient */
+    ItV.GoToBegin();
+    while( !ItV.IsAtEnd() )
+    {
+      /** use the fixed and moving transforms to compute the corresponding points.*/
+      bool sampleOk = true;
+      // convert the index to a point
+      PointType mappedPoint;
+      PointType mappedMovingPoint;
+      this->m_VirtualImage->TransformIndexToPhysicalPoint(ItV.GetIndex(),mappedPoint);
+      mappedMovingPoint = this->m_MovingImageTransform->TransformPoint(mappedPoint);
+      if (  !this->m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint) )
+           sampleOk=false;
+      if ( sampleOk )
+        {
+          MovingImagePixelType mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
+          this->m_VirtualImage->SetPixel(ItV.GetIndex(),mpix);
+        }
+      ++ItV;
+    }
+
+
+
     ItV.GoToBegin();
     while( !ItV.IsAtEnd() )
     {
@@ -188,7 +220,15 @@ public:
            sampleOk=false;
       if ( sampleOk )
         {
-          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,jacobian);
+          localDerivative.Fill(0);
+          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,jacobian,localDerivative);
+          if ( this->m_MovingImageTransform->HasLocalSupport() ) derivative+=localDerivative;
+          else { // update derivative at some index
+            OffsetValueType offset=this->m_VirtualImage->ComputeOffset(ItV.GetIndex());
+            offset*=this->m_MovingImageTransform->GetNumberOfLocalParameters();
+            for (unsigned int i=0; i< this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++)
+              derivative[offset+i]=localDerivative[i];
+          }
           metric_sum+=metricval;
           ct++;
         }

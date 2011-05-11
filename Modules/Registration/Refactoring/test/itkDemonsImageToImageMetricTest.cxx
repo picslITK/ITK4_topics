@@ -20,7 +20,7 @@
 #include "itkImage.h"
 #include "itkVector.h"
 #include "itkObjectToObjectMetric.h"
-#include "itkObjectToObjectThreadedMetricHolder.h"
+#include "itkObjectToObjectThreadedMetricOptimizer.h"
 #include "itkDemonsImageToImageMetric.h"
 #include "itkIdentityTransform.h"
 #include "itkDeformationFieldTransform.h"
@@ -122,24 +122,25 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   // Compute one iteration of the metric
   objectMetric->Initialize();
 
-  typedef itk::ObjectToObjectThreadedMetricHolder<ObjectMetricType> MetricThreadedHolderType;
-  typedef itk::ImageToData<ImageDimension, MetricThreadedHolderType> MetricThreaderType;
+  typedef itk::ObjectToObjectThreadedMetricOptimizer<ObjectMetricType> MetricThreadedOptimizerType;
+  typedef itk::ImageToData<ImageDimension, MetricThreadedOptimizerType> MetricThreaderType;
   itk::Size<ImageDimension> neighborhood_radius;
   neighborhood_radius.Fill(0);
 
   // pseudo code
   MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
-  MetricThreadedHolderType metricHolder;
-  metricHolder.metric = objectMetric;
-  metricHolder.measure_per_thread.resize(number_of_threads);
+  MetricThreadedOptimizerType metricOptimizer;
+  metricOptimizer.metric = objectMetric;
+  metricOptimizer.measure_per_thread.resize(number_of_threads);
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
   metricThreader->m_OverallRegion = inboundary_region ;
-  metricThreader->m_Holder = &metricHolder;
-  metricThreader->ThreadedGenerateData = MetricThreadedHolderType::ComputeMetricValueInRegionThreaded;
+  metricThreader->m_Holder = &metricOptimizer;
+  metricThreader->ThreadedGenerateData = MetricThreadedOptimizerType::ComputeMetricValueInRegionThreaded;
+  metricOptimizer.BeforeThreadedGenerateData(number_of_threads);
   metricThreader->GenerateData();
 
-  float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());
+  float energy = static_cast<float> (metricOptimizer.AccumulateMeasuresFromAllThreads());
 
   std::cout << "metric = " << energy << std::endl;
   return 1;

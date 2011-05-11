@@ -4,6 +4,8 @@ set(ITK-RegistrationRefactoringTests
   itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageMetricTest.cxx
   itkDeformationFieldTransformRegistrationTest.cxx
+  itkTransformParametersTest.cxx
+  itkImageVectorTransformParametersHelperTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -19,3 +21,10 @@ add_test(NAME itkDemonsImageToImageMetricTest
 add_test(NAME itkDeformationFieldTransformRegistrationTest
           COMMAND ITK-RegistrationRefactoringTestDriver
             itkDeformationFieldTransformRegistrationTest)
+
+add_test(NAME itkTransformParametersTest
+         COMMAND ITK-RegistrationRefactoringTestDriver
+          itkTransformParametersTest)
+add_test(NAME itkImageVectorTransformParametersHelperTest
+         COMMAND ITK-RegistrationRefactoringTestDriver
+          itkImageVectorTransformParametersHelperTest)

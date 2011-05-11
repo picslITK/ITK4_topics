@@ -233,8 +233,6 @@ public:
    *  That is, each threads should only update a sub-range of the transform where i < j and both are less
    *  than  k, where k is the number of parameters.  If i==j==0 then update all parameters.
    *  We assume Derivatives are of the same length as Parameters.  Throw exception otherwise.
-   * NOTE, remember this is overridden in DeformationFieldTransform, as long as
-   * that's using a separate m_InternalParameters member.
    */
   /** FIXME: should be pure virtual */
   virtual void UpdateTransformParameters( DerivativeType update ,
@@ -303,6 +301,15 @@ public:
    * in ResampleImageFilter.
    */
   virtual bool IsLinear() const { return false; }
+
+
+
+  /** Indicates if this transform is a "global" transform
+   *  e.g. an affine transform or a local one, e.g. a deformation field.
+   */
+  virtual bool HasLocalSupport() const { return false; }
+
+
 protected:
   Transform();
   Transform(unsigned int Dimension, unsigned int NumberOfParameters);

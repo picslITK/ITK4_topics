@@ -388,6 +388,8 @@ public:
 
   unsigned int GetNumberOfAffectedWeights() const;
 
+  virtual bool HasLocalSupport() const { return true; }
+
 protected:
   /** Print contents of an BSplineDeformableTransform. */
   void PrintSelf(std::ostream & os, Indent indent) const;

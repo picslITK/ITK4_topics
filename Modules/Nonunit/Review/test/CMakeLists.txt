@@ -195,8 +195,6 @@ itkVoxBoCUBImageIOTest.cxx
 itkWarpHarmonicEnergyCalculatorTest.cxx
 itkWarpJacobianDeterminantFilterTest.cxx
 itkReviewHeaderTest.cxx
-itkTransformParametersTest.cxx
-itkImageVectorTransformParametersTest.cxx
 )
 
 set(BASELINE ${ITK_DATA_ROOT}/Baseline/Review)
@@ -1758,6 +1756,3 @@ add_test(NAME itkHessianToObjectnessMeasureImageFilterTest2
   ${INPUTDATA}/DSA.png
   ${TEMP}/itkHessianToObjectnessMeasureImageFilterTestOutput2.mha
   0 0)
-
-add_test(NAME itkTransformParametersTest COMMAND ITK-ReviewTestDriver itkTransformParametersTest)
-add_test(NAME itkImageVectorTransformParametersTest COMMAND ITK-ReviewTestDriver itkImageVectorTransformParametersTest)
