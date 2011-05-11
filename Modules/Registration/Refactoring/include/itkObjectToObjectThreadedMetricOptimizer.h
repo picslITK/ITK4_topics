@@ -66,19 +66,23 @@ public:
 
   void BeforeThreadedGenerateData(unsigned int number_of_threads )
   {
+
+     this->measure_per_thread.resize(number_of_threads);
+
+
     unsigned long global_derivative_size=this->metric->GetMovingImageTransform()->GetNumberOfParameters();
     global_derivative.SetSize(global_derivative_size);
     if ( this->metric->GetMovingImageTransform()->HasLocalSupport() )
       {
         for (unsigned int i=0; i<number_of_threads; i++) {
-          derivatives_per_thread[i]=global_derivative;
+            this->derivatives_per_thread[i]=global_derivative;
         }
       }
     else
       {
         for (unsigned int i=0; i<number_of_threads; i++) {
-          derivatives_per_thread[i].SetSize(global_derivative_size);
-          derivatives_per_thread[i].Fill(0);
+            this->derivatives_per_thread[i].SetSize(global_derivative_size);
+            this->derivatives_per_thread[i].Fill(0);
         }
       }
   }

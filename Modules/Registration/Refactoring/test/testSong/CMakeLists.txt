@@ -34,3 +34,7 @@ LINK_DIRECTORIES( ${ITK_LIBRARY_PATH} )
 
 add_executable(itkCompositiveAffineTest itkCompositiveAffineTest.cxx )
 target_link_libraries(itkCompositiveAffineTest ${ITK_LIBRARIES})
+
+
+add_executable(itkCompositeAffineTransformDemonsRegistrationTest itkCompositeAffineTransformDemonsRegistrationTest.cxx )
+target_link_libraries(itkCompositeAffineTransformDemonsRegistrationTest ${ITK_LIBRARIES})
