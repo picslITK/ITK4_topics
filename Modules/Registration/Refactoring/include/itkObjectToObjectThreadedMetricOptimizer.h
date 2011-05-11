@@ -66,21 +66,37 @@ public:
 
   void BeforeThreadedGenerateData(unsigned int number_of_threads )
   {
+    this->derivatives_per_thread.resize(number_of_threads);
+    this->measure_per_thread.resize(number_of_threads);
     unsigned long global_derivative_size=this->metric->GetMovingImageTransform()->GetNumberOfParameters();
-    global_derivative.SetSize(global_derivative_size);
+    std::cout << "  before threaded generate data deriv size  " << global_derivative_size << std::endl;
+    this->global_derivative.SetSize(global_derivative_size);
     if ( this->metric->GetMovingImageTransform()->HasLocalSupport() )
       {
         for (unsigned int i=0; i<number_of_threads; i++) {
-          derivatives_per_thread[i]=global_derivative;
+          this->derivatives_per_thread[i]=this->global_derivative;
         }
       }
     else
       {
         for (unsigned int i=0; i<number_of_threads; i++) {
-          derivatives_per_thread[i].SetSize(global_derivative_size);
-          derivatives_per_thread[i].Fill(0);
+          DerivativeType thread_derivative(global_derivative_size);
+          thread_derivative.Fill(0);
+          this->derivatives_per_thread[i]=thread_derivative;
         }
       }
+    std::cout << " end before threaded generate data " << std::endl;
+  }
+
+  void AfterThreadedGenerateData(unsigned int number_of_threads )
+  {
+    if (  ! this->metric->GetMovingImageTransform()->HasLocalSupport() )
+      {
+        for (unsigned int i=0; i<number_of_threads; i++) {
+          this->global_derivative=this->global_derivative+derivatives_per_thread[i];
+        }
+      }
+    std::cout << " end after threaded generate data " <<  this->global_derivative << std::endl;
   }
 
   static void ComputeMetricValueInRegionThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){

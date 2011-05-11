@@ -29,6 +29,7 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkConstNeighborhoodIterator.h"
+#include "itkCentralDifferenceImageFunction.h"
 
 
 namespace itk
@@ -91,6 +92,9 @@ public:
   typedef LinearInterpolateImageFunction< MovingImageType, CoordinateRepresentationType > MovingInterpolatorType;
   typedef typename FixedInterpolatorType::Pointer FixedInterpolatorPointer;
   typedef typename MovingInterpolatorType::Pointer MovingInterpolatorPointer;
+  typedef          CovariantVector< double, itkGetStaticConstMacro(MovingImageDimension) > ImageDerivativesType;
+  typedef CentralDifferenceImageFunction< MovingImageType,
+                                          CoordinateRepresentationType > DerivativeFunctionType;
 
   /**  Type of the measure. */
   typedef typename Superclass::MeasureType    MeasureType;
@@ -121,7 +125,7 @@ public:
   /** This function computes the local voxel-wise contribution of
    *  the metric to the global integral of the metric/derivative.
    */
-  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, TransformJacobianType jacobian , DerivativeType localDerivative )
+  double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, ImageDerivativesType movingImageGradientValue, TransformJacobianType jacobian , DerivativeType& localDerivative )
   {
     double metricval=0;
     /** Only the voxelwise contribution given the point pairs. */
@@ -138,15 +142,14 @@ public:
       double sum = 0.0;
       for (unsigned int c=0; c < this->m_InputImageVectorLength; c++)
       {
-  //         metricval+=fabs(diff[c])/(double)FixedImageDimension; // VectorLength
         for ( unsigned int dim = 0; dim < MovingImageDimension; dim++ )
         {
     //    sum += 2.0 *diff[c]*jacobian(dim, par);// * movingImageGradientValue[dim];// VectorLength
-         sum += 2.0 *diff*jacobian(dim, par);// * movingImageGradientValue[dim];// VectorLength
+         sum += 2.0 *diff*jacobian(dim, par)*movingImageGradientValue[dim];// VectorLength
         }
       }
+      localDerivative[par]+=sum;
     }
-
     return metricval;
   }
 
@@ -159,11 +162,14 @@ public:
    */
   double ComputeMetricAndDerivative(const ImageRegionType &thread_region, DerivativeType& derivative )
   {
-    DerivativeType localDerivative;
-    localDerivative(this->m_MovingImageTransform->GetNumberOfLocalParameters());
+    /** This should be set if the image vector length is nonzero! */
+    this->m_InputImageVectorLength=1;
+    DerivativeType localDerivative(this->m_MovingImageTransform->GetNumberOfLocalParameters());
+    std::cout <<" alloced local derivative of size " << localDerivative.Size()<< std::endl;
     typedef typename MovingImageType::OffsetValueType OffsetValueType;
     TransformJacobianType jacobian(FixedImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
     jacobian.Fill(0);
+    std::cout <<" alloced jacobian " << std::endl;
     /** TODO
      *  1. Define derivative type and how to access its entries
      *  2. How do we compute image gradients in both moving & fixed space for both
@@ -179,7 +185,7 @@ public:
     unsigned long ct=0;
     ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
         thread_region );
-
+    std::cout << " warp the image " << std::endl;
     /* compute the image gradient */
     ItV.GoToBegin();
     while( !ItV.IsAtEnd() )
@@ -200,9 +206,12 @@ public:
         }
       ++ItV;
     }
+    std::cout << " warp the image done " << std::endl;
 
-
-
+    typename DerivativeFunctionType::Pointer derivativeCalculator = DerivativeFunctionType::New();
+    derivativeCalculator->UseImageDirectionOn();
+    derivativeCalculator->SetInputImage(this->m_VirtualImage);
+    //    std::cout << " thread region  " << thread_region << std::endl;
     ItV.GoToBegin();
     while( !ItV.IsAtEnd() )
     {
@@ -221,13 +230,20 @@ public:
       if ( sampleOk )
         {
           localDerivative.Fill(0);
-          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,jacobian,localDerivative);
-          if ( this->m_MovingImageTransform->HasLocalSupport() ) derivative+=localDerivative;
-          else { // update derivative at some index
+          ImageDerivativesType gradient = derivativeCalculator->Evaluate(mappedPoint);
+          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,gradient,jacobian,localDerivative);
+          // std::cout << " locDer size " << localDerivative.Size() << " glodir size " << derivative.Size() <<  " nvox " << thread_region.GetNumberOfPixels() << std::endl;
+          if ( ! this->m_MovingImageTransform->HasLocalSupport() ) {
+            derivative+=localDerivative;
+          }
+          else {
+            // update derivative at some index
             OffsetValueType offset=this->m_VirtualImage->ComputeOffset(ItV.GetIndex());
             offset*=this->m_MovingImageTransform->GetNumberOfLocalParameters();
-            for (unsigned int i=0; i< this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++)
+            for (unsigned int i=0; i< this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++) {
+              //              std::cout <<" Put in " << offset+i << " ind " << ItV.GetIndex() << std::endl;
               derivative[offset+i]=localDerivative[i];
+            }
           }
           metric_sum+=metricval;
           ct++;
