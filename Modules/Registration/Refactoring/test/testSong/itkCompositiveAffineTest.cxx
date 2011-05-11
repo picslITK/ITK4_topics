@@ -258,7 +258,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
                 y[i][d] += A[d*Dim +f ] * (x[i][f]-c[f]);
             }
             y[i][d] += t[d] + c[d];
-            y[i][d] += (rand() % 1000 ) / 1000.0 * 0.5; //noise
+            // y[i][d] += (rand() % 1000 ) / 1000.0 * 0.5; //noise
         }
 
     }
@@ -809,7 +809,6 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
     comp->AddTransform(rotation_transform);
     comp->AddTransform(scale_transform);
-//    comp->AddTransform(rotation_transform2);
     comp->AddTransform(shear_transform);
 
 
@@ -817,7 +816,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 //    comp->AddTransform(rotation_transform);
 
 
-    float scale[7] = {1,1,1,1,1,0.5,0.5};
+    float scale[6] = {4,4,4,4,0.5,0.5};
 
 //    float scale[6] = {8,4,4,4,0.5,0.5};
 //    float scale[7] = {2,4,2,4,4,0.5,0.5};
