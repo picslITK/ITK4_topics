@@ -294,6 +294,15 @@ public:
    * in ResampleImageFilter.
    */
   virtual bool IsLinear() const { return false; }
+
+
+
+  /** Indicates if this transform is a "global" transform
+   *  e.g. an affine transform or a local one, e.g. a deformation field.
+   */
+  virtual bool HasLocalSupport() const { return false; }
+
+
 protected:
   Transform();
   Transform(unsigned int Dimension, unsigned int NumberOfParameters);

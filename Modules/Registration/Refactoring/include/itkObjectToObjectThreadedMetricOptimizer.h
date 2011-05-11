@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkObjectToObjectThreadedMetricHolder.h,v $
+  Module:    $RCSfile: itkObjectToObjectThreadedMetricOptimizer.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,8 +14,8 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkObjectToObjectThreadedMetricHolder_h
-#define __itkObjectToObjectThreadedMetricHolder_h
+#ifndef __itkObjectToObjectThreadedMetricOptimizer_h
+#define __itkObjectToObjectThreadedMetricOptimizer_h
 
 #include "itkObjectToObjectMetric.h"
 #include "itkCovariantVector.h"
@@ -37,13 +37,14 @@ namespace itk
 // functor for threading using the metric function class
 // assuming function has output allocated already
 template<class TMetricFunction>
-struct ObjectToObjectThreadedMetricHolder{
+struct ObjectToObjectThreadedMetricOptimizer{
 
-  typedef ObjectToObjectThreadedMetricHolder          Self;
+  typedef ObjectToObjectThreadedMetricOptimizer          Self;
 
   typedef TMetricFunction           MetricType;
   typedef typename MetricType::Pointer  MetricTypePointer;
   typedef typename MetricType::MeasureType  MeasureType;
+  typedef typename MetricType::DerivativeType  DerivativeType;
   typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
   typedef typename MetricType::RegionType ImageRegionType;
   typedef typename MetricType::FixedImageType ImageType;
@@ -54,6 +55,8 @@ struct ObjectToObjectThreadedMetricHolder{
 public:
   MetricTypePointer           metric;
   std::vector<InternalComputationValueType> measure_per_thread;
+  DerivativeType global_derivative;
+  std::vector<DerivativeType> derivatives_per_thread;
 
   InternalComputationValueType AccumulateMeasuresFromAllThreads() {
     InternalComputationValueType energy = NumericTraits<InternalComputationValueType>::Zero;
@@ -61,15 +64,32 @@ public:
     return energy;
   }
 
-  static void ComputeMetricValueInRegionThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
+  void BeforeThreadedGenerateData(unsigned int number_of_threads )
+  {
+    unsigned long global_derivative_size=this->metric->GetMovingImageTransform()->GetNumberOfParameters();
+    global_derivative.SetSize(global_derivative_size);
+    if ( this->metric->GetMovingImageTransform()->HasLocalSupport() )
+      {
+        for (unsigned int i=0; i<number_of_threads; i++) {
+          derivatives_per_thread[i]=global_derivative;
+        }
+      }
+    else
+      {
+        for (unsigned int i=0; i<number_of_threads; i++) {
+          derivatives_per_thread[i].SetSize(global_derivative_size);
+          derivatives_per_thread[i].Fill(0);
+        }
+      }
+  }
 
+  static void ComputeMetricValueInRegionThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
     //    std::cout << regionForThread << std::endl;
     InternalComputationValueType local_metric;
     holder->measure_per_thread[threadId] = NumericTraits<InternalComputationValueType>::Zero;
     /** Compute one iteration of the metric */
-    local_metric=holder->metric->ComputeMetricAndDerivative(regionForThread);
+    local_metric=holder->metric->ComputeMetricAndDerivative(regionForThread, holder->derivatives_per_thread[threadId] );
     holder->measure_per_thread[threadId] += local_metric;
-
   }
 
 

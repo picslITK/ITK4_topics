@@ -206,6 +206,8 @@ public:
         this->m_InternalParameters[k]+=update[k];
   }
 
+  virtual bool HasLocalSupport() const { return true; }
+
 protected:
   DeformationFieldTransform();
   virtual ~DeformationFieldTransform();
