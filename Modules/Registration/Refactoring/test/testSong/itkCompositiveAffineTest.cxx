@@ -219,8 +219,9 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
 //    float A[Dim*Dim] = { 0.5, -3.6, 0.2, -2.9 };
 //    float A[Dim*Dim] = { 1.2, -0.8, 0.8, 0.6};
 //    float A[Dim*Dim] = { 0.6, -0.8, 0.8, 0.6};
-    float A[Dim*Dim] = { 0.8, -0.8, 0.8, 1.2};
+//    float A[Dim*Dim] = { 0.8, -0.8, 0.8, 1.2};
 //    float A[Dim*Dim] = { 1, 0, 0, 1};
+    float A[Dim*Dim] = { 0.4330,    0.5294,     0.6500,    2.29581};
 //        float A[Dim*Dim] = { 2, -1.1, 0, 1};
     float c[Dim] = { 0.5, 0.6 };
 //    float c[Dim]  = { 0, 0 };
@@ -257,7 +258,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
                 y[i][d] += A[d*Dim +f ] * (x[i][f]-c[f]);
             }
             y[i][d] += t[d] + c[d];
-            // y[i][d] += (rand() % 1000 ) / 1000.0 * 0.2; //noise
+            y[i][d] += (rand() % 1000 ) / 1000.0 * 0.5; //noise
         }
 
     }
@@ -562,7 +563,8 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
     //    for(int i=0; i<aff_para.Size(); i++) aff_para[i] = (rand() % 100) / 50.0;
     affine->SetParameters(aff_para);
 
-    float scale[6] = {4,4,4,4,0.5,0.5};
+//    float scale[6] = {4,4,4,4,0.5,0.5};
+    float scale[6] = {1,1,1,1,0.5,0.5};
 
 
 
@@ -805,17 +807,19 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
     comp->AddTransform(translation_transform);
 
-
+    comp->AddTransform(rotation_transform);
     comp->AddTransform(scale_transform);
 //    comp->AddTransform(rotation_transform2);
     comp->AddTransform(shear_transform);
-    comp->AddTransform(rotation_transform);
+
+
+
 //    comp->AddTransform(rotation_transform);
 
 
-//    float scale[7] = {1,1,1,1,1,0.5,0.5};
+    float scale[7] = {1,1,1,1,1,0.5,0.5};
 
-    float scale[6] = {4,4,4,4,0.5,0.5};
+//    float scale[6] = {8,4,4,4,0.5,0.5};
 //    float scale[7] = {2,4,2,4,4,0.5,0.5};
 //    float scale[7] = {0.5,0.5,0.5,0.5,0.5,0.5,0.5};
 
