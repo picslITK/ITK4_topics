@@ -111,7 +111,7 @@ public:
   typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
 
-  /** Define the internal parameter helped used to access the field */
+  /** Define the internal parameter helper used to access the field */
   typedef ImageVectorTransformParametersHelper<
                                           ScalarType,
                                           OutputVectorType::Dimension,
@@ -155,7 +155,12 @@ public:
    * for notes on pass by value vs reference.
    */
   virtual void SetParameters(const ParametersType & params)
-    { this->m_Parameters = params; }
+    {
+    if( &(this->m_Parameters) != &params )
+      {
+      this->m_Parameters = params;
+      }
+    }
 
   /** Set the fixed parameters and update internal transformation. */
   virtual void SetFixedParameters(const ParametersType &)
@@ -190,29 +195,6 @@ public:
   virtual unsigned int GetNumberOfLocalParameters(void) const
   { return Dimension; }
 
-  /** Return the number of parameters that completely define the Transfom  */
-  virtual unsigned int GetNumberOfParameters(void) const
-  //  { return this->m_InternalParameters.Size(); }
-  { return this->m_Parameters.Size(); }
-
-  /** Update params. Override this as long as we're using m_InternalParameters.
-   */
-  virtual void UpdateTransformParameters( DerivativeType update , unsigned long i=0 , unsigned long j=0 )
-  {
-    if ( i == 0 && j == 0 )
-      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
-        this->m_Parameters[k]+=update[k];
-    else
-      for (unsigned int k=i; k<j; k++)
-        this->m_Parameters[k]+=update[k];
-    /*    if ( i == 0 && j == 0 )
-      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
-        this->m_InternalParameters[k]+=update[k];
-    else
-      for (unsigned int k=i; k<j; k++)
-      this->m_InternalParameters[k]+=update[k];*/
-  }
-
   virtual bool HasLocalSupport() const { return true; }
 
 protected:
@@ -223,9 +205,6 @@ protected:
   /** The deformation field and its inverse (if it exists). */
   typename DeformationFieldType::Pointer      m_DeformationField;
   typename DeformationFieldType::Pointer      m_InverseDeformationField;
-
-  /** Internal parameters that allow access to field */
-  //InternalParametersType                      m_InternalParameters;
 
   /** The interpolator. */
   typename InterpolatorType::Pointer          m_Interpolator;
