@@ -161,7 +161,7 @@ void CompositeAffineTransformDemonsRegistrationTest(
     int numberOfThreads = 4;
 
     typedef itk::ObjectToObjectThreadedMetricOptimizer<MetricType> OptimizerType;
-    typedef itk::ImageToData<ImageDimension, OptimizerType> ThreaderType;
+    typedef itk::ImageToData<Dim, OptimizerType> ThreaderType;
 
     // pseudo code
     typename ThreaderType::Pointer metricThreader = ThreaderType::New();
@@ -169,7 +169,7 @@ void CompositeAffineTransformDemonsRegistrationTest(
 
     metricOptimizer.metric = metric;
 
-    ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
+    typename ImageType::RegionType inboundary_region = fixImage->GetRequestedRegion();
 
     metricThreader->SetNumberOfThreads(numberOfThreads);
     metricThreader->m_OverallRegion = inboundary_region ;
