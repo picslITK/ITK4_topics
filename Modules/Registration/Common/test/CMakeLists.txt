@@ -39,6 +39,7 @@ itkImageRegistrationMethodTest_8.cxx
 itkImageRegistrationMethodTest_9.cxx
 itkRecursiveMultiResolutionPyramidImageFilterTest.cxx
 itkNormalizedCorrelationImageMetricTest.cxx
+itkParameterScaleEstimatorTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationCommon  "${ITK-RegistrationCommon-Test_LIBRARIES}" "${ITK-RegistrationCommonTests}")
@@ -147,3 +148,5 @@ add_test(NAME itkRecursiveMultiResolutionPyramidImageFilterWithShrinkFilterTest
               Shrink)
 add_test(NAME itkNormalizedCorrelationImageMetricTest
       COMMAND ITK-RegistrationCommonTestDriver  itkNormalizedCorrelationImageMetricTest)
+add_test(NAME itkParameterScaleEstimatorTest
+      COMMAND ITK-RegistrationCommonTestDriver itkParameterScaleEstimatorTest)
