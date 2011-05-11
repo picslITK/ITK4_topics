@@ -15,11 +15,12 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkRigid2DTransform_h
-#define __itkRigid2DTransform_h
+#ifndef __itkRotate2DTransform_h
+#define __itkRotate2DTransform_h
 
 #include <iostream>
-#include "itkMatrixOffsetTransformBase.h"
+// #include "itkMatrixOffsetTransformBase.h"
+#include "itkRigid2DTransform.h"
 
 namespace itk
 {
@@ -56,20 +57,22 @@ namespace itk
  */
 template< class TScalarType = double >
 // Data type for scalars (float or double)
-class ITK_EXPORT Rigid2DTransform:
-  public MatrixOffsetTransformBase< TScalarType, 2, 2 >      // Dimensions of
+class ITK_EXPORT Rotate2DTransform:
+  public Rigid2DTransform< TScalarType >
+//  public MatrixOffsetTransformBase< TScalarType, 2, 2 >      // Dimensions of
                                                              // input and output
                                                              // spaces
 {
 public:
   /** Standard class typedefs. */
-  typedef Rigid2DTransform                               Self;
-  typedef MatrixOffsetTransformBase< TScalarType, 2, 2 > Superclass;
+  typedef Rotate2DTransform                               Self;
+  typedef Rigid2DTransform< TScalarType >                Superclass;
+//  typedef MatrixOffsetTransformBase< TScalarType, 2, 2 > Superclass;
   typedef SmartPointer< Self >                           Pointer;
   typedef SmartPointer< const Self >                     ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Rigid2DTransform, MatrixOffsetTransformBase);
+  itkTypeMacro(Rotate2DTransform, MatrixOffsetTransformBase);
 
   /** New macro for creation of through a Smart Pointer */
   itkNewMacro(Self);
@@ -77,7 +80,7 @@ public:
   /** Dimension of the space. */
   itkStaticConstMacro(InputSpaceDimension, unsigned int, 2);
   itkStaticConstMacro(OutputSpaceDimension, unsigned int, 2);
-  itkStaticConstMacro(ParametersDimension, unsigned int, 3);
+  itkStaticConstMacro(ParametersDimension, unsigned int, 1);
 
   /** Scalar type. */
   typedef typename Superclass::ScalarType ScalarType;
@@ -139,9 +142,12 @@ public:
    * GetMatrix().
    */
   virtual void SetRotationMatrix(const MatrixType & matrix)
-  { this->SetMatrix(matrix); }
-  const MatrixType & GetRotationMatrix() const
-  { return this->GetMatrix(); }
+  {
+      // this->SetMatrix(matrix);
+      Superclass::SetRotationMatrix(matrix);
+  }
+//  const MatrixType & GetRotationMatrix() const
+//  { return this->GetMatrix(); }
 
   /**
    * Compose the transformation with a translation
@@ -150,7 +156,7 @@ public:
    * origin.  The translation is precomposed with self if pre is
    * true, and postcomposed otherwise.
    */
-  void Translate(const OffsetType & offset, bool pre = false);
+//  void Translate(const OffsetType & offset, bool pre = false);
 
   /**
    * Back transform by an rigid transformation.
@@ -160,30 +166,34 @@ public:
    * an inverse transform and  then perform the transform using that
    * inverted transform.
    */
-  inline InputPointType      BackTransform(const OutputPointType  & point) const;
+//  inline InputPointType      BackTransform(const OutputPointType  & point) const;
+//
+//  inline InputVectorType     BackTransform(const OutputVectorType & vector) const;
+//
+//  inline InputVnlVectorType  BackTransform(const OutputVnlVectorType & vector) const;
+//
+//  inline InputCovariantVectorType BackTransform(
+//    const OutputCovariantVectorType & vector) const;
+//
+//  /** Set/Get the angle of rotation in radians */
+//  void SetAngle(TScalarType angle);
 
-  inline InputVectorType     BackTransform(const OutputVectorType & vector) const;
-
-  inline InputVnlVectorType  BackTransform(const OutputVnlVectorType & vector) const;
-
-  inline InputCovariantVectorType BackTransform(
-    const OutputCovariantVectorType & vector) const;
-
-  /** Set/Get the angle of rotation in radians */
-  void SetAngle(TScalarType angle);
-
-  itkGetConstReferenceMacro(Angle, TScalarType);
+//  itkGetConstReferenceMacro(Angle, TScalarType);
 
   /** Set the angle of rotation in degrees. */
-  void SetAngleInDegrees(TScalarType angle);
+//  void SetAngleInDegrees(TScalarType angle);
 
   /** Set/Get the angle of rotation in radians. These methods
    * are old and are retained for backward compatibility.
    * Instead, use SetAngle() and GetAngle(). */
-  void SetRotation(TScalarType angle)
-  { this->SetAngle(angle); }
+//  void SetRotation(TScalarType angle)
+//  { this->SetAngle(angle); }
+
   virtual const TScalarType & GetRotation() const
-  { return m_Angle; }
+  {
+      return Superclass::GetRotation();
+//       return m_Angle;
+  }
 
   /** Set the transformation from a container of parameters
    * This is typically used by optimizers.
@@ -220,10 +230,10 @@ public:
    * This method creates and returns a new Rigid2DTransform object
    * which is the inverse of self.
    */
-  void CloneInverseTo(Pointer & newinverse) const;
+//  void CloneInverseTo(Pointer & newinverse) const;
 
   /** Get an inverse of this transform. */
-  bool GetInverse(Self *inverse) const;
+//  bool GetInverse(Self *inverse) const;
 
   /** Return an inverse of this transform. */
   virtual InverseTransformBasePointer GetInverseTransform() const;
@@ -232,17 +242,17 @@ public:
    * This method creates and returns a new Rigid2DTransform object
    * which has the same parameters.
    */
-  void CloneTo(Pointer & clone) const;
+//  void CloneTo(Pointer & clone) const;
 
   /** Reset the parameters to create and identity transform. */
   virtual void SetIdentity(void);
 
 protected:
-  Rigid2DTransform();
-  Rigid2DTransform(unsigned int outputSpaceDimension,
+  Rotate2DTransform();
+  Rotate2DTransform(unsigned int outputSpaceDimension,
                    unsigned int parametersDimension);
 
-  ~Rigid2DTransform();
+  ~Rotate2DTransform();
 
   /**
     * Print contents of an Rigid2DTransform
@@ -262,89 +272,87 @@ protected:
 
   /** Update angle without recomputation of other internal variables. */
   void SetVarAngle(TScalarType angle)
-  { m_Angle = angle; }
-
-
-
-
+  {
+//      m_Angle = angle;
+      Superclass::SetVarAngle(angle);
+  }
 private:
-  Rigid2DTransform(const Self &); //purposely not implemented
+  Rotate2DTransform(const Self &); //purposely not implemented
   void operator=(const Self &);   //purposely not implemented
 
-  TScalarType m_Angle;
-
+//  TScalarType m_Angle;
 }; //class Rigid2DTransform
 
-// Back transform a point
-template< class TScalarType >
-inline
-typename Rigid2DTransform< TScalarType >::InputPointType
-Rigid2DTransform< TScalarType >::BackTransform(const OutputPointType & point) const
-{
-  itkWarningMacro(
-    <<
-    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
-    );
-  return this->GetInverseMatrix() * ( point - this->GetOffset() );
-}
-
-// Back transform a vector
-template< class TScalarType >
-inline
-typename Rigid2DTransform< TScalarType >::InputVectorType
-Rigid2DTransform< TScalarType >::BackTransform(const OutputVectorType & vect) const
-{
-  itkWarningMacro(
-    <<
-    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
-    );
-  return this->GetInverseMatrix() * vect;
-}
-
-// Back transform a vnl_vector
-template< class TScalarType >
-inline
-typename Rigid2DTransform< TScalarType >::InputVnlVectorType
-Rigid2DTransform< TScalarType >::BackTransform(const OutputVnlVectorType & vect) const
-{
-  itkWarningMacro(
-    <<
-    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
-    );
-  return this->GetInverseMatrix() * vect;
-}
-
-// Back Transform a CovariantVector
-template< class TScalarType >
-inline
-typename Rigid2DTransform< TScalarType >::InputCovariantVectorType
-Rigid2DTransform< TScalarType >::BackTransform(const OutputCovariantVectorType & vect) const
-{
-  itkWarningMacro(
-    <<
-    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
-    );
-  return this->GetMatrix() * vect;
-}
+//// Back transform a point
+//template< class TScalarType >
+//inline
+//typename Rotate2DTransform< TScalarType >::InputPointType
+//Rotate2DTransform< TScalarType >::BackTransform(const OutputPointType & point) const
+//{
+//  itkWarningMacro(
+//    <<
+//    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
+//    );
+//  return this->GetInverseMatrix() * ( point - this->GetOffset() );
+//}
+//
+//// Back transform a vector
+//template< class TScalarType >
+//inline
+//typename Rotate2DTransform< TScalarType >::InputVectorType
+//Rotate2DTransform< TScalarType >::BackTransform(const OutputVectorType & vect) const
+//{
+//  itkWarningMacro(
+//    <<
+//    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
+//    );
+//  return this->GetInverseMatrix() * vect;
+//}
+//
+//// Back transform a vnl_vector
+//template< class TScalarType >
+//inline
+//typename Rotate2DTransform< TScalarType >::InputVnlVectorType
+//Rotate2DTransform< TScalarType >::BackTransform(const OutputVnlVectorType & vect) const
+//{
+//  itkWarningMacro(
+//    <<
+//    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
+//    );
+//  return this->GetInverseMatrix() * vect;
+//}
+//
+//// Back Transform a CovariantVector
+//template< class TScalarType >
+//inline
+//typename Rotate2DTransform< TScalarType >::InputCovariantVectorType
+//Rotate2DTransform< TScalarType >::BackTransform(const OutputCovariantVectorType & vect) const
+//{
+//  itkWarningMacro(
+//    <<
+//    "BackTransform(): This method is slated to be removed from ITK.  Instead, please use GetInverse() to generate an inverse transform and then perform the transform using that inverted transform."
+//    );
+//  return this->GetMatrix() * vect;
+//}
 }  // namespace itk
 
 // Define instantiation macro for this template.
-#define ITK_TEMPLATE_Rigid2DTransform(_, EXPORT, TypeX, TypeY)                \
+#define ITK_TEMPLATE_Rotate2DTransform(_, EXPORT, TypeX, TypeY)                \
   namespace itk                                                               \
   {                                                                           \
-  _( 1 ( class EXPORT Rigid2DTransform< ITK_TEMPLATE_1 TypeX > ) )            \
+  _( 1 ( class EXPORT Rotate2DTransform< ITK_TEMPLATE_1 TypeX > ) )            \
   namespace Templates                                                         \
   {                                                                           \
-  typedef Rigid2DTransform< ITK_TEMPLATE_1 TypeX > Rigid2DTransform##TypeY; \
+  typedef Rotate2DTransform< ITK_TEMPLATE_1 TypeX > Rotate2DTransform##TypeY; \
   }                                                                           \
   }
 
 #if ITK_TEMPLATE_EXPLICIT
-#include "Templates/itkRigid2DTransform+-.h"
+#include "Templates/itkRotate2DTransform+-.h"
 #endif
 
 #if ITK_TEMPLATE_TXX
-#include "itkRigid2DTransform.txx"
+#include "itkRotate2DTransform.txx"
 #endif
 
 #endif /* __itkRigid2DTransform_h */

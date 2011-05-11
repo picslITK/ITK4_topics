@@ -204,7 +204,7 @@ CenteredCompositeTransform<TScalar, NDimensions>
 template
 <class TScalar, unsigned int NDimensions>
 void CenteredCompositeTransform<TScalar, NDimensions>
-::GetLocalJacobian( const InputPointType & p, JacobianType &j ) const
+::GetJacobianWithRespectToParameters( const InputPointType & p, JacobianType &j ) const
  {
     /* Returns a concatenated MxN array, holding the Jacobian of each sub
      * transform that is selected for optimization. The order is the same
@@ -213,11 +213,11 @@ void CenteredCompositeTransform<TScalar, NDimensions>
      * N cols = total number of parameters in the selected sub transforms. */
 
     j.SetSize( NDimensions, this->GetNumberOfParameters() );
-    unsigned int offset = 0;
+//    unsigned int offset = 0;
 //    unsigned int offset_previous = -1;
     OutputPointType transformedPoint = p - this->m_Center;
 
-    Superclass::GetLocalJacobian(transformedPoint, j);
+    Superclass::GetJacobianWithRespectToParameters(transformedPoint, j);
 
 //
 //    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
@@ -232,7 +232,7 @@ void CenteredCompositeTransform<TScalar, NDimensions>
 //            // to do: why parameters are listed from N-1 to 1???
 //            typename TransformType::JacobianType current_jacobian;
 //            current_jacobian.SetSize(NDimensions, transform->GetParameters().Size());
-//            transform->GetLocalJacobian( transformedPoint, current_jacobian );
+//            transform->GetJacobianWithRespectToParameters( transformedPoint, current_jacobian );
 //
 //            // debug: force only the closes transform to update!!
 ////            if (offset > 0){

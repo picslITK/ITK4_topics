@@ -35,11 +35,19 @@ DeformationFieldTransform() : Superclass( NDimensions, 0 )
   this->m_DeformationField = NULL;
   this->m_InverseDeformationField = NULL;
 
+  //Setup and assign default interpolator
   typedef VectorLinearInterpolateImageFunction<DeformationFieldType, ScalarType>
     DefaultInterpolatorType;
   typename DefaultInterpolatorType::Pointer interpolator
     = DefaultInterpolatorType::New();
   this->m_Interpolator = interpolator;
+
+  //Setup and assign parameter helper. This will hold the deformation field
+  // for access through the common TransformParameters interface.
+  TransformParametersHelperType* helper = new TransformParametersHelperType;
+  //After assigning this, m_Parametes will manage this,
+  // deleting when appropriate.
+  this->m_Parameters.SetHelper( helper );
 }
 
 /**
@@ -143,24 +151,26 @@ typename DeformationFieldTransform<TScalar, NDimensions>::JacobianType &
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobian( const InputPointType & point ) const
 {
-  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetLocalJacobian()" );
+  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetJacobianWithRespectToParameters()" );
 }
 
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
-::GetLocalJacobian( const InputPointType & point, JacobianType & jacobian ) const
+::GetJacobianWithRespectToParameters( const InputPointType & point,
+                                      JacobianType & jacobian ) const
 {
   IndexType idx;
   this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetLocalJacobian( idx, jacobian );
+  this->GetJacobianWithRespectToParameters( idx, jacobian );
 }
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
-::GetLocalJacobian( const IndexType & index, JacobianType & jacobian ) const
+::GetJacobianWithRespectToParameters( const IndexType & index,
+                                      JacobianType & jacobian ) const
 {
   jacobian.SetSize(NDimensions,NDimensions);
   jacobian.Fill(0.0);
@@ -295,7 +305,7 @@ void DeformationFieldTransform<TScalar, NDimensions>
       this->m_Interpolator->SetInputImage( this->m_DeformationField );
       }
     //Assign to parameters object
-    m_InternalParameters.SetParameterImage( this->m_DeformationField );
+    this->m_Parameters.SetParametersObject( this->m_DeformationField );
     }
 }
 

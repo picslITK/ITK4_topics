@@ -130,7 +130,8 @@ public:
     MovingImagePixelType mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
     FixedImagePixelType diff = fpix - mpix ;
     metricval+=fabs(diff)/(double)FixedImageDimension;
-    this->m_MovingImageTransform->GetLocalJacobian(mappedMovingPoint, jacobian);
+    this->m_MovingImageTransform->GetJacobianWithRespectToParameters(
+      mappedMovingPoint, jacobian);
 
     for ( unsigned int par = 0; par < this->m_MovingImageTransform->GetNumberOfLocalParameters(); par++ )
     {

@@ -19,7 +19,8 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "itkImageVectorTransformParameters.h"
+#include "itkTransformParameters.h"
+#include "itkImageVectorTransformParametersHelper.h"
 
 using namespace itk;
 
@@ -35,14 +36,15 @@ typedef ImageVectorType::RegionType                   RegionType;
 typedef RegionType::SizeType                          SizeType;
 typedef ImageVectorType::IndexType                    IndexType;
 typedef ImageVectorType::PixelContainer               VectorPixelContainer;
-typedef ImageVectorTransformParameters< ValueType,
+typedef TransformParameters< ValueType >              TransformParametersType;
+typedef ImageVectorTransformParametersHelper< ValueType,
                                         VectorDimension,
                                         ImageDimension >
-                                          ImageVectorTransformParametersType;
+                                      ImageVectorTransformParametersHelperType;
 }
 
-int testMemoryAccess( ImageVectorTransformParametersType& imageVectorParams,
-                      ImageVectorPointer imageVector,
+int testMemoryAccess( TransformParametersType& params,
+                      ImageVectorPointer imageOfVectors,
                       int dimLength )
 {
   int result = EXIT_SUCCESS;
@@ -58,16 +60,16 @@ int testMemoryAccess( ImageVectorTransformParametersType& imageVectorParams,
       // The image index returns a N-dim vector, so have to check each
       // element against the values returned by parameter object.
       unsigned long offset = (x + y * dimLength) * VectorDimension;
-      VectorPixelType vectorpixel = imageVector->GetPixel( index );
+      VectorPixelType vectorpixel = imageOfVectors->GetPixel( index );
       for(unsigned int ind=0; ind < VectorDimension; ind++)
         {
-        ValueType paramsValue = imageVectorParams[offset+ind];
+        ValueType paramsValue = params[offset+ind];
         if( vectorpixel[ind] != paramsValue )
           {
           std::cout << "VectorImage pixel value does not match params value."
                     << "vectorpixel[" << ind << "]: " << vectorpixel[ind]
                     << std::endl
-                    << "imageVectorParams[" << offset+ind << "]: "
+                    << "params[" << offset+ind << "]: "
                     << paramsValue << std::endl;
           result = EXIT_FAILURE;
           }
@@ -79,11 +81,11 @@ int testMemoryAccess( ImageVectorTransformParametersType& imageVectorParams,
 
 /******************************************************/
 
-int itkImageVectorTransformParametersTest(int, char *[])
+int itkImageVectorTransformParametersHelperTest(int, char *[])
 {
   int result = EXIT_SUCCESS;
 
-  ImageVectorPointer imageVector = ImageVectorType::New();
+  ImageVectorPointer imageOfVectors = ImageVectorType::New();
 
   IndexType start;
   start.Fill( 0 );
@@ -96,8 +98,8 @@ int itkImageVectorTransformParametersTest(int, char *[])
   region.SetSize( size );
   region.SetIndex( start );
 
-  imageVector->SetRegions( region );
-  imageVector->Allocate();
+  imageOfVectors->SetRegions( region );
+  imageOfVectors->Allocate();
 
   ImageVectorType::PointType     origin;
   ImageVectorType::SpacingType   spacing;
@@ -105,8 +107,8 @@ int itkImageVectorTransformParametersTest(int, char *[])
   origin.Fill( 0.0 );
   spacing.Fill( 1.0 );
 
-  imageVector->SetOrigin( origin );
-  imageVector->SetSpacing( spacing );
+  imageOfVectors->SetOrigin( origin );
+  imageOfVectors->SetSpacing( spacing );
 
   ValueType vectorinitvalues[VectorDimension] = {0.0, 0.1, 0.2, 0.3};
   VectorPixelType vectorvalues(vectorinitvalues);
@@ -127,7 +129,7 @@ int itkImageVectorTransformParametersTest(int, char *[])
 
       const ValueType value = x + y * dimLength;
 
-      VectorPixelType & vectorpixel = imageVector->GetPixel( index );
+      VectorPixelType & vectorpixel = imageOfVectors->GetPixel( index );
       vectorpixel.Fill( value );
       vectorpixel += vectorvalues;
 
@@ -136,10 +138,18 @@ int itkImageVectorTransformParametersTest(int, char *[])
     std::cout << std::endl;
     }
 
-  ImageVectorTransformParametersType imageVectorParams;
-  imageVectorParams.SetParameterImage( imageVector );
+  // Create a parameter object and assign the ImageVector helper.
+  TransformParametersType params;
+  ImageVectorTransformParametersHelperType* imageVectorParamsHelper =
+    new ImageVectorTransformParametersHelperType;
+  //Assign the helper to the parameter object.
+  //TransformParameters object will manage the helper once its been set.
+  params.SetHelper( imageVectorParamsHelper );
+  //Set the image in the helper. It will point the parameter data pointer
+  // to the image data.
+  params.SetParametersObject( imageOfVectors );
 
-  result = testMemoryAccess( imageVectorParams, imageVector, dimLength );
+  result = testMemoryAccess( params, imageOfVectors, dimLength );
 
   return result;
 }

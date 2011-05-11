@@ -60,6 +60,9 @@ namespace itk
  *   void                      SetParameters(const ParametersType &)
  *   void                      SetFixedParameters(const ParametersType &)
  *   const                     JacobianType & GetJacobian(const InputPointType  &) const
+ *   void                      GetJacobianWithRespectToParameters(const InputPointType &,
+ *                                                                JacobianType &) const
+ *
  * \ingroup Transforms
  *
  * \ingroup ITK-Transform
@@ -123,10 +126,10 @@ public:
 
   typedef typename InverseTransformBaseType::Pointer InverseTransformBasePointer;
 
-  typedef Matrix< TScalarType, itkGetStaticConstMacro(OutputSpaceDimension),
+  typedef Matrix< TScalarType,
+                  itkGetStaticConstMacro(OutputSpaceDimension),
                   itkGetStaticConstMacro(InputSpaceDimension) >
-  MatrixType;
-
+                                                                MatrixType;
 
   /**  Method to transform a point.
    * \warning This method must be thread-safe. See, e.g., its use
@@ -203,15 +206,18 @@ public:
   \end{array}\right]
    *
    * \f]
+   *
+   * All derived classes should implement:
+   *
+   * virtual void GetJacobian(const InputPointType  &x ) const
+   * {
+   *   this->GetJacobianWithRespectToParameters(x,this->m_Jacobian);
+   *   return this->m_Jacobian;
+   * }
+   *
    * */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const = 0;
 
-/** All derived classes should implement
-  virtual void GetJacobian(const InputPointType  &x ) const {
-    this->m_Jacobian.Fill(0);
-    this->GetLocalJacobian(x,this->m_Jacobian);
-  }
-*/
   /** This is a thread-safe version for GetJacobian(). Otherwise,
    *  m_Jacobian could be changed for different values in different threads.
    *  This is also used for efficient computation of a point-local jacobian
@@ -220,20 +226,25 @@ public:
    *  will most likely occur during multi-threading.
    *  To avoid repeatitive memory allocation, pass in 'j' with its size
    *  already set. */
-  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const = 0;
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
+                                                    JacobianType &j) const = 0;
 
   /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
    *  That is, each threads should only update a sub-range of the transform where i < j and both are less
    *  than  k, where k is the number of parameters.  If i==j==0 then update all parameters.
    *  We assume Derivatives are of the same length as Parameters.  Throw exception otherwise.
-   * NOTE, remember this is overridden in DeformationFieldTransform, as long as
-   * that's using a separate m_InternalParameters member.
    */
   /** FIXME: should be pure virtual */
-  virtual void UpdateTransformParameters( DerivativeType update , unsigned long i=0 , unsigned long j=0 ){
+  virtual void UpdateTransformParameters( DerivativeType update ,
+                                          unsigned long i=0 ,
+                                          unsigned long j=0 )
+  {
     if ( i == 0 && j == 0 )
-      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++) this->m_Parameters[k]+=update[k];
-    else for (unsigned int k=i; k<j; k++) this->m_Parameters[k]+=update[k];
+      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
+        this->m_Parameters[k]+=update[k];
+    else
+      for (unsigned int k=i; k<j; k++)
+        this->m_Parameters[k]+=update[k];
   }
 
   /** Return the number of local parameters that completely defines the Transfom
@@ -270,13 +281,9 @@ public:
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;
 
-  /** to be coherent with CompositeTransform::GetLocalJacobian() **/
-  /** FIXME:  Needs documentation and more descriptive name */
-  virtual const MatrixType & GetMatrix() const
+  /** FIXME:  Needs documentation. */
+  virtual const MatrixType & GetJacobianWithRespectToPosition() const
   { return m_IdentityMatrix; }
-
-
-
 
   /** Indicates if this transform is linear. A transform is defined to be
    * linear if the transform of a linear combination of points is equal to the

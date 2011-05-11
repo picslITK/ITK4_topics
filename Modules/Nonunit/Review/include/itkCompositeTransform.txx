@@ -191,8 +191,9 @@ CompositeTransform<TScalar, NDimensions>
 
 template
 <class TScalar, unsigned int NDimensions>
-void CompositeTransform<TScalar, NDimensions>
-::GetLocalJacobian( const InputPointType & p, JacobianType &j ) const
+void
+CompositeTransform<TScalar, NDimensions>
+::GetJacobianWithRespectToParameters( const InputPointType & p, JacobianType &j ) const
  {
     /* Returns a concatenated MxN array, holding the Jacobian of each sub
      * transform that is selected for optimization. The order is the same
@@ -211,12 +212,15 @@ void CompositeTransform<TScalar, NDimensions>
         if( this->GetNthTransformToOptimize( tind ) )
         {
             /* Copy from another matrix, element-by-element */
-            /* The matrices are row-major, so block copy is less obviously better */
+            /* The matrices are row-major, so block copy is less
+             * obviously better */
 
             // to do: why parameters are listed from N-1 to 1???
             typename TransformType::JacobianType current_jacobian;
-            current_jacobian.SetSize(NDimensions, transform->GetNumberOfLocalParameters());
-            transform->GetLocalJacobian( transformedPoint, current_jacobian );
+            current_jacobian.SetSize(
+              NDimensions, transform->GetNumberOfLocalParameters());
+            transform->GetJacobianWithRespectToParameters(
+              transformedPoint, current_jacobian );
 
             // debug: force only the closes transform to update!!
 //            if (offset > 0){
@@ -237,16 +241,17 @@ void CompositeTransform<TScalar, NDimensions>
          *  jacobian by multiplying the current matrix jumping over the
          *  first transform. The matrix here refers to  dT/dx at the point.
          *  For example, in the affine transform, this is the affine matrix.
-         *  TODO: for general transform, there should be something like
+         *  TODO1: for general transform, there should be something like
          *  GetPartialDerivativeOfPointCoordinates
          *
          *  Also, noted the multiplication contains all the affine matrix from
          *  all transforms no matter they are going to be optimized or not
          *
          */
+
         if (offset > 0){
             JacobianType old_j = j.extract(NDimensions,offset,0,0);
-            j.update( transform->GetMatrix() * old_j, 0, 0);
+            j.update( transform->GetJacobianWithRespectToPosition() * old_j, 0, 0);
 
         }
 
@@ -523,6 +528,45 @@ CompositeTransform<TScalar, NDimensions>
     return this->m_TransformsToOptimizeQueue;
  }
 
+/*
+template <class TScalarType, unsigned int NDimensions>
+void
+CompositeTransform<TScalarType, NDimensions>::
+UnifyParameterMemory(void)
+{
+  // For now, order the parameters in reverse queue order, as is done
+  // in GetParameters. This might change in near future.
+  TransformTypePointer transform;
+
+  // Resize the parameter memory
+  this->m_Parameters.SetSize( this->GetNumberOfParameters() );
+
+  ParametersType &  subParameters;
+  unsigned int      offset = 0;
+
+  for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+          tind >= 0; tind-- )
+    {
+    if( this->GetNthTransformToOptimize( tind ) )
+      {
+      transform = this->GetNthTransform( tind );
+      // Copy the transform's parameters
+      subParameters = transform->GetParameters();
+      // use vnl_vector data_block() to get data ptr
+      memcpy( &(this->m_Parameters.data_block())[offset],
+              subParameters.data_block(),
+              subParameters.Size()
+              * sizeof( ParametersValueType ) );
+      offset += subParameters.Size();
+      // Redirect the sub-transform's parameter member to point to
+      // the data within the unified block
+      subParameters =
+      }
+    }
+
+
+}
+*/
 
 template <class TScalarType, unsigned int NDimensions>
 void

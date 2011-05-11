@@ -143,6 +143,8 @@ Shear2DTransform< ScalarType, NDimensions >::TransformVector(const InputVectorTy
 {
   OutputVectorType result;
 
+  result.Fill(0);
+
 //  for ( unsigned int i = 0; i < SpaceDimension; i++ )
 //    {
 //    result[i] = vect[i] * m_Scale[i];
@@ -156,6 +158,7 @@ typename Shear2DTransform< ScalarType, NDimensions >::OutputVnlVectorType
 Shear2DTransform< ScalarType, NDimensions >::TransformVector(const InputVnlVectorType & vect) const
 {
   OutputVnlVectorType result;
+  result.fill(0);
 
 //  for ( unsigned int i = 0; i < SpaceDimension; i++ )
 //    {
@@ -176,6 +179,7 @@ Shear2DTransform< ScalarType, NDimensions >::TransformCovariantVector(const Inpu
 //    {
 //    result[i] = vect[i] / m_Scale[i];
 //    }
+  result.Fill(0);
   return result;
 }
 
@@ -221,7 +225,7 @@ const typename Shear2DTransform< ScalarType, NDimensions >::JacobianType &
 Shear2DTransform< ScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
  {
-    GetLocalJacobian( p, this->m_Jacobian );
+    GetJacobianWithRespectToParameters( p, this->m_Jacobian );
     return this->m_Jacobian;
  }
 
@@ -230,7 +234,7 @@ Shear2DTransform< ScalarType, NDimensions >
 template< class ScalarType, unsigned int NDimensions >
 void
 Shear2DTransform< ScalarType, NDimensions >
-::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
  {
     j.SetSize( 2, 1 );
     j.Fill(0);

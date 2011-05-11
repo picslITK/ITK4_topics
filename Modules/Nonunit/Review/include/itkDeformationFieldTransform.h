@@ -23,7 +23,7 @@
 #include "itkImage.h"
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkMatrixOffsetTransformBase.h"
-#include "itkImageVectorTransformParameters.h"
+#include "itkImageVectorTransformParametersHelper.h"
 
 namespace itk
 {
@@ -111,11 +111,12 @@ public:
   typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
 
-  /** Define the internal parameters type to access the field */
-  typedef ImageVectorTransformParameters< ScalarType,
+  /** Define the internal parameter helped used to access the field */
+  typedef ImageVectorTransformParametersHelper<
+                                          ScalarType,
                                           OutputVectorType::Dimension,
                                           itkGetStaticConstMacro( Dimension ) >
-                                            InternalParametersType;
+                                                TransformParametersHelperType;
 
   /** Get/Set the deformation field. */
   itkGetObjectMacro( DeformationField, DeformationFieldType );
@@ -145,19 +146,16 @@ public:
     { itkExceptionMacro( "TransformVector unimplemented" ); }
 
   /**  Method to transform a CovariantVector. */
-  virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const
-    { itkExceptionMacro( "TransformCovariantVector unimplemented" ); }
+  virtual OutputCovariantVectorType TransformCovariantVector(
+    const InputCovariantVectorType &) const
+      { itkExceptionMacro( "TransformCovariantVector unimplemented" ); }
 
   /** Set the transformation parameters and update internal transformation.
    * NOTE if this is implemented eventually, refer first to itkTransform.h
    * for notes on pass by value vs reference.
    */
   virtual void SetParameters(const ParametersType & params)
-    { m_InternalParameters = params; }
-
-  /** Get the Transformation Parameters. */
-  virtual const ParametersType & GetParameters(void) const
-    { return m_InternalParameters; }
+    { this->m_Parameters = params; }
 
   /** Set the fixed parameters and update internal transformation. */
   virtual void SetFixedParameters(const ParametersType &)
@@ -174,9 +172,11 @@ public:
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
 
-  virtual void GetLocalJacobian(const InputPointType  &x, JacobianType &j) const;
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &x,
+                                                  JacobianType &j) const;
 
-  virtual void GetLocalJacobian(const IndexType  &x, JacobianType &j) const;
+  virtual void GetJacobianWithRespectToParameters(const IndexType  &x,
+                                                  JacobianType &j) const;
 
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
@@ -192,7 +192,8 @@ public:
 
   /** Return the number of parameters that completely define the Transfom  */
   virtual unsigned int GetNumberOfParameters(void) const
-  { return this->m_InternalParameters.Size(); }
+  //  { return this->m_InternalParameters.Size(); }
+  { return this->m_Parameters.Size(); }
 
   /** Update params. Override this as long as we're using m_InternalParameters.
    */
@@ -200,10 +201,16 @@ public:
   {
     if ( i == 0 && j == 0 )
       for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
+        this->m_Parameters[k]+=update[k];
+    else
+      for (unsigned int k=i; k<j; k++)
+        this->m_Parameters[k]+=update[k];
+    /*    if ( i == 0 && j == 0 )
+      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
         this->m_InternalParameters[k]+=update[k];
     else
       for (unsigned int k=i; k<j; k++)
-        this->m_InternalParameters[k]+=update[k];
+      this->m_InternalParameters[k]+=update[k];*/
   }
 
   virtual bool HasLocalSupport() const { return true; }
@@ -218,7 +225,7 @@ protected:
   typename DeformationFieldType::Pointer      m_InverseDeformationField;
 
   /** Internal parameters that allow access to field */
-  InternalParametersType                      m_InternalParameters;
+  //InternalParametersType                      m_InternalParameters;
 
   /** The interpolator. */
   typename InterpolatorType::Pointer          m_Interpolator;
