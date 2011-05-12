@@ -265,6 +265,7 @@ public:
   {
     this->m_TransformQueue.clear();
     this->m_TransformsToOptimizeFlags.clear();
+    this->Modified();
   }
 
   /** Return an inverse of this transform. */
