@@ -89,7 +89,8 @@ ImageVectorTransformParametersHelper< TValueType, NVectorDimension, VImageDimens
     unsigned int sz = image->GetPixelContainer()->Size() * NVectorDimension;
     TValueType* valuePointer = reinterpret_cast<TValueType *>
                               ( image->GetPixelContainer()->GetBufferPointer() );
-    //Set the Array's pointer to the image data buffer
+    //Set the Array's pointer to the image data buffer. By default it will
+    // not manage the memory.
     container->SetData( valuePointer, sz );
     }
 }
