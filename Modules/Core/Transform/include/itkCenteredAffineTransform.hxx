@@ -85,7 +85,11 @@ CenteredAffineTransform< TScalarType, NDimensions >::SetParameters(const Paramet
   // Transfer the linear part
   unsigned int par = 0;
 
-  this->m_Parameters = parameters;
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
 
   MatrixType matrix;
 

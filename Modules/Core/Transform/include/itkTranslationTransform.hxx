@@ -54,6 +54,12 @@ void
 TranslationTransform< TScalarType, NDimensions >
 ::SetParameters(const ParametersType & parameters)
 {
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   typedef typename ParametersType::ValueType ParameterValueType;
   bool modified = false;
   for ( unsigned int i = 0; i < SpaceDimension; i++ )
