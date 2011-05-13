@@ -150,10 +150,8 @@ public:
     const InputCovariantVectorType &) const
       { itkExceptionMacro( "TransformCovariantVector unimplemented" ); }
 
-  /** Set the transformation parameters and update internal transformation.
-   * NOTE if this is implemented eventually, refer first to itkTransform.h
-   * for notes on pass by value vs reference.
-   */
+  /** Set the transformation parameters. This sets the deformation
+   * field image directly. */
   virtual void SetParameters(const ParametersType & params)
     {
     if( &(this->m_Parameters) != &params )

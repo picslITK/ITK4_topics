@@ -53,7 +53,11 @@ CenteredRigid2DTransform< TScalarType >
 {
   itkDebugMacro(<< "Setting parameters " << parameters);
 
-  this->m_Parameters = parameters;
+  //Save parameters
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
 
   // Set the angle
   const TScalarType angle = parameters[0];

@@ -222,6 +222,12 @@ Rigid2DTransform< TScalarType >::SetParameters(const ParametersType & parameters
 {
   itkDebugMacro(<< "Setting parameters " << parameters);
 
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   // Set angle
   const TScalarType angle = parameters[0];
   this->SetVarAngle(angle);

@@ -387,7 +387,11 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   unsigned int par = 0;
 
-  this->m_Parameters = parameters;
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
 
   for ( unsigned int row = 0; row < NOutputDimensions; row++ )
     {
