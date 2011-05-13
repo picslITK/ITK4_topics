@@ -89,6 +89,12 @@ QuaternionRigidTransform< TScalarType >
 {
   OutputVectorType translation;
 
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   // Transfer the quaternion part
   unsigned int par = 0;
 

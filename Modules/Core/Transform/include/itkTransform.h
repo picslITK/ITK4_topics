@@ -245,6 +245,16 @@ public:
     else
       for (unsigned int k=i; k<j; k++)
         this->m_Parameters[k]+=update[k];
+
+    /* Call SetParameters with the updated parameters.
+     * SetParameters in most transforms is used to assign the input params
+     * to member variables, possibly with some processing. The member variables
+     * are then used in TransformPoint.
+     * In the case of dense-field transforms that are updated in blocks from
+     * a threaded implementation, SetParameters doesn't do anything, and is
+     * optimized to not copy the input parrameters when they are m_Parameters.
+     */
+    this->SetParameters( this->m_Parameters );
   }
 
   /** Return the number of local parameters that completely defines the Transfom

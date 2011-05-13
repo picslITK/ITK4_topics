@@ -71,6 +71,10 @@ public:
   virtual const JacobianType & GetJacobian(const InputPointType  & ) const
     { return this->m_Jacobian; }
 
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
+                                                  JacobianType &j) const
+    { j.SetSize(6,6); j.Fill(1); }
+
   virtual void SetParameters(const ParametersType &) {}
   virtual void SetFixedParameters(const ParametersType &) {}
 };
@@ -121,6 +125,16 @@ int itkTransformTest(int, char* [] )
     transform->GetJacobian(pnt);
     }
   catch( itk::ExceptionObject & e )
+    {
+    std::cerr << e << std::endl;
+    }
+
+  TransformType::JacobianType jacobian;
+  try
+    {
+    transform->GetJacobianWithRespectToParameters(pnt, jacobian);
+    }
+  catch ( itk::ExceptionObject & e )
     {
     std::cerr << e << std::endl;
     }

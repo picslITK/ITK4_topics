@@ -67,6 +67,12 @@ Rigid3DPerspectiveTransform< TScalarType >
 {
   itkDebugMacro(<< "Setting parameters " << parameters);
 
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   // Transfer the versor part
 
   AxisType axis;

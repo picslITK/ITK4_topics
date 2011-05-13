@@ -78,6 +78,12 @@ Euler3DTransform< TScalarType >
 {
   itkDebugMacro(<< "Setting parameters " << parameters);
 
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   // Set angles with parameters
   m_AngleX = parameters[0];
   m_AngleY = parameters[1];
