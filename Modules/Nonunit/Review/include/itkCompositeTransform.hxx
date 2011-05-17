@@ -325,30 +325,52 @@ CompositeTransform<TScalar, NDimensions>
     }
 
     if( transforms.size() == 1 )
-    {
-        transforms[0]->SetParameters(this->m_Parameters);
-    }
-    else
-    {
-        unsigned int      offset = 0;
-        typename TransformQueueType::const_iterator it;
-
-        it = transforms.end();
-        do
+      {
+      /* Avoid unnecessary copying. See comments below */
+      if( &inputParameters == &this->m_Parameters )
         {
-            it--;
-            ParametersType & subParameters =
-              const_cast<ParametersType&>( (*it)->GetParameters() );
-            /* Use vnl_vector data_block() to get data ptr */
-            memcpy( subParameters.data_block(),
-                    &(inputParameters.data_block())[offset],
-                    subParameters.Size()
-                    * sizeof( ParametersValueType ) );
-            /* Call SetParameters explicitly to include anything extra it does */
-            (*it)->SetParameters(subParameters);
-            offset += subParameters.Size();
+        transforms[0]->SetParameters( transforms[0]->GetParameters() );
+        }
+      else
+        {
+        transforms[0]->SetParameters(inputParameters);
+        }
+      }
+    else
+      {
+      unsigned int      offset = 0;
+      typename TransformQueueType::const_iterator it;
+
+      it = transforms.end();
+      do
+        {
+        it--;
+
+        /* If inputParams is same object as m_Parameters, we just pass
+         * each sub-transforms own m_Parameters in. This is needed to
+         * avoid unnecessary copying of parameters in the sub-transforms,
+         * while still allowing SetParameters to do any oeprations on the
+         * parameters to update member variable states. A hack. */
+        ParametersType & subParameters =
+          const_cast<ParametersType&>( (*it)->GetParameters() );
+        if( &inputParameters == &this->m_Parameters )
+          {
+          (*it)->SetParameters( subParameters );
+          }
+        else
+          {
+          /* New parameter data, so copy it in */
+          /* Use vnl_vector data_block() to get data ptr */
+          memcpy( subParameters.data_block(),
+                  &(inputParameters.data_block())[offset],
+                  subParameters.Size()
+                  * sizeof( ParametersValueType ) );
+          /* Call SetParameters explicitly to include anything extra it does */
+          (*it)->SetParameters(subParameters);
+          offset += subParameters.Size();
+          }
         } while (it != transforms.begin() );
-    }
+      }
     return;
  }
 
@@ -506,6 +528,90 @@ CompositeTransform<TScalar, NDimensions>
       }
     return result;
  }
+
+template
+<class TScalar, unsigned int NDimensions>
+void
+CompositeTransform<TScalar, NDimensions>
+::UpdateTransformParameters( DerivativeType & update,
+                                        unsigned int i,
+                                        unsigned int j )
+{
+  /* Update parameters within the sub-transforms set to be optimized.
+   * This can span multiple sub-transforms. */
+  unsigned int numberOfParameters = this->GetNumberOfParameters();
+
+  if( update.Size() != numberOfParameters )
+    {
+    itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
+                      " be same as transform parameter size, "
+                      << numberOfParameters << std::endl);
+    }
+  /* Note that i & j are inclusive */
+  if( j >= numberOfParameters )
+    {
+    itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
+                      "], is out of range, "
+                      << numberOfParameters << std::endl);
+    }
+
+  if( i == 0 && j == 0 )
+    {
+    j = numberOfParameters-1;
+    }
+
+  unsigned int p0 = 0;
+  TransformTypePointer transform;
+
+  for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+          tind >= 0; tind-- )
+    {
+    if( this->GetNthTransformToOptimize( tind ) )
+      {
+      transform = this->GetNthTransform( tind );
+      unsigned int pN = transform->GetNumberOfParameters();
+      unsigned int p1 = p0 + pN - 1;
+      unsigned int ii, jj;
+      /* Does the update range fall within this transform? */
+      if( i <= p1 && j >= p0 )
+        {
+        /* Calc indecies for sub-transform parameter array */
+        ii = ( i > p0 ) ? i-p0 : 0;
+        jj = ( p1 < j ) ? p1-p0 : j-p0;
+        /* Create an array that points to subregion in input array */
+        DerivativeType subUpdate( &((update.data_block())[p0]),
+                                  transform->GetNumberOfParameters(), false );
+        /* This call will also call SetParameters, so don't need to call it
+         * expliclity here. */
+        transform->UpdateTransformParameters( subUpdate, ii, jj );
+        }
+      p0 += pN;
+      }
+    }
+}
+
+/* Get local support flag */
+template
+<class TScalar, unsigned int NDimensions>
+bool
+CompositeTransform<TScalar, NDimensions>
+::HasLocalSupport() const
+{
+  bool result = true;
+  for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+          tind >= 0; tind-- )
+    {
+    if( this->GetNthTransformToOptimize( tind ) )
+      {
+      if( ! this->GetNthTransform( tind )->HasLocalSupport() )
+        {
+        result = false;
+        }
+      }
+    }
+  return result;
+}
+
 
 template
 <class TScalar, unsigned int NDimensions>
