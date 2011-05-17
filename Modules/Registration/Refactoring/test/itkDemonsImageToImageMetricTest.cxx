@@ -104,8 +104,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   transformMdeformation->SetDeformationField(field);
   transformMdeformation->SetInverseDeformationField(fieldInv);
 
-  transformMComp->AddTransform(transformMtranslation);
-  //transformMComp->AddTransform(transformMdeformation);
+  //transformMComp->AddTransform(transformMtranslation);
+  transformMComp->AddTransform(transformMdeformation);
   transformFComp->AddTransform(transformFId);
   typedef itk::DemonsImageToImageMetric<ImageType,ImageType> ObjectMetricType;
   typedef ObjectMetricType::Pointer MetricTypePointer;
@@ -129,20 +129,20 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   // pseudo code
   MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
-  MetricThreadedOptimizerType metricOptimizer;
-  metricOptimizer.metric = objectMetric;
+  MetricThreadedOptimizerType::Pointer metricOptimizer = MetricThreadedOptimizerType::New();
+  metricOptimizer->SetMetric( objectMetric );
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricThreader->SetNumberOfThreads(number_of_threads);
   metricThreader->m_OverallRegion = inboundary_region ;
-  metricThreader->m_Holder = &metricOptimizer;
+  metricThreader->m_Holder = metricOptimizer.GetPointer();
   metricThreader->ThreadedGenerateData = MetricThreadedOptimizerType::ComputeMetricValueInRegionThreaded;
-  metricOptimizer.BeforeThreadedGenerateData(number_of_threads);
+  metricOptimizer->BeforeThreadedGenerateData(number_of_threads);
   metricThreader->GenerateData();
-  metricOptimizer.AfterThreadedGenerateData(number_of_threads);
+  metricOptimizer->AfterThreadedGenerateData(number_of_threads);
 
-  float energy = static_cast<float> (metricOptimizer.AccumulateMeasuresFromAllThreads());
+  float energy = static_cast<float> (metricOptimizer->AccumulateMeasuresFromAllThreads());
 
   std::cout << "metric = " << energy << std::endl;
-  return 1;
+  return EXIT_FAILURE; //not yet a full test
 
 }

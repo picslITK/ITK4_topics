@@ -131,30 +131,32 @@ public:
   typedef typename Superclass::InverseTransformBasePointer
                                         InverseTransformBasePointer;
   /** Scalar type. */
-  typedef typename Superclass::ScalarType ScalarType;
+  typedef typename Superclass::ScalarType           ScalarType;
   /** Parameters type. */
-  typedef typename Superclass::ParametersType      ParametersType;
-  typedef typename Superclass::ParametersValueType ParametersValueType;
+  typedef typename Superclass::ParametersType       ParametersType;
+  typedef typename Superclass::ParametersValueType  ParametersValueType;
+  /** Derivative type */
+  typedef typename Superclass::DerivativeType       DerivativeType;
   /** Jacobian type. */
-  typedef typename Superclass::JacobianType JacobianType;
+  typedef typename Superclass::JacobianType         JacobianType;
   /** Standard coordinate point type for this class. */
-  typedef typename Superclass::InputPointType  InputPointType;
-  typedef typename Superclass::OutputPointType OutputPointType;
+  typedef typename Superclass::InputPointType       InputPointType;
+  typedef typename Superclass::OutputPointType      OutputPointType;
   /** Standard vector type for this class. */
-  typedef typename Superclass::InputVectorType  InputVectorType;
-  typedef typename Superclass::OutputVectorType OutputVectorType;
+  typedef typename Superclass::InputVectorType      InputVectorType;
+  typedef typename Superclass::OutputVectorType     OutputVectorType;
   /** Standard covariant vector type for this class */
   typedef typename Superclass::InputCovariantVectorType
-  InputCovariantVectorType;
+                                                    InputCovariantVectorType;
   typedef typename Superclass::OutputCovariantVectorType
-  OutputCovariantVectorType;
+                                                    OutputCovariantVectorType;
   /** Standard vnl_vector type for this class. */
-  typedef typename Superclass::InputVnlVectorType  InputVnlVectorType;
-  typedef typename Superclass::OutputVnlVectorType OutputVnlVectorType;
+  typedef typename Superclass::InputVnlVectorType   InputVnlVectorType;
+  typedef typename Superclass::OutputVnlVectorType  OutputVnlVectorType;
   /** Transform queue type */
-  typedef std::deque<TransformTypePointer> TransformQueueType;
+  typedef std::deque<TransformTypePointer>          TransformQueueType;
   /** Optimization flags queue type */
-  typedef std::deque<bool>                 TransformsToOptimizeFlagsType;
+  typedef std::deque<bool>                       TransformsToOptimizeFlagsType;
 
   /** Dimension of the domain spaces. */
   itkStaticConstMacro( InputDimension, unsigned int, NDimensions );
@@ -361,6 +363,22 @@ public:
    * for more efficient operation, particularly with high-dimensionality
    * sub-transforms. */
    //virtual void PrepareForUse(void);
+
+  /* Update parameters over an inclusive parameter range [i,j], where
+   * i <= j, and both are less than k, where k is the total number of
+   * parameters. \c update must be the same length as parameters.
+   * Pass i==j==0 to update all parameters (default).
+   * See Superclass for more comments. */
+  virtual void UpdateTransformParameters( DerivativeType & update,
+                                          unsigned int i = 0,
+                                          unsigned int j = 0 );
+
+  /** Indicates if this transform is a "global" transform
+   *  e.g. an affine transform or a local one, e.g. a deformation field.
+   *  Returns true if only all sub-transforms that are set to be
+   *  optimized return true.
+   */
+  virtual bool HasLocalSupport() const;
 
 protected:
   CompositeTransform();

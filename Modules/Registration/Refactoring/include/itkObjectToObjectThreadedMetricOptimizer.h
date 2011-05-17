@@ -17,7 +17,6 @@
 #ifndef __itkObjectToObjectThreadedMetricOptimizer_h
 #define __itkObjectToObjectThreadedMetricOptimizer_h
 
-#include "itkObjectToObjectMetric.h"
 #include "itkCovariantVector.h"
 #include "itkPoint.h"
 #include "itkIndex.h"
@@ -37,52 +36,90 @@ namespace itk
 // functor for threading using the metric function class
 // assuming function has output allocated already
 template<class TMetricFunction>
-struct ObjectToObjectThreadedMetricOptimizer{
+class ITK_EXPORT ObjectToObjectThreadedMetricOptimizer : public Object
+{
+public:
+  /** Standard class typedefs. */
+  typedef ObjectToObjectThreadedMetricOptimizer     Self;
+  typedef Object                                    Superclass;
+  typedef SmartPointer< Self >                      Pointer;
+  typedef SmartPointer< const Self >                ConstPointer;
 
-  typedef ObjectToObjectThreadedMetricOptimizer          Self;
+  /** Run-time type information (and related methods). */
+  itkTypeMacro(Self, Superclass);
 
-  typedef TMetricFunction           MetricType;
-  typedef typename MetricType::Pointer  MetricTypePointer;
-  typedef typename MetricType::MeasureType  MeasureType;
-  typedef typename MetricType::DerivativeType  DerivativeType;
+  /** New macro for creation of through a Smart Pointer   */
+  itkNewMacro(Self);
+
+  /** Metric type over which this class is templated */
+  typedef TMetricFunction                           MetricType;
+  typedef typename MetricType::Pointer              MetricTypePointer;
+  /** Measure type */
+  typedef typename MetricType::MeasureType          MeasureType;
+  /** Derivative type */
+  typedef typename MetricType::DerivativeType       DerivativeType;
+  /** Image region type */
+  typedef typename MetricType::RegionType           ImageRegionType;
+  /** Fixed image type */
+  typedef typename MetricType::FixedImageType       FixedImageType;
+  /** Fixed image pointer */
+  typedef typename MetricType::FixedImagePointer    FixedImagePointer;
+  /** Moving image pointer */
+  typedef typename MetricType::MovingImagePointer   MovingImagePointer;
+  /** Tranform pointer */
+  typedef typename MetricType::TransformPointer     TransformPointer;
+  /** Internal computation type, for maintaining a desired precision */
   typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
-  typedef typename MetricType::RegionType ImageRegionType;
-  typedef typename MetricType::FixedImageType ImageType;
-  typedef typename MetricType::FixedImagePointer FixedImagePointer;
-  typedef typename MetricType::MovingImagePointer MovingImagePointer;
-  typedef typename MetricType::TransformPointer TransformPointer;
+
+  /** Accessors for Metric */
+  itkGetObjectMacro( Metric, MetricType );
+  itkSetObjectMacro( Metric, MetricType );
+
+  const DerivativeType & GetGlobalDerivative(void)
+  {
+    return m_GlobalDerivative;
+  }
 
 public:
-  MetricTypePointer           metric;
-  std::vector<InternalComputationValueType> measure_per_thread;
-  DerivativeType global_derivative;
-  std::vector<DerivativeType> derivatives_per_thread;
-
-  InternalComputationValueType AccumulateMeasuresFromAllThreads() {
-    InternalComputationValueType energy = NumericTraits<InternalComputationValueType>::Zero;
-    for(unsigned int i=0; i<measure_per_thread.size(); i++) energy += measure_per_thread[i];
+  InternalComputationValueType AccumulateMeasuresFromAllThreads()
+  {
+    InternalComputationValueType energy =
+      NumericTraits<InternalComputationValueType>::Zero;
+    for(unsigned int i=0; i<m_MeasurePerThread.size(); i++)
+      {
+      energy += m_MeasurePerThread[i];
+      }
     return energy;
   }
 
   void BeforeThreadedGenerateData(unsigned int number_of_threads )
   {
-    this->derivatives_per_thread.resize(number_of_threads);
-    this->measure_per_thread.resize(number_of_threads);
-    unsigned long global_derivative_size=this->metric->GetMovingImageTransform()->GetNumberOfParameters();
-    std::cout << "  before threaded generate data deriv size  " << global_derivative_size << std::endl;
-    this->global_derivative.SetSize(global_derivative_size);
-    if ( this->metric->GetMovingImageTransform()->HasLocalSupport() )
+    this->m_DerivativesPerThread.resize(number_of_threads);
+    this->m_MeasurePerThread.resize(number_of_threads);
+    unsigned long globalDerivativeSize =
+      this->m_Metric->GetMovingImageTransform()->GetNumberOfParameters();
+    std::cout << "  before threaded generate data deriv size  "
+              << globalDerivativeSize << std::endl;
+    this->m_GlobalDerivative.SetSize( globalDerivativeSize );
+    /* For global transforms with local support, e.g. deformation field,
+     * use a single global derivative container that's updated by region
+     * in multiple threads. */
+    if ( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
       {
-        for (unsigned int i=0; i<number_of_threads; i++) {
-          this->derivatives_per_thread[i]=this->global_derivative;
+      for (unsigned int i=0; i<number_of_threads; i++)
+        {
+        this->m_DerivativesPerThread[i].SetData(
+                                      this->m_GlobalDerivative.data_block(),
+                                      this->m_GlobalDerivative.Size(),
+                                      false );
         }
       }
     else
       {
-        for (unsigned int i=0; i<number_of_threads; i++) {
-          DerivativeType thread_derivative(global_derivative_size);
-          thread_derivative.Fill(0);
-          this->derivatives_per_thread[i]=thread_derivative;
+      for (unsigned int i=0; i<number_of_threads; i++)
+        {
+        this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
+        this->m_DerivativesPerThread[i].Fill( 0 );
         }
       }
     std::cout << " end before threaded generate data " << std::endl;
@@ -90,31 +127,43 @@ public:
 
   void AfterThreadedGenerateData(unsigned int number_of_threads )
   {
-    if (  ! this->metric->GetMovingImageTransform()->HasLocalSupport() )
+    if (  ! this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
       {
-        for (unsigned int i=0; i<number_of_threads; i++) {
-          this->global_derivative=this->global_derivative+derivatives_per_thread[i];
+      for (unsigned int i=0; i<number_of_threads; i++)
+        {
+        this->m_GlobalDerivative += this->m_DerivativesPerThread[i];
+        this->m_DerivativesPerThread[i].SetSize(0); //free memory
         }
       }
-    std::cout << " end after threaded generate data " <<  this->global_derivative << std::endl;
+    std::cout << " end after threaded generate data "
+              << this->m_GlobalDerivative << std::endl;
   }
 
-  static void ComputeMetricValueInRegionThreaded(const ImageRegionType &regionForThread, int threadId,  Self *holder){
+  static void ComputeMetricValueInRegionThreaded(
+                                  const ImageRegionType & regionForThread,
+                                  int threadId,
+                                  Self *holder )
+  {
     //    std::cout << regionForThread << std::endl;
     InternalComputationValueType local_metric;
-    holder->measure_per_thread[threadId] = NumericTraits<InternalComputationValueType>::Zero;
+    holder->m_MeasurePerThread[threadId] =
+      NumericTraits<InternalComputationValueType>::Zero;
     /** Compute one iteration of the metric */
-    local_metric=holder->metric->ComputeMetricAndDerivative(regionForThread, holder->derivatives_per_thread[threadId] );
-    holder->measure_per_thread[threadId] += local_metric;
+    local_metric=holder->m_Metric->ComputeMetricAndDerivative(
+                                    regionForThread,
+                                    holder->m_DerivativesPerThread[threadId] );
+    holder->m_MeasurePerThread[threadId] += local_metric;
   }
 
+private:
+  MetricTypePointer       m_Metric;
+  DerivativeType          m_GlobalDerivative;
+
+  std::vector< DerivativeType >               m_DerivativesPerThread;
+  std::vector<InternalComputationValueType>   m_MeasurePerThread;
 
 };
 
-
-
-
 } // end namespace itk
-
 
 #endif
