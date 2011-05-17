@@ -101,6 +101,7 @@ public:
     std::cout << "  before threaded generate data deriv size  "
               << globalDerivativeSize << std::endl;
     this->m_GlobalDerivative.SetSize( globalDerivativeSize );
+    this->m_GlobalDerivative.Fill(0);
     /* For global transforms with local support, e.g. deformation field,
      * use a single global derivative container that's updated by region
      * in multiple threads. */
@@ -139,6 +140,10 @@ public:
               << this->m_GlobalDerivative << std::endl;
   }
 
+  /** Callback for the threader's ThreadedGenerateData.
+   * Make it static so it can be used as a callback.
+   * An instance of the optimizer class is referenced through
+   * \c holder, which is passed in via the threader's user data. */
   static void ComputeMetricValueInRegionThreaded(
                                   const ImageRegionType & regionForThread,
                                   int threadId,
