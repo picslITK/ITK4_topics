@@ -29,8 +29,8 @@ namespace itk
 /**
  *
  */
-template <unsigned int VDimension, class TDataHolder>
-ImageToData<VDimension, TDataHolder>
+template <unsigned int VDimension>
+ImageToData<VDimension>
 ::ImageToData()
 {
   // Create the output. We use static_cast<> here because we know the default
@@ -44,6 +44,7 @@ ImageToData<VDimension, TDataHolder>
   // output bulk data prior to GenerateData() in case that bulk data
   // can be reused (an thus avoid a costly deallocate/allocate cycle).
 //  this->ReleaseDataBeforeUpdateFlagOff();
+  this->m_Holder = NULL;
 }
 
 /**
@@ -132,9 +133,9 @@ ImageToData<VDimension, TDataHolder>
 //}
 
 //----------------------------------------------------------------------------
-template <unsigned int VDimension, class TDataHolder>
+template <unsigned int VDimension>
 int
-ImageToData<VDimension, TDataHolder>
+ImageToData<VDimension>
 ::SplitRequestedRegion(int i, int num, ImageRegionType &overallRegion, ImageRegionType& splitRegion)
 {
   // Get the output pointer
@@ -195,9 +196,9 @@ ImageToData<VDimension, TDataHolder>
 
 
 //----------------------------------------------------------------------------
-template <unsigned int VDimension, class TDataHolder>
+template <unsigned int VDimension>
 void
-ImageToData<VDimension, TDataHolder>
+ImageToData<VDimension>
 ::GenerateData()
 {
   // Set up the multithreaded processing
@@ -217,9 +218,9 @@ ImageToData<VDimension, TDataHolder>
 // Callback routine used by the threading library. This routine just calls
 // the ThreadedGenerateData method after setting the correct region for this
 // thread.
-template <unsigned int VDimension, class TDataHolder>
+template <unsigned int VDimension>
 ITK_THREAD_RETURN_TYPE
-ImageToData<VDimension, TDataHolder>
+ImageToData<VDimension>
 ::ThreaderCallback( void *arg )
 {
   ThreadStruct *str;

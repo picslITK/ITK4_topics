@@ -51,7 +51,7 @@ namespace itk
 
 
 
-template <unsigned int VDimension, class TDataHolder>
+template <unsigned int VDimension>
 class ITK_EXPORT ImageToData : public ProcessObject
 {
 public:
@@ -92,11 +92,21 @@ public:
 //  conventions, which might be different between C and C++.
   typedef void (*ThreadedGenerateDataFuncType)(const ImageRegionType&,
                                     int ,
-                                    TDataHolder *);
+                                    void *);
 
   ThreadedGenerateDataFuncType ThreadedGenerateData;
   virtual void GenerateData();
 
+  itkSetMacro( OverallRegion, ImageRegionType );
+
+  void SetHolder( void* holder )
+    {
+    if( this->m_Holder != holder )
+      {
+      this->m_Holder = holder;
+      this->Modified();
+      }
+    }
 
 protected:
   ImageToData();
@@ -126,12 +136,11 @@ protected:
 
   // DataHolderType *m_Holder;
 
-public:
-
-  ImageRegionType m_OverallRegion;
-  TDataHolder *m_Holder;
-
 private:
+
+  void *            m_Holder;
+  ImageRegionType   m_OverallRegion;
+
   ImageToData(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 

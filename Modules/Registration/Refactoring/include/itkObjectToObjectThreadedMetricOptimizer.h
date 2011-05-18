@@ -35,7 +35,7 @@ namespace itk
 
 // functor for threading using the metric function class
 // assuming function has output allocated already
-template<class TMetricFunction>
+template<class TMetricFunction, class TThreader>
 class ITK_EXPORT ObjectToObjectThreadedMetricOptimizer : public Object
 {
 public:
@@ -54,6 +54,9 @@ public:
   /** Metric type over which this class is templated */
   typedef TMetricFunction                           MetricType;
   typedef typename MetricType::Pointer              MetricTypePointer;
+  /** Threader type */
+  typedef TThreader                                 ThreaderType;
+  typedef typename ThreaderType::Pointer            ThreaderTypePointer;
   /** Measure type */
   typedef typename MetricType::MeasureType          MeasureType;
   /** Derivative type */
@@ -75,9 +78,33 @@ public:
   itkGetObjectMacro( Metric, MetricType );
   itkSetObjectMacro( Metric, MetricType );
 
+  /** Accessors for Threader */
+  itkGetObjectMacro( Threader, ThreaderType );
+
   const DerivativeType & GetGlobalDerivative(void)
   {
     return m_GlobalDerivative;
+  }
+
+  void SetNumberOfThreads( int number )
+  {
+    if( number < 1 )
+      {
+      itkExceptionMacro("Number of threads must be > 0");
+      }
+    if( number != this->m_NumberOfThreads )
+      {
+      this->m_NumberOfThreads = number;
+      this->m_Threader->SetNumberOfThreads( number );
+      this->Modified();
+      }
+  }
+
+  void SetOverallRegion( ImageRegionType & region )
+  {
+    m_OverallRegion = region;
+    m_Threader->SetOverallRegion( region );
+    this->Modified();
   }
 
 public:
@@ -147,25 +174,59 @@ public:
   static void ComputeMetricValueInRegionThreaded(
                                   const ImageRegionType & regionForThread,
                                   int threadId,
-                                  Self *holder )
+                                  void *inHolder )
   {
     //    std::cout << regionForThread << std::endl;
     InternalComputationValueType local_metric;
+    Self * holder = static_cast<Self*>(inHolder);
     holder->m_MeasurePerThread[threadId] =
       NumericTraits<InternalComputationValueType>::Zero;
     /** Compute one iteration of the metric */
-    local_metric=holder->m_Metric->ComputeMetricAndDerivative(
+    local_metric = holder->m_Metric->ComputeMetricAndDerivative(
                                     regionForThread,
                                     holder->m_DerivativesPerThread[threadId] );
     holder->m_MeasurePerThread[threadId] += local_metric;
   }
 
+  void StartOptimization()
+  {
+    this->BeforeThreadedGenerateData( this->m_NumberOfThreads );
+    this->m_Threader->GenerateData();
+    this->AfterThreadedGenerateData( this->m_NumberOfThreads );
+  }
+
+protected:
+
+  /** Default constructor */
+  ObjectToObjectThreadedMetricOptimizer()
+  {
+    /* Setup threader */
+    this->m_Threader = ThreaderType::New();
+    this->m_Threader->SetHolder( static_cast<void*>(this) );
+    this->m_Threader->ThreadedGenerateData =
+      Self::ComputeMetricValueInRegionThreaded;
+    this->SetNumberOfThreads(1);
+
+    this->m_Metric = NULL;
+  }
+
+  virtual ~ObjectToObjectThreadedMetricOptimizer(){}
+
 private:
+
   MetricTypePointer       m_Metric;
   DerivativeType          m_GlobalDerivative;
+  ThreaderTypePointer     m_Threader;
+
+  int                     m_NumberOfThreads;
+  ImageRegionType         m_OverallRegion;
 
   std::vector< DerivativeType >               m_DerivativesPerThread;
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
+
+  //purposely not implemented
+  ObjectToObjectThreadedMetricOptimizer( const Self & );
+  void operator=( const Self& );      //purposely not implemented
 
 };
 
