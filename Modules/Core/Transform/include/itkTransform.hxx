@@ -72,6 +72,58 @@ std::string Transform< TScalarType, NInputDimensions, NOutputDimensions >
   n << "_" << this->GetInputSpaceDimension() << "_" << this->GetOutputSpaceDimension();
   return n.str();
 }
+
+/**
+ * UpdateTransformParameters
+ */
+template< class TScalarType,
+          unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::UpdateTransformParameters( DerivativeType & update,
+                              TScalarType factor,
+                              unsigned int i,
+                              unsigned int j )
+{
+  if( update.Size() != this->GetNumberOfParameters() )
+    {
+    itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
+                      " be same as transform parameter size, "
+                      << this->GetNumberOfParameters() << std::endl);
+    }
+  if( j >= this->GetNumberOfParameters() )
+    {
+    itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
+                      "], is out of range: "
+                      << this->GetNumberOfParameters() << std::endl);
+    }
+  if ( i == 0 && j == 0 )
+    {
+    j = this->GetNumberOfParameters() - 1;
+    }
+  if( factor == 1.0 )
+    {
+    for (unsigned int k=i; k<=j; k++)
+      this->m_Parameters[k] += update[k];
+    }
+  else
+    {
+    for (unsigned int k=i; k<=j; k++)
+      this->m_Parameters[k] += update[k] * factor;
+    }
+
+  /* Call SetParameters with the updated parameters.
+   * SetParameters in most transforms is used to assign the input params
+   * to member variables, possibly with some processing. The member variables
+   * are then used in TransformPoint.
+   * In the case of dense-field transforms that are updated in blocks from
+   * a threaded implementation, SetParameters doesn't do this, and is
+   * optimized to not copy the input parameters when == m_Parameters.
+   */
+  this->SetParameters( this->m_Parameters );
+}
+
 } // end namespace itk
 
 #endif

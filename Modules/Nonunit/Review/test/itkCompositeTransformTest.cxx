@@ -675,7 +675,7 @@ int itkCompositeTransformTest(int ,char *[] )
     update[i] = i;
     truth[i] += update[i];
     }
-  compositeTransform->UpdateTransformParameters( update, 2, 4 );
+  compositeTransform->UpdateTransformParameters( update, 1.0, 2, 4 );
   updateResult = compositeTransform->GetParameters();
   std::cout << "Testing UpdateTransformParameters 2. "
             << std::endl;
@@ -686,20 +686,20 @@ int itkCompositeTransformTest(int ,char *[] )
               << " result: " << updateResult << std::endl;
     return EXIT_FAILURE;
     }
-  /* Update partially over two transforms */
+  /* Update partially over two transforms, with a scaling factor */
   compositeTransform->SetNthTransformToOptimizeOn(0);
   truth = compositeTransform->GetParameters();
   update.SetSize( compositeTransform->GetNumberOfParameters() );
-  update.Fill(0);
   unsigned int i =
     compositeTransform->GetNthTransform(0)->GetNumberOfParameters() / 2;
   unsigned int j = compositeTransform->GetNumberOfParameters() - i - 1;
+  AffineType::ScalarType factor = 0.5;
   for( unsigned int ii = i; ii <= j; ii++ )
     {
     update[ii] = i;
-    truth[ii] += update[ii];
+    truth[ii] += update[ii] * factor;
     }
-  compositeTransform->UpdateTransformParameters( update, i, j );
+  compositeTransform->UpdateTransformParameters( update, factor, i, j );
   updateResult = compositeTransform->GetParameters();
   std::cout << "Testing UpdateTransformParameters 3. "
             << std::endl;
@@ -778,13 +778,12 @@ int itkCompositeTransformTest(int ,char *[] )
   truth = compositeTransform->GetParameters();
   unsigned int ii = 2, jj = compositeTransform->GetNumberOfParameters() - 2;
   update.SetSize( compositeTransform->GetNumberOfParameters() );
-  update.Fill(0);
-  for( unsigned int i =0; i <= jj; i++ )
+  for( unsigned int i = ii; i <= jj; i++ )
     {
     update[i] = i;
+    truth[i] += update[i];
     }
-  truth += update;
-  compositeTransform->UpdateTransformParameters( update );
+  compositeTransform->UpdateTransformParameters( update, 1.0, ii, jj );
   updateResult = compositeTransform->GetParameters();
   if( ! testVectorArray( truth, updateResult ) )
     {
