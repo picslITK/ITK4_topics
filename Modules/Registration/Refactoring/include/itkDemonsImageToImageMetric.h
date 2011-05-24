@@ -115,7 +115,10 @@ public:
   itkGetMacro(MovingImage, MovingImagePointer);
 
 
-  virtual unsigned int GetNumberOfParameters() const { return 0; }
+  virtual unsigned int GetNumberOfParameters() const
+  {
+    return this->m_MovingImageTransform->GetNumberOfParameters();
+  }
 
   virtual MeasureType GetValue( const ParametersType & parameters ) const { return 0; }
 
@@ -165,11 +168,11 @@ public:
     /** This should be set if the image vector length is nonzero! */
     this->m_InputImageVectorLength=1;
     DerivativeType localDerivative(this->m_MovingImageTransform->GetNumberOfLocalParameters());
-    std::cout <<" alloced local derivative of size " << localDerivative.Size()<< std::endl;
+    std::cout <<"Demons: alloced local derivative of size " << localDerivative.Size()<< std::endl;
     typedef typename MovingImageType::OffsetValueType OffsetValueType;
     TransformJacobianType jacobian(FixedImageDimension,this->m_MovingImageTransform->GetNumberOfLocalParameters());
     jacobian.Fill(0);
-    std::cout <<" alloced jacobian " << std::endl;
+    std::cout <<"Demons: alloced jacobian " << std::endl;
     /** TODO
      *  1. Define derivative type and how to access its entries
      *  2. How do we compute image gradients in both moving & fixed space for both

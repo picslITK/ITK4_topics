@@ -105,7 +105,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   transformMdeformation->SetInverseDeformationField(fieldInv);
 
   transformMComp->AddTransform(transformMtranslation);
-  //transformMComp->AddTransform(transformMdeformation);
+//  transformMComp->AddTransform(transformMdeformation);
   transformFComp->AddTransform(transformFId);
   typedef itk::DemonsImageToImageMetric<ImageType,ImageType> ObjectMetricType;
   typedef ObjectMetricType::Pointer MetricTypePointer;
@@ -122,6 +122,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   // Compute one iteration of the metric
   objectMetric->Initialize();
 
+  /* The threader type might be definable w/in the optimizer ? */
   typedef itk::ImageToData<ImageDimension>      MetricThreaderType;
   typedef itk::ObjectToObjectThreadedMetricOptimizer<
                                                 ObjectMetricType,
@@ -139,7 +140,7 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
 
   metricOptimizer->StartOptimization();
 
-  float energy = static_cast<float> (metricOptimizer->AccumulateMeasuresFromAllThreads());
+  float energy = static_cast<float> ( metricOptimizer->GetValue() );
 
   std::cout << "metric = " << energy << std::endl;
   return EXIT_FAILURE; //not yet a full test

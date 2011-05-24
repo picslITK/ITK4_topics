@@ -20,126 +20,83 @@
 #ifndef __itkImageToData_h
 #define __itkImageToData_h
 
-#include "itkProcessObject.h"
+#include "itkObjectToDataBase.h"
 #include "itkImage.h"
 
 namespace itk
 {
 
 /** \class ImageToData
- *  \brief Base class for all process objects that output image data.
+ *  \brief Class for custom threading setup and dispatch of Image data.
  *
- * ImageToData is the base class for all process objects that output
- * image data. Specifically, this class defines the GetOutput() method
- * that returns a pointer to the output image. The class also defines
- * some internal private data members that are used to manage streaming
- * of data.
+ * This class provides threading over an ImageRegion.
+ * The SplitRequestedObject method splits the provided ImageRegion into
+ * subregions, along the z-axis (?) ... details on motivation?
  *
- * Memory management in an ImageToData is slightly different than a
- * standard ProcessObject.  ProcessObject's always release the bulk
- * data associated with their output prior to GenerateData() being
- * called. ImageSources default to not releasing the bulk data incase
- * that particular memory block is large enough to hold the new output
- * values.  This avoids unnecessary deallocation/allocation
- * sequences. ImageToData's can be forced to use a memory management
- * model similar to the default ProcessObject behaviour by calling
- * ProcessObject::ReleaseDataBeforeUpdateFlagOn().  A user may want to
- * set this flag to limit peak memory usage during a pipeline update.
+ * Call SetOverallRegion to define the ImageRegion over which to thread.
+ * Call SetThreadedGenerateData to define the worker callback function,
+ *  which is called from each thread with a unique region to process.
+ * Call SetHolder to provide a class instance...
  *
+ * This class is templated over image dimension. The second template
+ * parameter should always be left as default.
+ *
+ * \sa ObjectToDataBase
  * \ingroup DataSources
  */
 
 
-
-template <unsigned int VDimension>
-class ITK_EXPORT ImageToData : public ProcessObject
+template <unsigned int VDimension,
+          typename TInputObject = ImageRegion<VDimension> >
+class ITK_EXPORT ImageToData : public ObjectToDataBase<TInputObject>
 {
 public:
   /** Standard class typedefs. */
-  typedef ImageToData               Self;
-  typedef ProcessObject             Superclass;
-  typedef SmartPointer<Self>        Pointer;
-  typedef SmartPointer<const Self>  ConstPointer;
+  typedef ImageToData                      Self;
+  typedef ObjectToDataBase<TInputObject>   Superclass;
+  typedef SmartPointer<Self>               Pointer;
+  typedef SmartPointer<const Self>         ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
-
-  /** Smart Pointer type to a DataObject. */
-  typedef DataObject::Pointer DataObjectPointer;
-
   /** Run-time type information (and related methods). */
-  itkTypeMacro(ImageToData,ProcessObject);
+  itkTypeMacro(ImageToData,Superclass);
+
+  /** Type of the object being threaded over */
+  typedef typename Superclass::InputObjectType  InputObjectType;
 
   /** Some convenient typedefs. */
   // typedef TImageRegion ImageRegionType;
   itkStaticConstMacro(ImageDimension, unsigned int, VDimension);
 
-  typedef ImageRegion<VDimension> ImageRegionType;
-  typedef Size<VDimension> SizeType;
-  typedef Index<VDimension> IndexType;
+  typedef ImageRegion<VDimension>   ImageRegionType;
+  typedef Size<VDimension>          SizeType;
+  typedef Index<VDimension>         IndexType;
 
-// http://www.parashift.com/c++-faq-lite/pointers-to-members.html
-//  [33.2] How do I pass a pointer-to-member-function to a signal handler, X event callback, system call that starts a thread/task, etc?
-//  Don't.
-//  so this call back function has to be define outside of the class OR use static function instead
-//
-//  Note: static member functions do not require an actual object to be invoked,
-//  so pointers-to-static-member-functions are usually type-compatible with regular
-//  pointers-to-functions. However, although it probably works on most compilers, it
-//  actually would have to be an extern "C" non-member function to be correct,
-//  since "C linkage" doesn't only cover things like name mangling, but also calling
-//  conventions, which might be different between C and C++.
-  typedef void (*ThreadedGenerateDataFuncType)(const ImageRegionType&,
-                                    int ,
-                                    void *);
-
-  ThreadedGenerateDataFuncType ThreadedGenerateData;
-  virtual void GenerateData();
-
-  itkSetMacro( OverallRegion, ImageRegionType );
-
-  void SetHolder( void* holder )
-    {
-    if( this->m_Holder != holder )
-      {
-      this->m_Holder = holder;
-      this->Modified();
-      }
-    }
+  /** Set the overall image region over which to operate.
+   * This is equivalent to SetOverallObject, but named more intuitively
+   * for this derived class. */
+  virtual void SetOverallRegion(  ImageRegionType& region )
+  { this->SetOverallObject( region ); }
 
 protected:
   ImageToData();
   virtual ~ImageToData() {}
 
-
-  /** Split the output's RequestedRegion into "num" pieces, returning
-   * region "i" as "splitRegion". This method is called "num" times. The
-   * regions must not overlap. The method returns the number of pieces that
-   * the routine is capable of splitting the output RequestedRegion,
-   * i.e. return value is less than or equal to "num". */
+  /** Split the ImageRegion \c overallRegion into \c requestedTotal subregions,
+   * returning subregion \c i as \c splitRegion.
+   * This method is called \c requestedTotal times. The
+   * pieces must not overlap. The method returns the number of pieces that
+   * the routine is capable of splitting the output RequestedObject,
+   * i.e. return value is less than or equal to \c requestedTotal. */
   virtual
-  int SplitRequestedRegion(int i, int num, ImageRegionType &overallRegion, ImageRegionType& splitRegion);
-
-
-
-  /** Static function used as a "callback" by the MultiThreader.  The threading
-   * library will call this routine for each thread, which will delegate the
-   * control to ThreadedGenerateData(). */
-  static ITK_THREAD_RETURN_TYPE ThreaderCallback( void *arg );
-
-  /** Internal structure used for passing image data into the threading library */
-  struct ThreadStruct
-    {
-    Pointer Filter;
-    };
-
-  // DataHolderType *m_Holder;
+  int SplitRequestedObject(int i,
+                           int requestedTotal,
+                           InputObjectType& overallRegion,
+                           InputObjectType& splitRegion) const;
 
 private:
-
-  void *            m_Holder;
-  ImageRegionType   m_OverallRegion;
 
   ImageToData(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

@@ -275,7 +275,8 @@ int itkAffineTransformTest(int, char *[])
     if( !testMatrix( aff2->GetMatrix(), matrix2Truth ) ||
         !testVector( aff2->GetOffset(), vector2Truth ) )
       {
-      std::cout << "Composition with anisotropic scaling test failed." << std::endl;
+      std::cout << "Composition with anisotropic scaling test failed."
+                << std::endl;
       return EXIT_FAILURE;
       }
 
@@ -565,6 +566,48 @@ int itkAffineTransformTest(int, char *[])
     paff->SetIdentity();
     paff->Print( std::cout );
 
+    /* Test UpdateTransformParameters */
+    Affine3DType::DerivativeType update( paff->GetNumberOfParameters() );
+    Affine3DType::ParametersType updateTruth;
+    updateTruth = parameters1;
+    for( unsigned int i=0; i<paff->GetNumberOfParameters(); i++ )
+      {
+      update[i] = i/10.0;
+      updateTruth[i] += update[i];
+      }
+    /* Update all the parameters, with default scaling factor of 1 */
+    paff->UpdateTransformParameters( update );
+    parametersRead = paff->GetParameters();
+    for( unsigned int k = 0; k < paff->GetNumberOfParameters(); k++ )
+      {
+      if( updateTruth[k] != parametersRead[k] )
+        {
+        std::cout << "UpdateTransformParameters 1 failed." << std::endl;
+        return EXIT_FAILURE;
+        }
+      }
+    /* Test updating a subset of parameters, with a scaling factor */
+    double factor = 0.5;
+    unsigned int j = paff->GetNumberOfParameters()/2;
+    unsigned int i = 1;
+    for( unsigned int k=i; k<=j; k++ )
+      {
+      update[k] = 100*k;
+      updateTruth[k] += update[k] * factor;
+      }
+    paff->UpdateTransformParameters( update, factor, i, j );
+    parametersRead = paff->GetParameters();
+    for( unsigned int k = 0; k < paff->GetNumberOfParameters(); k++ )
+      {
+      if( updateTruth[k] != parametersRead[k] )
+        {
+        std::cout << "UpdateTransformParameters 2 failed." << std::endl;
+        std::cout << "updateTruth: " << std::endl << updateTruth << std::endl;
+        std::cout << "parametersRead: " << std::endl << parametersRead
+                  << std::endl;
+        return EXIT_FAILURE;
+        }
+      }
 
     {
     // Test SetParameters and GetInverse
