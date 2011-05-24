@@ -533,9 +533,10 @@ template
 <class TScalar, unsigned int NDimensions>
 void
 CompositeTransform<TScalar, NDimensions>
-::UpdateTransformParameters( DerivativeType & update,
-                                        unsigned int i,
-                                        unsigned int j )
+::UpdateTransformParameters(  DerivativeType & update,
+                              ScalarType  factor,
+                              unsigned int i,
+                              unsigned int j )
 {
   /* Update parameters within the sub-transforms set to be optimized.
    * This can span multiple sub-transforms. */
@@ -583,7 +584,7 @@ CompositeTransform<TScalar, NDimensions>
                                   transform->GetNumberOfParameters(), false );
         /* This call will also call SetParameters, so don't need to call it
          * expliclity here. */
-        transform->UpdateTransformParameters( subUpdate, ii, jj );
+        transform->UpdateTransformParameters( subUpdate, factor, ii, jj );
         }
       p0 += pN;
       }

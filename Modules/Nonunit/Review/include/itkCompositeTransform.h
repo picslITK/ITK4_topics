@@ -364,12 +364,21 @@ public:
    * sub-transforms. */
    //virtual void PrepareForUse(void);
 
-  /* Update parameters over an inclusive parameter range [i,j], where
-   * i <= j, and both are less than k, where k is the total number of
-   * parameters. \c update must be the same length as parameters.
-   * Pass i==j==0 to update all parameters (default).
-   * See Superclass for more comments. */
+  /** Update the transform's parameters by the values in \c update.
+   * For the sake of efficiency, we put the
+   * burden of thread-safe use of this function on the developer.
+   * That is, each threads should only update an inclusive sub-range [i,j] of
+   * the transform where i <= j and both are less than  k, where k is the
+   * number of parameters.  If i==j==0 (default) then update all parameters.
+   * We assume \c update is of the same length as Parameters. Throw
+   * exception otherwise.
+   * \c factor is a scalar multiplier for each value in update.
+   * SetParameters is called on each sub-transform, to allow transforms
+   * to perform any required operations on the update parameters, typically
+   * a converion to member variables for use in TransformPoint.
+   */
   virtual void UpdateTransformParameters( DerivativeType & update,
+                                          ScalarType  factor = 1.0,
                                           unsigned int i = 0,
                                           unsigned int j = 0 );
 
