@@ -12,12 +12,16 @@ CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Tes
 
 add_test(NAME itkNewClassExampleTest
       COMMAND ITK-RegistrationRefactoringTestDriver itkNewClassExampleTest)
+
 add_test(NAME itkTransformVirtualDomainCalculatorTest2D
       COMMAND ITK-RegistrationRefactoringTestDriver itkTransformVirtualDomainCalculatorTest 2 ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm)
+
 add_test(NAME itkTransformVirtualDomainCalculatorTest3D
       COMMAND ITK-RegistrationRefactoringTestDriver itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd)
+
 add_test(NAME itkDemonsImageToImageMetricTest
-      COMMAND ITK-RegistrationRefactoringTestDriver itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd)
+      COMMAND ITK-RegistrationRefactoringTestDriver itkDemonsImageToImageMetricTest ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd 2)
+
 add_test(NAME itkDeformationFieldTransformRegistrationTest
           COMMAND ITK-RegistrationRefactoringTestDriver
             itkDeformationFieldTransformRegistrationTest)

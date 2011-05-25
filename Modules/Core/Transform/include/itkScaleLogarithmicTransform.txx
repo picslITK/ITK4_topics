@@ -49,7 +49,11 @@ ScaleLogarithmicTransform< ScalarType, NDimensions >
     {
     scales[i] = vcl_exp(parameters[i]);
     }
-  this->m_Parameters = parameters;
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
   this->SetScale(scales);
 
   // Modified is always called since we just have a pointer to the

@@ -122,27 +122,26 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   // Compute one iteration of the metric
   objectMetric->Initialize();
 
-  typedef itk::ObjectToObjectThreadedMetricOptimizer<ObjectMetricType> MetricThreadedOptimizerType;
-  typedef itk::ImageToData<ImageDimension, MetricThreadedOptimizerType> MetricThreaderType;
+  typedef itk::ImageToData<ImageDimension>      MetricThreaderType;
+  typedef itk::ObjectToObjectThreadedMetricOptimizer<
+                                                ObjectMetricType,
+                                                MetricThreaderType>
+                                                  MetricThreadedOptimizerType;
   itk::Size<ImageDimension> neighborhood_radius;
   neighborhood_radius.Fill(0);
 
   // pseudo code
-  MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
-  MetricThreadedOptimizerType metricOptimizer;
-  metricOptimizer.metric = objectMetric;
+  MetricThreadedOptimizerType::Pointer metricOptimizer = MetricThreadedOptimizerType::New();
+  metricOptimizer->SetMetric( objectMetric );
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
-  metricThreader->SetNumberOfThreads(number_of_threads);
-  metricThreader->m_OverallRegion = inboundary_region ;
-  metricThreader->m_Holder = &metricOptimizer;
-  metricThreader->ThreadedGenerateData = MetricThreadedOptimizerType::ComputeMetricValueInRegionThreaded;
-  metricOptimizer.BeforeThreadedGenerateData(number_of_threads);
-  metricThreader->GenerateData();
-  metricOptimizer.AfterThreadedGenerateData(number_of_threads);
+  metricOptimizer->SetOverallRegion( inboundary_region );
+  metricOptimizer->SetNumberOfThreads(number_of_threads);
 
-  float energy = static_cast<float> (metricOptimizer.AccumulateMeasuresFromAllThreads());
+  metricOptimizer->StartOptimization();
+
+  float energy = static_cast<float> (metricOptimizer->AccumulateMeasuresFromAllThreads());
 
   std::cout << "metric = " << energy << std::endl;
-  return 1;
+  return EXIT_FAILURE; //not yet a full test
 
 }

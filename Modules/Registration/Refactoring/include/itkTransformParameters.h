@@ -64,13 +64,11 @@ public:
   /** Initialize. Initialization called by constructors. */
   void Initialize();
 
-  /** Set a new data pointer for the parameter data (an TransformParameters
-   * type itself for this base class), pointing it to a different memory block.
-   * The size of the new memory block must equal the current size,
-   * in elements of TValueType.
+  /** Set a new data pointer for the parameter data, pointing it to a different
+   * memory block. The size of the new memory block must equal the current
+   * size, in elements of TValueType.
    * This call is passed to the assigned TransformParametersHelper.
-   * \warning Memory must be managed by caller after this call.
-   */
+   * \warning Memory must be managed by caller after this call. */
   virtual void MoveDataPointer( TValueType * pointer )
     {
     if( m_Helper == NULL )

@@ -429,6 +429,12 @@ template< class TScalarType, unsigned int NDimensions >
 void
 KernelTransform< TScalarType, NDimensions >::SetParameters(const ParametersType & parameters)
 {
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   typename PointsContainer::Pointer landmarks = PointsContainer::New();
   const unsigned int numberOfLandmarks =  parameters.Size() / NDimensions;
   landmarks->Reserve(numberOfLandmarks);

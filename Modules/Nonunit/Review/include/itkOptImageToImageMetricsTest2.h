@@ -83,6 +83,10 @@ public:
 
     //Verify that Initialize has properly called
     //MultiThreadingInitialize() and a series of CreateAnother();
+    /*
+    NOTE: ImageToImageMetric is no longer cloning the transform
+    for threaded use, at least during development of new registration
+    framework.
 
     typedef typename MetricType::TransformPointer TransformPointer;
     const TransformPointer *transformPtr= metric->GetThreaderTransform();
@@ -91,6 +95,7 @@ public:
       {
       exit(EXIT_FAILURE);
       }
+    */
     }
     //Other registration functionality tested in
     //OptImageToImageTest.cxx... skip the rest

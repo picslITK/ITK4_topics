@@ -65,6 +65,12 @@ CenteredEuler3DTransform< TScalarType >
 {
   itkDebugMacro(<< "Setting parameters " << parameters);
 
+  //Save parameters
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   const ScalarType angleX = parameters[0];
   const ScalarType angleY = parameters[1];
   const ScalarType angleZ = parameters[2];

@@ -65,11 +65,11 @@ public:
   virtual void MoveDataPointer(CommonContainerType* container,
                                TValueType * pointer );
 
-  /** Set an image that holds the parameter data. 'container' is a pointer
-   * to the itkArray within the object to which this helper is assigned,
-   * and will be pointed
-   * to the image data buffer, and set not to manage memory, so the image
-   * still manages its memory.
+  /** Set an image that holds the parameter data. \c container is a pointer
+   * of type itkArray to the object to which this helper is assigned.
+   *\c container will be pointed to the image data buffer, and set not to
+   * manage memory, so the image still manages its memory.
+   * A dynamic cast is performed on \c object to make sure its of proper type.
    * Generally this will be called from
    * TransformParameters::SetParameterObject. */
   virtual void SetParametersObject(CommonContainerType * container,

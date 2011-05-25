@@ -43,11 +43,15 @@ public:
   /** Default constructor. Nothing to do. */
   TransformParametersHelper(){}
 
-  /** Set a new data pointer for the parameter data (a TransformParameters
-   * type itself for this base class), pointing it to a different memory block.
-   * The size of the new memory block must equal the current size,
-   * in elements of TValueType.
+  /** Set a new data pointer for the parameter data, pointing it to a different
+   * memory block. The size of the new memory block must equal the current
+   * size, in elements of TValueType.
+   * This call is passed to the assigned TransformParametersHelper.
    * \warning Memory must be managed by caller after this call.
+   * \c container is the TransformParameters object to which this helper
+   * is assigned.
+   * Generally this will be called from the TransformParameters object to
+   * which this helper is assigned.
    */
   virtual void MoveDataPointer(CommonContainerType* container,
                                TValueType * pointer )

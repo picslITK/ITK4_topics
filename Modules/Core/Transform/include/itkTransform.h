@@ -98,7 +98,7 @@ public:
   /** Type of the input parameters. */
   typedef  typename Superclass::ParametersType      ParametersType;
   typedef  typename Superclass::ParametersValueType ParametersValueType;
-  typedef Array< ParametersValueType > DerivativeType;
+  typedef  Array< ParametersValueType >             DerivativeType;
 
   /** Type of the Jacobian matrix. */
   typedef  Array2D< TScalarType > JacobianType;
@@ -230,21 +230,43 @@ public:
                                                     JacobianType &j) const = 0;
 
   /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
-   *  That is, each threads should only update a sub-range of the transform where i < j and both are less
+   *  That is, each threads should only update an inclusive sub-range [i,j] of the transform where i <= j and both are less
    *  than  k, where k is the number of parameters.  If i==j==0 then update all parameters.
    *  We assume Derivatives are of the same length as Parameters.  Throw exception otherwise.
    */
-  /** FIXME: should be pure virtual */
-  virtual void UpdateTransformParameters( DerivativeType update ,
-                                          unsigned long i=0 ,
-                                          unsigned long j=0 )
+  /** FIXME: should be pure virtual? */
+  virtual void UpdateTransformParameters( DerivativeType & update ,
+                                          unsigned int i=0 ,
+                                          unsigned int j=0 )
   {
+    if( update.Size() != this->GetNumberOfParameters() )
+      {
+      itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
+                        " be same as transform parameter size, "
+                        << this->GetNumberOfParameters() << std::endl);
+      }
+    if( j >= this->GetNumberOfParameters() )
+      {
+      itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
+                        "], is out of range: "
+                        << this->GetNumberOfParameters() << std::endl);
+      }
     if ( i == 0 && j == 0 )
       for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
-        this->m_Parameters[k]+=update[k];
+        this->m_Parameters[k] += update[k];
     else
-      for (unsigned int k=i; k<j; k++)
-        this->m_Parameters[k]+=update[k];
+      for (unsigned int k=i; k<=j; k++)
+        this->m_Parameters[k] += update[k];
+
+    /* Call SetParameters with the updated parameters.
+     * SetParameters in most transforms is used to assign the input params
+     * to member variables, possibly with some processing. The member variables
+     * are then used in TransformPoint.
+     * In the case of dense-field transforms that are updated in blocks from
+     * a threaded implementation, SetParameters doesn't do this, and is
+     * optimized to not copy the input parameters when they are m_Parameters.
+     */
+    this->SetParameters( this->m_Parameters );
   }
 
   /** Return the number of local parameters that completely defines the Transfom
@@ -301,8 +323,6 @@ public:
    * in ResampleImageFilter.
    */
   virtual bool IsLinear() const { return false; }
-
-
 
   /** Indicates if this transform is a "global" transform
    *  e.g. an affine transform or a local one, e.g. a deformation field.

@@ -44,6 +44,12 @@ CenteredSimilarity2DTransform< TScalarType >
 {
   itkDebugMacro(<< "Setting parameters " << parameters);
 
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
+
   // Set scale
   const TScalarType scale = parameters[0];
   this->SetVarScale(scale);

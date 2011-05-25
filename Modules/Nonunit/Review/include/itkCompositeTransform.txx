@@ -273,7 +273,9 @@ CompositeTransform<TScalar, NDimensions>
     TransformQueueType transforms = this->GetTransformsToOptimizeQueue();
     if( transforms.size() == 1 )
     {
-        this->m_Parameters = transforms[0]->GetParameters();
+      // Return directly to avoid copying. Most often we'll have only a single
+      // active transform, so we'll end up here.
+      return transforms[0]->GetParameters();
     }
     else
     {
@@ -281,7 +283,6 @@ CompositeTransform<TScalar, NDimensions>
          * it's efficient. */
         this->m_Parameters.SetSize( this->GetNumberOfParameters() );
 
-        ParametersType    subParameters;
         unsigned int      offset = 0;
         typename TransformQueueType::const_iterator it;
 
@@ -289,7 +290,7 @@ CompositeTransform<TScalar, NDimensions>
         do
         {
             it--;
-            subParameters = (*it)->GetParameters();
+            const ParametersType & subParameters = (*it)->GetParameters();
             /* use vnl_vector data_block() to get data ptr */
             memcpy( &(this->m_Parameters.data_block())[offset],
                     subParameters.data_block(),
@@ -309,6 +310,9 @@ void
 CompositeTransform<TScalar, NDimensions>
 ::SetParameters(const ParametersType & inputParameters)
  {
+    /* We do not copy inputParameters into m_Parameters,
+     * to avoid unnecessary copying. */
+
     /* Assumes input params are concatenation of the parameters of the
      sub transforms currently selected for optimization, in
      the order of the queue from begin() to end(). */
@@ -321,33 +325,54 @@ CompositeTransform<TScalar, NDimensions>
                 << inputParameters.Size() << " instead of "
                 << this->GetNumberOfParameters() << ".");
     }
-    this->m_Parameters = inputParameters;
 
     if( transforms.size() == 1 )
-    {
-        transforms[0]->SetParameters(this->m_Parameters);
-    }
-    else
-    {
-        ParametersType    subParameters;
-        unsigned int      offset = 0;
-        typename TransformQueueType::const_iterator it;
-
-        it = transforms.end();
-        do
+      {
+      /* Avoid unnecessary copying. See comments below */
+      if( &inputParameters == &this->m_Parameters )
         {
-            it--;
-            subParameters = (*it)->GetParameters();
-            /* Use vnl_vector data_block() to get data ptr */
-            memcpy( subParameters.data_block(),
-                    &(this->m_Parameters.data_block())[offset],
-                    subParameters.Size()
-                    * sizeof( ParametersValueType ) );
-            /* Call SetParameters explicitly to include anything extra it does */
-            (*it)->SetParameters(subParameters);
-            offset += subParameters.Size();
+        transforms[0]->SetParameters( transforms[0]->GetParameters() );
+        }
+      else
+        {
+        transforms[0]->SetParameters(inputParameters);
+        }
+      }
+    else
+      {
+      unsigned int      offset = 0;
+      typename TransformQueueType::const_iterator it;
+
+      it = transforms.end();
+      do
+        {
+        it--;
+
+        /* If inputParams is same object as m_Parameters, we just pass
+         * each sub-transforms own m_Parameters in. This is needed to
+         * avoid unnecessary copying of parameters in the sub-transforms,
+         * while still allowing SetParameters to do any oeprations on the
+         * parameters to update member variable states. A hack. */
+        ParametersType & subParameters =
+          const_cast<ParametersType&>( (*it)->GetParameters() );
+        if( &inputParameters == &this->m_Parameters )
+          {
+          (*it)->SetParameters( subParameters );
+          }
+        else
+          {
+          /* New parameter data, so copy it in */
+          /* Use vnl_vector data_block() to get data ptr */
+          memcpy( subParameters.data_block(),
+                  &(inputParameters.data_block())[offset],
+                  subParameters.Size()
+                  * sizeof( ParametersValueType ) );
+          /* Call SetParameters explicitly to include anything extra it does */
+          (*it)->SetParameters(subParameters);
+          offset += subParameters.Size();
+          }
         } while (it != transforms.begin() );
-    }
+      }
     return;
  }
 
@@ -362,7 +387,6 @@ CompositeTransform<TScalar, NDimensions>
      * it's efficient. */
     this->m_FixedParameters.SetSize( this->GetNumberOfFixedParameters() );
 
-    ParametersType    subFixedParameters;
     unsigned int      offset = 0;
     typename TransformQueueType::const_iterator it;
 
@@ -370,7 +394,7 @@ CompositeTransform<TScalar, NDimensions>
     do
     {
         it--;
-        subFixedParameters = (*it)->GetFixedParameters();
+        const ParametersType & subFixedParameters = (*it)->GetFixedParameters();
         /* use vnl_vector data_block() to get data ptr */
         memcpy( &(this->m_FixedParameters.data_block())[offset],
                 subFixedParameters.data_block(),
@@ -392,7 +416,6 @@ CompositeTransform<TScalar, NDimensions>
      sub transforms currently selected for optimization. */
     TransformQueueType transforms = this->GetTransformsToOptimizeQueue();
 
-    ParametersType    subFixedParameters;
     unsigned int      offset = 0;
     typename TransformQueueType::const_iterator it;
 
@@ -411,7 +434,8 @@ CompositeTransform<TScalar, NDimensions>
     do
     {
         it--;
-        subFixedParameters = (*it)->GetFixedParameters();
+        ParametersType & subFixedParameters =
+          const_cast<ParametersType&>( (*it)->GetFixedParameters() );
         /* Use vnl_vector data_block() to get data ptr */
         memcpy( subFixedParameters.data_block(),
                 &(this->m_FixedParameters.data_block())[offset],
@@ -493,56 +517,53 @@ CompositeTransform<TScalar, NDimensions>
      * NOTE: We might want to optimize this only to store the result and
      * only re-calc when the composite object has been modified. */
     unsigned int result = 0;
-    typename TransformQueueType::iterator it;
-    TransformQueueType transforms = this->GetTransformsToOptimizeQueue();
+    TransformTypePointer transform;
 
-    for( it = transforms.begin(); it != transforms.end(); ++it )
-    {
-        result += (*it)->GetFixedParameters().Size();
-    }
-
+    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+            tind >= 0; tind-- )
+      {
+      if( this->GetNthTransformToOptimize( tind ) )
+        {
+        transform = this->GetNthTransform( tind );
+        result += transform->GetFixedParameters().Size();
+        }
+      }
     return result;
  }
 
 template
 <class TScalar, unsigned int NDimensions>
-typename CompositeTransform< TScalar, NDimensions >::TransformQueueType &
-CompositeTransform<TScalar, NDimensions>
-::GetTransformsToOptimizeQueue() const
- {
-    /* Update the list of transforms to use for optimization only if
-     the selection of transforms to optimize may have changed */
-    if( this->GetMTime() > this->m_PreviousTransformsToOptimizeUpdateTime )
-    {
-        this->m_TransformsToOptimizeQueue.clear();
-        for( size_t n=0; n < this->m_TransformQueue.size(); n++ )
-        {
-            /* Return them in the same order as they're found in the main list */
-            if( this->GetNthTransformToOptimize( n ) )
-            {
-                this->m_TransformsToOptimizeQueue.push_back( m_TransformQueue[n] );
-            }
-        }
-        this->m_PreviousTransformsToOptimizeUpdateTime = this->GetMTime();
-    }
-    return this->m_TransformsToOptimizeQueue;
- }
-
-/*
-template <class TScalarType, unsigned int NDimensions>
 void
-CompositeTransform<TScalarType, NDimensions>::
-UnifyParameterMemory(void)
+CompositeTransform<TScalar, NDimensions>
+::UpdateTransformParameters( DerivativeType & update,
+                                        unsigned int i,
+                                        unsigned int j )
 {
-  // For now, order the parameters in reverse queue order, as is done
-  // in GetParameters. This might change in near future.
+  /* Update parameters within the sub-transforms set to be optimized.
+   * This can span multiple sub-transforms. */
+  unsigned int numberOfParameters = this->GetNumberOfParameters();
+
+  if( update.Size() != numberOfParameters )
+    {
+    itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
+                      " be same as transform parameter size, "
+                      << numberOfParameters << std::endl);
+    }
+  /* Note that i & j are inclusive */
+  if( j >= numberOfParameters )
+    {
+    itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
+                      "], is out of range, "
+                      << numberOfParameters << std::endl);
+    }
+
+  if( i == 0 && j == 0 )
+    {
+    j = numberOfParameters-1;
+    }
+
+  unsigned int p0 = 0;
   TransformTypePointer transform;
-
-  // Resize the parameter memory
-  this->m_Parameters.SetSize( this->GetNumberOfParameters() );
-
-  ParametersType &  subParameters;
-  unsigned int      offset = 0;
 
   for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
           tind >= 0; tind-- )
@@ -550,23 +571,73 @@ UnifyParameterMemory(void)
     if( this->GetNthTransformToOptimize( tind ) )
       {
       transform = this->GetNthTransform( tind );
-      // Copy the transform's parameters
-      subParameters = transform->GetParameters();
-      // use vnl_vector data_block() to get data ptr
-      memcpy( &(this->m_Parameters.data_block())[offset],
-              subParameters.data_block(),
-              subParameters.Size()
-              * sizeof( ParametersValueType ) );
-      offset += subParameters.Size();
-      // Redirect the sub-transform's parameter member to point to
-      // the data within the unified block
-      subParameters =
+      unsigned int pN = transform->GetNumberOfParameters();
+      unsigned int p1 = p0 + pN - 1;
+      unsigned int ii, jj;
+      /* Does the update range fall within this transform? */
+      if( i <= p1 && j >= p0 )
+        {
+        /* Calc indecies for sub-transform parameter array */
+        ii = ( i > p0 ) ? i-p0 : 0;
+        jj = ( p1 < j ) ? p1-p0 : j-p0;
+        /* Create an array that points to subregion in input array */
+        DerivativeType subUpdate( &((update.data_block())[p0]),
+                                  transform->GetNumberOfParameters(), false );
+        /* This call will also call SetParameters, so don't need to call it
+         * expliclity here. */
+        transform->UpdateTransformParameters( subUpdate, ii, jj );
+        }
+      p0 += pN;
       }
     }
-
-
 }
-*/
+
+/* Get local support flag */
+template
+<class TScalar, unsigned int NDimensions>
+bool
+CompositeTransform<TScalar, NDimensions>
+::HasLocalSupport() const
+{
+  bool result = true;
+  for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+          tind >= 0; tind-- )
+    {
+    if( this->GetNthTransformToOptimize( tind ) )
+      {
+      if( ! this->GetNthTransform( tind )->HasLocalSupport() )
+        {
+        result = false;
+        }
+      }
+    }
+  return result;
+}
+
+
+template
+<class TScalar, unsigned int NDimensions>
+typename CompositeTransform< TScalar, NDimensions >::TransformQueueType &
+CompositeTransform<TScalar, NDimensions>
+::GetTransformsToOptimizeQueue() const
+{
+  /* Update the list of transforms to use for optimization only if
+   the selection of transforms to optimize may have changed */
+  if( this->GetMTime() > this->m_PreviousTransformsToOptimizeUpdateTime )
+  {
+      this->m_TransformsToOptimizeQueue.clear();
+      for( size_t n=0; n < this->m_TransformQueue.size(); n++ )
+      {
+          /* Return them in the same order as they're found in the main list */
+          if( this->GetNthTransformToOptimize( n ) )
+          {
+              this->m_TransformsToOptimizeQueue.push_back( m_TransformQueue[n] );
+          }
+      }
+      this->m_PreviousTransformsToOptimizeUpdateTime = this->GetMTime();
+  }
+  return this->m_TransformsToOptimizeQueue;
+}
 
 template <class TScalarType, unsigned int NDimensions>
 void

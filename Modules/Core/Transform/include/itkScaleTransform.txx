@@ -50,7 +50,11 @@ ScaleTransform< ScalarType, NDimensions >
     {
     m_Scale[i] = parameters[i];
     }
-  this->m_Parameters = parameters;
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
 
   this->ComputeMatrix();
 
