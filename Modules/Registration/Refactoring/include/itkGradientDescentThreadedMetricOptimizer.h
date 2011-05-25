@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkObjectToObjectThreadedMetricOptimizer.h,v $
+  Module:    $RCSfile: itkGradientDescentThreadedMetricOptimizer.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,12 +14,12 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkObjectToObjectThreadedMetricOptimizer_h
-#define __itkObjectToObjectThreadedMetricOptimizer_h
+#ifndef __itkGradientDescentThreadedMetricOptimizer_h
+#define __itkGradientDescentThreadedMetricOptimizer_h
 
 #include "itkPoint.h"
 #include "itkIndex.h"
-#include "itkObjectToObjectThreadedMetricOptimizerBase.h"
+#include "itkGradientDescentThreadedMetricOptimizerBase.h"
 
 namespace itk
 {
@@ -27,14 +27,14 @@ namespace itk
 // functor for threading using the metric function class
 // assuming function has output allocated already
 template<class TMetricFunction, class TMetricThreader>
-class ITK_EXPORT ObjectToObjectThreadedMetricOptimizer
-  : public ObjectToObjectThreadedMetricOptimizerBase< TMetricFunction,
+class ITK_EXPORT GradientDescentThreadedMetricOptimizer
+  : public GradientDescentThreadedMetricOptimizerBase< TMetricFunction,
                                                       TMetricThreader >
 {
 public:
   /** Standard class typedefs. */
-  typedef ObjectToObjectThreadedMetricOptimizer     Self;
-  typedef ObjectToObjectThreadedMetricOptimizerBase < TMetricFunction,
+  typedef GradientDescentThreadedMetricOptimizer     Self;
+  typedef GradientDescentThreadedMetricOptimizerBase < TMetricFunction,
                                                       TMetricThreader >
                                                         Superclass;
   typedef SmartPointer< Self >                      Pointer;
@@ -275,7 +275,7 @@ protected:
   }
 
   /** Default constructor */
-  ObjectToObjectThreadedMetricOptimizer()
+  GradientDescentThreadedMetricOptimizer()
   {
     /* Point the threader to the threading worker callback.
      * The rest of the threader is initialed in Superclass. */
@@ -283,7 +283,7 @@ protected:
       Self::ComputeMetricValueInRegionThreaded );
   }
 
-  virtual ~ObjectToObjectThreadedMetricOptimizer(){}
+  virtual ~GradientDescentThreadedMetricOptimizer(){}
 
 private:
 
@@ -291,7 +291,7 @@ private:
   std::vector< DerivativeType >   m_DerivativesPerThread;
 
   //purposely not implemented
-  ObjectToObjectThreadedMetricOptimizer( const Self & );
+  GradientDescentThreadedMetricOptimizer( const Self & );
   void operator=( const Self& );      //purposely not implemented
 
 };
@@ -299,7 +299,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkObjectToObjectThreadedMetricOptimizer.txx"
+# include "itkGradientDescentThreadedMetricOptimizer.txx"
 #endif
 
 #endif

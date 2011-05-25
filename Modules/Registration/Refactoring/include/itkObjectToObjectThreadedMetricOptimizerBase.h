@@ -54,9 +54,6 @@ public:
   /** Metric type over which this class is templated */
   typedef TMetricFunction                           MetricType;
   typedef typename MetricType::Pointer              MetricTypePointer;
-  /** Metric Threader type */
-  typedef TMetricThreader                           MetricThreaderType;
-  typedef typename MetricThreaderType::Pointer      MetricThreaderTypePointer;
   /** Measure type */
   typedef typename MetricType::MeasureType          MeasureType;
   /** Image region type */
@@ -71,6 +68,9 @@ public:
   typedef typename MetricType::TransformPointer     TransformPointer;
   /** Internal computation type, for maintaining a desired precision */
   typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
+  /** Metric Threader type */
+  typedef TMetricThreader                           MetricThreaderType;
+  typedef typename MetricThreaderType::Pointer      MetricThreaderTypePointer;
 
   /** Accessors for Metric */
   itkGetObjectMacro( Metric, MetricType );

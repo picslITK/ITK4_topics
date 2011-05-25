@@ -15,17 +15,17 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkObjectToObjectThreadedMetricOptimizer_txx
-#define __itkObjectToObjectThreadedMetricOptimizer_txx
+#ifndef __itkRegularStepGradientDescentThreadedMetricOptimizer_txx
+#define __itkRegularStepGradientDescentThreadedMetricOptimizer_txx
 
-#include "itkObjectToObjectThreadedMetricOptimizer.h"
+#include "itkRegularStepGradientDescentThreadedMetricOptimizer.h"
 
 namespace itk
 {
 /** Advance one step in the optimization */
 template<class TMetricFunction, class TThreader>
 void
-ObjectToObjectThreadedMetricOptimizer<TMetricFunction,TThreader>
+RegularStepGradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
 ::AdvanceOneStep()
 {
   //ScalesType &    scales = this->GetScales();
