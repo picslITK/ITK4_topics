@@ -53,11 +53,11 @@ int main(int argc, char** argv){
     ImageReaderType::Pointer imageReader = ImageReaderType::New();
 
 
-    imageReader->SetFileName(argv[0]);
+    imageReader->SetFileName(argv[1]);
     imageReader->Update();
     ImagePointerType fixImage = imageReader->GetOutput();
 
-    imageReader->SetFileName(argv[1]);
+    imageReader->SetFileName(argv[2]);
     imageReader->Update();
     ImagePointerType movImage = imageReader->GetOutput();
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 
 
 template<class CompositeTransformPointerType>
-void CreateCompositeAffineTransform(CompositeTransformPointerType &composite_transform) {
+void CreateCompositeAffineTransform(CompositeTransformPointerType &comp) {
 
     typedef typename CompositeTransformPointerType::ObjectType CompositeTransformType;
     const int Dim = CompositeTransformType::InputDimension;
@@ -110,13 +110,20 @@ void CreateCompositeAffineTransform(CompositeTransformPointerType &composite_tra
     std::cout << "r.trans=" << rotation_transform->GetTranslation() << std::endl;
 
 
-    typename CompositeTransformType::Pointer comp = CompositeTransformType::New();
+//    typename CompositeTransformType::Pointer comp = CompositeTransformType::New();
+
+    comp = CompositeTransformType::New();
 
     // add in the reverse order of applying to the point
     comp->AddTransform(translation_transform);
     comp->AddTransform(rotation_transform);
     comp->AddTransform(scale_transform);
     comp->AddTransform(shear_transform);
+
+
+
+
+
 }
 
 
@@ -136,6 +143,8 @@ void CompositeAffineTransformDemonsRegistrationTest(
     typename CompositeTransformType::Pointer comp = CompositeTransformType::New();
     CreateCompositeAffineTransform(comp);
 
+
+//    std::cout << "debug: dkfja;kdf;lkda " << comp << std::endl;
 
     typedef itk::IdentityTransform<double, Dim> IdentityTransformType;
     typename IdentityTransformType::Pointer identityTransform = IdentityTransformType::New();
@@ -158,7 +167,7 @@ void CompositeAffineTransformDemonsRegistrationTest(
 
 
 
-    int numberOfThreads = 4;
+    int numberOfThreads = 1;
 
     typedef itk::ObjectToObjectThreadedMetricOptimizer<MetricType> OptimizerType;
     typedef itk::ImageToData<Dim, OptimizerType> ThreaderType;

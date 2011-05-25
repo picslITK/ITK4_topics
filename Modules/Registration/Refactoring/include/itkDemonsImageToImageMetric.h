@@ -196,7 +196,16 @@ public:
       PointType mappedPoint;
       PointType mappedMovingPoint;
       this->m_VirtualImage->TransformIndexToPhysicalPoint(ItV.GetIndex(),mappedPoint);
+
+
+//      std::cout << "debug: mappedPoint:" << mappedPoint << std::endl;
+//      std::cout << "debug: moving transform:" << this->m_MovingImageTransform << std::endl;
+
+
       mappedMovingPoint = this->m_MovingImageTransform->TransformPoint(mappedPoint);
+
+
+
       if (  !this->m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint) )
            sampleOk=false;
       if ( sampleOk )
