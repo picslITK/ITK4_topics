@@ -33,6 +33,24 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
    * The rest of the threader is initialed in Superclass. */
   this->m_MetricThreader->SetThreadedGenerateData(
     Self::ComputeMetricValueInRegionThreaded );
+
+  this->m_ModifyGradientThreader->SetThreadedGenerateData(
+    Self::ModifyGradientThreaded );
+
+  m_Maximize = false;
+  m_NumberOfIterations = 100;
+  m_CurrentIteration = 0;
+  m_StopCondition = MaximumNumberOfIterations;
+  m_StopConditionDescription << this->GetNameOfClass() << ": ";
+}
+
+//-------------------------------------------------------------------
+template<class TMetricFunction, class TThreader>
+const std::string
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+::GetStopConditionDescription() const
+{
+  return m_StopConditionDescription.str();
 }
 
 //-------------------------------------------------------------------
@@ -118,6 +136,18 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
   std::cout << " end Initialize " << std::endl;
 }
 
+//-------------------------------------------------------------------
+template<class TMetricFunction, class TThreader>
+void
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+::UpdateMetricValueAndDerivative()
+{
+  this->BeforeMetricThreadedGenerateData();
+  /* Calculate new metric value and derivative with threading. */
+  this->m_MetricThreader->GenerateData();
+  /* Collect metric results from the threads. */
+  this->AfterMetricThreadedGenerateData();
+}
 
 //-------------------------------------------------------------------
 template<class TMetricFunction, class TThreader>
@@ -180,10 +210,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 template<class TMetricFunction, class TThreader>
 void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
-::ComputeMetricValueInRegionThreaded(
-                                  const ImageRegionType & regionForThread,
-                                  int threadId,
-                                  void *inHolder )
+::ComputeMetricValueInRegionThreaded( const ImageRegionType & regionForThread,
+                                      int threadId,
+                                      void *inHolder )
 {
   //    std::cout << regionForThread << std::endl;
   InternalComputationValueType local_metric;
@@ -193,6 +222,18 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
                                   regionForThread,
                                   holder->m_DerivativesPerThread[threadId] );
   holder->m_MeasurePerThread[threadId] = local_metric;
+}
+
+//-------------------------------------------------------------------
+template<class TMetricFunction, class TThreader>
+void
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
+                          int threadId,
+                          void *inHolder )
+{
+  Self * holder = static_cast<Self*>(inHolder);
+  holder->ModifyGradientOverSubRange( rangeForThread );
 }
 
 }//namespace itk

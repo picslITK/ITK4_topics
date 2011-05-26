@@ -77,12 +77,26 @@ public:
   itkSetObjectMacro( Metric, MetricType );
 
   /** Accerssor for metric value */
-  itkGetMacro( Value, InternalComputationValueType );
+  itkGetConstReferenceMacro( Value, InternalComputationValueType );
 
   /** Accessor for Metric Threader */
   itkGetObjectMacro( MetricThreader, MetricThreaderType );
 
-  void SetNumberOfThreads( int number )
+  /** Set current parameters scaling. */
+  void SetScales(const ScalesType & scales)
+  {
+    itkDebugMacro("setting scales to " <<  scales);
+    m_Scales = scales;
+    this->Modified();
+  }
+
+  /** Get current parameters scaling. */
+  itkGetConstReferenceMacro(Scales, ScalesType);
+
+  /** Set the number of threads to use when threading.
+   * This is initialized by default to the global default number of
+   * threads from itkMultiThreader */
+  virtual void SetNumberOfThreads( int number )
   {
     if( number < 1 )
       {
@@ -96,6 +110,7 @@ public:
       }
   }
 
+  /** Set the full image region over which to optimize */
   void SetOverallRegion( ImageRegionType & region )
   {
     m_OverallRegion = region;
@@ -103,16 +118,16 @@ public:
     this->Modified();
   }
 
-public:
-
-  virtual void StartOptimization(){}
+  /** Run the optimization */
+  virtual void StartOptimization() = 0;
 
 protected:
 
   /** Default constructor */
   ObjectToObjectThreadedMetricOptimizerBase()
   {
-    /* Setup Metric threader */
+    /* Setup Metric threader. The callback must be set
+     * from derived class. */
     this->m_MetricThreader = MetricThreaderType::New();
     this->m_MetricThreader->SetHolder( static_cast<void*>(this) );
     this->SetNumberOfThreads( this->m_MetricThreader->
@@ -125,7 +140,9 @@ protected:
   int                           m_NumberOfThreads;
   MetricThreaderTypePointer     m_MetricThreader;
 
-  InternalComputationValueType                m_Value;
+  /** Metric measure value at a given iteration */
+  MeasureType                                 m_Value;
+  /** Intermediary metric value storage. */
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
 
   virtual ~ObjectToObjectThreadedMetricOptimizerBase(){}
@@ -133,6 +150,7 @@ protected:
 private:
 
   ImageRegionType         m_OverallRegion;
+  ScalesType              m_Scales;
 
   //purposely not implemented
   ObjectToObjectThreadedMetricOptimizerBase( const Self & );
