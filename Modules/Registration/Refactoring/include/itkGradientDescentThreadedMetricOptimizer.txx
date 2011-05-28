@@ -22,16 +22,143 @@
 
 namespace itk
 {
-/** Advance one step in the optimization */
+
+/**
+ * Default constructor
+ */
+template<class TMetricFunction, class TThreader>
+void
+GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+::GradientDescentThreadedMetricOptimizer()
+{
+  m_LearningRate = 1.0;
+}
+
+/**
+ * Start and run the optimization
+ */
+template<class TMetricFunction, class TThreader>
+void
+GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+::StartOptimization()
+{
+  itkDebugMacro("StartOptimization");
+
+  m_CurrentIteration   = 0;
+
+  /* Validate some settings */
+  if( this->m_Scales.Size() != this->m_Metric->GetNumberOfParameters() )
+    {
+    m_StopCondition = OtherError;
+    m_StopConditionDescription << "Scales size error";
+    StopOptimization();
+    itkExceptionMacro("Size of scales (" << this->m_Scales.Size()
+                      << ") must match size of parameters (" <<
+                      this->m_Metric->GetNumberOfParameters() << ").");
+    }
+
+  this->ResumeOptimization();
+}
+
+/**
+ * Resume optimization.
+ */
+virtual void ResumeOptimization()
+{
+  /* Do threading initialization here so we can also do some cleanup
+   * when we stop, and still be able to resume. */
+  this->InitializeForThreading();
+
+  m_StopConditionDescription.str("");
+  m_StopConditionDescription << this->GetNameOfClass() << ": ";
+  InvokeEvent( StartEvent() );
+
+  m_Stop = false;
+  while( ! m_Stop )
+    {
+    /* Compute value/derivative, using threader. */
+    try
+      {
+      this->UpdateMetricValueAndDerivative();
+      }
+    catch ( ExceptionObject & err )
+      {
+      m_StopCondition = MetricError;
+      m_StopConditionDescription << "Metric error";
+      StopOptimization();
+
+      // Pass exception to caller
+      throw err;
+      }
+
+    /* Check if optimization has been stopped externally.
+     * (Presumably this could happen from a multi-threaded client app?) */
+    if ( m_Stop )
+      {
+      m_StopConditionDescription << "StopOptimization() called";
+      break;
+      }
+
+    /* Advance one step along the gradient.
+     * This will modify the gradient and update the transform. */
+    this->AdvanceOneStep();
+
+    /* Update and check iteration count */
+    m_CurrentIteration++;
+    if ( m_CurrentIteration >= m_NumberOfIterations )
+      {
+      m_StopConditionDescription << "Maximum number of iterations ("
+                                 << m_NumberOfIterations
+                                 << ") exceeded.";
+      m_StopCondition = MaximumNumberOfIterations;
+      StopOptimization();
+      break;
+      }
+    } //while (!m_Stop)
+}
+
+/**
+ * Advance one Step following the gradient direction
+ */
 template<class TMetricFunction, class TThreader>
 void
 GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
 ::AdvanceOneStep()
 {
-  //ScalesType &    scales = this->GetScales();
+  itkDebugMacro("AdvanceOneStep");
 
+  this->ModifyGradient();
+  this->m_Metric->GetMovingImageTransform()->
+                    UpdateTransformParameters( m_GlobalDerivative );
+  this->InvokeEvent( IterationEvent() );
 }
 
+/**
+ * Modify the gradient over a given index range.
+ */
+template<class TMetricFunction, class TThreader>
+void
+GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+::ModifyGradientOverSubRange( IndexRangeType& subrange )
+{
+  double direction;
+  if ( this->m_Maximize )
+    {
+    direction = 1.0;
+    }
+  else
+    {
+    direction = -1.0;
+    }
+
+  ScalesType& scales = this->GetScales();
+
+  double direction_learning = direction * m_LearningRate;
+  for ( unsigned int j = subrange[0]; j <= subrange[1]; j++ )
+    {
+    m_Gradient[j] = m_Gradient[j] / scales[j] * direction_learning;
+    }
+}
 
 }//namespace itk
 

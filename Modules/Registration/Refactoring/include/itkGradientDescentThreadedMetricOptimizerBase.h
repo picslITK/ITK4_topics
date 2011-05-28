@@ -119,19 +119,9 @@ public:
    * of stopped optimization */
   virtual void ResumeOptimization() = 0;
 
-  /**
-   * Stop optimization
-   */
-  void
-  GradientDescentOptimizer
-  ::StopOptimization(void)
-  {
-    itkDebugMacro("StopOptimization");
-
-    m_Stop = true;
-    InvokeEvent( EndEvent() );
-  }
-
+  /** Stop optimization. The object is left in a state so the
+   * optimization can be resumed by calling ResumeOptimization. */
+  virtual void StopOptimization(void);
 
 protected:
 
@@ -180,8 +170,7 @@ protected:
     /* Perform the modification either with or without threading */
     if( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
       {
-      /* This doesn't require any BeforeThreaded'
-      * or AfterThreaded' processing */
+      /* This ends up calling ModifyGradientThreaded frome each thread */
       this->m_ModifyGradientThreader->GenerateData();
       }
     else
@@ -219,7 +208,7 @@ protected:
 
   /** Cleanup after optimization is complete.
    * Should be called at end of StartOptimization by derived class. */
-  virtual void CleanupAfterOptimization(void);
+  virtual void CleanupFromThreading(void);
 
   /** Get the reason for termination */
   virtual const std::string GetStopConditionDescription() const;

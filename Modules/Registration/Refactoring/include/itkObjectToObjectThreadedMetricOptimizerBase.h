@@ -129,9 +129,11 @@ protected:
     /* Setup Metric threader. The callback must be set
      * from derived class. */
     this->m_MetricThreader = MetricThreaderType::New();
-    this->m_MetricThreader->SetHolder( static_cast<void*>(this) );
+    //this->m_MetricThreader->SetHolder( static_cast<void*>(this) );
+    this->m_MetricThreader->SetHolder( this );
     this->SetNumberOfThreads( this->m_MetricThreader->
       GetMultiThreader()->GetGlobalDefaultNumberOfThreads() );
+
     this->m_Metric = NULL;
     this->m_Value = 0;
   }

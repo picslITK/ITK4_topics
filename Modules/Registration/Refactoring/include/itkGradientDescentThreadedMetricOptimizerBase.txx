@@ -55,9 +55,22 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 
 //-------------------------------------------------------------------
 template<class TMetricFunction, class TThreader>
+const std::string
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+::StopOptimization(void)
+{
+  itkDebugMacro("StopOptimization");
+
+  m_Stop = true;
+  this->CleanupFromThreading();
+  InvokeEvent( EndEvent() );
+}
+
+//-------------------------------------------------------------------
+template<class TMetricFunction, class TThreader>
 void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
-::InitializeThreadingMemory()
+::InitializeForThreading()
 {
   if( this->m_Metric.IsNull() )
     {
@@ -87,15 +100,6 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
     return;
     }
 
-  // Make sure the scales have been set properly
-  if ( m_Scales.size() != dimensions )
-    {
-    itkExceptionMacro(<< "The size of Scales is "
-                      << m_Scales.size()
-                      << ", but the NumberOfParameters for the Metric is "
-                      << dimensions
-                      << ".");
-    }
 */
   //Allocate and initialize memory for holding derivative results.
   this->m_DerivativesPerThread.resize( this->m_NumberOfThreads );
@@ -110,7 +114,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
    * in multiple threads. */
   if ( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
     {
-    std::cout << " Initialize: tx has local support\n";
+    std::cout << " Initialize: tx HAS local support\n";
     for (int i=0; i<this->m_NumberOfThreads; i++)
       {
       this->m_DerivativesPerThread[i].SetData(
@@ -193,10 +197,12 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 template<class TMetricFunction, class TThreader>
 void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
-::CleanupAfterOptimization()
+::CleanupFromThreading()
 {
-  //Free some memory
-  this->m_GlobalDerivative.SetSize(0);
+  // Free some memory used during threading. This probably
+  // doesn't actually amount to much.
+  // We could also free m_GlobalDerivatives by setting its size to 0,
+  // but user may want to examine it when optimization is stopped.
   if ( ! this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
     {
     for (int i=0; i<this->m_NumberOfThreads; i++)

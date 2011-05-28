@@ -22,16 +22,13 @@
 
 #include "itkObjectToDataBase.h"
 
-namespace itk
-{
-
 /** \class Array1DToData
  *  \brief Class for custom threading setup and dispatch of 1D data.
  *
  * This class provides threading over 1D data.
  * The SplitRequestedObject method splits the provided IndexRange into
  * 1 or more inclusive sub-ranges.
- * IndexRange is expected to be an inclusive range, and need
+ * IndexRange is treated as an inclusive range, and need
  * not start at 0.
  *
  * Call SetOverallIndexRange to define the IndexRange over which to thread.
@@ -47,16 +44,18 @@ namespace itk
 
 namespace
 {
-  typedef Index<2>                           TIndexRange;
+  typedef itk::Index<2>                           TIndexRange;
 }
 
+namespace itk
+{
 class ITK_EXPORT Array1DToData
   : public ObjectToDataBase< TIndexRange >
 {
 public:
   /** Standard class typedefs. */
   typedef Array1DToData                      Self;
-  typedef ObjectToDataBase<IndexRangeType>   Superclass;
+  typedef ObjectToDataBase<TIndexRange>      Superclass;
   typedef SmartPointer<Self>                 Pointer;
   typedef SmartPointer<const Self>           ConstPointer;
 
@@ -67,24 +66,17 @@ public:
   itkTypeMacro(Array1DToData,Superclass);
 
   /** Type of the object being threaded over */
-  typedef typename Superclass::InputObjectType  InputObjectType;
   typedef TIndexRange                           IndexRangeType;
+  /** Type for convenience of base class methods */
+  typedef Superclass::InputObjectType  InputObjectType;
 
   /** Set the overall image region over which to operate.
-   * This is equivalent to SetOverallObject, but named more intuitively
+   * This performs some error checking and is named more intuitively
    * for this derived class. */
-  virtual void SetOverallIndexRange(  IndexRangeType& range )
-  {
-    if( range[0] > range[1] )
-      {
-      itkExceptionMacro("Error in range. Begin is less than End: "
-                        << range << ".");
-      }
-    this->SetOverallObject( range );
-  }
+  virtual void SetOverallIndexRange(  IndexRangeType& range );
 
 protected:
-  Array1DToData();
+  Array1DToData(); //use New() method instead of direct instantiation.
   virtual ~Array1DToData() {}
 
   /** Split the ImageRegion \c overallRegion into \c requestedTotal subregions,
@@ -107,11 +99,5 @@ private:
 };
 
 } // end namespace itk
-
-
-
-#ifndef ITK_MANUAL_INSTANTIATION
-# include "itkArray1DToData.txx"
-#endif
 
 #endif

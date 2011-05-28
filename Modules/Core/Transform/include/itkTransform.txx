@@ -122,6 +122,8 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
    * optimized to not copy the input parameters when == m_Parameters.
    */
   this->SetParameters( this->m_Parameters );
+
+  this->Modified();
 }
 
 } // end namespace itk

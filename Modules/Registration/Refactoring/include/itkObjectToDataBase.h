@@ -29,12 +29,18 @@ namespace itk
 /** \class ObjectToDataBase
  *  \brief Virtual base class for specialized threading setup and dispatch.
  *
- *  SplitRequestedObject is a method to split the object into
- *  non-overlapping pieces for threading. Must be overridden by derived
- *  classes to provide the particular funcationality required for
- *  TInputObject type.
+ * SplitRequestedObject is a method to split the object into
+ * non-overlapping pieces for threading. Must be overridden by derived
+ * classes to provide the particular funcationality required for
+ * TInputObject type.
  *
- *  Call SetHolder
+ * Call SetHolder
+ *
+ * \warning The actual number of threads used may be less than the
+ * requested number of threads. Either because the requested number is
+ * greater than the number available, or the SplitRequestedObject method
+ * decides that fewer threads would be more efficient. After the threader
+ * has run, m_numberOfThreadsUsed holds the actual number used.
  *
  * \sa ImageToData
  * \ingroup DataSources
@@ -86,9 +92,7 @@ public:
   /** Set the threaded worker callback. Used by the user class
    * to assign the worker callback. */
   void SetThreadedGenerateData( ThreadedGenerateDataFuncType func )
-    {
-    m_ThreadedGenerateData = func;
-    }
+  { m_ThreadedGenerateData = func; }
 
   /** Set the object holder used during threading. */
   void SetHolder( void* holder )
@@ -99,6 +103,16 @@ public:
       this->Modified();
       }
     }
+  /** Convenience overload that accepts pointer to itk object */
+  void SetHolder( Object * holder )
+  { SetHolder( static_cast<void*>(holder) ); }
+
+  /** Get the assigned holder */
+  void* GetHolder()
+  { return this->m_Holder; }
+
+  /** Accessor for number of threads actually used */
+  itkGetMacro( NumberOfThreadsUsed, int );
 
   /** Start the threading process */
   virtual void GenerateData();
@@ -140,6 +154,11 @@ private:
   ThreadedGenerateDataFuncType  m_ThreadedGenerateData;
   void *                        m_Holder;
   InputObjectType               m_OverallObject;
+  /** Store the actual number of threads used, which may be less than
+   * the number allocated by the threader if the object does not split
+   * well into that number.
+   * This value is valid once the threader has been run. */
+  int                           m_NumberOfThreadsUsed;
 
   ObjectToDataBase(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

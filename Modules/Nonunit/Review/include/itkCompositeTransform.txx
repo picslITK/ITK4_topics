@@ -591,6 +591,7 @@ CompositeTransform<TScalar, NDimensions>
       p0 += pN;
       }
     }
+  this->Modified();
 }
 
 /* Get local support flag */

@@ -47,6 +47,7 @@ ObjectToDataBase<TInputObject>
 
   this->m_Holder = NULL;
   this->m_ThreadedGenerateData = NULL;
+  this->m_NumberOfThreadsUsed = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -99,6 +100,12 @@ ObjectToDataBase<TInputObject>
                                             threadCount,
                                             str->Filter->m_OverallObject,
                                             splitObject);
+
+  // store the actual number of threads used
+  if( threadId == 0 )
+    {
+    str->Filter->m_NumberOfThreadsUsed = total;
+    }
 
   // execute the actual method with appropriate output region
   if (threadId < total)

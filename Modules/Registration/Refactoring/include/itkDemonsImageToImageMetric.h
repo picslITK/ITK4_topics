@@ -128,6 +128,7 @@ public:
   /** This function computes the local voxel-wise contribution of
    *  the metric to the global integral of the metric/derivative.
    */
+  /* NOTE - why aren't all params passed by reference ? */
   double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint, PointType mappedMovingPoint, ImageDerivativesType movingImageGradientValue, TransformJacobianType jacobian , DerivativeType& localDerivative )
   {
     double metricval=0;

@@ -24,18 +24,30 @@ namespace itk
 {
 
 /**
- *
+ * Default constructor
  */
 Array1DToData::Array1DToData()
 {
   m_OverallObject.Fill(0);
 }
 
-//----------------------------------------------------------------------------
-template <unsigned int VDimension, typename TInputObject>
-int
-Array1DToData<VDimension,TInputObject>
-::SplitRequestedObject(int i, int requestedTotal,
+/**
+ * Set the overall range over which to thread.
+ */
+SetOverallIndexRange(  IndexRangeType& range )
+{
+  if( range[0] > range[1] )
+    {
+    itkExceptionMacro("Error in range. Begin is less than End: "
+                      << range << ".");
+    }
+  this->SetOverallObject( range );
+}
+
+/**
+ * Split the requested range into a subrange.
+ */
+SplitRequestedObject(int i, int requestedTotal,
                        InputObjectType& overallIndexRange,
                        InputObjectType& splitIndexRange) const
 {
