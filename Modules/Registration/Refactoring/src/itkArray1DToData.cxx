@@ -40,7 +40,7 @@ Array1DToData
 {
   if( range[0] > range[1] )
     {
-    itkExceptionMacro("Error in range. Begin is less than End: "
+    itkExceptionMacro("Error in range.  Begin is less than End: "
                       << range << ".");
     }
   this->SetOverallObject( range );

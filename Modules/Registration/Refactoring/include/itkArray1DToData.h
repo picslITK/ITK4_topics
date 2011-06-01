@@ -44,7 +44,7 @@
 
 namespace
 {
-  typedef itk::Index<2>                           TIndexRange;
+  typedef itk::Index<2>                      TIndexRange;
 }
 
 namespace itk
@@ -68,21 +68,21 @@ public:
   /** Type of the object being threaded over */
   typedef TIndexRange                           IndexRangeType;
   /** Type for convenience of base class methods */
-  typedef Superclass::InputObjectType  InputObjectType;
+  typedef Superclass::InputObjectType           InputObjectType;
 
-  /** Set the overall image region over which to operate.
+  /** Set the overall index range over which to operate.
    * This performs some error checking and is named more intuitively
    * for this derived class. */
-  virtual void SetOverallIndexRange(  IndexRangeType& range );
+  virtual void SetOverallIndexRange( IndexRangeType& range  );
 
 protected:
   Array1DToData(); //use New() method instead of direct instantiation.
   virtual ~Array1DToData() {}
 
-  /** Split the ImageRegion \c overallRegion into \c requestedTotal subregions,
-   * returning subregion \c i as \c splitRegion.
+  /** Split the IndexRange \c overallIndexRange into
+   * \c requestedTotal subranges, returning subrange \c i as \c splitIndex.
    * This method is called \c requestedTotal times. The
-   * pieces must not overlap. The method returns the number of pieces that
+   * pieces will not overlap. The method returns the number of pieces that
    * the routine is capable of splitting the output RequestedObject,
    * i.e. return value is less than or equal to \c requestedTotal. */
   virtual
@@ -99,7 +99,5 @@ private:
 };
 
 } // end namespace itk
-
-#include "../src/itkArray1DToData.cxx"
 
 #endif
