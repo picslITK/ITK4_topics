@@ -149,11 +149,11 @@ protected:
     Pointer Filter;
     };
 
-private:
-
-  ThreadedGenerateDataFuncType  m_ThreadedGenerateData;
-  void *                        m_Holder;
   InputObjectType               m_OverallObject;
+  void *                        m_Holder;
+
+private:
+  ThreadedGenerateDataFuncType  m_ThreadedGenerateData;
   /** Store the actual number of threads used, which may be less than
    * the number allocated by the threader if the object does not split
    * well into that number.

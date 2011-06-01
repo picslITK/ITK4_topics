@@ -24,9 +24,9 @@ namespace itk
 {
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::GradientDescentThreadedMetricOptimizerBase()
 {
   /* Point the metric threader to the threading worker callback.
@@ -45,18 +45,18 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 const std::string
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::GetStopConditionDescription() const
 {
   return m_StopConditionDescription.str();
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 const std::string
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::StopOptimization(void)
 {
   itkDebugMacro("StopOptimization");
@@ -67,9 +67,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::InitializeForThreading()
 {
   if( this->m_Metric.IsNull() )
@@ -83,6 +83,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
   // at least all new ones to be used with this optimzier hierarchy?
 
 /*
+
+for regular step grad descent:
+
   const unsigned int dimensions =
     this->m_Metric->GetNumberOfParameters();
   // Verify parameter settings
@@ -141,9 +144,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::UpdateMetricValueAndDerivative()
 {
   this->BeforeMetricThreadedGenerateData();
@@ -154,9 +157,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::BeforeMetricThreadedGenerateData()
 {
   /* Allow the metric to do any per-iteration initialization it
@@ -166,9 +169,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::AfterMetricThreadedGenerateData()
 {
   /* For global transforms, sum the derivatives from each region. */
@@ -194,9 +197,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::CleanupFromThreading()
 {
   // Free some memory used during threading. This probably
@@ -213,9 +216,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::ComputeMetricValueInRegionThreaded( const ImageRegionType & regionForThread,
                                       int threadId,
                                       void *inHolder )
@@ -231,9 +234,9 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
                           int threadId,
                           void *inHolder )

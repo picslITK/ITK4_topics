@@ -100,4 +100,6 @@ private:
 
 } // end namespace itk
 
+#include "../src/itkArray1DToData.cxx"
+
 #endif

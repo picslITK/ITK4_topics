@@ -25,18 +25,14 @@
 namespace itk
 {
 
-// functor for threading using the metric function class
-// assuming function has output allocated already
-template<class TMetricFunction, class TMetricThreader>
+template<class TMetricFunction>
 class ITK_EXPORT GradientDescentThreadedMetricOptimizerBase
-  : public ObjectToObjectThreadedMetricOptimizerBase< TMetricFunction,
-                                                      TMetricThreader >
+  : public ObjectToObjectThreadedMetricOptimizerBase< TMetricFunction >
 {
 public:
   /** Standard class typedefs. */
   typedef GradientDescentThreadedMetricOptimizerBase     Self;
-  typedef ObjectToObjectThreadedMetricOptimizerBase < TMetricFunction,
-                                                      TMetricThreader >
+  typedef ObjectToObjectThreadedMetricOptimizerBase < TMetricFunction >
                                                         Superclass;
   typedef SmartPointer< Self >                      Pointer;
   typedef SmartPointer< const Self >                ConstPointer;
@@ -163,7 +159,8 @@ protected:
    * is performed w/out threading.
    * The work is done in ModifyGradientOverSubRange in both cases.
    * At completion, m_Gradient can be used to update the transform
-   * parameters. Other members may hold additional results in derived classes.
+   * parameters. Derived classes may hold additional results in
+   * other member variables.
    */
   virtual void ModifyGradient()
   {

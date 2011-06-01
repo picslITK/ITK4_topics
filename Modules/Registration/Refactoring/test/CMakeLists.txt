@@ -7,6 +7,7 @@ set(ITK-RegistrationRefactoringTests
   itkTransformParametersTest.cxx
   itkImageVectorTransformParametersHelperTest.cxx
   itkArray1DToDataTest.cxx
+  itkObjectToObjectThreadedMetricOptimizerBaseTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -36,3 +37,7 @@ add_test(NAME itkImageVectorTransformParametersHelperTest
 
 add_test(NAME itkArray1DToDataTest
          COMMAND ITK-RegistrationRefactoringTestDriver itkArray1DToDataTest)
+
+add_test(NAME itkObjectToObjectThreadedMetricOptimizerBaseTest
+         COMMAND ITK-RegistrationRefactoringTestDriver
+         itkObjectToObjectThreadedMetricOptimizerBaseTest)

@@ -123,16 +123,14 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   objectMetric->Initialize();
 
   /* The threader type might be definable w/in the optimizer ? */
-  typedef itk::ImageToData<ImageDimension>      MetricThreaderType;
-  typedef itk::ObjectToObjectThreadedMetricOptimizer<
-                                                ObjectMetricType,
-                                                MetricThreaderType>
+  typedef itk::ObjectToObjectThreadedMetricOptimizer<ObjectMetricType>
                                                   MetricThreadedOptimizerType;
   itk::Size<ImageDimension> neighborhood_radius;
   neighborhood_radius.Fill(0);
 
   // pseudo code
-  MetricThreadedOptimizerType::Pointer metricOptimizer = MetricThreadedOptimizerType::New();
+  MetricThreadedOptimizerType::Pointer metricOptimizer =
+    MetricThreadedOptimizerType::New();
   metricOptimizer->SetMetric( objectMetric );
   ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
   metricOptimizer->SetOverallRegion( inboundary_region );

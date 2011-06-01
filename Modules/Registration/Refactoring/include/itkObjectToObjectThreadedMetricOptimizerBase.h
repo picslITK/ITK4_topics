@@ -17,22 +17,25 @@
 #ifndef __itkObjectToObjectThreadedMetricOptimizerBase_h
 #define __itkObjectToObjectThreadedMetricOptimizerBase_h
 
-#include "itkCovariantVector.h"
-#include "itkPoint.h"
-#include "itkIndex.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkImageRegionConstIteratorWithIndex.h"
-#include "itkInterpolateImageFunction.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
-
+#include "itkImageToData.h"
+#include "itkTransformParameters.h"
 
 namespace itk
 {
+/** \class ObjectToObjectThreadedMetricOptimizerBase
+ * \brief Abstract base for object-to-object metric optimizers.
+ *
+ * Threading of the metric updates is handled within this optimizer.
+ * Threading of other optimizer operations may also be handled within
+ * the optimizer, for example in GradientDescentThreadedMetricOptimizer.
+ *
+ * Derived classes must override StartOptimization, which is called
+ * to initialize and run the optimization.
+ *
+ * \ingroup ITK-Optimizers
+ */
 
-// functor for threading using the metric function class
-// assuming function has output allocated already
-template<class TMetricFunction, class TMetricThreader>
+template<class TMetricFunction>
 class ITK_EXPORT ObjectToObjectThreadedMetricOptimizerBase : public Object
 {
 public:
@@ -45,9 +48,6 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(Self, Superclass);
 
-  /** New macro for creation of through a Smart Pointer   */
-  itkNewMacro(Self);
-
   /**  Scale type. */
   typedef TransformParameters< double >             ScalesType;
 
@@ -57,26 +57,29 @@ public:
   /** Measure type */
   typedef typename MetricType::MeasureType          MeasureType;
   /** Image region type */
-  typedef typename MetricType::RegionType           ImageRegionType;
+  typedef typename MetricType::RegionType           ImageRegionType; //used only in threading
   /** Fixed image type */
-  typedef typename MetricType::FixedImageType       FixedImageType;
+//  typedef typename MetricType::FixedImageType       FixedImageType;
   /** Fixed image pointer */
-  typedef typename MetricType::FixedImagePointer    FixedImagePointer;
+//  typedef typename FixedImageType::Pointer          FixedImagePointer;
+  /** Moving image type */
+  typedef typename MetricType::MovingImageType      MovingImageType; //used only to define threader type.
   /** Moving image pointer */
-  typedef typename MetricType::MovingImagePointer   MovingImagePointer;
+//  typedef typename MovingImageType::Pointer         MovingImagePointer;
   /** Tranform pointer */
-  typedef typename MetricType::TransformPointer     TransformPointer;
+//  typedef typename MetricType::TransformPointer     TransformPointer;
   /** Internal computation type, for maintaining a desired precision */
   typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
+
   /** Metric Threader type */
-  typedef TMetricThreader                           MetricThreaderType;
-  typedef typename MetricThreaderType::Pointer      MetricThreaderTypePointer;
+  typedef ImageToData<MovingImageType::ImageDimension> MetricThreaderType;
+  typedef typename MetricThreaderType::Pointer         MetricThreaderPointer;
 
   /** Accessors for Metric */
   itkGetObjectMacro( Metric, MetricType );
   itkSetObjectMacro( Metric, MetricType );
 
-  /** Accerssor for metric value */
+  /** Accessor for metric value */
   itkGetConstReferenceMacro( Value, InternalComputationValueType );
 
   /** Accessor for Metric Threader */
@@ -95,7 +98,10 @@ public:
 
   /** Set the number of threads to use when threading.
    * This is initialized by default to the global default number of
-   * threads from itkMultiThreader */
+   * threads from itkMultiThreader.
+   * /warning If a derived class does any additional threading, it
+   * must override this method, or otherwise handle setting the number
+   * of threads for its needs from the m_NumberOfThreads class member. */
   virtual void SetNumberOfThreads( int number )
   {
     if( number < 1 )
@@ -131,6 +137,7 @@ protected:
     this->m_MetricThreader = MetricThreaderType::New();
     //this->m_MetricThreader->SetHolder( static_cast<void*>(this) );
     this->m_MetricThreader->SetHolder( this );
+    //Is this necessary, or will it already have been set to global default?
     this->SetNumberOfThreads( this->m_MetricThreader->
       GetMultiThreader()->GetGlobalDefaultNumberOfThreads() );
 
@@ -140,7 +147,7 @@ protected:
 
   MetricTypePointer             m_Metric;
   int                           m_NumberOfThreads;
-  MetricThreaderTypePointer     m_MetricThreader;
+  MetricThreaderPointer         m_MetricThreader;
 
   /** Metric measure value at a given iteration */
   MeasureType                                 m_Value;

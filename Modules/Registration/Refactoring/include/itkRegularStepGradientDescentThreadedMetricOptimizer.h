@@ -26,19 +26,17 @@ namespace itk
 
 // functor for threading using the metric function class
 // assuming function has output allocated already
-template<class TMetricFunction, class TMetricThreader>
+template<class TMetricFunction>
 class ITK_EXPORT RegularStepGradientDescentThreadedMetricOptimizer
-  : public GradientDescentThreadedMetricOptimizerBase< TMetricFunction,
-                                                      TMetricThreader >
+  : public GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 {
 public:
   /** Standard class typedefs. */
   typedef RegularStepGradientDescentThreadedMetricOptimizer     Self;
-  typedef GradientDescentThreadedMetricOptimizerBase < TMetricFunction,
-                                                      TMetricThreader >
-                                                        Superclass;
-  typedef SmartPointer< Self >                      Pointer;
-  typedef SmartPointer< const Self >                ConstPointer;
+  typedef GradientDescentThreadedMetricOptimizerBase <TMetricFunction>
+                                                                Superclass;
+  typedef SmartPointer< Self >                                  Pointer;
+  typedef SmartPointer< const Self >                            ConstPointer;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(Self, Superclass);

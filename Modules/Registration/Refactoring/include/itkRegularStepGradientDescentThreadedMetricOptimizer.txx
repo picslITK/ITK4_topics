@@ -23,9 +23,9 @@
 namespace itk
 {
 /** Advance one step in the optimization */
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-RegularStepGradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+RegularStepGradientDescentThreadedMetricOptimizer<TMetricFunction>
 ::AdvanceOneStep()
 {
   //ScalesType &    scales = this->GetScales();

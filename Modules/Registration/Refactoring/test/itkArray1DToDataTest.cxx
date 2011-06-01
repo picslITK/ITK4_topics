@@ -71,7 +71,7 @@ public:
 };
 
 /*
- * The test itself
+ * Run the actually test
  */
 int RunTest( Array1DToData::Pointer& threader, int numberOfThreads,
               IndexRangeType& fullRange, HolderClass& holder)
@@ -108,9 +108,9 @@ int RunTest( Array1DToData::Pointer& threader, int numberOfThreads,
     }
 
   /* Did we use as many threads as requested? */
-  std::cout << "threader->GetNumberOfThreadsUsed(): "
-            << threader->GetNumberOfThreadsUsed() << std::endl
-            << "requested numberOfThreads: " << numberOfThreads << std::endl;
+  std::cout << "requested numberOfThreads: " << numberOfThreads << std::endl
+            << "actual: threader->GetNumberOfThreadsUsed(): "
+            << threader->GetNumberOfThreadsUsed() << std::endl;
 
   /* Check the results */
   IndexRangeType::IndexValueType previousEndIndex = -1;
@@ -160,7 +160,7 @@ int RunTest( Array1DToData::Pointer& threader, int numberOfThreads,
 }//namespace
 
 /*
- * Main test func
+ * Main test entry function
  */
 int itkArray1DToDataTest(int , char* [])
 {
@@ -168,6 +168,16 @@ int itkArray1DToDataTest(int , char* [])
   HolderClass   holder;
 
   int result = EXIT_SUCCESS;
+
+  /* Check # of threads */
+  std::cout << "GetGlobalMaximumNumberOfThreads: "
+            << threader->GetMultiThreader()->GetGlobalMaximumNumberOfThreads()
+            << std::endl;
+  std::cout << "GetGlobalDefaultNumberOfThreads: "
+            << threader->GetMultiThreader()->GetGlobalDefaultNumberOfThreads()
+            << std::endl;
+  std::cout << "threader->NumberOfThreads(): " << threader->GetNumberOfThreads()
+            << std::endl;
 
   /* Set the callback for the threader to use */
   threader->SetThreadedGenerateData( HolderClass::ThreadedCallback );
@@ -194,14 +204,42 @@ int itkArray1DToDataTest(int , char* [])
     result = EXIT_FAILURE;
     }
 
+
   /* Test with multiple threads */
-  fullRange[0] = 6;
-  fullRange[1] = 108; //set total range to prime to test uneven division
-  numberOfThreads =
-    threader->GetMultiThreader()->GetGlobalMaximumNumberOfThreads();
-  if( RunTest( threader, numberOfThreads, fullRange, holder ) != EXIT_SUCCESS )
+  if( threader->GetMultiThreader()->GetGlobalMaximumNumberOfThreads() > 1 )
     {
-    result = EXIT_FAILURE;
+    /* Test with default number of threads. */
+    fullRange[0] = 6;
+    fullRange[1] = 108; //set total range to prime to test uneven division
+    numberOfThreads =
+      threader->GetMultiThreader()->GetGlobalDefaultNumberOfThreads();
+    if( RunTest( threader, numberOfThreads, fullRange, holder )
+          != EXIT_SUCCESS )
+      {
+      result = EXIT_FAILURE;
+      }
+
+    /* Test with max number of threads and check that we only used as
+     * many as is reasonable. */
+    int maxNumberOfThreads =
+      threader->GetMultiThreader()->GetGlobalMaximumNumberOfThreads();
+    fullRange[0] = 6;
+    fullRange[1] = fullRange[0]+maxNumberOfThreads-2;
+    if( RunTest( threader, maxNumberOfThreads, fullRange, holder )
+          != EXIT_SUCCESS )
+      {
+      result = EXIT_FAILURE;
+      }
+    if( threader->GetNumberOfThreadsUsed() != maxNumberOfThreads-1 )
+      {
+      std::cerr << "Error: Expected to use only " << maxNumberOfThreads-1
+                << "threads, but used " << threader->GetNumberOfThreadsUsed()
+                << "." << std::endl;
+      }
+    }
+  else
+    {
+    std::cout << "No multi-threading available. " << std::endl;
     }
 
   /* Test that malformed range is caught */

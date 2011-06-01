@@ -18,7 +18,7 @@
 
 =========================================================================*/
 #include "itkArray1DToData.h"
-#include "vnl/math.h"
+#include "vnl/vnl_math.h"
 
 namespace itk
 {
@@ -34,7 +34,9 @@ Array1DToData::Array1DToData()
 /**
  * Set the overall range over which to thread.
  */
-SetOverallIndexRange(  IndexRangeType& range )
+void
+Array1DToData
+::SetOverallIndexRange(  IndexRangeType& range )
 {
   if( range[0] > range[1] )
     {
@@ -47,14 +49,16 @@ SetOverallIndexRange(  IndexRangeType& range )
 /**
  * Split the requested range into a subrange.
  */
-SplitRequestedObject(int i, int requestedTotal,
+int
+Array1DToData
+::SplitRequestedObject(int i, int requestedTotal,
                        InputObjectType& overallIndexRange,
                        InputObjectType& splitIndexRange) const
 {
   // overallIndexRange is expected to be inclusive
 
   // determine the actual number of pieces that will be generated
-  typename SizeType::SizeValueType count =
+  IndexRangeType::IndexValueType count =
     overallIndexRange[1] - overallIndexRange[0] + 1;
   int valuesPerThread = Math::Ceil<int>(count/(double)requestedTotal);
   int maxThreadIdUsed = Math::Ceil<int>(count/(double)valuesPerThread) - 1;
@@ -78,5 +82,3 @@ SplitRequestedObject(int i, int requestedTotal,
 }
 
 } // end namespace itk
-
-#endif

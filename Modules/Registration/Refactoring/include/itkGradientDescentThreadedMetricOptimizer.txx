@@ -26,9 +26,9 @@ namespace itk
 /**
  * Default constructor
  */
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizer<TMetricFunction>
 ::GradientDescentThreadedMetricOptimizer()
 {
   m_LearningRate = 1.0;
@@ -37,9 +37,9 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
 /**
  * Start and run the optimization
  */
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizer<TMetricFunction>
 ::StartOptimization()
 {
   itkDebugMacro("StartOptimization");
@@ -63,7 +63,10 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
 /**
  * Resume optimization.
  */
-virtual void ResumeOptimization()
+template<class TMetricFunction>
+void
+GradientDescentThreadedMetricOptimizer<TMetricFunction>
+::ResumeOptimization()
 {
   /* Do threading initialization here so we can also do some cleanup
    * when we stop, and still be able to resume. */
@@ -120,9 +123,9 @@ virtual void ResumeOptimization()
 /**
  * Advance one Step following the gradient direction
  */
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizer<TMetricFunction>
 ::AdvanceOneStep()
 {
   itkDebugMacro("AdvanceOneStep");
@@ -136,9 +139,9 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
 /**
  * Modify the gradient over a given index range.
  */
-template<class TMetricFunction, class TThreader>
+template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction,TThreader>
+GradientDescentThreadedMetricOptimizer<TMetricFunction>
 ::ModifyGradientOverSubRange( IndexRangeType& subrange )
 {
   double direction;
