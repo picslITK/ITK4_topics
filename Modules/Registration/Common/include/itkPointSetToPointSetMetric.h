@@ -41,22 +41,19 @@ namespace itk
  * \ingroup ITK-RegistrationCommon
  */
 
-template< class TFixedPointSet,
-          class TMovingPointSet,
-          typename TValueType = double >
-class ITK_EXPORT PointSetToPointSetMetric
-  : public MultipleValuedCostFunction< TValueType >
+template< class TFixedPointSet,  class TMovingPointSet >
+class ITK_EXPORT PointSetToPointSetMetric:public MultipleValuedCostFunction
 {
 public:
 
   /** Standard class typedefs. */
   typedef PointSetToPointSetMetric   Self;
-  typedef MultipleValuedCostFunction< TValueType > Superclass;
+  typedef MultipleValuedCostFunction Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
   /** Type used for representing point components  */
-  typedef typename Superclass::ParametersValueType CoordinateRepresentationType;
+  typedef Superclass::ParametersValueType CoordinateRepresentationType;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(PointSetToPointSetMetric, MultipleValuedCostFunction);
@@ -91,13 +88,13 @@ public:
   typedef typename TransformType::JacobianType    TransformJacobianType;
 
   /**  Type of the measure. */
-  typedef typename Superclass::MeasureType MeasureType;
+  typedef Superclass::MeasureType MeasureType;
 
   /**  Type of the derivative. */
-  typedef typename Superclass::DerivativeType DerivativeType;
+  typedef Superclass::DerivativeType DerivativeType;
 
   /**  Type of the parameters. */
-  typedef typename Superclass::ParametersType ParametersType;
+  typedef Superclass::ParametersType ParametersType;
 
   /** Connect the Fixed Pointset.  */
   itkSetConstObjectMacro(FixedPointSet, FixedPointSetType);

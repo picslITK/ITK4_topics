@@ -193,7 +193,7 @@ LBFGSOptimizer
  */
 void
 LBFGSOptimizer
-::SetCostFunction(SingleValuedCostFunctionType *costFunction)
+::SetCostFunction(SingleValuedCostFunction *costFunction)
 {
   const unsigned int numberOfParameters =
     costFunction->GetNumberOfParameters();

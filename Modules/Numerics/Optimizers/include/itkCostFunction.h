@@ -33,7 +33,6 @@ namespace itk
  * \ingroup ITK-Optimizers
  */
 
-template< class TValueType = double >
 class ITK_EXPORT CostFunction:public Object
 {
 public:
@@ -48,8 +47,8 @@ public:
 
   /**  ParametersType typedef.
    *  It defines a position in the optimization search space. */
-  typedef TValueType                   ParametersValueType;
-  typedef TransformParameters< TValueType > ParametersType;
+  typedef double                                     ParametersValueType;
+  typedef TransformParameters< ParametersValueType > ParametersType;
 
   /** Return the number of parameters required to compute
    *  this cost function.
@@ -66,9 +65,5 @@ private:
   void operator=(const Self &); //purposely not implemented
 };
 } // end namespace itk
-
-#ifndef ITK_MANUAL_INSTANTIATION
-#include "itkCostFunction.txx"
-#endif
 
 #endif

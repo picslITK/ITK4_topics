@@ -65,7 +65,7 @@ public:
   itkTypeMacro(FRPROptimizer, PowellOptimizer);
 
   /** Type of the Cost Function   */
-  typedef  SingleValuedCostFunction<>  CostFunctionType;
+  typedef  SingleValuedCostFunction  CostFunctionType;
   typedef  CostFunctionType::Pointer CostFunctionPointer;
 
   /** Convert gradient to a unit length vector */

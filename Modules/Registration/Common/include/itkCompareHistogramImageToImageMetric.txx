@@ -23,8 +23,8 @@
 
 namespace itk
 {
-template< class TFixedImage, class TMovingImage, typename TValueType >
-CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >::CompareHistogramImageToImageMetric()
+template< class TFixedImage, class TMovingImage >
+CompareHistogramImageToImageMetric< TFixedImage, TMovingImage >::CompareHistogramImageToImageMetric()
 {
   m_TrainingFixedImage        = 0; // has to be provided by the user.
   m_TrainingMovingImage       = 0; // has to be provided by the user.
@@ -33,9 +33,9 @@ CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >::Com
   m_TrainingHistogram         = 0; // either provided by the user or created
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+CompareHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::Initialize()
 throw ( ExceptionObject )
 {
@@ -47,9 +47,9 @@ throw ( ExceptionObject )
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+CompareHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::FormTrainingHistogram()
 throw ( ExceptionObject )
 {
@@ -158,8 +158,8 @@ age");
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
-void CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >::PrintSelf(std::ostream & os, Indent indent) const
+template< class TFixedImage, class TMovingImage >
+void CompareHistogramImageToImageMetric< TFixedImage, TMovingImage >::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
 

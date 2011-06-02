@@ -38,16 +38,16 @@
  *   the solution is the vector | 2 -2 |
  *
  */
-class gradientCostFunction : public itk::SingleValuedCostFunction<>
+class gradientCostFunction : public itk::SingleValuedCostFunction
 {
 public:
 
   typedef gradientCostFunction                  Self;
-  typedef itk::SingleValuedCostFunction<>   Superclass;
+  typedef itk::SingleValuedCostFunction   Superclass;
   typedef itk::SmartPointer<Self>         Pointer;
   typedef itk::SmartPointer<const Self>   ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( gradientCostFunction, SingleValuedCostFunction<> );
+  itkTypeMacro( gradientCostFunction, SingleValuedCostFunction );
 
   enum { SpaceDimension=2 };
 

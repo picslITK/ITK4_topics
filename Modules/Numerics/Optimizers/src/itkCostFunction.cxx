@@ -19,9 +19,8 @@
 
 namespace itk
 {
-template< class TValueType >
 void
-CostFunction< TValueType >
+CostFunction
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

@@ -160,7 +160,7 @@ AmoebaOptimizer
  */
 void
 AmoebaOptimizer
-::SetCostFunction(SingleValuedCostFunctionType *costFunction)
+::SetCostFunction(SingleValuedCostFunction *costFunction)
 {
   const unsigned int numberOfParameters =
     costFunction->GetNumberOfParameters();

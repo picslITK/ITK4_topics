@@ -31,14 +31,13 @@ namespace itk
  * \ingroup Numerics Optimizers
  * \ingroup ITK-Optimizers
  */
-template< typename TValueType = double >
 class ITK_EXPORT MultipleValuedCostFunction:
-  public CostFunction< TValueType >
+  public CostFunction
 {
 public:
   /** Standard class typedefs. */
   typedef MultipleValuedCostFunction Self;
-  typedef CostFunction< TValueType > Superclass;
+  typedef CostFunction               Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
@@ -47,15 +46,15 @@ public:
 
   /**  ParametersType typedef.
    *  It defines a position in the optimization search space. */
-  typedef typename Superclass::ParametersType ParametersType;
+  typedef Superclass::ParametersType ParametersType;
 
   /**  MeasureType typedef.
    *  It defines a type used to return the cost function value. */
-  typedef Array< TValueType > MeasureType;
+  typedef Array< double > MeasureType;
 
   /**  GradientType typedef.
    *  It defines a type used to return the cost function derivative.  */
-  typedef Array2D< TValueType > DerivativeType;
+  typedef Array2D< double > DerivativeType;
 
   /** This method returns the value of the cost function corresponding
     * to the specified parameters.

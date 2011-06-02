@@ -50,16 +50,16 @@
  *   and the expected final value of the function is 10.0
  *
  */
-class amoebaCostFunction : public itk::SingleValuedCostFunction<>
+class amoebaCostFunction : public itk::SingleValuedCostFunction
 {
 public:
 
   typedef amoebaCostFunction                    Self;
-  typedef itk::SingleValuedCostFunction<>     Superclass;
+  typedef itk::SingleValuedCostFunction     Superclass;
   typedef itk::SmartPointer<Self>           Pointer;
   typedef itk::SmartPointer<const Self>     ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( amoebaCostFunction, SingleValuedCostFunction<> );
+  itkTypeMacro( amoebaCostFunction, SingleValuedCostFunction );
 
   enum { SpaceDimension=2 };
 

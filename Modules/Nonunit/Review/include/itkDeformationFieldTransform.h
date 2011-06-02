@@ -120,7 +120,9 @@ public:
 
   /** Get/Set the deformation field. */
   itkGetObjectMacro( DeformationField, DeformationFieldType );
-  /* Create special set accessor to update interpolator */
+  /** Set the deformation field. Create special set accessor to update
+   * interpolator and assign deformation field to transform parameters
+   * container. */
   virtual void SetDeformationField( DeformationFieldType* field );
 
   /** Get/Set the inverse deformation field. */
@@ -129,8 +131,6 @@ public:
 
   /** Get/Set the interpolator. */
   itkGetObjectMacro( Interpolator, InterpolatorType );
-  /* Create out own set accessor that assigns the deformation field
-     to Interpolator and TransformParameter objects */
   /* Create out own set accessor that assigns the deformation field */
   virtual void SetInterpolator( InterpolatorType* interpolator );
 

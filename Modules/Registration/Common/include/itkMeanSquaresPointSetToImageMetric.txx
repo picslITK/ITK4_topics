@@ -26,17 +26,17 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
-MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+template< class TFixedPointSet, class TMovingImage >
+MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::MeanSquaresPointSetToImageMetric()
 {}
 
 /**
  * Get the match Measure
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
-typename MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >::MeasureType
-MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+template< class TFixedPointSet, class TMovingImage >
+typename MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage >::MeasureType
+MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::GetValue(const TransformParametersType & parameters) const
 {
   FixedPointSetConstPointer fixedPointSet = this->GetFixedPointSet();
@@ -95,9 +95,9 @@ MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
 /**
  * Get the Derivative Measure
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::GetDerivative(const TransformParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -194,9 +194,9 @@ MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
 /*
  * Get both the match Measure and theDerivative Measure
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+MeanSquaresPointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::GetValueAndDerivative(const TransformParametersType & parameters,
                         MeasureType & value, DerivativeType  & derivative) const
 {

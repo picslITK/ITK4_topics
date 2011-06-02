@@ -59,9 +59,7 @@ namespace itk
  * \ingroup RegistrationFilters
  * \ingroup ITK-RegistrationCommon
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType = double >
+template< typename TFixedPointSet, typename TMovingPointSet >
 class ITK_EXPORT PointSetToPointSetRegistrationMethod:public ProcessObject
 {
 public:
@@ -86,10 +84,7 @@ public:
   typedef typename MovingPointSetType::ConstPointer MovingPointSetConstPointer;
 
   /**  Type of the metric. */
-  typedef PointSetToPointSetMetric< FixedPointSetType,
-                                    MovingPointSetType,
-                                    TValueType >
-                                      MetricType;
+  typedef PointSetToPointSetMetric< FixedPointSetType, MovingPointSetType > MetricType;
   typedef typename MetricType::Pointer                                      MetricPointer;
 
   /**  Type of the Transform . */
