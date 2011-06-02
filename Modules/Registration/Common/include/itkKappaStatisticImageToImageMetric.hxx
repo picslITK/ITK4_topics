@@ -26,8 +26,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >
 ::KappaStatisticImageToImageMetric()
 {
   itkDebugMacro("Constructor");
@@ -40,9 +40,9 @@ KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-typename KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
-KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+typename KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
+KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue(const TransformParametersType & parameters) const
 {
   itkDebugMacro("GetValue( " << parameters << " ) ");
@@ -164,9 +164,9 @@ KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * Get the Derivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >
 ::GetDerivative(const TransformParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -254,7 +254,8 @@ KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
         }
 
       TransformJacobianType jacobian;
-      this->m_Transform->GetLocalJacobian(inputPoint, jacobian);
+      this->m_Transform->GetJacobianWithRespectToParameters(
+        inputPoint, jacobian);
 
       this->m_NumberOfPixelsCounted++;
 
@@ -304,9 +305,9 @@ KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /*
  * Compute the image gradient and assign to m_GradientImage.
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputeGradient()
 {
   const unsigned int dim = MovingImageType::ImageDimension;
@@ -375,9 +376,9 @@ KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * Get both the match Measure and theDerivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative(const TransformParametersType & parameters,
                         MeasureType & Value, DerivativeType  & Derivative) const
 {
@@ -388,9 +389,9 @@ KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * PrintSelf
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-KappaStatisticImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+KappaStatisticImageToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

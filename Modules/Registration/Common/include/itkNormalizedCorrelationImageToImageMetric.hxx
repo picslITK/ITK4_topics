@@ -26,8 +26,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::NormalizedCorrelationImageToImageMetric()
 {
   m_SubtractMean = false;
@@ -36,9 +36,9 @@ NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-typename NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
-NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+typename NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
+NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue(const TransformParametersType & parameters) const
 {
   FixedImageConstPointer fixedImage = this->m_FixedImage;
@@ -131,9 +131,9 @@ NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * Get the Derivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetDerivative(const TransformParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -317,9 +317,9 @@ NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /*
  * Get both the match Measure and theDerivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative(const TransformParametersType & parameters,
                         MeasureType & value, DerivativeType  & derivative) const
 {
@@ -504,9 +504,9 @@ NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+NormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

@@ -30,23 +30,22 @@ namespace itk
  * \ingroup Numerics Optimizers
  * \ingroup ITKOptimizers
  */
-template< class TValueType = double >
 class ITK_EXPORT SingleValuedCostFunction:
-  public CostFunction< TValueType >
+  public CostFunction
 {
 public:
   /** Standard class typedefs. */
   typedef SingleValuedCostFunction   Self;
-  typedef CostFunction< TValueType > Superclass;
+  typedef CostFunction               Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(SingleValuedCostFunction, Superclass);
+  itkTypeMacro(SingleValuedCostFunction, CostFunction);
 
   /**  MeasureType typedef.
    *  It defines a type used to return the cost function value. */
-  typedef TValueType MeasureType;
+  typedef double MeasureType;
 
   /**  ParametersType typedef.
    *  It defines a position in the optimization search space. */
