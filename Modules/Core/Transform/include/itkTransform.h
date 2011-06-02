@@ -70,12 +70,12 @@ namespace itk
 template< class TScalarType,
           unsigned int NInputDimensions = 3,
           unsigned int NOutputDimensions = 3 >
-class ITK_EXPORT Transform:public TransformBase< TScalarType >
+class ITK_EXPORT Transform:public TransformBase
 {
 public:
   /** Standard class typedefs. */
   typedef Transform                     Self;
-  typedef TransformBase< TScalarType >  Superclass;
+  typedef TransformBase                 Superclass;
   typedef SmartPointer< Self >          Pointer;
   typedef SmartPointer< const Self >    ConstPointer;
 
@@ -101,7 +101,7 @@ public:
   typedef  Array< ParametersValueType >             DerivativeType;
 
   /** Type of the Jacobian matrix. */
-  typedef  Array2D< TScalarType > JacobianType;
+  typedef  Array2D< ParametersValueType > JacobianType;
 
   /** Standard vector type for this class. */
   typedef Vector< TScalarType, NInputDimensions >  InputVectorType;

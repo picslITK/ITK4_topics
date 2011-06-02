@@ -33,8 +33,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::MattesMutualInformationImageToImageMetric():
   // Initialize memory
   m_FixedImageMarginalPDF(NULL),
@@ -80,8 +80,8 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
   this->m_ComputeGradient = false;
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::~MattesMutualInformationImageToImageMetric()
 {
   if ( m_FixedImageMarginalPDF != NULL )
@@ -140,9 +140,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 /**
  * Print out internal information about this class
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -182,9 +182,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 /**
  * Initialize
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::Initialize(void)
 throw ( ExceptionObject )
 {
@@ -491,9 +491,9 @@ throw ( ExceptionObject )
  * From the pre-computed samples, now
  * fill in the parzen window index locations
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputeFixedImageParzenWindowIndices(
   FixedImageSampleContainer & samples)
 {
@@ -526,9 +526,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 inline void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueThreadPreProcess(ThreadIdType threadID,
                            bool withinSampleThread) const
 {
@@ -556,9 +556,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 inline bool
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueThreadProcessSample(ThreadIdType threadID,
                               SizeValueType fixedImageSample,
                               const MovingImagePointType & itkNotUsed(mappedPoint),
@@ -649,9 +649,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
   return true;
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 inline void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueThreadPostProcess( ThreadIdType threadID,
                              bool itkNotUsed(withinSampleThread) ) const
 {
@@ -697,10 +697,10 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
-typename MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage  >
+typename MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::MeasureType
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue(const ParametersType & parameters) const
 {
   // Set up the parameters in the transform
@@ -795,9 +795,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
   return static_cast< MeasureType >( -1.0 * sum );
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 inline void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeThreadPreProcess( ThreadIdType threadID,
                                          bool itkNotUsed(withinSampleThread) ) const
 {
@@ -837,9 +837,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 inline bool
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeThreadProcessSample(ThreadIdType threadID,
                                            SizeValueType fixedImageSample,
                                            const MovingImagePointType & itkNotUsed(mappedPoint),
@@ -963,9 +963,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
   return true;
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 inline void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeThreadPostProcess(ThreadIdType threadID,
                                          bool withinSampleThread) const
 {
@@ -1010,9 +1010,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 /**
  * Get the both Value and Derivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative(const ParametersType & parameters,
                         MeasureType & value,
                         DerivativeType & derivative) const
@@ -1189,9 +1189,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 /**
  * Get the match measure derivative
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage  >
 void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetDerivative(const ParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -1204,9 +1204,9 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 /**
  * Compute PDF derivatives contribution for each parameter
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputePDFDerivatives(ThreadIdType threadID,
                         unsigned int sampleNumber,
                         int pdfMovingIndex,
@@ -1273,7 +1273,8 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
 
     if ( threadID > 0 )
       {
-      //Testing without the transform cloning that had been done in ImageToImageMetric.
+      //Testing without the transform cloning that had been done in
+      //ImageToImageMetric.
       transform = this->m_Transform; // this->m_ThreaderTransform[threadID - 1];
       }
     else
@@ -1282,8 +1283,8 @@ MattesMutualInformationImageToImageMetric< TFixedImage, TMovingImage, TValueType
       }
 
     JacobianType jacobian;
-    transform->GetLocalJacobian( this->m_FixedImageSamples[sampleNumber].point,
-                                 jacobian);
+    transform->GetJacobianWithRespectToParameters(
+      this->m_FixedImageSamples[sampleNumber].point, jacobian);
 
     for ( unsigned int mu = 0; mu < this->m_NumberOfParameters; mu++ )
       {
