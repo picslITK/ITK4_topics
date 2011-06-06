@@ -189,13 +189,16 @@ public:
     unsigned long ct=0;
     ImageRegionConstIteratorWithIndex<FixedImageType> ItV( this->m_VirtualImage,
         thread_region );
-    std::cout << " warp the image " << std::endl;
+
+   /////Stauffer 6/6
+   //Shouldn't need to warp to the virtual image if we're not going to calc image deriv from it.
+  //  std::cout << " warp the image " << std::endl;
     /* compute the image gradient */
-    ItV.GoToBegin();
-    while( !ItV.IsAtEnd() )
-    {
+  //  ItV.GoToBegin();
+  //  while( !ItV.IsAtEnd() )
+  //  {
       /** use the fixed and moving transforms to compute the corresponding points.*/
-      bool sampleOk = true;
+  /*    bool sampleOk = true;
       // convert the index to a point
       PointType mappedPoint;
       PointType mappedMovingPoint;
@@ -211,10 +214,20 @@ public:
       ++ItV;
     }
     std::cout << " warp the image done " << std::endl;
+   */
+  ///////////
 
     typename DerivativeFunctionType::Pointer derivativeCalculator = DerivativeFunctionType::New();
     derivativeCalculator->UseImageDirectionOn();
-    derivativeCalculator->SetInputImage(this->m_VirtualImage);
+
+    ////// Stauffer 6/6
+    // Calc deriv from moving image (or the "in use" transform(s), I think, when we get that added)
+    //  and transform result into virtual space to avoid threading issues that arise from boundary
+    //  conditions when using a warp to virtual image
+    // derivativeCalculator->SetInputImage(this->m_VirtualImage);
+    derivativeCalculator->SetInputImage(this->m_MovingImageTransform);
+    //////
+
     //    std::cout << " thread region  " << thread_region << std::endl;
     ItV.GoToBegin();
     while( !ItV.IsAtEnd() )
@@ -234,8 +247,15 @@ public:
       if ( sampleOk )
         {
           localDerivative.Fill(0);
-          ImageDerivativesType gradient = derivativeCalculator->Evaluate(mappedPoint);
-          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,gradient,jacobian,localDerivative);
+
+          ////// Stauffer 6/6
+          // ImageDerivativesType gradient = derivativeCalculator->Evaluate(mappedPoint);
+          ImageDerivativesType gradient = derivativeCalculator->Evaluate( mappedMovingPoint );
+          gradientWarped = this->m_MovingImageTransform->TransformCovariantVector( gradient );
+          //////
+
+          double metricval=this->ComputeLocalContributionToMetricAndDerivative(mappedFixedPoint,mappedMovingPoint,gradientWarped,jacobian,localDerivative);
+
           // std::cout << " locDer size " << localDerivative.Size() << " glodir size " << derivative.Size() <<  " nvox " << thread_region.GetNumberOfPixels() << std::endl;
           if ( ! this->m_MovingImageTransform->HasLocalSupport() ) {
             derivative+=localDerivative;

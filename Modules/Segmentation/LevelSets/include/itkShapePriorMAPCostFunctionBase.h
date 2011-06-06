@@ -46,12 +46,12 @@ namespace itk
  */
 template< class TFeatureImage, class TOutputPixel >
 class ITK_EXPORT ShapePriorMAPCostFunctionBase:
-  public SingleValuedCostFunction<>
+  public SingleValuedCostFunction
 {
 public:
   /** Standard class typedefs. */
   typedef ShapePriorMAPCostFunctionBase Self;
-  typedef SingleValuedCostFunction<>      Superclass;
+  typedef SingleValuedCostFunction      Superclass;
   typedef SmartPointer< Self >          Pointer;
   typedef SmartPointer< const Self >    ConstPointer;
 
