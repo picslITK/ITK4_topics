@@ -49,8 +49,8 @@ public:
 
   /**  ParametersType typedef.
    *  It defines a position in the optimization search space. */
-  typedef typename Superclass::ParametersType      ParametersType;
-  typedef typename Superclass::ParametersValueType ParametersValueType;
+  typedef Superclass::ParametersType      ParametersType;
+  typedef Superclass::ParametersValueType ParametersValueType;
 
   /** DerivativeType typedef.
    *  It defines a type used to return the cost function derivative.  */
