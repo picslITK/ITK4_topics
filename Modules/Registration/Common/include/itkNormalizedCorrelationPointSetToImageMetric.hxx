@@ -413,7 +413,7 @@ NormalizedCorrelationPointSetToImageMetric< TFixedPointSet, TMovingImage >
     }
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
 NormalizedCorrelationPointSetToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
