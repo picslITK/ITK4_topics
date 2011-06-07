@@ -53,7 +53,8 @@ public:
   typedef SmartPointer<const Self>      ConstPointer;
 
   /** Type used for representing point components  */
-  typedef Superclass::ParametersValueType CoordinateRepresentationType;
+  typedef typename Superclass::CoordinateRepresentationType
+                                                  CoordinateRepresentationType;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro( PointSetToPointSetMetric, ObjectToObjectMetric );
@@ -114,9 +115,6 @@ public:
 
   /**  Type of the parameters. */
   typedef Superclass::ParametersType ParametersType;
-
-  /** Type of coordinate system used to calculate values, derivatives */
-  enum CoordinateSystemType { Fixed, Moving, Both };
 
   /** Connect the fixed pointset.  */
   itkSetConstObjectMacro( FixedPointSet, FixedPointSetType );
@@ -221,18 +219,6 @@ public:
   virtual void GetLocalMovingNeighborhoodDerivative( const MovingPointType,
     MeasuresType &, LocalMovingDerivativeType & ) const = 0;
 
-  /**
-   * Set coordinate system type.  This variable allows the user to switch
-   * between calculating the value and derivative with respect to the fixed
-   * point set or moving point set.
-   */
-  itkSetMacro( CoordinateSystem, CoordinateSystemType );
-
-  /**
-   * Get coordinate system type.
-   */
-  itGetConstMacro( CoordinateSystem, CoordinateSystemType );
-
   /** Initialize the metric by making sure that all the components
    *  are present and plugged together correctly     */
   virtual void Initialize( void )
@@ -250,8 +236,6 @@ protected:
   MovingPointSetConstPointer m_MovingPointSet;
   FixedPointSetConstPointer  m_MovingTransformedPointSet;
   mutable TransformPointer   m_MovingTransform;
-
-  CoordinateSystemType       m_CoordinateSystem;
 
   /**
    * Warp the fixed point set based on the fixed transform.  Note that the

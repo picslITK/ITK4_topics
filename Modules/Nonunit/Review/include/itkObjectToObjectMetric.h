@@ -50,6 +50,9 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(ObjectToObjectMetric, SingleValuedCostFunction);
 
+  /** Type used for representing object components  */
+  typedef Superclass::ParametersValueType CoordinateRepresentationType;
+
   /**  Type of the measure. */
   typedef typename Superclass::MeasureType    MeasureType;
 
@@ -60,9 +63,38 @@ public:
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
+  /** Type of coordinate system used to calculate values, derivatives */
+  enum CoordinateSystemType { Fixed, Moving, Both };
+
+  /**
+   * Set coordinate system type.  This variable allows the user to switch
+   * between calculating the value and derivative with respect to the fixed
+   * object or moving object.
+   */
+  itkSetMacro( CoordinateSystem, CoordinateSystemType );
+
+  /**
+   * Get coordinate system type.
+   */
+  itGetConstMacro( CoordinateSystem, CoordinateSystemType );
+
   /** Initialize the Metric by making sure that all the components
    *  are present and plugged together correctly     */
   virtual void Initialize(void) throw ( ExceptionObject ) = 0;
+
+  /** This method returns the value of the cost function */
+  virtual MeasureType GetValue() const = 0;
+
+  /** This method returns the derivative of the cost function */
+  virtual void GetDerivative(DerivativeType & derivative) const = 0;
+
+  /** This method returns the value and derivative of the cost function */
+  virtual void GetValueAndDerivative(MeasureType & value,
+                                     DerivativeType & derivative) const
+  {
+    value = this->GetValue();
+    this->GetDerivative(derivative);
+  }
 
 protected:
   ObjectToObjectMetric();
@@ -70,7 +102,10 @@ protected:
 
   void PrintSelf(std::ostream & os, Indent indent) const;
 
+  /* Necessary ?? */
   mutable ParametersType      m_Parameters;
+
+  CoordinateSystemType       m_CoordinateSystem;
 
 private:
   ObjectToObjectMetric(const Self &); //purposely not implemented
