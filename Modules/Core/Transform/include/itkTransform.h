@@ -20,6 +20,8 @@
 
 #include "itkTransformBase.h"
 #include "itkVector.h"
+#include "itkSymmetricSecondRankTensor.h"
+#include "itkDiffusionTensor3D.h"
 #include "vnl/vnl_vector_fixed.h"
 #include "itkMatrix.h"
 
@@ -107,6 +109,20 @@ public:
   typedef Vector< TScalarType, NInputDimensions >  InputVectorType;
   typedef Vector< TScalarType, NOutputDimensions > OutputVectorType;
 
+  /* Standard tensor type for this class */
+  typedef DiffusionTensor3D< TScalarType >         InputTensorType;
+  typedef DiffusionTensor3D< TScalarType >         OutputTensorType;
+
+  /** Standard tensor matrix type for this class */
+  typedef typename SymmetricSecondRankTensor<TScalarType>::MatrixType       InputTensorMatrixType;
+  typedef typename SymmetricSecondRankTensor<TScalarType>::MatrixType       OutputTensorMatrixType;
+
+  /** Method to transform a diffusion tensor */
+  //virtual OutputTensorType TransformTensor( const InputTensorType &) const = 0;
+
+  /** Method to transform a tensor matrix */
+  //virtual OutputTensorMatrixType TransformTensor( const InputTensorMatrixType &) const = 0;
+
   /** Standard covariant vector type for this class */
   typedef CovariantVector< TScalarType, NInputDimensions >  InputCovariantVectorType;
   typedef CovariantVector< TScalarType, NOutputDimensions > OutputCovariantVectorType;
@@ -145,6 +161,12 @@ public:
 
   /**  Method to transform a CovariantVector. */
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const = 0;
+
+  /** Method to transform a diffusion tensor */
+  //virtual OutputTensorType TransformTensor( const InputTensorType &) const = 0;
+
+  /** Method to transform a tensor matrix */
+  //virtual OutputTensorMatrixType TransformTensor( const InputTensorMatrixType &) const = 0;
 
   /** Set the transformation parameters and update internal transformation.
    * SetParameters gives the transform the option to set it's
