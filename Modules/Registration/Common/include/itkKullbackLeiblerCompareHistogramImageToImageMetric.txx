@@ -27,32 +27,27 @@
 
 namespace itk
 {
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage,
-                                                   TMovingImage,
-                                                   TValueType>
-::KullbackLeiblerCompareHistogramImageToImageMetric()
+                                                   TMovingImage >::KullbackLeiblerCompareHistogramImageToImageMetric()
 {
   m_Epsilon                = 1e-12; // should be smaller than 1/numBins^2
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::Initialize()
 throw ( ExceptionObject )
 {
   Superclass::Initialize();
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 typename KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, \
-                                                            TMovingImage,
-                                                            TValueType>
-::MeasureType
+                                                            TMovingImage >::MeasureType
 KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, \
-                                                   TMovingImage,
-                                                   TValueType >
+                                                   TMovingImage >
 ::EvaluateMeasure(HistogramType & histogram) const
 {
   // Two terms.
@@ -101,8 +96,8 @@ KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, \
   return KullbackLeibler;
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
-void KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >::PrintSelf(std::ostream & os,
+template< class TFixedImage, class TMovingImage >
+void KullbackLeiblerCompareHistogramImageToImageMetric< TFixedImage, TMovingImage >::PrintSelf(std::ostream & os,
                                                                                                Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

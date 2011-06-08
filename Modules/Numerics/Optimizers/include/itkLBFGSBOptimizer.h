@@ -93,14 +93,11 @@ public:
   /** The vnl optimizer */
   typedef LBFGSBOptimizerHelper InternalOptimizerType;
 
-  /** SingleValuedCostFunction typedef */
-  typedef SingleValuedCostFunction<>  SingleValuedCostFunctionType;
-
   /** Start optimization with an initial value. */
   void StartOptimization(void);
 
   /** Plug in a Cost Function into the optimizer  */
-  virtual void SetCostFunction(SingleValuedCostFunctionType *costFunction);
+  virtual void SetCostFunction(SingleValuedCostFunction *costFunction);
 
   /** Set/Get the optimizer trace flag. If set to true, the optimizer
    * prints out information every iteration.

@@ -41,7 +41,7 @@ TransformIOBase::CreateTransform(TransformPointer & ptr,
   LightObject::Pointer i;
   i = ObjectFactoryBase::CreateInstance ( ClassName.c_str() );
   itkDebugMacro ("After call ObjectFactory");
-  ptr = dynamic_cast< TransformType * >( i.GetPointer() );
+  ptr = dynamic_cast< TransformBase * >( i.GetPointer() );
   if ( ptr.IsNull() )
     {
     std::ostringstream msg;

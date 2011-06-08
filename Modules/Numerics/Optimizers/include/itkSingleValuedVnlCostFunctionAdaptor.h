@@ -47,17 +47,14 @@ public:
   /** InternalGradientType typedef. */
   typedef   vnl_vector< double > InternalDerivativeType;
 
-  /** SingleValuedCostFunction typedef */
-  typedef SingleValuedCostFunction<>  SingleValuedCostFunctionType;
-
   /** Parameters of the SingleValuedCostFunction */
-  typedef SingleValuedCostFunctionType::ParametersType ParametersType;
+  typedef SingleValuedCostFunction::ParametersType ParametersType;
 
   /** Derivatives of the SingleValuedCostFunction */
-  typedef SingleValuedCostFunctionType::DerivativeType DerivativeType;
+  typedef SingleValuedCostFunction::DerivativeType DerivativeType;
 
   /** Type of the SingleValuedCostFunction value */
-  typedef SingleValuedCostFunctionType::MeasureType MeasureType;
+  typedef SingleValuedCostFunction::MeasureType MeasureType;
 
   /** Scales typedef */
   typedef Array< double > ScalesType;
@@ -66,11 +63,11 @@ public:
   SingleValuedVnlCostFunctionAdaptor(unsigned int spaceDimension);
 
   /** Set the CostFunction deriving from SingleValuedCostFunction */
-  void SetCostFunction(SingleValuedCostFunctionType *costFunction)
+  void SetCostFunction(SingleValuedCostFunction *costFunction)
   { m_CostFunction = costFunction; }
 
   /** Get the CostFunction deriving from SingleValuedCostFunction */
-  const SingleValuedCostFunctionType * GetCostFunction(void) const
+  const SingleValuedCostFunction * GetCostFunction(void) const
   { return m_CostFunction; }
 
   /**  Delegate computation of the value to the CostFunction. */
@@ -132,11 +129,11 @@ protected:
 
 private:
 
-  SingleValuedCostFunctionType::Pointer m_CostFunction;
-  bool                                  m_ScalesInitialized;
-  ScalesType                            m_Scales;
-  bool                                  m_NegateCostFunction;
-  Object::Pointer                       m_Reporter;
+  SingleValuedCostFunction::Pointer m_CostFunction;
+  bool                              m_ScalesInitialized;
+  ScalesType                        m_Scales;
+  bool                              m_NegateCostFunction;
+  Object::Pointer                   m_Reporter;
 
   mutable MeasureType    m_CachedValue;
   mutable DerivativeType m_CachedDerivative;

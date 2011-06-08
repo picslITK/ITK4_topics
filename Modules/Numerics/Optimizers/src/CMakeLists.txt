@@ -4,6 +4,7 @@ itkRegularStepGradientDescentOptimizer.cxx
 itkLBFGSOptimizer.cxx
 itkExhaustiveOptimizer.cxx
 itkLevenbergMarquardtOptimizer.cxx
+itkCostFunction.cxx
 itkSingleValuedNonLinearVnlOptimizer.cxx
 itkQuaternionRigidTransformGradientDescentOptimizer.cxx
 itkSPSAOptimizer.cxx

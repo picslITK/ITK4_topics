@@ -15,15 +15,24 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#include "itkCostFunction.h"
+#ifndef __itkRegularStepGradientDescentThreadedMetricOptimizer_txx
+#define __itkRegularStepGradientDescentThreadedMetricOptimizer_txx
+
+#include "itkRegularStepGradientDescentThreadedMetricOptimizer.h"
 
 namespace itk
 {
-template< class TValueType >
+/** Advance one step in the optimization */
+template<class TMetricFunction>
 void
-CostFunction< TValueType >
-::PrintSelf(std::ostream & os, Indent indent) const
+RegularStepGradientDescentThreadedMetricOptimizer<TMetricFunction>
+::AdvanceOneStep()
 {
-  Superclass::PrintSelf(os, indent);
+  //ScalesType &    scales = this->GetScales();
+
 }
-} // end namespace itk
+
+
+}//namespace itk
+
+#endif

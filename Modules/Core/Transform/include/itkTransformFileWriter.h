@@ -38,7 +38,7 @@ public:
   typedef LightProcessObject   Superclass;
   typedef SmartPointer< Self > Pointer;
 
-  typedef TransformBase< double >                 TransformType;
+  typedef TransformBase                           TransformType;
   typedef TransformIOBase::ConstTransformPointer  ConstTransformPointer;
   typedef TransformIOBase::ConstTransformListType ConstTransformListType;
 

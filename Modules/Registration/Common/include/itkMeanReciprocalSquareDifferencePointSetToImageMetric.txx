@@ -26,8 +26,8 @@ namespace itk
 /*
 * Constructor
 */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
-MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+template< class TFixedPointSet, class TMovingImage >
+MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::MeanReciprocalSquareDifferencePointSetToImageMetric()
 {
   m_Lambda = 1.0;
@@ -36,9 +36,9 @@ MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImag
 /**
  * Get the match Measure
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
-typename MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >::MeasureType
-MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+template< class TFixedPointSet, class TMovingImage >
+typename MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage >::MeasureType
+MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::GetValue(const TransformParametersType & parameters) const
 {
   FixedPointSetConstPointer fixedPointSet = this->GetFixedPointSet();
@@ -99,9 +99,9 @@ MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImag
 /*
  * Get the Derivative Measure
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::GetDerivative(const TransformParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -204,9 +204,9 @@ MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImag
 /*
  * Get both the match Measure and theDerivative Measure
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::GetValueAndDerivative(const TransformParametersType & parameters,
                         MeasureType & value, DerivativeType  & derivative) const
 {
@@ -312,9 +312,9 @@ MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImag
 /**
  * PrintSelf
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+MeanReciprocalSquareDifferencePointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

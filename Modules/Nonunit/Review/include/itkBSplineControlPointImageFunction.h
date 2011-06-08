@@ -66,11 +66,11 @@ namespace itk
  */
 template<class TControlPointLattice>
 class ITK_EXPORT BSplineParametricDistanceCostFunction
-  : public SingleValuedCostFunction<>
+  : public SingleValuedCostFunction
 {
 public:
   typedef BSplineParametricDistanceCostFunction    Self;
-  typedef SingleValuedCostFunction<>               Superclass;
+  typedef SingleValuedCostFunction                 Superclass;
   typedef SmartPointer<Self>                       Pointer;
   typedef SmartPointer<const Self>                 ConstPointer;
 
@@ -85,9 +85,9 @@ public:
   /** Method for creation through the object factory. */
   itkNewMacro( Self );
 
-  typedef typename Superclass::MeasureType    MeasureType;
-  typedef typename Superclass::DerivativeType DerivativeType;
-  typedef typename Superclass::ParametersType ParametersType;
+  typedef Superclass::MeasureType    MeasureType;
+  typedef Superclass::DerivativeType DerivativeType;
+  typedef Superclass::ParametersType ParametersType;
 
   typedef FixedArray<unsigned,
     itkGetStaticConstMacro( ParametricDimension )>    ArrayType;

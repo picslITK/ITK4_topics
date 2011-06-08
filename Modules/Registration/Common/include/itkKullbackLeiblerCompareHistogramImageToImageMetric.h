@@ -68,14 +68,14 @@ namespace itk
  * \ingroup ITK-RegistrationCommon
  */
 
-template< class TFixedImage, class TMovingImage, typename TValueType = double >
+template< class TFixedImage, class TMovingImage >
 class ITK_EXPORT KullbackLeiblerCompareHistogramImageToImageMetric:
-  public CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+  public CompareHistogramImageToImageMetric< TFixedImage, TMovingImage >
 {
 public:
   /** Standard class typedefs. */
   typedef KullbackLeiblerCompareHistogramImageToImageMetric Self;
-  typedef CompareHistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+  typedef CompareHistogramImageToImageMetric< TFixedImage, TMovingImage >
   Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;

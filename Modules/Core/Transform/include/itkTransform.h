@@ -72,12 +72,12 @@ namespace itk
 template< class TScalarType,
           unsigned int NInputDimensions = 3,
           unsigned int NOutputDimensions = 3 >
-class ITK_EXPORT Transform:public TransformBase< TScalarType >
+class ITK_EXPORT Transform:public TransformBase
 {
 public:
   /** Standard class typedefs. */
   typedef Transform                     Self;
-  typedef TransformBase< TScalarType >  Superclass;
+  typedef TransformBase                 Superclass;
   typedef SmartPointer< Self >          Pointer;
   typedef SmartPointer< const Self >    ConstPointer;
 
@@ -103,7 +103,7 @@ public:
   typedef  Array< ParametersValueType >             DerivativeType;
 
   /** Type of the Jacobian matrix. */
-  typedef  Array2D< TScalarType > JacobianType;
+  typedef  Array2D< ParametersValueType > JacobianType;
 
   /** Standard vector type for this class. */
   typedef Vector< TScalarType, NInputDimensions >  InputVectorType;
@@ -251,52 +251,33 @@ public:
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                     JacobianType &j) const = 0;
 
-  /** For the sake of efficiency, we put the burden of thread-safe use of this function on the developer.
-   *  That is, each threads should only update an inclusive sub-range [i,j] of the transform where i <= j and both are less
-   *  than  k, where k is the number of parameters.  If i==j==0 then update all parameters.
-   *  We assume Derivatives are of the same length as Parameters.  Throw exception otherwise.
+  /** Update the transform's parameters by the values in \c update.
+   * For the sake of efficiency, we put the
+   * burden of thread-safe use of this function on the developer.
+   * That is, each threads should only update an inclusive sub-range [i,j] of
+   * the transform where i <= j and both are less than  k, where k is the
+   * number of parameters.  If i==j==0 then update all parameters.
+   * We assume \c update is of the same length as Parameters. Throw
+   * exception otherwise.
+   * \c factor is a scalar multiplier for each value in update.
+   * Derived classes may override this to provide different operations for
+   * updating, including composition for classes such as versor transforms.e
+   * SetParameters is called at the end of this method, to allow transforms
+   * to perform any required operations on the update parameters, typically
+   * a converion to member variables for use in TransformPoint.
    */
-  /** FIXME: should be pure virtual? */
-  virtual void UpdateTransformParameters( DerivativeType & update ,
-                                          unsigned int i=0 ,
-                                          unsigned int j=0 )
-  {
-    if( update.Size() != this->GetNumberOfParameters() )
-      {
-      itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
-                        " be same as transform parameter size, "
-                        << this->GetNumberOfParameters() << std::endl);
-      }
-    if( j >= this->GetNumberOfParameters() )
-      {
-      itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
-                        "], is out of range: "
-                        << this->GetNumberOfParameters() << std::endl);
-      }
-    if ( i == 0 && j == 0 )
-      for (unsigned int k=0; k<this->GetNumberOfParameters(); k++)
-        this->m_Parameters[k] += update[k];
-    else
-      for (unsigned int k=i; k<=j; k++)
-        this->m_Parameters[k] += update[k];
+  virtual void UpdateTransformParameters( DerivativeType & update,
+                                          TScalarType factor = 1.0,
+                                          unsigned int i = 0,
+                                          unsigned int j = 0 );
 
-    /* Call SetParameters with the updated parameters.
-     * SetParameters in most transforms is used to assign the input params
-     * to member variables, possibly with some processing. The member variables
-     * are then used in TransformPoint.
-     * In the case of dense-field transforms that are updated in blocks from
-     * a threaded implementation, SetParameters doesn't do this, and is
-     * optimized to not copy the input parameters when they are m_Parameters.
-     */
-    this->SetParameters( this->m_Parameters );
-  }
-
-  /** Return the number of local parameters that completely defines the Transfom
-   *  at an individual voxel.  For transforms with local support, this will enable
-   *  downstream computation of the jacobian wrt only the local support region.
-   *  For instance, in the case of a deformation field, this will be equal to the
-   *  number of image dimensions. If it is an affine transform, this will be the
-   *  same as the GetNumberOfParameters().
+  /** Return the number of local parameters that completely defines the Transform
+   *  at an individual voxel.  For transforms with local support, this will
+   *  enable downstream computation of the jacobian wrt only the local support
+   *  region.
+   *  For instance, in the case of a deformation field, this will be equal to
+   *  the number of image dimensions. If it is an affine transform, this will
+   *  be the same as the GetNumberOfParameters().
    */
   virtual unsigned int GetNumberOfLocalParameters(void) const
   { return this->GetNumberOfParameters(); }
@@ -308,11 +289,13 @@ public:
   /** Returns a boolean indicating whether it is possible or not to compute the
    * inverse of this current Transform. If it is possible, then the inverse of
    * the transform is returned in the inverseTransform variable passed by the
-   * user.  The inverse is recomputed if this current transform has been modified.
-   * This method is intended to be overriden by derived classes.
+   * user.  The inverse is recomputed if this current transform has been
+   * modified.
+   * This method is intended to be overriden as needed by derived classes.
    *
    */
-  bool GetInverse( Self *itkNotUsed(inverseTransform) ) const { return false; }
+  bool GetInverse( Self *itkNotUsed(inverseTransform) ) const
+  { return false; }
 
   /** Return an inverse of this transform. If the inverse has not been
    *  implemented, return NULL. The type of the inverse transform
@@ -320,7 +303,8 @@ public:
    *  transform. This allows one to return a numeric inverse transform
    *  instead.
    */
-  virtual InverseTransformBasePointer GetInverseTransform() const { return NULL; }
+  virtual InverseTransformBasePointer GetInverseTransform() const
+  { return NULL; }
 
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;

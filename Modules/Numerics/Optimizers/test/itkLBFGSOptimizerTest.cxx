@@ -40,16 +40,16 @@
  *   the solution is the vector | 2 -2 |
  *
  */
-class LBFGSCostFunction : public itk::SingleValuedCostFunction<>
+class LBFGSCostFunction : public itk::SingleValuedCostFunction
 {
 public:
 
   typedef LBFGSCostFunction                 Self;
-  typedef itk::SingleValuedCostFunction<>     Superclass;
+  typedef itk::SingleValuedCostFunction     Superclass;
   typedef itk::SmartPointer<Self>           Pointer;
   typedef itk::SmartPointer<const Self>     ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( LBFCostFunction, SingleValuedCostFunction<> );
+  itkTypeMacro( LBFCostFunction, SingleValuedCostFunction );
 
   enum { SpaceDimension=2 };
 

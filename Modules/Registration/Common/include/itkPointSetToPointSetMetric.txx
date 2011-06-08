@@ -23,8 +23,8 @@
 namespace itk
 {
 /** Constructor */
-template< class TFixedPointSet,  class TMovingPointSet, typename TValueType >
-PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet, TValueType >
+template< class TFixedPointSet, class TMovingPointSet >
+PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet >
 ::PointSetToPointSetMetric()
 {
   m_FixedPointSet = 0;    // has to be provided by the user.
@@ -33,9 +33,9 @@ PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet, TValueType >
 }
 
 /** Set the parameters that define a unique transform */
-template< class TFixedPointSet,  class TMovingPointSet, typename TValueType >
+template< class TFixedPointSet, class TMovingPointSet >
 void
-PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet, TValueType >
+PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet >
 ::SetTransformParameters(const ParametersType & parameters) const
 {
   if ( !m_Transform )
@@ -46,9 +46,9 @@ PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet, TValueType >
 }
 
 /** Initialize the metric */
-template< class TFixedPointSet,  class TMovingPointSet, typename TValueType >
+template< class TFixedPointSet, class TMovingPointSet >
 void
-PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet, TValueType >
+PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet >
 ::Initialize(void)
 throw ( ExceptionObject )
 {
@@ -81,9 +81,9 @@ throw ( ExceptionObject )
 }
 
 /** PrintSelf */
-template< class TFixedPointSet,  class TMovingPointSet, typename TValueType >
+template< class TFixedPointSet, class TMovingPointSet >
 void
-PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet, TValueType >
+PointSetToPointSetMetric< TFixedPointSet, TMovingPointSet >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

@@ -35,14 +35,14 @@ namespace itk
  *    \ingroup RegistrationMetrics
  * \ingroup ITK-RegistrationCommon
  */
-template< class TFixedImage, class TMovingImage, typename TValueType = double >
+template< class TFixedImage, class TMovingImage >
 class ITK_EXPORT MeanSquaresHistogramImageToImageMetric:
-  public HistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+  public HistogramImageToImageMetric< TFixedImage, TMovingImage >
 {
 public:
   /** Standard class typedefs. */
   typedef MeanSquaresHistogramImageToImageMetric                   Self;
-  typedef HistogramImageToImageMetric< TFixedImage, TMovingImage, TValueType > Superclass;
+  typedef HistogramImageToImageMetric< TFixedImage, TMovingImage > Superclass;
   typedef SmartPointer< Self >                                     Pointer;
   typedef SmartPointer< const Self >                               ConstPointer;
 

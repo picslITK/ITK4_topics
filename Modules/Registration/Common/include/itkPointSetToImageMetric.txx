@@ -25,8 +25,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
-PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+template< class TFixedPointSet, class TMovingImage >
+PointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::PointSetToImageMetric()
 {
   m_FixedPointSet = 0;         // has to be provided by the user.
@@ -41,9 +41,9 @@ PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
 /**
  * Set the parameters that define a unique transform
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+PointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::SetTransformParameters(const ParametersType & parameters) const
 {
   if ( !m_Transform )
@@ -56,9 +56,9 @@ PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
 /**
  * PrintSelf
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+PointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::Initialize(void)
 throw ( ExceptionObject )
 {
@@ -125,9 +125,9 @@ throw ( ExceptionObject )
 /**
  * PrintSelf
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType >
+template< class TFixedPointSet, class TMovingImage >
 void
-PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+PointSetToImageMetric< TFixedPointSet, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

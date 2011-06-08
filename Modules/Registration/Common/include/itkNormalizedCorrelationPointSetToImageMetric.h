@@ -40,15 +40,15 @@ namespace itk
  * \ingroup RegistrationMetrics
  * \ingroup ITK-RegistrationCommon
  */
-template< class TFixedPointSet, class TMovingImage, typename TValueType = double >
+template< class TFixedPointSet, class TMovingImage >
 class ITK_EXPORT NormalizedCorrelationPointSetToImageMetric:
-  public PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType >
+  public PointSetToImageMetric< TFixedPointSet, TMovingImage >
 {
 public:
 
   /** Standard class typedefs. */
   typedef NormalizedCorrelationPointSetToImageMetric            Self;
-  typedef PointSetToImageMetric< TFixedPointSet, TMovingImage, TValueType > Superclass;
+  typedef PointSetToImageMetric< TFixedPointSet, TMovingImage > Superclass;
   typedef SmartPointer< Self >                                  Pointer;
   typedef SmartPointer< const Self >                            ConstPointer;
 

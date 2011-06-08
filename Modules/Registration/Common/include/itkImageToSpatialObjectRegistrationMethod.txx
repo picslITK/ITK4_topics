@@ -23,12 +23,8 @@
 namespace itk
 {
 /** Constructor */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::ImageToSpatialObjectRegistrationMethod()
 {
   this->SetNumberOfRequiredOutputs(1);    // for the Transform
@@ -54,13 +50,9 @@ ImageToSpatialObjectRegistrationMethod< TFixedImage,
 }
 
 /** Initialize by setting the interconnects between components.  */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
 void
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::Initialize()
 throw ( ExceptionObject )
 {
@@ -133,13 +125,9 @@ throw ( ExceptionObject )
 }
 
 /** Starts the Registration Process */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
 void
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::StartRegistration(void)
 {
   // StartRegistration is an old API from before
@@ -190,13 +178,9 @@ ImageToSpatialObjectRegistrationMethod< TFixedImage,
 }
 
 /** PrintSelf */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
 void
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -213,13 +197,9 @@ ImageToSpatialObjectRegistrationMethod< TFixedImage,
 /*
  * Generate Data
  */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
 void
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::GenerateData()
 {
   this->StartRegistration();
@@ -228,28 +208,17 @@ ImageToSpatialObjectRegistrationMethod< TFixedImage,
 /**
  *  Get Output
  */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
-const typename ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                                       TMovingSpatialObject,
-                                                       TValueType >
-                                                       ::TransformOutputType *
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
+const typename ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >::TransformOutputType *
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::GetOutput() const
 {
   return static_cast< const TransformOutputType * >( this->ProcessObject::GetOutput(0) );
 }
 
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
 DataObject::Pointer
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::MakeOutput(unsigned int output)
 {
   switch ( output )
@@ -266,13 +235,9 @@ ImageToSpatialObjectRegistrationMethod< TFixedImage,
 /**
  *
  */
-template< typename TFixedImage,
-          typename TMovingSpatialObject,
-          typename TValueType >
+template< typename TFixedImage, typename TMovingSpatialObject >
 unsigned long
-ImageToSpatialObjectRegistrationMethod< TFixedImage,
-                                        TMovingSpatialObject,
-                                        TValueType >
+ImageToSpatialObjectRegistrationMethod< TFixedImage, TMovingSpatialObject >
 ::GetMTime() const
 {
   unsigned long mtime = Superclass::GetMTime();

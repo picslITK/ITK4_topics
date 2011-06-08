@@ -56,17 +56,15 @@ namespace itk
  * \ingroup ITK-RegistrationCommon
  */
 
-template< class TFixedImage,
-          class TMovingSpatialObject,
-          typename TValueType = double >
+template< class TFixedImage, class TMovingSpatialObject >
 class ITK_EXPORT ImageToSpatialObjectMetric:
-  public SingleValuedCostFunction< TValueType >
+  public SingleValuedCostFunction
 {
 public:
-  typedef ImageToSpatialObjectMetric              Self;
-  typedef SingleValuedCostFunction< TValueType >  Superclass;
-  typedef SmartPointer< Self >                    Pointer;
-  typedef SmartPointer< const Self >              ConstPointer;
+  typedef ImageToSpatialObjectMetric Self;
+  typedef SingleValuedCostFunction   Superclass;
+  typedef SmartPointer< Self >       Pointer;
+  typedef SmartPointer< const Self > ConstPointer;
 
   /** Type of the fixed image */
   typedef TFixedImage FixedImageType;
@@ -75,8 +73,7 @@ public:
   typedef TMovingSpatialObject MovingSpatialObjectType;
 
   /** Type used for representing point components  */
-  typedef typename Superclass::ParametersValueType
-                                              CoordinateRepresentationType;
+  typedef Superclass::ParametersValueType CoordinateRepresentationType;
 
   /** Image dimension enumeration. */
   itkStaticConstMacro(ImageDimension, unsigned int,
@@ -109,10 +106,10 @@ public:
                             itkGetStaticConstMacro(ObjectDimension) > VectorType;
 
   /**  Type of the match measure */
-  typedef typename Superclass::MeasureType MeasureType;
+  typedef Superclass::MeasureType MeasureType;
 
   /** Type of the derivative of the match measure */
-  typedef typename Superclass::DerivativeType DerivativeType;
+  typedef Superclass::DerivativeType DerivativeType;
 
   /** Pointer type for the FixedImage  */
   typedef typename FixedImageType::Pointer FixedImagePointer;
@@ -129,7 +126,7 @@ public:
 
   /**  ParametersType typedef.
    *  It defines a position in the optimization search space. */
-  typedef typename Superclass::ParametersType ParametersType;
+  typedef Superclass::ParametersType ParametersType;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(ImageToSpatialObjectMetric, Object);

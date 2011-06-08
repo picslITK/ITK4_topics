@@ -25,12 +25,8 @@ namespace itk
 /**
  * Constructor
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::PointSetToPointSetRegistrationMethod()
 {
   this->SetNumberOfRequiredOutputs(1);    // for the Transform
@@ -57,13 +53,9 @@ PointSetToPointSetRegistrationMethod< TFixedPointSet,
 /*
  * Set the initial transform parameters
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 void
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::SetInitialTransformParameters(const ParametersType & param)
 {
   m_InitialTransformParameters = param;
@@ -73,13 +65,9 @@ PointSetToPointSetRegistrationMethod< TFixedPointSet,
 /**
  * Initialize by setting the interconnects between components.
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 void
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::Initialize()
 throw ( ExceptionObject )
 {
@@ -139,13 +127,9 @@ throw ( ExceptionObject )
 /*
  * Starts the Registration Process
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 void
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::StartRegistration(void)
 {
   // StartRegistration is an old API from before
@@ -204,13 +188,9 @@ PointSetToPointSetRegistrationMethod< TFixedPointSet,
 /**
  * PrintSelf
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 void
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -223,13 +203,9 @@ PointSetToPointSetRegistrationMethod< TFixedPointSet,
   os << indent << "Last    Transform Parameters: " << m_LastTransformParameters << std::endl;
 }
 
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 void
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::GenerateData()
 {
   this->StartRegistration();
@@ -238,28 +214,17 @@ PointSetToPointSetRegistrationMethod< TFixedPointSet,
 /**
  *  Get Output
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
-const typename PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                                     TMovingPointSet,
-                                                     TValueType >
-::TransformOutputType *
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
+const typename PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >::TransformOutputType *
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::GetOutput() const
 {
   return static_cast< const TransformOutputType * >( this->ProcessObject::GetOutput(0) );
 }
 
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 DataObject::Pointer
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::MakeOutput(unsigned int output)
 {
   switch ( output )
@@ -276,13 +241,9 @@ PointSetToPointSetRegistrationMethod< TFixedPointSet,
 /**
  *
  */
-template< typename TFixedPointSet,
-          typename TMovingPointSet,
-          typename TValueType >
+template< typename TFixedPointSet, typename TMovingPointSet >
 unsigned long
-PointSetToPointSetRegistrationMethod< TFixedPointSet,
-                                      TMovingPointSet,
-                                      TValueType >
+PointSetToPointSetRegistrationMethod< TFixedPointSet, TMovingPointSet >
 ::GetMTime() const
 {
   unsigned long mtime = Superclass::GetMTime();

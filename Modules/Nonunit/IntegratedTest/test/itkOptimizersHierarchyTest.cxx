@@ -121,10 +121,10 @@ int itkOptimizersHierarchyTest(int, char* [] )
 
 
   // This is only type checking. This class is not expected to be instantiated
-  typedef itk::CostFunction<>     CostFunctionType;
+  typedef itk::CostFunction     CostFunctionType;
 
   // This is only type checking. This class is not expected to be instantiated
-  typedef itk::SingleValuedCostFunction<>     SingleValuedCostFunctionType;
+  typedef itk::SingleValuedCostFunction     SingleValuedCostFunctionType;
 
 
   typedef itk::AmoebaOptimizer    AmoebaOptimizerType;

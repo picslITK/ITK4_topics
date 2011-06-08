@@ -39,16 +39,16 @@ int POWELL_CALLS_TO_GET_VALUE = 0;
  *   the solution is the vector | 2 -2 |
  *
  */
-class PowellBoundedCostFunction : public itk::SingleValuedCostFunction<>
+class PowellBoundedCostFunction : public itk::SingleValuedCostFunction
 {
 public:
 
   typedef PowellBoundedCostFunction                  Self;
-  typedef itk::SingleValuedCostFunction<>   Superclass;
+  typedef itk::SingleValuedCostFunction   Superclass;
   typedef itk::SmartPointer<Self>         Pointer;
   typedef itk::SmartPointer<const Self>   ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( PowellBoundedCostFunction, SingleValuedCostFunction<> );
+  itkTypeMacro( PowellBoundedCostFunction, SingleValuedCostFunction );
 
   enum { SpaceDimension=2 };
 

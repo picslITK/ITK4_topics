@@ -84,8 +84,7 @@ public:
   itkTypeMacro(OnePlusOneEvolutionaryOptimizer, SingleValuedNonLinearOptimizer);
 
   /** Type of the Cost Function   */
-  //Why doesn't this use Superclass::CostFunctionType ?
-  typedef  SingleValuedCostFunction<>  CostFunctionType;
+  typedef  SingleValuedCostFunction  CostFunctionType;
   typedef  CostFunctionType::Pointer CostFunctionPointer;
 
   /** Normal random variate generator type. */

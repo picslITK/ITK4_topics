@@ -26,8 +26,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::MatchCardinalityImageToImageMetric()
 {
   itkDebugMacro("Constructor");
@@ -42,9 +42,9 @@ MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /*
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-typename MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+typename MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue(const TransformParametersType & parameters) const
 {
   return const_cast< Self * >( this )->GetNonconstValue(parameters);
@@ -53,9 +53,9 @@ MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * Get the match Measure (non const version. spawns threads).
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-typename MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+typename MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::GetNonconstValue(const TransformParametersType & parameters)
 {
   itkDebugMacro("GetValue( " << parameters << " ) ");
@@ -125,9 +125,9 @@ MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
   return measure;
 }
 
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::ThreadedGetValue(const FixedImageRegionType & regionForThread,
                    int threadId)
 {
@@ -194,9 +194,9 @@ MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 }
 
 //----------------------------------------------------------------------------
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 int
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::SplitFixedRegion(int i, int num, FixedImageRegionType & splitRegion)
 {
   // Get the output pointer
@@ -254,9 +254,9 @@ MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 // Callback routine used by the threading library. This routine just calls
 // the ThreadedGenerateData method after setting the correct region for this
 // thread.
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 ITK_THREAD_RETURN_TYPE
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::ThreaderCallback(void *arg)
 {
   ThreadStruct *str;
@@ -289,9 +289,9 @@ MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
 /**
  * PrintSelf
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MatchCardinalityImageToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

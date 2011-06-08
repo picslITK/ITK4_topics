@@ -51,16 +51,16 @@ namespace itk
  * \ingroup ITK-RegistrationCommon
  */
 
-template< class TFixedImage,  class TMovingImage, typename TValueType = double >
+template< class TFixedImage,  class TMovingImage >
 class ITK_EXPORT ImageToImageMetric:
-  public SingleValuedCostFunction< TValueType >
+  public SingleValuedCostFunction
 {
 public:
   /** Standard class typedefs. */
-  typedef ImageToImageMetric                      Self;
-  typedef SingleValuedCostFunction< TValueType >  Superclass;
-  typedef SmartPointer< Self >                    Pointer;
-  typedef SmartPointer< const Self >              ConstPointer;
+  typedef ImageToImageMetric         Self;
+  typedef SingleValuedCostFunction   Superclass;
+  typedef SmartPointer< Self >       Pointer;
+  typedef SmartPointer< const Self > ConstPointer;
 
   /** Type used for representing point components  */
   typedef typename Superclass::ParametersValueType CoordinateRepresentationType;

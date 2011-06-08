@@ -56,7 +56,7 @@ ConjugateGradientOptimizer
  */
 void
 ConjugateGradientOptimizer
-::SetCostFunction(SingleValuedCostFunctionType *costFunction)
+::SetCostFunction(SingleValuedCostFunction *costFunction)
 {
   const unsigned int numberOfParameters =
     costFunction->GetNumberOfParameters();

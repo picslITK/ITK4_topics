@@ -26,8 +26,8 @@ namespace itk
 /**
  * Constructor
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 ::MeanReciprocalSquareDifferenceImageToImageMetric()
 {
   m_Lambda = 1.0;
@@ -37,9 +37,9 @@ MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TVa
 /**
  * PrintSelf
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -50,9 +50,9 @@ MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TVa
 /*
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
-typename MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >::MeasureType
-MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+template< class TFixedImage, class TMovingImage >
+typename MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
+MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue(const TransformParametersType & parameters) const
 {
   FixedImageConstPointer fixedImage = this->m_FixedImage;
@@ -120,9 +120,9 @@ MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TVa
 /**
  * Get the Derivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 ::GetDerivative(const TransformParametersType & parameters,
                 DerivativeType & derivative) const
 {
@@ -147,9 +147,9 @@ MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TVa
 /**
  * Get both the match Measure and theDerivative Measure
  */
-template< class TFixedImage, class TMovingImage, typename TValueType >
+template< class TFixedImage, class TMovingImage >
 void
-MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage, TValueType >
+MeanReciprocalSquareDifferenceImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative(const TransformParametersType & parameters,
                         MeasureType & Value, DerivativeType  & Derivative) const
 {
