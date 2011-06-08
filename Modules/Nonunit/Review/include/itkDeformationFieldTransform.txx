@@ -21,6 +21,7 @@
 #include "itkDeformationFieldTransform.h"
 
 #include "itkVectorLinearInterpolateImageFunction.h"
+#include "vnl/algo/vnl_symmetric_eigensystem.h"
 
 namespace itk
 {
@@ -109,6 +110,129 @@ DeformationFieldTransform<TScalar, NDimensions>
 }
 
 /**
+ * Transform vector
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformVectorAtPoint( const InputVectorType& inputVector, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( index, jacobian );
+
+  AffineTransformPointer localTransform = AffineTransformType::New();
+  localTransform->SetMatrix( jacobian );
+  OutputVectorType outputVector = localTransform->TransformVector( inputVector );
+
+  return outputVector;
+
+}
+
+/**
+ * Transform tensor
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputTensorType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformTensorAtPoint( const InputTensorType& inputTensor, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  typedef vnl_matrix<ScalarType> VnlMatrixType;
+  typedef vnl_vector<ScalarType> VnlVectorType;
+
+
+  VnlMatrixType matrixTensor(3,3);
+  matrixTensor(0,0) = inputTensor[0];
+  matrixTensor(1,1) = inputTensor[3];
+  matrixTensor(2,2) = inputTensor[5];
+  matrixTensor(1,0) = matrixTensor(0,1) = inputTensor[1];
+  matrixTensor(2,0) = matrixTensor(0,2) = inputTensor[2];
+  matrixTensor(2,1) = matrixTensor(1,2) = inputTensor[4];
+
+  OutputTensorType outputTensor;
+  outputTensor.CastFrom( inputTensor );
+
+  IndexType index;
+  this->m_DeformationField->TransformPhysicalPointToIndex( point, index );
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( index, jacobian );
+
+  //typename AffineTransformType::Pointer localTransform = AffineTransformType::New();
+  //localTransform->SetMatrix( jacobian );
+
+  vnl_symmetric_eigensystem< ScalarType > eig(matrixTensor);
+
+  InputVectorType ev1;
+  InputVectorType ev2;
+  InputVectorType ev3;
+
+  for (unsigned int i=0; i<3; i++)
+    {
+    ev1[i] = eig.get_eigenvector(2)[i];
+    ev2[i] = eig.get_eigenvector(1)[i];
+    ev3[i] = eig.get_eigenvector(0)[i];
+    }
+
+  OutputVectorType ev1r = this->TransformVectorAtPoint( ev1, point );
+  ev1r.Normalize();
+
+  // Get aspect of rotated e2 that is perpendicular to rotated e1
+  OutputVectorType ev2a = this->TransformVectorAtPoint( ev2 );
+  if ( (ev2a * ev1r) < 0 )
+    {
+    ev2a = ev2a*(-1.0);
+    }
+  OutputVectorType ev2r = ev2a - (ev2a*ev1r)*ev1r;
+  ev2r.Normalize();
+
+  OutputVectorType ev3r = CrossProduct( ev1r, ev2r );
+  ev3r.Normalize();
+
+  VnlVectorType e1(3);
+  VnlVectorType e2(3);
+  VnlVectorType e3(3);
+
+  for (unsigned int i=0; i<3; i++)
+    {
+    e1[i] = ev1r[i];
+    e2[i] = ev2r[i];
+    e3[i] = ev3r[i];
+    }
+
+  VnlMatrixType rotated = eig.get_eigenvalue(2) * outer_product(e1,e1)
+    + eig.get_eigenvalue(1) * outer_product(e2,e2) + eig.get_eigenvalue(0) * outer_product(e3,e3);
+
+  outputTensor[0] = rotated(0,0);
+  outputTensor[1] = rotated(0,1);
+  outputTensor[2] = rotated(0,2);
+  outputTensor[3] = rotated(1,1);
+  outputTensor[4] = rotated(1,2);
+  outputTensor[5] = rotated(2,2);
+
+  return outputTensor;
+}
+
+
+
+/**
  * return an inverse transformation
  */
 template<class TScalar, unsigned int NDimensions>
@@ -151,7 +275,7 @@ typename DeformationFieldTransform<TScalar, NDimensions>::JacobianType &
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobian( const InputPointType & point ) const
 {
-  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetJacobianWithRespectToParameters()" );
+  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetJacobianWithRespectToPosition()" );
 }
 
 
@@ -161,15 +285,44 @@ DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToParameters( const InputPointType & point,
                                       JacobianType & jacobian ) const
 {
-  IndexType idx;
-  this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetJacobianWithRespectToParameters( idx, jacobian );
+  jacobian.SetSize(NDimensions,NDimensions);
+  jacobian.Fill(0.0);
+  for (unsigned int i=0; i<NDimensions; i++)
+    {
+    jacobian(i,i) = 1.0;
+    }
 }
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
-::GetJacobianWithRespectToParameters( const IndexType & index,
+::GetJacobianWithRespectToParameters( const IndexType & index ,
+                                      JacobianType & jacobian ) const
+{
+  jacobian.SetSize(NDimensions,NDimensions);
+  jacobian.Fill(0.0);
+  for (unsigned int i=0; i<NDimensions; i++)
+    {
+    jacobian(i,i) = 1.0;
+    }
+}
+
+
+template<class TScalar, unsigned int NDimensions>
+void
+DeformationFieldTransform<TScalar, NDimensions>
+::GetJacobianWithRespectToPosition( const InputPointType & point,
+                                      JacobianType & jacobian ) const
+{
+  IndexType idx;
+  this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
+  this->GetJacobianWithRespectToPosition( idx, jacobian );
+}
+
+template<class TScalar, unsigned int NDimensions>
+void
+DeformationFieldTransform<TScalar, NDimensions>
+::GetJacobianWithRespectToPosition( const IndexType & index,
                                       JacobianType & jacobian ) const
 {
   jacobian.SetSize(NDimensions,NDimensions);

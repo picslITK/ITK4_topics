@@ -92,6 +92,14 @@ public:
   typedef typename Superclass::InputVnlVectorType   InputVnlVectorType;
   typedef typename Superclass::OutputVnlVectorType  OutputVnlVectorType;
 
+  /** Standard tensor type for this class */
+  typedef typename Superclass::InputTensorType      InputTensorType;
+  typedef typename Superclass::OutputTensorType     OutputTensorType;
+
+    /** Standard tensor type for this class */
+  typedef typename Superclass::InputTensorMatrixType      InputTensorMatrixType;
+  typedef typename Superclass::OutputTensorMatrixType     OutputTensorMatrixType;
+
   /** Derivative type */
   typedef typename Superclass::DerivativeType       DerivativeType;
 
@@ -145,6 +153,16 @@ public:
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const
     { itkExceptionMacro( "TransformVector unimplemented" ); }
 
+  OutputVectorType TransformVectorAtPoint( const InputVectorType &, const InputPointType & ) const;
+
+  /** Method to transform a tensor */
+  OutputTensorType TransformTensorAtPoint(const InputTensorType &, const InputPointType &) const;
+  //  { itkExceptionMacro( "TransformTensor unimplemented" ); }
+
+  /** Method to transform a tensor */
+  //OutputTensorMatrixType TransformTensorAtPoint(const InputTensorMatrixType &, const InputPointType &) const
+  //  { itkExceptionMacro( "TransformTensor unimplemented" ); }
+
   /**  Method to transform a CovariantVector. */
   virtual OutputCovariantVectorType TransformCovariantVector(
     const InputCovariantVectorType &) const
@@ -174,6 +192,12 @@ public:
    * Definition in txx file throws an exception.
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
+
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &j) const;
+
+  virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
+                                                  JacobianType &j) const;
 
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &x,
                                                   JacobianType &j) const;
