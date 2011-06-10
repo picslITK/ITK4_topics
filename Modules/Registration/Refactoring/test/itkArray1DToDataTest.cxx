@@ -25,7 +25,9 @@ using namespace itk;
 
 namespace{
 
-typedef Array1DToData::IndexRangeType  IndexRangeType;
+class HolderClass;
+typedef Array1DToData<HolderClass>                  Array1DToDataType;
+typedef Array1DToDataType::IndexRangeType           IndexRangeType;
 
 /*
  * Helper class that holds callback and stores results from threads.
@@ -41,9 +43,8 @@ public:
   static void ThreadedCallback(
                                 const IndexRangeType& rangeForThread,
                                 int threadId,
-                                void *inHolder )
+                                Self *holder )
   {
-    Self *holder = static_cast<Self*> (inHolder);
     if( threadId >= holder->m_numberOfThreads )
       {
       holder->m_GotMoreThreadsThanExpected = true;
@@ -73,7 +74,7 @@ public:
 /*
  * Run the actually test
  */
-int RunTest( Array1DToData::Pointer& threader, int numberOfThreads,
+int RunTest( Array1DToDataType::Pointer& threader, int numberOfThreads,
               IndexRangeType& fullRange, HolderClass& holder)
 {
   std::cout << "Testing with " << numberOfThreads
@@ -164,7 +165,7 @@ int RunTest( Array1DToData::Pointer& threader, int numberOfThreads,
  */
 int itkArray1DToDataTest(int , char* [])
 {
-  Array1DToData::Pointer threader = Array1DToData::New();
+  Array1DToDataType::Pointer threader = Array1DToDataType::New();
   HolderClass   holder;
 
   int result = EXIT_SUCCESS;
@@ -182,7 +183,7 @@ int itkArray1DToDataTest(int , char* [])
   /* Set the callback for the threader to use */
   threader->SetThreadedGenerateData( HolderClass::ThreadedCallback );
   /* Set the data/method holder that threader will pass to callback */
-  threader->SetHolder( static_cast<void*>(&holder) );
+  threader->SetHolder( &holder );
 
   IndexRangeType fullRange;
 

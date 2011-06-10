@@ -29,16 +29,16 @@ namespace itk
 /**
  *
  */
-template <unsigned int VDimension, typename TInputObject>
-ImageToData<VDimension,TInputObject>
+template <unsigned int VDimension, class TDataHolder, typename TInputObject>
+ImageToData<VDimension, TDataHolder, TInputObject>
 ::ImageToData()
 {
 }
 
 //----------------------------------------------------------------------------
-template <unsigned int VDimension, typename TInputObject>
+template <unsigned int VDimension, class TDataHolder, typename TInputObject>
 int
-ImageToData<VDimension,TInputObject>
+ImageToData<VDimension, TDataHolder, TInputObject>
 ::SplitRequestedObject(int i, int requestedTotal,
                        InputObjectType &overallRegion,
                        InputObjectType& splitRegion) const

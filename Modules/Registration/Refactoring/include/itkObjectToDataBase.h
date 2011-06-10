@@ -27,14 +27,21 @@ namespace itk
 {
 
 /** \class ObjectToDataBase
- *  \brief Virtual base class for specialized threading setup and dispatch.
+ *  \brief Virtual base class for threading setup and dispatch.
+ *
+ * The class is templated over the type of object over which threading
+ * is performed, e.g. an image region. And it is templated over the
+ * type of the data holder. The data holder is supplied to the threading
+ * callback for the user.
  *
  * SplitRequestedObject is a method to split the object into
  * non-overlapping pieces for threading. Must be overridden by derived
  * classes to provide the particular funcationality required for
  * TInputObject type.
  *
- * Call SetHolder
+ * Call SetHolder...
+ *
+ * Call SetThreadedGenerateData...
  *
  * \warning The actual number of threads used may be less than the
  * requested number of threads. Either because the requested number is
@@ -46,7 +53,7 @@ namespace itk
  * \ingroup DataSources
  */
 
-template <class TInputObject>
+template <class TInputObject, class TDataHolder>
 class ITK_EXPORT ObjectToDataBase : public ProcessObject
 {
 public:
@@ -64,6 +71,9 @@ public:
 
   /** Type of the input object that's split for threading */
   typedef TInputObject              InputObjectType;
+
+  /** Type of the data holder, i.e. user data */
+  typedef TDataHolder               DataHolderType;
 
   /** Type of callback function called by threader to do the work.
    */
@@ -84,18 +94,19 @@ public:
   //  calling conventions, which might be different between C and C++.
   typedef void (*ThreadedGenerateDataFuncType)(const InputObjectType&,
                                                 int threadId,
-                                                void * holder);
+                                                DataHolderType * holder);
 
   /** Set the overall (i.e. complete) object over which to thread */
   itkSetMacro( OverallObject, InputObjectType );
 
   /** Set the threaded worker callback. Used by the user class
-   * to assign the worker callback. */
+   * to assign the worker callback.
+   * \note This callback must be a static function if it is a class method. */
   void SetThreadedGenerateData( ThreadedGenerateDataFuncType func )
   { m_ThreadedGenerateData = func; }
 
   /** Set the object holder used during threading. */
-  void SetHolder( void* holder )
+  void SetHolder( DataHolderType* holder )
     {
     if( this->m_Holder != holder )
       {
@@ -103,12 +114,9 @@ public:
       this->Modified();
       }
     }
-  /** Convenience overload that accepts pointer to itk object */
-  void SetHolder( Object * holder )
-  { SetHolder( static_cast<void*>(holder) ); }
 
-  /** Get the assigned holder */
-  void* GetHolder()
+  /** Get the assigned holder, as a raw C-pointer */
+  DataHolderType* GetHolder()
   { return this->m_Holder; }
 
   /** Accessor for number of threads actually used */
@@ -139,7 +147,7 @@ protected:
 
   /** Static function used as a "callback" by the MultiThreader.  The threading
    * library will call this routine for each thread, which will delegate the
-   * control to ThreadedGenerateData(). */
+   * control to the function pointed to by m_ThreadedGenerateData. */
   static ITK_THREAD_RETURN_TYPE ThreaderCallback( void *arg );
 
   /** Internal structure used for passing image data into the
@@ -150,7 +158,8 @@ protected:
     };
 
   InputObjectType               m_OverallObject;
-  void *                        m_Holder;
+  /** Raw C-pointer to the data holder */
+  DataHolderType *              m_Holder;
 
 private:
   ThreadedGenerateDataFuncType  m_ThreadedGenerateData;

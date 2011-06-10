@@ -98,10 +98,7 @@ public:
 
   /** Set the number of threads to use when threading.
    * This is initialized by default to the global default number of
-   * threads from itkMultiThreader.
-   * /warning If a derived class does any additional threading, it
-   * must override this method, or otherwise handle setting the number
-   * of threads for its needs from the m_NumberOfThreads class member. */
+   * threads from itkMultiThreader. */
   virtual void SetNumberOfThreads( int number )
   {
     if( number < 1 )
@@ -117,6 +114,9 @@ public:
   }
 
   /** Set the full image region over which to optimize */
+  // NOTE: this should be more general, i.e. for any object type.
+  // ACTUALLY we're moving metric threading out of optimizer, so
+  // I think this can go completely away.
   void SetOverallRegion( ImageRegionType & region )
   {
     m_OverallRegion = region;
@@ -147,12 +147,10 @@ protected:
 
   MetricTypePointer             m_Metric;
   int                           m_NumberOfThreads;
-  MetricThreaderPointer         m_MetricThreader;
+//  MetricThreaderPointer         m_MetricThreader;
 
   /** Metric measure value at a given iteration */
   MeasureType                                 m_Value;
-  /** Intermediary metric value storage. */
-  std::vector<InternalComputationValueType>   m_MeasurePerThread;
 
   virtual ~ObjectToObjectThreadedMetricOptimizerBase(){}
 

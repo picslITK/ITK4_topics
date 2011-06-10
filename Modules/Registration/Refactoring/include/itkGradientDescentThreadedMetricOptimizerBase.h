@@ -33,9 +33,9 @@ public:
   /** Standard class typedefs. */
   typedef GradientDescentThreadedMetricOptimizerBase     Self;
   typedef ObjectToObjectThreadedMetricOptimizerBase < TMetricFunction >
-                                                        Superclass;
-  typedef SmartPointer< Self >                      Pointer;
-  typedef SmartPointer< const Self >                ConstPointer;
+                                                         Superclass;
+  typedef SmartPointer< Self >                           Pointer;
+  typedef SmartPointer< const Self >                     ConstPointer;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(Self, Superclass);
@@ -75,7 +75,7 @@ public:
   itkSuperclassTraitMacro( InternalComputationValueType );
 
   /** Threader for grandient update */
-  typedef Array1DToData                 ModifyGradientThreaderType;
+  typedef Array1DToData<Self>             ModifyGradientThreaderType;
   typedef ModifyGradientThreaderType::IndexRangeType  IndexRangeType;
 
   /** Global derivative accessor */
@@ -146,7 +146,7 @@ protected:
   static void ComputeMetricValueInRegionThreaded(
                                   const ImageRegionType & regionForThread,
                                   int threadId,
-                                  void *inHolder );
+                                  Self *inHolder );
 
   /** Perform per-iteration operations after the metric values have been
    * updated via threading. In particular this will gather the results
@@ -190,7 +190,7 @@ protected:
   static void ModifyGradientThreaded(
                                   const IndexRangeType& rangeForThread,
                                   int threadId,
-                                  void *inHolder );
+                                  Self *inHolder );
 
   /** Advance one step following the gradient direction
    * This method verifies if a change in direction is required

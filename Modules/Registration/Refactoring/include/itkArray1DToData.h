@@ -49,15 +49,16 @@ namespace
 
 namespace itk
 {
+template<class TDataHolder>
 class ITK_EXPORT Array1DToData
-  : public ObjectToDataBase< TIndexRange >
+  : public ObjectToDataBase< TIndexRange, TDataHolder >
 {
 public:
   /** Standard class typedefs. */
-  typedef Array1DToData                      Self;
-  typedef ObjectToDataBase<TIndexRange>      Superclass;
-  typedef SmartPointer<Self>                 Pointer;
-  typedef SmartPointer<const Self>           ConstPointer;
+  typedef Array1DToData                               Self;
+  typedef ObjectToDataBase<TIndexRange, TDataHolder>  Superclass;
+  typedef SmartPointer<Self>                          Pointer;
+  typedef SmartPointer<const Self>                    ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
@@ -68,7 +69,7 @@ public:
   /** Type of the object being threaded over */
   typedef TIndexRange                           IndexRangeType;
   /** Type for convenience of base class methods */
-  typedef Superclass::InputObjectType           InputObjectType;
+  typedef typename Superclass::InputObjectType  InputObjectType;
 
   /** Set the overall index range over which to operate.
    * This performs some error checking and is named more intuitively
@@ -99,5 +100,9 @@ private:
 };
 
 } // end namespace itk
+
+#ifndef ITK_MANUAL_INSTANTIATION
+# include "itkArray1DToData.txx"
+#endif
 
 #endif

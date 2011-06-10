@@ -50,6 +50,16 @@ NewClassExample< TFixedImage, TMovingImage >
 
   return measure;
 }
+
+template< class TFixedImage, class TMovingImage >
+template< typename TType >
+void
+NewClassExample< TFixedImage, TMovingImage >
+::TestTemplatedMethod( TType input )
+{
+  TType val = input + NumericTraits< TType >::Zero;
+  std::cout << val << std::endl;
+}
 } // End namespace itk
 
 #endif // itkNewClassExample_txx

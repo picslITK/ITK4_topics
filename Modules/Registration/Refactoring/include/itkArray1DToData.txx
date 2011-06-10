@@ -17,6 +17,9 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
+#ifndef __itkArray1DToData_txx
+#define __itkArray1DToData_txx
+
 #include "itkArray1DToData.h"
 #include "vnl/vnl_math.h"
 
@@ -26,16 +29,18 @@ namespace itk
 /**
  * Default constructor
  */
-Array1DToData::Array1DToData()
+template<class TDataHolder>
+Array1DToData<TDataHolder>::Array1DToData()
 {
-  m_OverallObject.Fill(0);
+  this->m_OverallObject.Fill(0);
 }
 
 /**
  * Set the overall range over which to thread.
  */
+template<class TDataHolder>
 void
-Array1DToData
+Array1DToData<TDataHolder>
 ::SetOverallIndexRange(  IndexRangeType& range )
 {
   if( range[0] > range[1] )
@@ -49,8 +54,9 @@ Array1DToData
 /**
  * Split the requested range into a subrange.
  */
+template<class TDataHolder>
 int
-Array1DToData
+Array1DToData<TDataHolder>
 ::SplitRequestedObject(int i, int requestedTotal,
                        InputObjectType& overallIndexRange,
                        InputObjectType& splitIndexRange) const
@@ -82,3 +88,5 @@ Array1DToData
 }
 
 } // end namespace itk
+
+#endif

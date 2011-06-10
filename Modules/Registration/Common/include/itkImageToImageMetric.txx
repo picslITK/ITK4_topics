@@ -57,7 +57,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
   m_NumberOfPixelsCounted = 0;
 
   m_Transform         = NULL; // has to be provided by the user.
-  //m_ThreaderTransform = NULL; // constructed at initialization.
+  m_ThreaderTransform = NULL; // constructed at initialization.
 
   m_Interpolator  = 0; // has to be provided by the user.
 
@@ -97,12 +97,12 @@ ImageToImageMetric< TFixedImage, TMovingImage >
     }
   m_ThreaderNumberOfMovingImageSamples = NULL;
 
-  /*if ( m_ThreaderTransform != NULL )
+  if ( m_ThreaderTransform != NULL )
     {
     delete[] m_ThreaderTransform;
     }
   m_ThreaderTransform = NULL;
-  */
+
   if ( this->m_ThreaderBSplineTransformWeights != NULL )
     {
     delete[] this->m_ThreaderBSplineTransformWeights;
@@ -367,7 +367,6 @@ throw ( ExceptionObject )
   m_ThreaderNumberOfMovingImageSamples = new unsigned int[m_NumberOfThreads - 1];
 
   // Allocate the array of transform clones to be used in every thread
-  /*
   if ( m_ThreaderTransform != NULL )
     {
     delete[] m_ThreaderTransform;
@@ -380,15 +379,13 @@ throw ( ExceptionObject )
     // This static_cast should always work since the pointer was created by
     // CreateAnother() called from the transform itself.
     TransformType *transformCopy = static_cast< TransformType * >( anotherTransform.GetPointer() );
-    */
     /** Set the fixed parameters first. Some transforms have parameters which depend on
         the values of the fixed parameters. For instance, the BSplineDeformableTransform
         checks the grid size (part of the fixed parameters) before setting the parameters. */
-   /* transformCopy->SetFixedParameters( this->m_Transform->GetFixedParameters() );
+    transformCopy->SetFixedParameters( this->m_Transform->GetFixedParameters() );
     transformCopy->SetParameters( this->m_Transform->GetParameters() );
     this->m_ThreaderTransform[ithread] = transformCopy;
     }
-    */
 
   m_FixedImageSamples.resize(m_NumberOfFixedImageSamples);
   if ( m_UseSequentialSampling )
@@ -815,7 +812,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 }
 
 // Method to reinitialize the seed of the random number generator
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::ReinitializeSeed()
@@ -824,7 +821,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 }
 
 // Method to reinitialize the seed of the random number generator
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::ReinitializeSeed(int seed)
@@ -912,7 +909,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 
   if ( threadID > 0 )
     {
-    transform = this->m_Transform;// this->m_ThreaderTransform[threadID - 1];
+    transform = this->m_ThreaderTransform[threadID - 1];
     }
   else
     {
@@ -1030,7 +1027,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 
   if ( threadID > 0 )
     {
-    transform = this->m_Transform; // this->m_ThreaderTransform[threadID - 1];
+    transform = this->m_ThreaderTransform[threadID - 1];
     }
   else
     {
@@ -1169,7 +1166,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
     }
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueMultiThreadedPreProcessInitiate(void) const
@@ -1181,7 +1178,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
   m_Threader->SingleMethodExecute();
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueMultiThreadedInitiate(void) const
@@ -1198,7 +1195,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
     }
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueMultiThreadedPostProcessInitiate(void) const
@@ -1211,7 +1208,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 ITK_THREAD_RETURN_TYPE
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueMultiThreadedPreProcess(void *arg)
@@ -1232,7 +1229,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 ITK_THREAD_RETURN_TYPE
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueMultiThreaded(void *arg)
@@ -1253,7 +1250,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 ITK_THREAD_RETURN_TYPE
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueMultiThreadedPostProcess(void *arg)
@@ -1271,7 +1268,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
   return ITK_THREAD_RETURN_VALUE;
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueThread(unsigned int threadID) const
@@ -1332,7 +1329,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
     }
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeMultiThreadedPreProcessInitiate(void) const
@@ -1344,7 +1341,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
   m_Threader->SingleMethodExecute();
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeMultiThreadedInitiate(void) const
@@ -1361,7 +1358,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
     }
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeMultiThreadedPostProcessInitiate(void) const
@@ -1374,7 +1371,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 ITK_THREAD_RETURN_TYPE
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeMultiThreadedPreProcess(void *arg)
@@ -1395,7 +1392,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 ITK_THREAD_RETURN_TYPE
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeMultiThreaded(void *arg)
@@ -1416,7 +1413,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match Measure
  */
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 ITK_THREAD_RETURN_TYPE
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeMultiThreadedPostProcess(void *arg)
@@ -1434,7 +1431,7 @@ ImageToImageMetric< TFixedImage, TMovingImage >
   return ITK_THREAD_RETURN_VALUE;
 }
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage  >
 void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeThread(unsigned int threadID) const
@@ -1585,17 +1582,14 @@ void
 ImageToImageMetric< TFixedImage, TMovingImage >
 ::SynchronizeTransforms() const
 {
-  /*
   for ( unsigned int threadID = 0; threadID < m_NumberOfThreads - 1; threadID++ )
     {
-  */
     /** Set the fixed parameters first. Some transforms have parameters which depend on
         the values of the fixed parameters. For instance, the BSplineDeformableTransform
         checks the grid size (part of the fixed parameters) before setting the parameters. */
-  /*  this->m_ThreaderTransform[threadID]->SetFixedParameters( this->m_Transform->GetFixedParameters() );
+    this->m_ThreaderTransform[threadID]->SetFixedParameters( this->m_Transform->GetFixedParameters() );
     this->m_ThreaderTransform[threadID]->SetParameters( this->m_Transform->GetParameters() );
     }
-  */
 }
 } // end namespace itk
 

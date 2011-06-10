@@ -321,11 +321,11 @@ public:
   typedef MultiThreader MultiThreaderType;
   /** Get the Threader. */
   itkGetConstObjectMacro(Threader, MultiThreaderType);
-  /*const TransformPointer * GetThreaderTransform()
+  const TransformPointer * GetThreaderTransform()
   {
     return m_ThreaderTransform;
   }
-  */
+
 protected:
   ImageToImageMetric();
   virtual ~ImageToImageMetric();
@@ -392,7 +392,7 @@ public:
   TransformPointer m_Transform;
   /** Copies of Transform helpers per thread (N-1 of them, since m_Transform
    * will do the work for thread=0. */
-  // TransformPointer *m_ThreaderTransform;
+  TransformPointer *m_ThreaderTransform;
 
   InterpolatorPointer m_Interpolator;
 

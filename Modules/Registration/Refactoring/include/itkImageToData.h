@@ -36,6 +36,7 @@ namespace itk
  * Call SetOverallRegion to define the ImageRegion over which to thread.
  * Call SetThreadedGenerateData to define the worker callback function,
  *  which is called from each thread with a unique region to process.
+ *\warning This callback function must be \c static if it is a class method.
  * Call SetHolder to provide a class instance...
  *
  * This class is templated over image dimension. The second template
@@ -46,9 +47,10 @@ namespace itk
  */
 
 
-template <unsigned int VDimension,
+template <unsigned int VDimension, class TDataHolder,
           typename TInputObject = ImageRegion<VDimension> >
-class ITK_EXPORT ImageToData : public ObjectToDataBase<TInputObject>
+class ITK_EXPORT ImageToData
+  : public ObjectToDataBase<TInputObject, TDataHolder>
 {
 public:
   /** Standard class typedefs. */
@@ -104,8 +106,6 @@ private:
 };
 
 } // end namespace itk
-
-
 
 #ifndef ITK_MANUAL_INSTANTIATION
 # include "itkImageToData.txx"

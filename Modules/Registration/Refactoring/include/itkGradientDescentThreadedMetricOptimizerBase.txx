@@ -221,11 +221,11 @@ void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::ComputeMetricValueInRegionThreaded( const ImageRegionType & regionForThread,
                                       int threadId,
-                                      void *inHolder )
+                                      Self *holder )
 {
   //    std::cout << regionForThread << std::endl;
   InternalComputationValueType local_metric;
-  Self * holder = static_cast<Self*>(inHolder);
+  //Self * holder = static_cast<Self*>(inHolder);
   /** Compute one iteration of the metric */
   local_metric = holder->m_Metric->ComputeMetricAndDerivative(
                                   regionForThread,

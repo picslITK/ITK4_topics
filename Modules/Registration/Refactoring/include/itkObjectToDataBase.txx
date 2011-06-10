@@ -29,8 +29,8 @@ namespace itk
 /**
  *
  */
-template <class TInputObject>
-ObjectToDataBase<TInputObject>
+template <class TInputObject, class TDataHolder>
+ObjectToDataBase<TInputObject, TDataHolder>
 ::ObjectToDataBase()
 {
   // Create the output. We use static_cast<> here because we know the default
@@ -51,9 +51,9 @@ ObjectToDataBase<TInputObject>
 }
 
 //----------------------------------------------------------------------------
-template <class TInputObject>
+template <class TInputObject, class TDataHolder>
 void
-ObjectToDataBase<TInputObject>
+ObjectToDataBase<TInputObject, TDataHolder>
 ::GenerateData()
 {
   // Make sure hold and threader worker have been defined
@@ -81,9 +81,9 @@ ObjectToDataBase<TInputObject>
 // Callback routine used by the threading library. This routine just calls
 // the ThreadedGenerateData method after setting the correct region for this
 // thread.
-template <class TInputObject>
+template <class TInputObject, class TDataHolder>
 ITK_THREAD_RETURN_TYPE
-ObjectToDataBase<TInputObject>
+ObjectToDataBase<TInputObject, TDataHolder>
 ::ThreaderCallback( void *arg )
 {
   ThreadStruct *str;
