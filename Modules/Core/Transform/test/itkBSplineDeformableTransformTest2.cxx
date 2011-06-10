@@ -145,28 +145,9 @@ static int RunTest(int argc, char * argv [] )
 
   typename TransformType::Pointer bsplineTransform = TransformType::New();
 
-
-  typedef typename TransformType::RegionType RegionType;
-  RegionType bsplineRegion;
-  typename RegionType::SizeType   size;
-
-  const unsigned int numberOfGridNodesOutsideTheImageSupport = VSplineOrder;
-
-  const unsigned int numberOfGridNodesInsideTheImageSupport = 5;
-
-  const unsigned int numberOfGridNodes =
-                        numberOfGridNodesInsideTheImageSupport +
-                        numberOfGridNodesOutsideTheImageSupport;
-
-  const unsigned int numberOfGridCells =
-                        numberOfGridNodesInsideTheImageSupport - 1;
-
-  size.Fill( numberOfGridNodes );
-  bsplineRegion.SetSize( size );
-
   typedef typename TransformType::MeshSizeType MeshSizeType;
   MeshSizeType meshSize;
-  meshSize.Fill( numberOfGridCells );
+  meshSize.Fill( 4 );
 
   typedef typename TransformType::PhysicalDimensionsType PhysicalDimensionsType;
   PhysicalDimensionsType fixedDimensions;
@@ -180,19 +161,16 @@ static int RunTest(int argc, char * argv [] )
   bsplineTransform->SetTransformDomainPhysicalDimensions( fixedDimensions );
   bsplineTransform->SetTransformDomainMeshSize( meshSize );
 
-  typedef typename TransformType::ParametersType     ParametersType;
-
-  const unsigned int numberOfParameters = bsplineTransform->GetNumberOfParameters();
-
-  const unsigned int numberOfNodes = numberOfParameters / SpaceDimension;
-
+  typedef typename TransformType::ParametersType ParametersType;
+  const unsigned int numberOfParameters =
+    bsplineTransform->GetNumberOfParameters();
   ParametersType parameters( numberOfParameters );
-
 
   std::ifstream infile;
 
   infile.open( argv[1] );
 
+  const unsigned int numberOfNodes = numberOfParameters / SpaceDimension;
   for( unsigned int n=0; n < numberOfNodes; n++ )
     {
     infile >>  parameters[n];
@@ -201,14 +179,11 @@ static int RunTest(int argc, char * argv [] )
 
   infile.close();
 
-
   bsplineTransform->SetParameters( parameters );
-
 
   typename CommandProgressUpdate::Pointer observer = CommandProgressUpdate::New();
 
   resampler->AddObserver( itk::ProgressEvent(), observer );
-
 
   resampler->SetTransform( bsplineTransform );
 

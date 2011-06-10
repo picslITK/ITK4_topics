@@ -693,24 +693,29 @@ BSplineDeformableTransform<TScalarType, NDimensions, VSplineOrder>
 template< class TScalarType, unsigned int NDimensions, unsigned int VSplineOrder >
 bool
 BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
-::InsideValidRegion( const ContinuousIndexType & index) const
+::InsideValidRegion( ContinuousIndexType & index ) const
 {
   bool inside = true;
 
   SizeType gridSize =
     this->m_CoefficientImages[0]->GetLargestPossibleRegion().GetSize();
 
+  ScalarType minLimit = 0.5 * static_cast<ScalarType>( SplineOrder - 1 );
+
   for( unsigned int j = 0; j < SpaceDimension; j++ )
     {
     ScalarType maxLimit = static_cast<ScalarType>( gridSize[j] ) - 0.5 *
       static_cast<ScalarType>( SplineOrder - 1 ) - 1.0;
-    if( index[j] >= maxLimit )
+    if( index[j] == maxLimit  )
+      {
+      index[j] -= 1e-6;
+      }
+    else if( index[j] >= maxLimit )
       {
       inside = false;
       break;
       }
-    ScalarType minLimit = 0.5 * static_cast<ScalarType>( SplineOrder - 1 );
-    if( index[j] < minLimit )
+    else if( index[j] < minLimit )
       {
       inside = false;
       break;
@@ -732,7 +737,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 {
   inside = true;
 
-  if( this->m_CoefficientImages[0] )
+  if( this->m_CoefficientImages[0]->GetBufferPointer() )
     {
     ContinuousIndexType index;
     this->m_CoefficientImages[0]->
@@ -859,15 +864,15 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
   RegionType supportRegion;
   SizeType supportSize;
   supportSize.Fill( SplineOrder + 1 );
-  supportRegion.SetSize( supportSize );
+
+  supportRegion.SetSize(supportSize);
     {
     supportRegion.SetIndex( this->m_LastJacobianIndex );
 
     //Make an array of jacobian image iterators
     for(unsigned int j = 0; j < SpaceDimension; j++ )
       {
-      jacobianIterators[j] =
-        IteratorType( this->m_JacobianImages[j], supportRegion );
+      jacobianIterators[j] = IteratorType(this->m_JacobianImages[j], supportRegion);
       while ( !jacobianIterators[j].IsAtEnd() )
         {
         // zero out jacobian elements
@@ -878,8 +883,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
     }
 
   ContinuousIndexType index;
-  this->m_CoefficientImages[0]->
-    TransformPhysicalPointToContinuousIndex( point, index );
+  this->m_CoefficientImages[0]->TransformPhysicalPointToContinuousIndex(point,index);
 
   // NOTE: if the support region does not lie totally within the grid
   // we assume zero displacement and do no computations beyond zeroing out the value
@@ -902,8 +906,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
     //Reset iterators now that the support region has changed
     for( unsigned int j = 0; j < SpaceDimension; j++ )
       {
-      jacobianIterators[j] = IteratorType(
-        this->m_JacobianImages[j], supportRegion );
+      jacobianIterators[j] = IteratorType(this->m_JacobianImages[j], supportRegion);
       }
     }
 
@@ -935,8 +938,7 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 ::GetJacobian(const InputPointType & point, WeightsType & weights, ParameterIndexArrayType & indexes) const
 {
   ContinuousIndexType index;
-  this->m_CoefficientImages[0]->
-    TransformPhysicalPointToContinuousIndex( point, index );
+  this->m_CoefficientImages[0]->TransformPhysicalPointToContinuousIndex(point,index);
 
   // NOTE: if the support region does not lie totally within the grid
   // we assume zero displacement and return the input point
@@ -961,10 +963,8 @@ BSplineDeformableTransform< TScalarType, NDimensions, VSplineOrder >
 
   typedef ImageRegionIterator< JacobianImageType > IteratorType;
 
-  IteratorType coeffIterator =
-    IteratorType( this->m_CoefficientImages[0], supportRegion );
-  const ParametersValueType *basePointer =
-    this->m_CoefficientImages[0]->GetBufferPointer();
+  IteratorType coeffIterator = IteratorType(this->m_CoefficientImages[0], supportRegion);
+  const ParametersValueType *basePointer = this->m_CoefficientImages[0]->GetBufferPointer();
   while ( !coeffIterator.IsAtEnd() )
     {
     indexes[counter] = &( coeffIterator.Value() ) - basePointer;

@@ -295,13 +295,12 @@ int itkBSplineDeformableTransformTest1()
 
   {
     // point inside the grid support region
-    inputPoint.Fill( 10.0 );
+    inputPoint.Fill( 7.5 );
     const JacobianType & jacobian = transform->GetJacobian( inputPoint );
     PRINT_VALUE( 0, n );
     PRINT_VALUE( 1, n );
     PRINT_VALUE( 2, n );
     std::cout << std::endl;
-
   }
 
 

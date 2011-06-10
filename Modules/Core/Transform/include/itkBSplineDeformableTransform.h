@@ -102,10 +102,7 @@ namespace itk
  *
  * \ingroup Transforms
  * \ingroup ITK-Transform
- *
- * \wiki
  * \wikiexample{Registration/ImageRegistrationMethodBSpline,A global registration of two images}
- * \endwiki
  */
 template<
   class TScalarType = double,            // Data type for scalars
@@ -464,7 +461,7 @@ private:
   typename WeightsFunctionType::Pointer m_WeightsFunction;
 
   /** Check if a continuous index is inside the valid region. */
-  bool InsideValidRegion(const ContinuousIndexType & index) const;
+  bool InsideValidRegion(ContinuousIndexType & index) const;
 }; //class BSplineDeformableTransform
 }  // namespace itk
 

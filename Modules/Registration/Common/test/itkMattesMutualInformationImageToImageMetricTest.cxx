@@ -501,23 +501,21 @@ int TestMattesMetricWithBSplineDeformableTransform(
   typedef itk::BSplineDeformableTransform<
     double, ImageDimension, 3 > TransformType;
   typedef typename TransformType::ParametersType ParametersType;
-
-  typename TransformType::Pointer transformer = TransformType::New();
-
-  typename TransformType::MeshSizeType meshSize;
-  meshSize.Fill( 3 );
-
   typename TransformType::PhysicalDimensionsType dimensions;
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {
     dimensions[d] = imgFixed->GetSpacing()[d] *
-      ( imgFixed->GetLargestPossibleRegion().GetSize()[d] - 1.0 );
+      ( imgFixed->GetLargestPossibleRegion().GetSize()[d] - 1 );
     }
+  typename TransformType::MeshSizeType meshSize;
+  meshSize.Fill( 4 );
 
-  transformer->SetTransformDomainOrigin( imgFixed->GetOrigin() );
-  transformer->SetTransformDomainMeshSize( meshSize );
+  typename TransformType::Pointer transformer = TransformType::New();
+
   transformer->SetTransformDomainPhysicalDimensions( dimensions );
+  transformer->SetTransformDomainOrigin( imgFixed->GetOrigin() );
   transformer->SetTransformDomainDirection( imgFixed->GetDirection() );
+  transformer->SetTransformDomainMeshSize( meshSize );
 
   transformer->Print( std::cout );
 

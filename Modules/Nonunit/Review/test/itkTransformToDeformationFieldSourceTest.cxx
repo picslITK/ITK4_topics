@@ -72,7 +72,6 @@ int itkTransformToDeformationFieldSourceTest( int argc, char * argv [] )
   typedef DeformationFieldGeneratorType::OriginType     OriginType;
   typedef DeformationFieldGeneratorType::IndexType      IndexType;
   typedef DeformationFieldGeneratorType::RegionType     RegionType;
-  typedef DeformationFieldGeneratorType::DirectionType     DirectionType;
   typedef itk::ImageFileWriter<
     DeformationFieldImageType >                         WriterType;
 
@@ -81,7 +80,6 @@ int itkTransformToDeformationFieldSourceTest( int argc, char * argv [] )
   IndexType index;      index.Fill( 0 );
   SpacingType spacing;  spacing.Fill( 0.7 );
   OriginType origin;    origin.Fill( -10.0 );
-  DirectionType direction;   direction.SetIdentity();
 
   /** Create transforms. */
   AffineTransformType::Pointer affineTransform
@@ -108,17 +106,18 @@ int itkTransformToDeformationFieldSourceTest( int argc, char * argv [] )
   else if ( transformName == "BSpline" )
     {
     /** Set the options. */
-    SizeType gridSize;
-    gridSize[ 0 ] = 7;
-    gridSize[ 1 ] = 10;
 
     BSplineDeformableTransformType::PhysicalDimensionsType dimensions;
-    dimensions[0] = spacing[0] * ( size[0] - 1.0 );
-    dimensions[0] = spacing[1] * ( size[1] - 1.0 );
-
+    for( unsigned int d = 0; d < Dimension; d++ )
+      {
+      dimensions[d] = spacing[d] * ( size[d] - 1.0 );
+      }
     BSplineDeformableTransformType::MeshSizeType meshSize;
-    meshSize[0] = gridSize[0] - SplineOrder;
-    meshSize[1] = gridSize[1] - SplineOrder;
+    BSplineDeformableTransformType::DirectionType direction;
+    direction.SetIdentity();
+
+    meshSize[0] = 7 - SplineOrder;
+    meshSize[1] = 10 - SplineOrder;
 
     bSplineTransform->SetTransformDomainOrigin( origin );
     bSplineTransform->SetTransformDomainPhysicalDimensions( dimensions );
@@ -158,12 +157,12 @@ int itkTransformToDeformationFieldSourceTest( int argc, char * argv [] )
   defGenerator->SetOutputSpacing( spacing );
   defGenerator->SetOutputOrigin( origin );
   defGenerator->SetOutputIndex( index );
-  defGenerator->SetOutputDirection( direction );
   //
   // for coverage, exercise access methods
   spacing  = defGenerator->GetOutputSpacing();
   origin = defGenerator->GetOutputOrigin();
-  direction = defGenerator->GetOutputDirection();
+  DeformationFieldGeneratorType::DirectionType
+    direction = defGenerator->GetOutputDirection();
   std::cout << "Spacing " << spacing
             << " Origin " << origin
             << std::endl << "Direction "

@@ -21,6 +21,7 @@
 #include "itkBSplineDeformableTransformInitializer.h"
 
 #include "itkPointSet.h"
+#include "itkBoundingBox.h"
 
 namespace itk
 {
@@ -112,6 +113,13 @@ BSplineDeformableTransformInitializer<TTransform, TImage>
   // We next determine which corner is the transform domain origin by which
   // point is closest to the minimum of the bounding box.
 
+  typedef BoundingBox<unsigned int, SpaceDimension,
+    typename PointSetType::CoordRepType,
+    typename PointSetType::PointsContainer> BoundingBoxType;
+  typename BoundingBoxType::Pointer bbox = BoundingBoxType::New();
+  bbox->SetPoints( cornerPoints->GetPoints() );
+  bbox->ComputeBoundingBox();
+
   transformDomainOrigin.Fill( 0 );
   PointIdentifier transformDomainOriginId = 0;
   RealType minDistance = NumericTraits<RealType>::max();
@@ -122,7 +130,7 @@ BSplineDeformableTransformInitializer<TTransform, TImage>
     cornerPoints->GetPoint( d, &corner );
 
     RealType distance = corner.SquaredEuclideanDistanceTo(
-      cornerPoints->GetBoundingBox()->GetMinimum() );
+      bbox->GetMinimum() );
     if( distance < minDistance )
       {
       transformDomainOrigin.CastFrom( corner );
