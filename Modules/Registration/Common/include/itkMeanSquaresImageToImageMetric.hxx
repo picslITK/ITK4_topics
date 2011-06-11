@@ -31,7 +31,7 @@ namespace itk
  * Constructor
  */
 template< class TFixedImage, class TMovingImage >
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::MeanSquaresImageToImageMetric()
 {
   this->SetComputeGradient(true);
@@ -48,7 +48,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 }
 
 template< class TFixedImage, class TMovingImage >
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::~MeanSquaresImageToImageMetric()
 {
   if ( m_ThreaderMSE != NULL )
@@ -69,7 +69,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
  */
 template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -80,7 +80,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
  */
 template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::Initialize(void)
 throw ( ExceptionObject )
 {
@@ -106,7 +106,7 @@ throw ( ExceptionObject )
 
 template< class TFixedImage, class TMovingImage >
 inline bool
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueThreadProcessSample(ThreadIdType threadID,
                               SizeValueType fixedImageSample,
                               const MovingImagePointType & itkNotUsed(mappedPoint),
@@ -122,7 +122,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 template< class TFixedImage, class TMovingImage >
 typename MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::MeasureType
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue(const ParametersType & parameters) const
 {
   itkDebugMacro("GetValue( " << parameters << " ) ");
@@ -169,7 +169,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 
 template< class TFixedImage, class TMovingImage >
 inline bool
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivativeThreadProcessSample(ThreadIdType threadID,
                                            SizeValueType fixedImageSample,
                                            const MovingImagePointType & itkNotUsed(mappedPoint),
@@ -222,7 +222,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
  */
 template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative(const ParametersType & parameters,
                         MeasureType & value,
                         DerivativeType & derivative) const
@@ -298,7 +298,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
  */
 template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 ::GetDerivative(const ParametersType & parameters,
                 DerivativeType & derivative) const
 {

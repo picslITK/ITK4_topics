@@ -433,7 +433,7 @@ throw ( ExceptionObject )
 
   const int binRange = m_NumberOfHistogramBins / this->m_NumberOfThreads;
 
-  for (unsigned int threadID = 0; threadID < this->m_NumberOfThreads - 1; threadID++ )
+  for (ThreadIdType threadID = 0; threadID < this->m_NumberOfThreads - 1; threadID++ )
     {
     m_ThreaderJointPDF[threadID] = JointPDFType::New();
     m_ThreaderJointPDF[threadID]->SetRegions(jointPDFRegion);
