@@ -206,19 +206,15 @@ public:
                                                 MovingGradientImageType >
                                                  MovingGradientImageFilterType;
 
-  /** Gradient calculator types. */
+  /** Image gradient calculator types. */
   typedef CentralDifferenceImageFunction<
                                 FixedImageType,
                                 CoordinateRepresentationType>
                                                FixedGradientCalculatorType;
-  typedef typename FixedImageGradientCalculatorType::Pointer
-                                               FixedGradientCalculatorPointer;
   typedef CentralDifferenceImageFunction<
                                 MovingImageType,
                                 CoordinateRepresentationType>
                                                MovingGradientCalculatorType;
-  typedef typename MovingImageGradientCalculatorType::Pointer
-                                               MovingGradientCalculatorPointer;
 
   /**  Type of the measure. */
   typedef typename Superclass::MeasureType    MeasureType;
@@ -340,29 +336,29 @@ protected:
    * This function also checks if mapped point is within the mask if
    * one is set, and that is within the moving image buffer, in which
    * case \c pointIsValid will be true on return.
-   * \c mappedFixedPoint and \c fixedImageValue are also returned.
+   * \c mappedFixedPoint and \c fixedImageValue are also returned, and
+   * \c fixedImageGradient is returned if \c computeImageGradient is set.
    * \note It would be better for maintainence to have a single method
    * that could work for either fixed or moving domains. However setting
    * that up is complicated because dimensionality and pixel type may
    * be different between the two. */
-  virtual void TransformFixedPoint(const VirtualPointType & point,
+  virtual void TransformAndEvaluateFixedPoint(const VirtualPointType & point,
                               FixedImagePointType & mappedFixedPoint,
                               bool & pointIsValid,
-                              FixedImagePixelType & FixedImageValue,
+                              FixedImagePixelType & fixedImageValue,
+                              bool computeImageGradient,
+                              FixedImageDerivativesType & fixedGradient,
                               unsigned int threadID) const;
 
-  /** Transform a point from VirtualImage domain to MovingImage domain.
-   * This function also checks if mapped point is within the mask if
-   * one is set, and that is within the moving image buffer. */
-  virtual void TransformMovingPoint(const VirtualPointType & point,
+  /** Transform a point from VirtualImage domain to MovingImage domain,
+   * as is done in \c TransformAndEvaluateMovingPoint. */
+  virtual void TransformAndEvaluateMovingPoint(const VirtualPointType & point,
                               MovingImagePointType & mappedMovingPoint,
                               bool & pointIsValid,
                               MovingImagePixelType & movingImageValue,
+                              bool computeImageGradient,
+                              MovingImageDerivativesType & movingGradient,
                               unsigned int threadID) const;
-
-  virtual void TransformPointWithDerivatives(
-                                            todo
-                                              ) const;
 
   /** Compute image derivatives at a point. */
   virtual void ComputeFixedImageDerivatives(
@@ -378,15 +374,15 @@ protected:
   FixedTransformPointer   m_FixedImageTransform;
   MovingImageConstPointer m_MovingImage;
   MovingTransformPointer  m_MovingImageTransform;
-  VirtualImagePointer     m_VirtualImage;
-
-  /* needed ? I think we'll just get on the fly from GetNumberOfParameters? */
-  unsigned int            m_NumberOfParameters;
+  VirtualImagePointer     m_VirtualDomainImage;
 
   VirtualRegionType       m_VirtualDomainRegion;
   VirtualSpacingType      m_VirtualDomainSpacing;
   VirtualOriginType       m_VirtualDomainOrigin;
   VirtualDirectionType    m_VirtualDomainDirection;
+
+  /* needed ? I think we'll just get on the fly from GetNumberOfParameters? */
+  unsigned int            m_NumberOfParameters;
 
   /** Pointers to interpolator bases */
   FixedInterpolatorPointer  m_FixedInterpolator;
@@ -406,22 +402,29 @@ protected:
   FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
   MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
 
+  /** Image gradient calculators */
+  FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
+  MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
+
   /* This was from DemonsImageToImage - not sure if still needed. Seems to
    * always be 1 there, but maybe b/c wasn't fully setup for vector images yet? */
   unsigned int m_InputImageVectorLength;
 
   /** User worker method to calculate value and derivative at a given point.
    * Must be provided by derived classes.
+   * Results are returned in \c metricValue and \c localDerivatives.
    * \warning  This is called from the threader, and thus must be thread-safe.
    */
   virtual inline bool GetValueAndDerivativeProcessPoint(
             const VirtualPointType &      itkNotUsed(virtualPoint),
             const FixedImagePointType &   itkNotUsed(mappedFixedPoint),
             const FixedImagePixelType &   itkNotUsed(fixedImageValue),
-            const ImageDerivativesType &  itkNotUsed(fixedImageGradientValue),
+            const ImageDerivativesType &  itkNotUsed(FixedImageDerivatives),
             const MovingImagePointType &  itkNotUsed(mappedMovingPoint),
             const MovingImagePixelType &  itkNotUsed(movingImageValue),
-            const ImageDerivativesType &  itkNotUsed(movingImageGradientValue),
+            const ImageDerivativesType &  itkNotUsed(movingImageDerivatives),
+            MeasureType                   itkNotUsed(metricValue),
+            DerivativeType &              itkNotUsed(localDerivatives),
             unsigned int                  itkNotUsed(threadID) )
     {return false;}
 
@@ -467,9 +470,9 @@ protected:
    * value and derivative. */
   //NOTE: this should be private?
   static void GetValueAndDerivativeMultiThreadedCallback(
-                                                const ThreaderInputObjectType&,
-                                                int threadId,
-                                                Self * holder);
+                          const ThreaderInputObjectType& virtualImageSubRegion,
+                          int threadId,
+                          Self * dataHolder);
 
   /** Threader used to evaluate value and deriviative. */
   ValueAndDerivativeThreaderType::Pointer    m_ValueAndDerivativeThreader;

@@ -33,7 +33,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
     Self::GetValueAndDerivativeMultiThreadedCallback );
-  this->m_ValueAndDerivativeThreader->SetHolder(
+  this->m_ValueAndDerivativeThreader->SetHolder(...);
+
+  /* These will be instantiated if needed in Initialize */
+  m_MovingGradientCalculator = NULL;
+  m_FixedGradientCalculator = NULL;
 }
 
 /*
@@ -41,11 +45,79 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
  * Iterates over image region and calls derived class for calculations.
  */
 void GetValueAndDerivativeMultiThreadedCallback(
-                const ThreaderInputObjectType& virtualImageRegion,
+                const ThreaderInputObjectType& virtualImageSubRegion,
                 int threadId,
-                Self * metric)
+                Self * self)
 {
-  //loop over virtual region
+  /* Create an iterator over the virtual sub region */
+  ImageRegionConstIteratorWithIndex<VirtualImageType>
+      ItV( this->m_VirtualDomainImage, virtualImageSubRegion );
+
+  VirtualPointType            virtualPoint;
+  FixedOutputPointType        mappedFixedPoint;
+  FixedImagePixelType         fixedImageValue;
+  FixedImageDerivativesType   fixedImageDerivatives;
+  MovingOutputPointType       mappedMovingPoint;
+  MovingImagePixelType        movingImageValue;
+  MovingImageDerivativesType  movingImageDerivatives;
+  bool                        pointIsValid;
+  MeasureType                 metricValue;
+
+  //FIXME: handle different coord systems, will need diff tranform?
+  //  what if using coord system 'both'?
+  DerivativeType              localDerivative(
+                                self->m_MovingImageTransform->
+                                GetNumberOfLocalParameters() );
+
+  /* Iterate over the sub region */
+  ItV.GoToBegin();
+  while( !ItV.IsAtEnd() )
+  {
+
+    self->m_VirtualImage->TransformIndexToPhysicalPoint(
+                                              ItV.GetIndex(), virtualPoint);
+    self->TransformAndEvaluateFixedPoint( virtualPoint,
+                                          mappedFixedPoint,
+                                          pointIsValid,
+                                          fixedImageValue,
+                                          true /*compute gradient*/,
+                                          fixedImageDerivatives,
+                                          threadID );
+    if( pointIsValid )
+      {
+      self->TransformAndEvaluateMovingPoint( virtualPoint,
+                                            mappedMovingPoint,
+                                            pointIsValid,
+                                            movingImageValue,
+                                            true /*compute gradient*/,
+                                            movingImageDerivatives,
+                                            threadID );
+      }
+
+    if( pointIsValid )
+      {
+      pointIsValid = self->GetValueAndDerivativeProcessPoint(
+                                               virtualPoint,
+                                               mappedFixedPoint,
+                                               fixedImageValue,
+                                               fixedImageDerivatives,
+                                               mappedMovingPoint,
+                                               movingImageValue,
+                                               movingImageDerivatives,
+                                               metricValue,
+                                               localDerivative,
+                                               threadID );
+      }
+
+    if( pointIsValid )
+      {
+      increment count of pixels used in computation, prob in pre-thread var
+      }
+
+    //next index
+    ++ItV;
+  }
+
 
   //transform points to fixed and moving
 
@@ -54,17 +126,18 @@ void GetValueAndDerivativeMultiThreadedCallback(
   //save results to per-thread containers
 }
 
-/** Transform a point from VirtualImage domain to FixedImage domain.
- * This function also checks if mapped point is within the mask if
- * on is set, and that is within the moving image buffer.
+/*
+ * Transform a point from VirtualImage domain to FixedImage domain.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::TransformFixedPoint(VirtualPointType & point,
+::TransformAndEvaluateFixedPoint( VirtualPointType & point,
                       FixedImagePointType & mappedFixedPoint,
                       bool & pointIsValid,
                       FixedImagePixelType & fixedImageValue,
+                      bool computeImageGradient,
+                      FixedImageDerivativesType & fixedGradient,
                       unsigned int threadID) const
 {
   pointIsValid = true;
@@ -88,8 +161,22 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         m_FixedBSplineInterpolator->IsInsideBuffer( mappedFixedPoint );
       if ( pointIsValid )
         {
-        fixedImageValue =
-          m_FixedBSplineInterpolator->Evaluate(mappedFixedPoint, threadID);
+        if( computeImageGradient )
+          {
+          /* The assumption here is that calling EvaluateValueAndDerivative
+           * is faster than separately calling Evaluate and EvaluateDerivative,
+           * because of setup for the bspline evaluation. */
+          m_FixedBSplineInterpolator->EvaluateValueAndDerivative(
+                                                        mappedFixedPoint,
+                                                        fixedImageValue,
+                                                        fixedGradient,
+                                                        threadID);
+          }
+        else
+          {
+          fixedImageValue =
+            m_FixedBSplineInterpolator->Evaluate(mappedFixedPoint, threadID);
+          }
         }
       }
     else
@@ -99,22 +186,29 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       if ( pointIsValid )
         {
         fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
+        if( computeImageGradient )
+          {
+          this->ComputeFixedImageDerivatives(mappedFixedPoint,
+                                             fixedGradient,
+                                             threadID);
+          }
         }
       }
     }
 }
 
-/** Transform a point from VirtualImage domain to MovingImage domain.
- * This function also checks if mapped point is within the mask if
- * on is set, and that is within the moving image buffer.
+/*
+ * Transform a point from VirtualImage domain to MovingImage domain.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::TransformMovingPoint(VirtualPointType & point,
+::TransformAndEvaluateMovingPoint( VirtualPointType & point,
                       MovingImagePointType & mappedMovingPoint,
                       bool & pointIsValid,
                       MovingImagePixelType & movingImageValue,
+                      bool computeImageGradient,
+                      MovingImageDerivativesType & movingGradient,
                       unsigned int threadID) const
 {
   pointIsValid = true;
@@ -138,8 +232,22 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         m_MovingBSplineInterpolator->IsInsideBuffer( mappedMovingPoint );
       if ( pointIsValid )
         {
-        movingImageValue =
-          m_MovingBSplineInterpolator->Evaluate(mappedMovingPoint, threadID);
+        if( computeImageGradient )
+          {
+          /* The assumption here is that calling EvaluateValueAndDerivative
+           * is faster than separately calling Evaluate and EvaluateDerivative,
+           * because of setup for the bspline evaluation. */
+          m_MovingBSplineInterpolator->EvaluateValueAndDerivative(
+                                                        mappedMovingPoint,
+                                                        movingImageValue,
+                                                        movingGradient,
+                                                        threadID);
+          }
+        else
+          {
+          movingImageValue =
+            m_MovingBSplineInterpolator->Evaluate(mappedMovingPoint, threadID);
+          }
         }
       }
     else
@@ -149,7 +257,85 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       if ( pointIsValid )
         {
         movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
+        if( computeImageGradient )
+          {
+          this->ComputeMovingImageDerivatives(mappedMovingPoint,
+                                              movingGradient,
+                                              threadID);
+          }
         }
+      }
+    }
+}
+
+/*
+ * Compute image derivatives for a Fixed point.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::ComputeFixedImageDerivatives(
+                              const FixedImagePointType & mappedPoint,
+                              FixedImageDerivativesType & gradient,
+                              unsigned int threadID) const
+{
+  if ( m_FixedInterpolatorIsBSpline )
+    {
+    // Computed Fixed image gradient using derivative BSpline kernel.
+    gradient = m_FixedBSplineInterpolator->EvaluateDerivative(mappedPoint,
+                                                              threadID);
+    }
+  else
+    {
+    if ( m_UseGaussianGradient )
+      {
+      ContinuousIndex< double, FixedImageDimension > tempIndex;
+      m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
+                                                             tempIndex);
+      FixedImageIndexType mappedIndex;
+      mappedIndex.CopyWithRound(tempIndex);
+      gradient = m_FixedGaussianGradientImage->GetPixel(mappedIndex);
+      }
+    else
+      {
+      // if not using the gradient image
+      gradient = m_FixedGradientCalculator->Evaluate(mappedPoint);
+      }
+    }
+}
+
+/*
+ * Compute image derivatives for a moving point.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::ComputeMovingImageDerivatives(
+                              const MovingImagePointType & mappedPoint,
+                              MovingImageDerivativesType & gradient,
+                              unsigned int threadID) const
+{
+  if ( m_MovingInterpolatorIsBSpline )
+    {
+    // Computed moving image gradient using derivative BSpline kernel.
+    gradient = m_MovingBSplineInterpolator->EvaluateDerivative(mappedPoint,
+                                                               threadID);
+    }
+  else
+    {
+    if ( m_UseGaussianGradient )
+      {
+      ContinuousIndex< double, MovingImageDimension > tempIndex;
+      m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
+                                                             tempIndex);
+      MovingImageIndexType mappedIndex;
+      mappedIndex.CopyWithRound(tempIndex);
+      gradient = m_MovingGaussianGradientImage->GetPixel(mappedIndex);
+      }
+    else
+      {
+      // if not using the gradient image
+      gradient = m_MovingGradientCalculator->Evaluate(mappedPoint);
       }
     }
 }
