@@ -21,6 +21,7 @@
 #include "itkDeformationFieldTransform.h"
 
 #include "itkVectorLinearInterpolateImageFunction.h"
+#include "vnl/algo/vnl_symmetric_eigensystem.h"
 
 namespace itk
 {
@@ -109,6 +110,98 @@ DeformationFieldTransform<TScalar, NDimensions>
 }
 
 /**
+ * Transform covariant vector
+ */
+
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputCovariantVectorType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformCovariantVector( const InputCovariantVectorType& vector, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  AffineTransformPointer localTransform = AffineTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+  OutputCovariantVectorType outputVector = localTransform->TransformCovariantVector( vector );
+
+  return outputVector;
+
+}
+
+
+/**
+ * Transform vector
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformVector( const InputVectorType& vector, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  AffineTransformPointer localTransform = AffineTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+  OutputVectorType outputVector = localTransform->TransformVector( vector );
+
+  return outputVector;
+
+}
+
+
+/**
+ * Transform tensor
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputTensorType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformTensor( const InputTensorType& inputTensor, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  LocalTransformPointer localTransform = LocalTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+
+  OutputTensorType result = localTransform->TransformTensor( inputTensor );
+
+  return result;
+}
+
+
+
+/**
  * return an inverse transformation
  */
 template<class TScalar, unsigned int NDimensions>
@@ -146,30 +239,61 @@ DeformationFieldTransform<TScalar, NDimensions>
     }
 }
 
+
 template<class TScalar, unsigned int NDimensions>
 typename DeformationFieldTransform<TScalar, NDimensions>::JacobianType &
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobian( const InputPointType & point ) const
 {
-  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetJacobianWithRespectToParameters()" );
+  itkExceptionMacro( "GetJacobian() not valid for DeformationFieldTransform. Use GetJacobianWithRespectToPosition()" );
 }
 
 
+/*
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToParameters( const InputPointType & point,
                                       JacobianType & jacobian ) const
 {
-  IndexType idx;
-  this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetJacobianWithRespectToParameters( idx, jacobian );
+  jacobian.SetSize(NDimensions,NDimensions);
+  jacobian.Fill(0.0);
+  for (unsigned int i=0; i<NDimensions; i++)
+    {
+    jacobian(i,i) = 1.0;
+    }
 }
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
-::GetJacobianWithRespectToParameters( const IndexType & index,
+::GetJacobianWithRespectToParameters( const IndexType & index ,
+                                      JacobianType & jacobian ) const
+{
+  jacobian.SetSize(NDimensions,NDimensions);
+  jacobian.Fill(0.0);
+  for (unsigned int i=0; i<NDimensions; i++)
+    {
+    jacobian(i,i) = 1.0;
+    }
+}
+*/
+
+template<class TScalar, unsigned int NDimensions>
+void
+DeformationFieldTransform<TScalar, NDimensions>
+::GetJacobianWithRespectToPosition( const InputPointType & point,
+                                      JacobianType & jacobian ) const
+{
+  IndexType idx;
+  this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
+  this->GetJacobianWithRespectToPosition( idx, jacobian );
+}
+
+template<class TScalar, unsigned int NDimensions>
+void
+DeformationFieldTransform<TScalar, NDimensions>
+::GetJacobianWithRespectToPosition( const IndexType & index,
                                       JacobianType & jacobian ) const
 {
   jacobian.SetSize(NDimensions,NDimensions);
