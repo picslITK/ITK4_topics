@@ -98,7 +98,7 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
     }
   else
     {
-    for (unsigned int k=i; k < numberOfParameters; k++)
+    for (unsigned int k=0; k < numberOfParameters; k++)
       this->m_Parameters[k] += update[k] * factor;
     }
 
