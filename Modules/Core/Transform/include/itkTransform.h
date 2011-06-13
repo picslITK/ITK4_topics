@@ -252,24 +252,20 @@ public:
                                                     JacobianType &j) const = 0;
 
   /** Update the transform's parameters by the values in \c update.
-   * For the sake of efficiency, we put the
-   * burden of thread-safe use of this function on the developer.
-   * That is, each threads should only update an inclusive sub-range [i,j] of
-   * the transform where i <= j and both are less than  k, where k is the
-   * number of parameters.  If i==j==0 then update all parameters.
    * We assume \c update is of the same length as Parameters. Throw
    * exception otherwise.
    * \c factor is a scalar multiplier for each value in update.
-   * Derived classes may override this to provide different operations for
-   * updating, including composition for classes such as versor transforms.e
    * SetParameters is called at the end of this method, to allow transforms
    * to perform any required operations on the update parameters, typically
    * a converion to member variables for use in TransformPoint.
+   * NOTE: currently this is a simple method to add the update to the
+   * existing parameter values, with the optinal factor. This will
+   * be modified to call a functor instead of performing any operations
+   * itself. The functor will be user-assignable to perform
+   * specialized operations, including any desired threading.
    */
   virtual void UpdateTransformParameters( DerivativeType & update,
-                                          TScalarType factor = 1.0,
-                                          unsigned int i = 0,
-                                          unsigned int j = 0 );
+                                          TScalarType factor = 1.0 );
 
   /** Return the number of local parameters that completely defines the Transform
    *  at an individual voxel.  For transforms with local support, this will

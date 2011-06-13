@@ -82,34 +82,23 @@ template< class TScalarType,
 void
 Transform< TScalarType, NInputDimensions, NOutputDimensions >
 ::UpdateTransformParameters( DerivativeType & update,
-                              TScalarType factor,
-                              unsigned int i,
-                              unsigned int j )
+                              TScalarType factor )
 {
-  if( update.Size() != this->GetNumberOfParameters() )
+  unsigned int numberOfParameters = this->GetNumberOfParameters();
+  if( update.Size() != numberOfParameters )
     {
     itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
                       " be same as transform parameter size, "
-                      << this->GetNumberOfParameters() << std::endl);
-    }
-  if( j >= this->GetNumberOfParameters() )
-    {
-    itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
-                      "], is out of range: "
-                      << this->GetNumberOfParameters() << std::endl);
-    }
-  if ( i == 0 && j == 0 )
-    {
-    j = this->GetNumberOfParameters() - 1;
+                      << numberOfParameters << std::endl);
     }
   if( factor == 1.0 )
     {
-    for (unsigned int k=i; k<=j; k++)
+    for (unsigned int k=0; k < numberOfParameters; k++)
       this->m_Parameters[k] += update[k];
     }
   else
     {
-    for (unsigned int k=i; k<=j; k++)
+    for (unsigned int k=i; k < numberOfParameters; k++)
       this->m_Parameters[k] += update[k] * factor;
     }
 
