@@ -233,6 +233,104 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   return result;
 }
 
+// Transform a Tensor
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputTensorType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformTensor(const InputTensorType & tensor) const
+{
+  OutputTensorType result;     // Converted vector
+
+  typename InputTensorType::EigenValuesArrayType eigenValues;
+  typename InputTensorType::EigenVectorsMatrixType eigenVectors;
+
+  tensor.ComputeEigenAnalysis( eigenValues, eigenVectors );
+
+
+  InputTensorEigenVectorType ev1;
+  InputTensorEigenVectorType ev2;
+  InputTensorEigenVectorType ev3;
+
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    ev1[i] = eigenVectors(2,i);
+    ev2[i] = eigenVectors(1,i);
+    ev3[i] = eigenVectors(0,i);
+    }
+
+  //Get Tensor-space version of local transform (i.e. always 3D)
+  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
+  typename  EigenVectorTransformType::MatrixType matrix;
+  matrix.Fill(0.0);
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    matrix(i,i) = 1.0;
+    }
+
+  for (unsigned int i=0; i<NOutputDimensions; i++)
+    {
+    for (unsigned int j=0; j<NInputDimensions; j++)
+      {
+      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
+        {
+        matrix(i,j) = this->m_Matrix(i,j);
+        }
+      }
+    }
+
+  typename EigenVectorTransformType::Pointer tensorTransform = EigenVectorTransformType::New();
+  tensorTransform->SetIdentity();
+  tensorTransform->SetMatrix( matrix );
+
+  InputTensorEigenVectorType ev1r = tensorTransform->TransformCovariantVector( ev1 );
+  ev1r.Normalize();
+
+  // Get aspect of rotated e2 that is perpendicular to rotated e1
+  InputTensorEigenVectorType ev2a = tensorTransform->TransformCovariantVector( ev2 );
+  if ( (ev2a * ev1r) < 0 )
+    {
+    ev2a = ev2a*(-1.0);
+    }
+  InputTensorEigenVectorType ev2r = ev2a - (ev2a*ev1r)*ev1r;
+  ev2r.Normalize();
+
+
+  InputTensorEigenVectorType ev3r; // = CrossProduct(ev1r, ev2r);
+  ev3r[0] = ev1r[1]*ev2r[2] - ev1r[2]*ev2r[1];
+  ev3r[1] = ev1r[2]*ev2r[0] - ev1r[0]*ev2r[2];
+  ev3r[2] = ev1r[0]*ev2r[1] - ev1r[1]*ev2r[0];
+  ev3r.Normalize();
+
+  // Outer product matrices
+  typename EigenVectorTransformType::MatrixType e1;
+  typename EigenVectorTransformType::MatrixType e2;
+  typename EigenVectorTransformType::MatrixType e3;
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    for (unsigned int j=0; j<InputTensorType::Dimension; j++)
+      {
+      e1(i,j) = eigenValues[2] * ev1r[i]*ev1r[j];
+      e2(i,j) = eigenValues[1] * ev2r[i]*ev2r[j];
+      e3(i,j) = eigenValues[0] * ev3r[i]*ev3r[j];
+      }
+    }
+
+  typename EigenVectorTransformType::MatrixType rotated = e1 + e2 + e3;
+
+  result[0] = rotated(0,0);
+  result[1] = rotated(0,1);
+  result[2] = rotated(0,2);
+  result[3] = rotated(1,1);
+  result[4] = rotated(1,2);
+  result[5] = rotated(2,2);
+
+  return result;
+}
+
+
 // Recompute the inverse matrix (internal)
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
