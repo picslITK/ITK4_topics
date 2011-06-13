@@ -260,6 +260,12 @@ public:
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                     JacobianType &j) const = 0;
 
+  /** This provides the ability to get a local jacobian value
+   *  in a dense deformation field as in this case it would
+   *  would be unclear what parameters would refer to. */
+  virtual const MatrixType & GetJacobianWithRespectToPosition() const
+  { return m_IdentityMatrix; }
+
   /** Update the transform's parameters by the values in \c update.
    * For the sake of efficiency, we put the
    * burden of thread-safe use of this function on the developer.
@@ -317,10 +323,6 @@ public:
 
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;
-
-  /** FIXME:  Needs documentation. */
-  virtual const MatrixType & GetJacobianWithRespectToPosition() const
-  { return m_IdentityMatrix; }
 
   /** Indicates if this transform is linear. A transform is defined to be
    * linear if the transform of a linear combination of points is equal to the
