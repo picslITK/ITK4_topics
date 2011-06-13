@@ -32,7 +32,7 @@ typedef itk::DeformationFieldTransform<double, dimensions>
 typedef DeformationTransformType::ScalarType  ScalarType;
 
 template <typename TPoint>
-bool samePoint( const TPoint & p1, const TPoint & p2, double epsilon=1e-10 )
+bool samePoint( const TPoint & p1, const TPoint & p2, double epsilon=1e-8 )
   {
   bool pass=true;
   for ( unsigned int i = 0; i < TPoint::PointDimension; i++ )
@@ -43,8 +43,32 @@ bool samePoint( const TPoint & p1, const TPoint & p2, double epsilon=1e-10 )
   return pass;
   }
 
+template <typename TVector>
+bool sameVector( const TVector & p1, const TVector & p2, double epsilon=1e-8 )
+  {
+  bool pass=true;
+  for ( unsigned int i = 0; i < TVector::Dimension; i++ )
+    {
+    if( vcl_fabs( p1[i] - p2[i] ) > epsilon )
+      pass=false;
+    }
+  return pass;
+  }
+
+template <typename TTensor>
+bool sameTensor( const TTensor & p1, const TTensor & p2, double epsilon=1e-8 )
+  {
+  bool pass=true;
+  for ( unsigned int i = 0; i < TTensor::InternalDimension; i++ )
+    {
+    if( vcl_fabs( p1[i] - p2[i] ) > epsilon )
+      pass=false;
+    }
+  return pass;
+  }
+
 template <typename TArray2D>
-bool sameArray2D( const TArray2D & a1, const TArray2D & a2, double epsilon=1e-10 )
+bool sameArray2D( const TArray2D & a1, const TArray2D & a2, double epsilon=1e-8 )
   {
   bool pass=true;
 
@@ -76,6 +100,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
    * vectors as well. Currently this just tests transforming
    * points. */
 
+  std::cout.precision(12);
+
   typedef  itk::Matrix<ScalarType, dimensions, dimensions>  Matrix2Type;
   typedef  itk::Vector<ScalarType, dimensions>               Vector2Type;
 
@@ -100,189 +126,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   zeroVector.Fill( 0 );
   field->FillBuffer( zeroVector );
 
-  /*
-   * Set a deformation field that has only one point with
-   * a non-zero vector. */
-  FieldType::IndexType nonZeroFieldIndex;
-  nonZeroFieldIndex[0] = 3;
-  nonZeroFieldIndex[1] = 4;
-  ScalarType nonZeroData[] = {4,-2.5};
-  DeformationTransformType::OutputVectorType nonZeroFieldVector(nonZeroData);
-  field->SetPixel( nonZeroFieldIndex, nonZeroFieldVector );
-
-  deformationTransform->SetDeformationField( field );
-
-  std::cout << "deformationTransform: " << std::endl
-            << deformationTransform << std::endl;
-
-  /* Test transforming some points. */
-
-  DeformationTransformType::InputPointType testPoint;
-  DeformationTransformType::OutputPointType deformOutput, deformTruth;
-
-  /* Test a point with non-zero deformation */
-  testPoint[0] = nonZeroFieldIndex[0];
-  testPoint[1] = nonZeroFieldIndex[1];
-  deformTruth[0] = nonZeroFieldIndex[0] + nonZeroFieldVector[0];
-  deformTruth[1] = nonZeroFieldIndex[1] + nonZeroFieldVector[1];
-  deformOutput = deformationTransform->TransformPoint( testPoint );
-  std::cout << "point 1 transformed: " << deformOutput << std::endl;
-  if( !samePoint( deformOutput, deformTruth ) )
-      {
-      std::cout << "Failed transforming point 1." << std::endl;
-      return EXIT_FAILURE;
-      }
-
-  /* Test a point that should have zero deformation */
-  testPoint[0] = nonZeroFieldIndex[0]+2;
-  testPoint[1] = nonZeroFieldIndex[1]+1;
-  deformTruth = testPoint;
-  deformOutput = deformationTransform->TransformPoint( testPoint );
-  std::cout << "zero-point transformed: " << deformOutput << std::endl;
-  if( !samePoint( deformOutput, deformTruth ) )
-      {
-      std::cout << "Failed transforming zero point." << std::endl;
-      return EXIT_FAILURE;
-      }
-
-  /* Test a non-integer point using the linear interpolator.
-   * The default interpolator thus far is linear, but set it
-   * just in case, and to test the set function and test TransforPoint's
-   * handling of changed deformation field and interpolator objects. */
-  typedef itk::VectorLinearInterpolateImageFunction<FieldType, ScalarType>
-    LinearInterpolatorType;
-  LinearInterpolatorType::Pointer interpolator = LinearInterpolatorType::New();
-  std::cout << "Interpolator:" << std::endl << interpolator;
-  deformationTransform->SetInterpolator( interpolator );
-  std::cout << "\n***Transform after add interpolator: \n"
-    << deformationTransform << std::endl;
-
-  ScalarType xoffset = 0.4;
-  testPoint[0] = nonZeroFieldIndex[0] + xoffset;
-  testPoint[1] = nonZeroFieldIndex[1];
-  deformTruth[0] = (nonZeroFieldIndex[0] + 1) * xoffset +
-    ( nonZeroFieldIndex[0] + nonZeroFieldVector[0] ) * (1 - xoffset);
-  deformTruth[1] = nonZeroFieldIndex[1] * xoffset +
-    ( nonZeroFieldIndex[1] + nonZeroFieldVector[1] ) * (1 - xoffset);
-  deformOutput = deformationTransform->TransformPoint( testPoint );
-  std::cout << "Transform point with offset: " << std::endl
-            << "  Test point: " << testPoint << std::endl
-            << "  Truth: " << deformTruth << std::endl
-            << "  Output: " << deformOutput << std::endl;
-  if( !samePoint( deformOutput, deformTruth ) )
-      {
-      std::cout << "Failed transforming offset point." << std::endl;
-      return EXIT_FAILURE;
-      }
-
-  /* Test IsLinear()
-   * Should always return false */
-  if( deformationTransform->IsLinear() )
-    {
-    std::cout << "DeformationFieldTransform returned 'true' for IsLinear()."
-      " Expected 'false'." << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  /* Test inverse transform */
-
-  /* We haven't set an inverse deformation field for the inverse deformation
-   * transform, so we should get a false return here */
-  DeformationTransformType::Pointer inverseTransform
-    = DeformationTransformType::New();
-  if( deformationTransform->GetInverse( inverseTransform ) )
-    {
-    std::cout << "Expected GetInverse() to fail." << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  /* Add an inverse deformation field */
-  FieldType::Pointer inverseField = FieldType::New();
-  DeformationTransformType::OutputVectorType inverseFieldVector;
-  FieldType::IndexType inverseFieldIndex;
-  /* Use same initializers that we used above */
-  inverseField->SetRegions( region );
-  inverseField->Allocate();
-  inverseField->FillBuffer( zeroVector );
-  inverseFieldVector[0] = -1;
-  inverseFieldVector[1] = -2;
-  inverseFieldIndex[0] = 7;
-  inverseFieldIndex[1] = 11;
-  inverseField->SetPixel( inverseFieldIndex, inverseFieldVector );
-
-  deformationTransform->SetInverseDeformationField( inverseField );
-
-  /* Retrieve the inverse transform */
-  if( !deformationTransform->GetInverse( inverseTransform ) )
-    {
-    std::cout << "Expected GetInverse() to succeed." << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  /* Transform a point using inverse. Not much of a different test
-   * than for forwards transform. */
-  DeformationTransformType::OutputPointType inverseTruth, inverseOutput;
-  testPoint[0] = inverseFieldIndex[0];
-  testPoint[1] = inverseFieldIndex[1];
-  inverseTruth[0] = testPoint[0] + inverseFieldVector[0];
-  inverseTruth[1] = testPoint[1] + inverseFieldVector[1];
-  inverseOutput = inverseTransform->TransformPoint( testPoint );
-  std::cout << "Transform point with inverse transform: "
-            << std::endl
-            << "  Test point: " << testPoint << std::endl
-            << "  Truth: " << inverseTruth << std::endl
-            << "  Output: " << inverseOutput << std::endl;
-  if( !samePoint( inverseOutput, inverseTruth ) )
-    {
-    std::cout << "Failed to transform point with inverse transform."
-              << std::endl;
-    return EXIT_FAILURE;
-    }
-  /* Get inverse transform again, but using other accessor. */
-  DeformationTransformType::Pointer inverseTransform2;
-  inverseTransform2 = dynamic_cast<DeformationTransformType*>
-    ( deformationTransform->GetInverseTransform().GetPointer() );
-  if( ! inverseTransform2 )
-    {
-    std::cout << "Failed calling GetInverseTransform()." << std::endl;
-    return EXIT_FAILURE;
-    }
-  inverseOutput = inverseTransform2->TransformPoint( testPoint );
-  if( !samePoint( inverseOutput, inverseTruth ) )
-    {
-    std::cout << "Failed transform point with 2nd inverse transform."
-              << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  /* Test GetJacobian */
-  DeformationTransformType::JacobianType jacobian;
-  DeformationTransformType::JacobianType jacobianTruth(dimensions,dimensions);
-  jacobianTruth(0,0) = -1.66666674614;
-  jacobianTruth(0,1) = 0;
-  jacobianTruth(1,0) = 1.66666662693;
-  jacobianTruth(1,1) = 1.0;
-
-  //std::cout.precision(12);
-  DeformationTransformType::InputPointType inputPoint;
-  inputPoint[0]=nonZeroFieldIndex[0]+1;
-  inputPoint[1]=nonZeroFieldIndex[1];
-  bool caughtException = false;
-  try
-    {
-    DeformationTransformType::JacobianType jacobian = deformationTransform->GetJacobian( inputPoint );
-    }
-  catch( itk::ExceptionObject & e )
-    {
-    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
-    caughtException = true;
-    }
-  if( !caughtException )
-    {
-    std::cout << "Expected GetJacobian() to throw exception." << std::endl;
-    return EXIT_FAILURE;
-    }
-
+  /* Initialize Affine transform and use to create deformation field */
   typedef itk::CenteredAffineTransform<double,2> AffineTransformType;
   typedef AffineTransformType::MatrixType AffineMatrixType;
   AffineMatrixType affineMatrix;
@@ -300,10 +144,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   affineTransform->SetIdentity();
   affineTransform->SetMatrix( affineMatrix );
 
-  FieldType::Pointer field2 = FieldType::New();
-  field2->SetRegions( field->GetLargestPossibleRegion() );
-  field2->Allocate();
-  itk::ImageRegionIteratorWithIndex<FieldType> it( field2, field2->GetLargestPossibleRegion() );
+  itk::ImageRegionIteratorWithIndex<FieldType> it( field, field->GetLargestPossibleRegion() );
   it.GoToBegin();
 
   while (! it.IsAtEnd() )
@@ -315,117 +156,185 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     FieldType::PixelType v;
     v[0] = vec[0];
     v[1] = vec[1];
-    field2->SetPixel( it.GetIndex(), v );
+    field->SetPixel( it.GetIndex(), v );
     ++it;
     }
 
-  DeformationTransformType::Pointer transform2 = DeformationTransformType::New();
-  transform2->SetDeformationField( field2 );
+  deformationTransform->SetDeformationField( field );
 
-  DeformationTransformType::JacobianType fieldJ;
-  transform2->GetJacobianWithRespectToParameters( inputPoint, fieldJ );
-  std::cout << "GetJacobianWithRespectToParameters: " << std::endl
-            << "  Test point: " << testPoint << std::endl
-            << "  Truth: " << std::endl << fieldJTruth << std::endl
-            << "  Output: " << std::endl << fieldJ << std::endl;
-  if( !sameArray2D( fieldJ, fieldJTruth, 0.01 ) )
-      {
-      std::cout << "Failed calculating jacobian." << std::endl;
+  DeformationTransformType::InputPointType testPoint;
+  testPoint[0] = 10;
+  testPoint[1] = 8;
+
+  /* Test LocalJacobian methods */
+  DeformationTransformType::JacobianType jacobian;
+  deformationTransform->GetJacobianWithRespectToPosition( testPoint, jacobian );
+  std::cout << "Local jacobian estimated. " << std::endl << jacobian << std::endl;
+  if (!sameArray2D( jacobian, fieldJTruth, 1e-6 ) )
+    {
+      std::cout << "Failed getting local jacobian. Should be " << std::endl << affineMatrix << std::endl;
       return EXIT_FAILURE;
-      }
-
-  /* Test parameter access.
-   * Parameters just point to the deformation field, but using
-   * 1D indexing. */
-  DeformationTransformType::ParametersType params;
-  params = deformationTransform->GetParameters();
-  unsigned int expectedParamSize = dimLength * dimLength * dimensions;
-  if( params.Size() != expectedParamSize )
-    {
-    std::cout << "params are not expected size. "
-              << params.Size() << " instead of " << expectedParamSize
-              << std::endl;
-    return EXIT_FAILURE;
-    }
-  /* Test reading */
-  if( params[0] != 0 )
-    {
-    std::cout << "params[0] not of expected value. "
-              << params[0] << " instead of 0." << std::endl;
-    return EXIT_FAILURE;
-    }
-  int nonZeroFieldIndex1D = dimensions *
-            ( nonZeroFieldIndex[1] * dimLength + nonZeroFieldIndex[0] );
-  if( params[nonZeroFieldIndex1D]   != nonZeroData[0] ||
-      params[nonZeroFieldIndex1D+1] != nonZeroData[1] )
-    {
-    std::cout << "params[nonZeroFieldIndex1D] not of expected value. "
-              << std::endl << "Expected: " << nonZeroData[0]
-              << " " << nonZeroData[1]
-              << std::endl << "Retrieved: " << params[nonZeroFieldIndex1D]
-              << " " << params[nonZeroFieldIndex1D+1] << std::endl;
-    for( int xx=0; xx<dimLength; xx++ )
-      {
-      for( int yy=0; yy<dimLength; yy++ )
-        {
-        if(params[yy*dimLength+xx] != 0)
-          std::cout << xx << "," << yy << ": " << params[yy*dimLength+xx]
-                  << std::endl;
-        }
-      }
-    return EXIT_FAILURE;
-    }
-
-  /* Test setting parameters */
-  DeformationTransformType::ParametersType newParams( expectedParamSize );
-  newParams.Fill(13);
-  newParams[0] = 11;
-  newParams[expectedParamSize-1] = 15;
-  deformationTransform->SetParameters( newParams );
-  /* Test that the values got copied to the deformation field image */
-  DeformationTransformType::OutputVectorType readVector;
-  FieldType::IndexType fieldIndex;
-  fieldIndex[0] = fieldIndex[1] = 0;
-  readVector = field->GetPixel(fieldIndex);
-  if( readVector[0] != 11 || readVector[1] != 13 )
-    {
-    std::cout << "Failed setting and reading parameters from field."
-              << std::endl << "Expected 11 13 "
-              << std::endl << "Read " << readVector[0] << " "
-              << readVector[1] << std::endl;
-    return EXIT_FAILURE;
-    }
-  fieldIndex[0] = fieldIndex[1] = dimLength - 1;
-  readVector = field->GetPixel(fieldIndex);
-  if( readVector[0] != 13 || readVector[1] != 15 )
-    {
-    std::cout << "Failed setting and reading parameters from field."
-              << std::endl << "Expected 13 15 "
-              << std::endl << "Read " << readVector[0] << " "
-              << readVector[1] << std::endl;
-    return EXIT_FAILURE;
     }
 
 
-  /* Test that the CreateAnother routine throws an exception.
-   * See comments in .h */
-  caughtException = false;
+  bool caughtException = false;
   try
     {
-    itk::LightObject::Pointer anotherTransform =
-      deformationTransform->CreateAnother();
+    deformationTransform->GetJacobianWithRespectToParameters( testPoint, jacobian );
     }
   catch( itk::ExceptionObject & e )
     {
     std::cout << "Caught expected exception:" << std::endl << e << std::endl;
     caughtException = true;
     }
-  if( !caughtException )
+
+  if (!caughtException)
     {
-    std::cout << "Expected CreateAnother to throw exception." << std::endl;
+    std::cout << "Expected GetJacobianWithRespectToParameters() to throw exception." << std::endl;
     return EXIT_FAILURE;
     }
-  std::cout << "CreateAnother test passed." << std::endl;
+
+  /** Test transforming of points */
+
+
+  DeformationTransformType::OutputPointType deformOutput, deformTruth;
+
+  /* Test a point with non-zero deformation */
+  FieldType::IndexType idx;
+  field->TransformPhysicalPointToIndex( testPoint, idx );
+  deformTruth = testPoint + field->GetPixel( idx );
+
+  deformOutput = deformationTransform->TransformPoint( testPoint );
+  std::cout << "point 1 transformed: " << deformOutput << std::endl;
+  if( !samePoint( deformOutput, deformTruth  ) )
+      {
+      std::cout << "Failed transforming point 1. Should be " << deformTruth << std::endl;
+      return EXIT_FAILURE;
+      }
+
+
+  DeformationTransformType::InputVectorType testVector;
+  DeformationTransformType::OutputVectorType deformVector, deformVectorTruth;
+  testVector[0] = 0.5;
+  testVector[1] = 0.5;
+
+  deformVectorTruth = affineTransform->TransformVector( testVector );
+  deformVector = deformationTransform->TransformVector( testVector, testPoint );
+  std::cout << "vector 1 transformed: " << deformVector << std::endl;
+  if( !sameVector( deformVector, deformVectorTruth, 0.0001 ) )
+      {
+      std::cout << "Failed transforming vector 1. Should be " << deformVectorTruth << std::endl;
+      return EXIT_FAILURE;
+      }
+
+  caughtException = false;
+  try
+    {
+    deformVector = deformationTransform->TransformVector( testVector );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
+    }
+
+  if (!caughtException)
+    {
+    std::cout << "Expected TransformVector(vector) to throw exception." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  DeformationTransformType::InputCovariantVectorType testcVector;
+  DeformationTransformType::OutputCovariantVectorType deformcVector, deformcVectorTruth;
+  testcVector[0] = 0.5;
+  testcVector[1] = 0.5;
+
+  deformcVectorTruth = affineTransform->TransformCovariantVector( testcVector );
+  deformcVector = deformationTransform->TransformCovariantVector( testcVector, testPoint );
+  std::cout << "covariant vector 1 transformed: " << deformcVector << std::endl;
+  if( !sameVector( deformcVector, deformcVectorTruth, 0.0001 ) )
+      {
+      std::cout << "Failed transforming vector 1. Should be " << deformcVectorTruth << std::endl;
+      return EXIT_FAILURE;
+      }
+
+  caughtException = false;
+  try
+    {
+    deformcVector = deformationTransform->TransformCovariantVector( testcVector );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
+    }
+
+  if (!caughtException)
+    {
+    std::cout << "Expected TransformCovariantVector(vector) to throw exception." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  DeformationTransformType::InputTensorType testTensor;
+  DeformationTransformType::OutputTensorType deformTensor, deformTensorTruth;
+  testTensor[0] = 3;
+  testTensor[1] = 0.01;
+  testTensor[2] = 0.01;
+  testTensor[3] = 2;
+  testTensor[4] = 0.01;
+  testTensor[5] = 1;
+
+  // pass thru functionality only for now
+  deformTensorTruth = affineTransform->TransformTensor( testTensor );
+  std::cout << "tensor 1:             " << testTensor << std::endl;
+  deformTensor = deformationTransform->TransformTensor( testTensor, testPoint );
+  std::cout << "tensor 1 transformed: " << deformTensor << std::endl;
+  if( !sameTensor( deformTensor, deformTensorTruth, 0.0001 ) )
+      {
+      std::cout << "Failed transforming tensor 1. Should be " << deformTensorTruth << std::endl;
+      //return EXIT_FAILURE;
+      }
+
+  caughtException = false;
+  try
+    {
+    deformTensor = deformationTransform->TransformTensor( testTensor );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
+    }
+
+  if (!caughtException)
+    {
+    std::cout << "Expected TransformTensor(tensor) to throw exception." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+
+
+  /* Test IsLinear()
+   * Should always return false */
+  if( deformationTransform->IsLinear() )
+    {
+    std::cout << "DeformationFieldTransform returned 'true' for IsLinear()."
+      " Expected 'false'." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+    /* We haven't set an inverse deformation field for the inverse deformation
+   * transform, so we should get a false return here */
+  DeformationTransformType::Pointer inverseTransform
+    = DeformationTransformType::New();
+  if( deformationTransform->GetInverse( inverseTransform ) )
+    {
+    std::cout << "Expected GetInverse() to fail." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+
+
 
   return EXIT_SUCCESS;
 }

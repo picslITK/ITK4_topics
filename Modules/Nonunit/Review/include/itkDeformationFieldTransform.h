@@ -96,6 +96,10 @@ public:
   typedef typename Superclass::InputTensorType      InputTensorType;
   typedef typename Superclass::OutputTensorType     OutputTensorType;
 
+  /** Standard tensor type for this class */
+  typedef typename Superclass::InputTensorEigenVectorType      InputTensorEigenVectorType;
+  typedef typename Superclass::OutputTensorEigenVectorType     OutputTensorEigenVectorType;
+
     /** Standard tensor type for this class */
   typedef typename Superclass::InputTensorMatrixType      InputTensorMatrixType;
   typedef typename Superclass::OutputTensorMatrixType     OutputTensorMatrixType;
@@ -118,6 +122,9 @@ public:
   /* Define tranform based upon ImageDirections of Deformation Field */
   typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
+
+  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions>  LocalTransformType;
+  typedef typename LocalTransformType::Pointer                          LocalTransformPointer;
 
   /** Define the internal parameter helper used to access the field */
   typedef ImageVectorTransformParametersHelper<
@@ -147,26 +154,25 @@ public:
 
   /**  Method to transform a vector. */
   virtual OutputVectorType TransformVector(const InputVectorType &) const
-    { itkExceptionMacro( "TransformVector unimplemented" ); }
+    { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
+
+  virtual OutputVectorType TransformVector(const InputVectorType &, const InputPointType & ) const;
 
   /**  Method to transform a vnl_vector. */
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const
-    { itkExceptionMacro( "TransformVector unimplemented" ); }
-
-  OutputVectorType TransformVectorAtPoint( const InputVectorType &, const InputPointType & ) const;
+    { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
 
   /** Method to transform a tensor */
-  OutputTensorType TransformTensorAtPoint(const InputTensorType &, const InputPointType &) const;
-  //  { itkExceptionMacro( "TransformTensor unimplemented" ); }
+  OutputTensorType TransformTensor(const InputTensorType & ) const
+    { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use TransformTensor(Tensor,Point)" ); }
 
-  /** Method to transform a tensor */
-  //OutputTensorMatrixType TransformTensorAtPoint(const InputTensorMatrixType &, const InputPointType &) const
-  //  { itkExceptionMacro( "TransformTensor unimplemented" ); }
+  OutputTensorType TransformTensor(const InputTensorType &, const InputPointType &) const;
 
   /**  Method to transform a CovariantVector. */
-  virtual OutputCovariantVectorType TransformCovariantVector(
-    const InputCovariantVectorType &) const
-      { itkExceptionMacro( "TransformCovariantVector unimplemented" ); }
+  virtual OutputCovariantVectorType TransformCovariantVector( const InputCovariantVectorType &) const
+      { itkExceptionMacro( "TransformCovariantVector(CovariantVector) unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
+
+  virtual OutputCovariantVectorType TransformCovariantVector( const InputCovariantVectorType &, const InputPointType & ) const;
 
   /** Set the transformation parameters. This sets the deformation
    * field image directly. */
@@ -200,10 +206,12 @@ public:
                                                   JacobianType &j) const;
 
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &x,
-                                                  JacobianType &j) const;
+                                                  JacobianType &j) const
+    { itkExceptionMacro("GetJacobianWithRespectToParameters unimplemented. Use GetJacobianWithRespectToPosition"); }
 
   virtual void GetJacobianWithRespectToParameters(const IndexType  &x,
-                                                  JacobianType &j) const;
+                                                  JacobianType &j) const
+    { itkExceptionMacro("GetJacobianWithRespectToParameters unimplemented. Use GetJacobianWithRespectToPosition"); }
 
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
