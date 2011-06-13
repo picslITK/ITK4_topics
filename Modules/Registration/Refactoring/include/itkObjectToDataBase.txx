@@ -87,7 +87,7 @@ ObjectToDataBase<TInputObject, TDataHolder>
 ::ThreaderCallback( void *arg )
 {
   ThreadStruct *str;
-  int total, threadId, threadCount;
+  ThreadIdType total, threadId, threadCount;
 
   threadId = ((MultiThreader::ThreadInfoStruct *)(arg))->ThreadID;
   threadCount = ((MultiThreader::ThreadInfoStruct *)(arg))->NumberOfThreads;

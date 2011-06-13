@@ -42,7 +42,7 @@ public:
    * holder, which is passed in via the threader's user data. */
   static void ThreadedCallback(
                                 const IndexRangeType& rangeForThread,
-                                int threadId,
+                                ThreadIdType threadId,
                                 Self *holder )
   {
     if( threadId >= holder->m_numberOfThreads )
@@ -53,13 +53,13 @@ public:
     holder->m_rangeInCallback[threadId] = rangeForThread;
   }
 
-  void Init(int numberOfThreads)
+  void Init(ThreadIdType numberOfThreads)
   {
     m_GotMoreThreadsThanExpected = false;
     m_rangeInCallback.resize(numberOfThreads);
     IndexRangeType emptyRange;
     emptyRange.Fill(-1);
-    for(unsigned int i=0; i<m_rangeInCallback.size(); i++)
+    for(ThreadIdType i=0; i<m_rangeInCallback.size(); i++)
       {
       m_rangeInCallback[i] = emptyRange;
       }
@@ -67,14 +67,14 @@ public:
 
   bool                         m_GotMoreThreadsThanExpected;
   std::vector<IndexRangeType>  m_rangeInCallback;
-  int                          m_numberOfThreads;
+  ThreadIdType                 m_numberOfThreads;
 
 };
 
 /*
  * Run the actually test
  */
-int RunTest( Array1DToDataType::Pointer& threader, int numberOfThreads,
+int RunTest( Array1DToDataType::Pointer& threader, ThreadIdType numberOfThreads,
               IndexRangeType& fullRange, HolderClass& holder)
 {
   std::cout << "Testing with " << numberOfThreads
@@ -115,7 +115,7 @@ int RunTest( Array1DToDataType::Pointer& threader, int numberOfThreads,
 
   /* Check the results */
   IndexRangeType::IndexValueType previousEndIndex = -1;
-  for( int i=0; i < threader->GetNumberOfThreadsUsed(); i++ )
+  for( ThreadIdType i=0; i < threader->GetNumberOfThreadsUsed(); i++ )
     {
     IndexRangeType subRange = holder.m_rangeInCallback[i];
     /* Check that the sub range was assigned something at all */
@@ -190,7 +190,7 @@ int itkArray1DToDataTest(int , char* [])
   /* Test with single thread */
   fullRange[0] = 0;
   fullRange[1] = 102; //set total range to prime to test uneven division
-  int numberOfThreads = 1;
+  ThreadIdType numberOfThreads = 1;
   if( RunTest( threader, numberOfThreads, fullRange, holder ) != EXIT_SUCCESS )
     {
     result = EXIT_FAILURE;
@@ -222,7 +222,7 @@ int itkArray1DToDataTest(int , char* [])
 
     /* Test with max number of threads and check that we only used as
      * many as is reasonable. */
-    int maxNumberOfThreads =
+    ThreadIdType maxNumberOfThreads =
       threader->GetMultiThreader()->GetGlobalMaximumNumberOfThreads();
     fullRange[0] = 6;
     fullRange[1] = fullRange[0]+maxNumberOfThreads-2;

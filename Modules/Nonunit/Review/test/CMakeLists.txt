@@ -30,25 +30,17 @@ itkBoxMeanImageFilterTest.cxx
 itkBoxSigmaImageFilterTest.cxx
 itkBruker2DSEQImageIOTest.cxx
 itkBSplineControlPointImageFilterTest.cxx
-itkBSplineControlPointImageFunctionTest.cxx
 itkBSplineDeformableTransformInitializerTest1.cxx
 itkBSplineDeformableTransformInitializerTest2.cxx
-itkBSplineScatteredDataPointSetToImageFilterTest.cxx
-itkBSplineScatteredDataPointSetToImageFilterTest2.cxx
-itkBSplineScatteredDataPointSetToImageFilterTest3.cxx
 itkChangeLabelLabelMapFilterTest.cxx
 itkChangeRegionLabelMapFilterTest1.cxx
-itkCompositeTransformTest.cxx
 itkConformalFlatteningMeshFilterTest.cxx
 itkConformalFlatteningQuadEdgeMeshFilterTest.cxx
 itkContourExtractor2DImageFilterTest.cxx
 itkConvertLabelMapFilterTest1.cxx
 itkConvolutionImageFilterTest.cxx
 itkConvolutionImageFilterTestInt.cxx
-itkCoxDeBoorBSplineKernelFunctionTest.cxx
-itkCoxDeBoorBSplineKernelFunctionTest2.cxx
 itkCropLabelMapFilterTest1.cxx
-itkDeformationFieldTransformTest.cxx
 itkDiffeomorphicDemonsRegistrationFilterTest.cxx
 itkDiffeomorphicDemonsRegistrationFilterTest2.cxx
 itkDirectFourierReconstructionImageToImageFilterTest.cxx
@@ -126,7 +118,6 @@ itkMultiScaleHessianBasedMeasureImageFilterTest.cxx
 itkNeuralNetworkIOTest.cxx
 itkN4MRIBiasFieldCorrectionImageFilterTest
 itkObjectByObjectLabelMapFilterTest.cxx
-itkObjectToObjectMetricTest.cxx
 itkOptGrayscaleDilateImageFilterTest.cxx
 itkOptGrayscaleErodeImageFilterTest.cxx
 itkOptGrayscaleMorphologicalClosingImageFilterTest.cxx
@@ -402,8 +393,6 @@ itk_add_test(NAME itkBSplineControlPointImageFilterTest2
     --compare ${ITK_TEST_OUTPUT_DIR}/N4ControlPoints_3D_output.nii.gz
               ${ITK_TEST_OUTPUT_DIR}/N4ControlPoints_3D_outputRefined.nii.gz
     itkBSplineControlPointImageFilterTest 3 ${ITK_DATA_ROOT}/Baseline/Review/N4ControlPoints_3D.nii.gz ${ITK_TEST_OUTPUT_DIR}/N4ControlPoints_3D_output.nii.gz ${ITK_TEST_OUTPUT_DIR}/N4ControlPoints_3D_outputRefined.nii.gz)
-itk_add_test(NAME itkBSplineControlPointImageFunctionTest
-      COMMAND ITK-ReviewTestDriver itkBSplineControlPointImageFunctionTest)
 itk_add_test(NAME itkBSplineDeformableTransformInitializerTest1
       COMMAND ITK-ReviewTestDriver itkBSplineDeformableTransformInitializerTest1
               ${ITK_EXAMPLE_DATA_ROOT}/BSplineDisplacements1.txt ${ITK_EXAMPLE_DATA_ROOT}/BrainProtonDensitySliceBorder20.png ${ITK_EXAMPLE_DATA_ROOT}/BrainProtonDensitySliceBorder20.png ${ITK_TEST_OUTPUT_DIR}/itkBSplineDeformableTransformInitializerTest1.png ${ITK_TEST_OUTPUT_DIR}/itkBSplineDeformableTransformInitializerTest1DeformationField.mhd)
@@ -416,17 +405,6 @@ itk_add_test(NAME itkTransformToDeformationFieldSourceTest03
               ${TEMP}/warpedImage.nii
   --compareNumberOfPixelsTolerance 20
    itkTransformToDeformationFieldSourceTest1 ${TEMP}/transformedImage.nii ${TEMP}/warpedImage.nii)
-itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest01
-      COMMAND ITK-ReviewTestDriver
-    --compare ${ITK_DATA_ROOT}/Baseline/Review/itkBSplineScatteredDataPointSetToImageFilterTest01.mha
-              ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredDataPointSetToImageFilterTest01.mha
-    itkBSplineScatteredDataPointSetToImageFilterTest ${ITK_DATA_ROOT}/Input/cake_easy.png ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredDataPointSetToImageFilterTest01.mha)
-itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest02
-      COMMAND ITK-ReviewTestDriver itkBSplineScatteredDataPointSetToImageFilterTest2
-              ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredApproximationDataPointsTestOutput2.txt)
-itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest03
-      COMMAND ITK-ReviewTestDriver itkBSplineScatteredDataPointSetToImageFilterTest3
-              ${ITK_DATA_ROOT}/Input/BSplineScatteredApproximationDataPointsInput.txt ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredApproximationDataPointsTestOutput3.txt)
 itk_add_test(NAME itkChangeLabelLabelMapFilterTest1
       COMMAND ITK-ReviewTestDriver
     --compare ${ITK_DATA_ROOT}/Baseline/Review/cthead1-label-changed.mha
@@ -447,8 +425,6 @@ itk_add_test(NAME itkChangeRegionLabelMapFilterTest1
     --compare ${ITK_DATA_ROOT}/Baseline/Review/cthead1-label-changeregion.mha
               ${ITK_TEST_OUTPUT_DIR}/cthead1-label-changeregion.mha
     itkChangeRegionLabelMapFilterTest1 ${ITK_DATA_ROOT}/Input/cthead1Label.png ${ITK_TEST_OUTPUT_DIR}/cthead1-label-changeregion.mha 50 100 120 150)
-itk_add_test(NAME itkCompositeTransformTest
-      COMMAND ITK-ReviewTestDriver itkCompositeTransformTest)
 itk_add_test(NAME itkConformalFlatteningMeshFilterTest1
       COMMAND ITK-ReviewTestDriver itkConformalFlatteningMeshFilterTest
               ${ITK_DATA_ROOT}/Input/genusZeroSurface01.vtk ${ITK_TEST_OUTPUT_DIR}/genusZeroMesh01ConformalFlattenedToSphere.vtk 1)
@@ -485,17 +461,11 @@ itk_add_test(NAME itkConvolutionImageFilterTest5x5Mean
     --compare ${ITK_DATA_ROOT}/Baseline/Review/itkConvolutionImageFilterTest5x5Mean.png
               ${ITK_TEST_OUTPUT_DIR}/itkConvolutionImageFilterTest5x5Mean.png
     itkConvolutionImageFilterTestInt ${ITK_DATA_ROOT}/Input/cthead1.png ${ITK_DATA_ROOT}/Input/5x5-constant.png ${ITK_TEST_OUTPUT_DIR}/itkConvolutionImageFilterTest5x5Mean.png 1)
-itk_add_test(NAME itkCoxDeBoorBSplineKernelFunctionTest01
-      COMMAND ITK-ReviewTestDriver itkCoxDeBoorBSplineKernelFunctionTest)
-itk_add_test(NAME itkCoxDeBoorBSplineKernelFunctionTest02
-      COMMAND ITK-ReviewTestDriver itkCoxDeBoorBSplineKernelFunctionTest2)
 itk_add_test(NAME itkCropLabelMapFilterTest1
       COMMAND ITK-ReviewTestDriver
     --compare ${ITK_DATA_ROOT}/Baseline/Review/cthead1-label-crop.mha
               ${ITK_TEST_OUTPUT_DIR}/cthead1-label-crop.mha
     itkCropLabelMapFilterTest1 ${ITK_DATA_ROOT}/Input/cthead1Label.png ${ITK_TEST_OUTPUT_DIR}/cthead1-label-crop.mha 40 50)
-itk_add_test(NAME itkDeformationFieldTransformTest
-      COMMAND ITK-ReviewTestDriver itkDeformationFieldTransformTest)
 itk_add_test(NAME itkDiffeomorphicDemonsRegistrationFilterTest01
       COMMAND ITK-ReviewTestDriver itkDiffeomorphicDemonsRegistrationFilterTest
               0 0 0.001 20.0 200 0.01 0.08 5 10)
@@ -1215,8 +1185,6 @@ itk_add_test(NAME itkObjectByObjectLabelMapFilterTest1
     --compare ${ITK_DATA_ROOT}/Baseline/Review/itkObjectByObjectLabelMapFilterTest1.png
               ${ITK_TEST_OUTPUT_DIR}/itkObjectByObjectLabelMapFilterTest1.png
     itkObjectByObjectLabelMapFilterTest ${ITK_DATA_ROOT}/Input/SpotsLabeled.png ${ITK_TEST_OUTPUT_DIR}/itkObjectByObjectLabelMapFilterTest1.png 1)
-itk_add_test(NAME itkObjectToObjectMetricTest
-      COMMAND ITK-ReviewTestDriver itkObjectToObjectMetricTest)
 itk_add_test(NAME itkOptImageToImageMetricsTest01
       COMMAND ITK-ReviewTestDriver itkOptImageToImageMetricsTest
               ${ITK_EXAMPLE_DATA_ROOT}/BrainProtonDensitySliceBorder20.png

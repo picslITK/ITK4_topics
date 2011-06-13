@@ -1,4 +1,4 @@
-/*=========================================================================
+  /*=========================================================================
  *
  *  Copyright Insight Software Consortium
  *
@@ -64,7 +64,7 @@ public:
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
   /** Type of coordinate system used to calculate values, derivatives */
-  enum CoordinateSystemType { Fixed, Moving, Both };
+  typedef enum  { Fixed=0, Moving, Both } CoordinateSystemType;
 
   /**
    * Set coordinate system type.  This variable allows the user to switch
@@ -76,7 +76,7 @@ public:
   /**
    * Get coordinate system type.
    */
-  itGetConstMacro( CoordinateSystem, CoordinateSystemType );
+  itkGetConstMacro( CoordinateSystem, CoordinateSystemType );
 
   /** Initialize the Metric by making sure that all the components
    *  are present and plugged together correctly     */
@@ -110,6 +110,20 @@ protected:
 private:
   ObjectToObjectMetric(const Self &); //purposely not implemented
   void operator=(const Self &);     //purposely not implemented
+
+  /** Provide these two methods to satisfy pure virtuals within
+   * SingleValuedCostFunction. This is a sign that we probalby shouldn't
+   * be deriving this from SingleValuedCostFunction. */
+  MeasureType GetValue( const ParametersType& ) const
+    {
+    itkExceptionMacro("Not implemented. Use GetValue(void).");
+    };
+
+  /** This method returns the derivative of the cost function */
+  void GetDerivative( const ParametersType &, DerivativeType &) const
+    {
+    itkExceptionMacro("Not implemented. Use GetDerivative(DerivativeType&).");
+    };
 
 };
 } // end namespace itk

@@ -1,4 +1,4 @@
-itk_module(ITK-RegistrationRefactoring
+  itk_module(ITK-RegistrationRefactoring
 DEPENDS
 ITK-RegistrationCommon
 ITK-Optimizers
@@ -12,4 +12,4 @@ ITK-ImageFeature
 ITK-FiniteDifference
 TEST_DEPENDS
 ITK-TestKernel
-ITK-Review)
+)

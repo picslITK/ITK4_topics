@@ -16,6 +16,7 @@ itkRegularStepGradientDescentOptimizerTest.cxx
 itkLevenbergMarquardtOptimizerTest.cxx
 itkVersorRigid3DTransformOptimizerTest.cxx
 itkAmoebaOptimizerTest.cxx
+itkBSplineControlPointImageFunctionTest.cxx
 )
 
 CreateTestDriver(ITK-Optimizers  "${ITK-Optimizers-Test_LIBRARIES}" "${ITK-OptimizersTests}")
@@ -52,3 +53,5 @@ itk_add_test(NAME itkVersorRigid3DTransformOptimizerTest
       COMMAND ITK-OptimizersTestDriver itkVersorRigid3DTransformOptimizerTest)
 itk_add_test(NAME itkAmoebaOptimizerTest
       COMMAND ITK-OptimizersTestDriver itkAmoebaOptimizerTest)
+itk_add_test(NAME itkBSplineControlPointImageFunctionTest
+      COMMAND ITK-OptimizersTestDriver   itkBSplineControlPointImageFunctionTest)

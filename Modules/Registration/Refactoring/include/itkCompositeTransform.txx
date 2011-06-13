@@ -564,7 +564,7 @@ CompositeTransform<TScalar, NDimensions>
     {
     if( this->GetNthTransformToOptimize( tind ) )
       {
-      transform = this->GetNthTransform( tind );
+      subtransform = this->GetNthTransform( tind );
       /* The input values are in a monolithic block, so we have to point
        * to the subregion corresponding to the individual subtransform.
        * This simply creates an Array object with data pointer, no
@@ -573,7 +573,7 @@ CompositeTransform<TScalar, NDimensions>
                                 subtransform->GetNumberOfParameters(), false );
       /* This call will also call SetParameters, so don't need to call it
        * expliclity here. */
-      transform->UpdateTransformParameters( subUpdate, factor );
+      subtransform->UpdateTransformParameters( subUpdate, factor );
       offset += subtransform->GetNumberOfParameters();
       }
     }

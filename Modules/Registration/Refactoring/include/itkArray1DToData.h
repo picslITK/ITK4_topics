@@ -87,8 +87,8 @@ protected:
    * the routine is capable of splitting the output RequestedObject,
    * i.e. return value is less than or equal to \c requestedTotal. */
   virtual
-  int SplitRequestedObject(int i,
-                           int requestedTotal,
+  ThreadIdType SplitRequestedObject(ThreadIdType i,
+                           ThreadIdType requestedTotal,
                            InputObjectType& overallIndexRange,
                            InputObjectType& splitIndexRange) const;
 

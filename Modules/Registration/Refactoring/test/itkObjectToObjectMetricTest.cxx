@@ -45,13 +45,12 @@ public:
 
   // Pure virtual functions that all Metrics must provide
   unsigned int GetNumberOfParameters() const { return 5; }
-  MeasureType GetValue( const ParametersType & parameters ) const
+  MeasureType GetValue() const
     {
-    this->m_Parameters = parameters;
     return 1.0;
     }
-  void GetDerivative(const ParametersType &,
-                             DerivativeType & derivative) const { derivative.Fill(0.0); }
+  void GetDerivative( DerivativeType & derivative ) const
+    { derivative.Fill(0.0); }
   void Initialize(void) throw ( itk::ExceptionObject ) {}
   void PrintSelf(std::ostream& os, itk::Indent indent) const
   {
@@ -84,7 +83,7 @@ int itkObjectToObjectMetricTest(int ,char * [])
   ParametersType parameters(13);
   parameters.Fill( 19.5);
 
-  objectMetric->GetValue( parameters );
+  objectMetric->GetValue( );
 
   return EXIT_SUCCESS;
 }

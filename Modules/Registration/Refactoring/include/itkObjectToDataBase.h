@@ -93,7 +93,7 @@ public:
   //  since "C linkage" doesn't only cover things like name mangling, but also
   //  calling conventions, which might be different between C and C++.
   typedef void (*ThreadedGenerateDataFuncType)(const InputObjectType&,
-                                                int threadId,
+                                                ThreadIdType threadId,
                                                 DataHolderType * holder);
 
   /** Set the overall (i.e. complete) object over which to thread */
@@ -120,7 +120,7 @@ public:
   { return this->m_Holder; }
 
   /** Accessor for number of threads actually used */
-  itkGetMacro( NumberOfThreadsUsed, int );
+  itkGetMacro( NumberOfThreadsUsed, ThreadIdType );
 
   /** Start the threading process */
   virtual void GenerateData();
@@ -140,8 +140,8 @@ protected:
    * This must be overridden by derived classes to provide specialized
    * behavior. */
   virtual
-  int SplitRequestedObject(int i,
-                           int requestedTotal,
+  ThreadIdType SplitRequestedObject(ThreadIdType i,
+                           ThreadIdType requestedTotal,
                            InputObjectType& overallObject,
                            InputObjectType& splitObject) const = 0;
 
@@ -167,7 +167,7 @@ private:
    * the number allocated by the threader if the object does not split
    * well into that number.
    * This value is valid once the threader has been run. */
-  int                           m_NumberOfThreadsUsed;
+  ThreadIdType                  m_NumberOfThreadsUsed;
 
   ObjectToDataBase(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

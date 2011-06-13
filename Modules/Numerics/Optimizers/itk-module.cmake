@@ -1,1 +1,1 @@
-itk_module(ITK-Optimizers DEPENDS ITK-Statistics ITK-Transform TEST_DEPENDS ITK-TestKernel)
+itk_module(ITK-Optimizers DEPENDS ITK-Statistics ITK-Transform ITK-ImageFunction TEST_DEPENDS ITK-TestKernel)

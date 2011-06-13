@@ -55,9 +55,9 @@ Array1DToData<TDataHolder>
  * Split the requested range into a subrange.
  */
 template<class TDataHolder>
-int
+ThreadIdType
 Array1DToData<TDataHolder>
-::SplitRequestedObject(int i, int requestedTotal,
+::SplitRequestedObject(ThreadIdType i, ThreadIdType requestedTotal,
                        InputObjectType& overallIndexRange,
                        InputObjectType& splitIndexRange) const
 {
@@ -66,8 +66,8 @@ Array1DToData<TDataHolder>
   // determine the actual number of pieces that will be generated
   IndexRangeType::IndexValueType count =
     overallIndexRange[1] - overallIndexRange[0] + 1;
-  int valuesPerThread = Math::Ceil<int>(count/(double)requestedTotal);
-  int maxThreadIdUsed = Math::Ceil<int>(count/(double)valuesPerThread) - 1;
+  ThreadIdType valuesPerThread = Math::Ceil<ThreadIdType>(count/(double)requestedTotal);
+  ThreadIdType maxThreadIdUsed = Math::Ceil<ThreadIdType>(count/(double)valuesPerThread) - 1;
 
   // Split the index range
   if (i < maxThreadIdUsed)

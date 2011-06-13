@@ -145,6 +145,11 @@ itkMemoryLeakTest.cxx
 itkVectorGeometryTest.cxx
 itkVNLRoundProfileTest1.cxx
 itkZeroFluxBoundaryConditionTest.cxx
+itkBSplineScatteredDataPointSetToImageFilterTest.cxx
+itkBSplineScatteredDataPointSetToImageFilterTest2.cxx
+itkBSplineScatteredDataPointSetToImageFilterTest3.cxx
+itkCoxDeBoorBSplineKernelFunctionTest.cxx
+itkCoxDeBoorBSplineKernelFunctionTest2.cxx
 )
 
 CreateTestDriver(ITK-Common1 "${ITK-Common_LIBRARIES}" "${ITK-Common1Tests}")
@@ -398,3 +403,19 @@ itk_module_target_label(itkSystemInformationTest)
 target_link_libraries(itkSystemInformationTest  ${ITK-Common_LIBRARIES})
 itk_add_test(NAME itkSystemInformationTest
          COMMAND itkSystemInformationTest ${CMAKE_BINARY_DIR})
+
+itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest01
+      COMMAND ITK-Common2TestDriver
+    --compare ${ITK_DATA_ROOT}/Baseline/Review/itkBSplineScatteredDataPointSetToImageFilterTest01.mha
+              ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredDataPointSetToImageFilterTest01.mha
+    itkBSplineScatteredDataPointSetToImageFilterTest ${ITK_DATA_ROOT}/Input/cake_easy.png ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredDataPointSetToImageFilterTest01.mha)
+itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest02
+      COMMAND ITK-Common2TestDriver itkBSplineScatteredDataPointSetToImageFilterTest2
+              ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredApproximationDataPointsTestOutput2.txt)
+itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest03
+      COMMAND ITK-Common2TestDriver itkBSplineScatteredDataPointSetToImageFilterTest3
+              ${ITK_DATA_ROOT}/Input/BSplineScatteredApproximationDataPointsInput.txt ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredApproximationDataPointsTestOutput3.txt)
+itk_add_test(NAME itkCoxDeBoorBSplineKernelFunctionTest01
+      COMMAND ITK-Common2TestDriver itkCoxDeBoorBSplineKernelFunctionTest)
+itk_add_test(NAME itkCoxDeBoorBSplineKernelFunctionTest02
+      COMMAND ITK-Common2TestDriver itkCoxDeBoorBSplineKernelFunctionTest2)
