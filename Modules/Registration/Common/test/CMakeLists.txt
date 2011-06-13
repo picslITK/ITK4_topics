@@ -171,3 +171,5 @@ itk_add_test(NAME itkPointSetToPointSetRegistrationTest
       COMMAND ITK-RegistrationCommonTestDriver itkPointSetToPointSetRegistrationTest)
 itk_add_test(NAME itkSpatialObjectToImageRegistrationTest
       COMMAND ITK-RegistrationCommonTestDriver itkSpatialObjectToImageRegistrationTest)
+add_test(NAME itkParameterScaleEstimatorTest
+      COMMAND ITK-RegistrationCommonTestDriver itkParameterScaleEstimatorTest)

@@ -74,6 +74,7 @@ set(Registration_module_list
 ITK-FEMRegistration
 ITK-PDEDeformableRegistration
 ITK-RegistrationCommon
+ITK-RegistrationRefactoring
 )
 
 set(Segmentation_module_list

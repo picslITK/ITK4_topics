@@ -222,8 +222,8 @@ int itkGeodesicActiveContourShapePriorLevelSetImageFilterTest( int, char *[])
   shape->Initialize();
 
   // Set up the cost function
-  CostFunctionType::ArrayType mean( shape->GetNumberOfShapeParameters() );
-  CostFunctionType::ArrayType stddev( shape->GetNumberOfShapeParameters() );
+  CostFunctionType::ParametersType mean( shape->GetNumberOfShapeParameters() );
+  CostFunctionType::ParametersType stddev( shape->GetNumberOfShapeParameters() );
 
   // Assume the sphere radius has a mean value of 25 and std dev of 3
   mean[0]   = 25.0;
@@ -424,7 +424,7 @@ int itkGeodesicActiveContourShapePriorLevelSetImageFilterTest( int, char *[])
   TEST_INITIALIZATION_ERROR( CostFunction, NULL, costFunction );
   TEST_INITIALIZATION_ERROR( Optimizer, NULL, optimizer );
 
-  CostFunctionType::ArrayType badParameters( shape->GetNumberOfShapeParameters() - 1 );
+  CostFunctionType::ParametersType badParameters( shape->GetNumberOfShapeParameters() - 1 );
   badParameters.Fill( 2.0 );
 
   TEST_INITIALIZATION_ERROR( InitialParameters, badParameters, parameters );

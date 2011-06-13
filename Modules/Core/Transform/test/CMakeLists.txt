@@ -31,6 +31,7 @@ itkTransformsSetParametersTest.cxx
 itkBSplineDeformableTransformTest.cxx
 itkBSplineDeformableTransformTest2.cxx
 itkBSplineDeformableTransformTest3.cxx
+itkBSplineDeformationFieldTransformTest.cxx
 itkVersorRigid3DTransformTest.cxx
 itkVersorTransformTest.cxx
 itkSplineKernelTransformTest.cxx
@@ -139,6 +140,8 @@ itk_add_test(NAME itkBSplineDeformableTransformTest7
     --compare ${ITK_DATA_ROOT}/Baseline/Common/itkBSplineDeformableTransformTest5PixelCentered.png
               ${ITK_TEST_OUTPUT_DIR}/itkBSplineDeformableTransformTest7PixelCentered.png
     itkBSplineDeformableTransformTest3 ${ITK_EXAMPLE_DATA_ROOT}/BSplineDisplacements1.txt ${ITK_EXAMPLE_DATA_ROOT}/DiagonalLines.png ${ITK_EXAMPLE_DATA_ROOT}/DiagonalLines.png ${ITK_TEST_OUTPUT_DIR}/itkBSplineDeformableTransformTest7PixelCentered.png ${ITK_TEST_OUTPUT_DIR}/itkBSplineDeformableTransformTest7DeformationFieldPixelCentered.mhd 2)
+itk_add_test(NAME itkBSplineDeformationFieldTransformTest
+      COMMAND ITK-TransformTestDriver itkBSplineDeformationFieldTransformTest)
 itk_add_test(NAME itkVersorRigid3DTransformTest
       COMMAND ITK-TransformTestDriver itkVersorRigid3DTransformTest)
 itk_add_test(NAME itkVersorTransformTest

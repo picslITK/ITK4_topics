@@ -123,11 +123,7 @@ public:
   typedef SmartPointer< const Self >                         ConstPointer;
 
   /** New macro for creation of through the object factory. */
-  static Pointer New(void);
-
-  /** CreateAnother method will clone the existing instance of this type,
-   * including its internal member variables. */
-  virtual::itk::LightObject::Pointer CreateAnother(void) const;
+  itkNewMacro( Self );
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(BSplineDeformableTransform, Transform);
@@ -246,16 +242,17 @@ public:
   virtual const ParametersType & GetFixedParameters(void) const;
 
   /** Parameters as SpaceDimension number of images. */
-  typedef typename ParametersType::ValueType                         ParametersValueType;
-  typedef Image< ParametersValueType, itkGetStaticConstMacro(SpaceDimension) > ImageType;
-  typedef typename ImageType::Pointer                                ImagePointer;
-  typedef typename itk::FixedArray<ImagePointer,NDimensions>         CoefficientImageArray;
+  typedef typename ParametersType::ValueType               ParametersValueType;
+  typedef Image< ParametersValueType,
+    itkGetStaticConstMacro( SpaceDimension )>              ImageType;
+  typedef typename ImageType::Pointer                      ImagePointer;
+  typedef typename itk::FixedArray<ImagePointer, NDimensions>   CoefficientImageArray;
 
   /** Get the array of coefficient images. */
-  virtual CoefficientImageArray GetCoefficientImage()
-  { return m_CoefficientImage; }
-  virtual const CoefficientImageArray GetCoefficientImage() const
-  { return m_CoefficientImage; }
+  virtual CoefficientImageArray GetCoefficientImages()
+  { return m_CoefficientImages; }
+  virtual const CoefficientImageArray GetCoefficientImages() const
+  { return m_CoefficientImages; }
 
   /** Set the array of coefficient images.
    *
@@ -269,7 +266,7 @@ public:
    * API. Mixing the two modes may results in unexpected results.
    *
    */
-  virtual void SetCoefficientImage(const CoefficientImageArray & images);
+  virtual void SetCoefficientImages(const CoefficientImageArray & images);
 
   /** Typedefs for specifying the extent of the grid. */
   typedef ImageRegion< itkGetStaticConstMacro(SpaceDimension) > RegionType;
@@ -277,42 +274,41 @@ public:
   typedef typename RegionType::IndexType    IndexType;
   typedef typename RegionType::SizeType     SizeType;
   typedef typename ImageType::SpacingType   SpacingType;
+  typedef typename ImageType::SpacingType   PhysicalDimensionsType;
   typedef typename ImageType::DirectionType DirectionType;
   typedef typename ImageType::PointType     OriginType;
+  typedef typename ImageType::PixelType     PixelType;
 
-  /** This method specifies the region over which the grid resides. */
-  virtual void SetGridRegion(const RegionType & region);
+  typedef SizeType MeshSizeType;
 
-  itkGetConstMacro(GridRegion, RegionType);
 
-  /** This method specifies the grid spacing or resolution. */
-  virtual void SetGridSpacing(const SpacingType & spacing);
+  /** Function to specify the transform domain origin. */
+  virtual void SetTransformDomainOrigin( const OriginType & );
 
-  itkGetConstMacro(GridSpacing, SpacingType);
+  /** Function to retrieve the transform domain origin. */
+  itkGetConstMacro( TransformDomainOrigin, OriginType );
 
-  /** This method specifies the grid directions . */
-  virtual void SetGridDirection(const DirectionType & spacing);
+  /** Function to specify the transform domain physical dimensions. */
+  virtual void SetTransformDomainPhysicalDimensions(
+    const PhysicalDimensionsType & );
 
-  itkGetConstMacro(GridDirection, DirectionType);
+  /** Function to retrieve the transform domain spacing. */
+  itkGetConstMacro( TransformDomainPhysicalDimensions, PhysicalDimensionsType );
 
-  /** This method specifies the grid origin. */
-  virtual void SetGridOrigin(const OriginType & origin);
+  /** Function to specify the transform domain direction. */
+  virtual void SetTransformDomainDirection( const DirectionType & );
 
-  itkGetConstMacro(GridOrigin, OriginType);
+  /** Function to retrieve the transform domain direction. */
+  itkGetConstMacro( TransformDomainDirection, DirectionType );
 
-  /** Typedef of the bulk transform. */
-  typedef Transform< ScalarType, itkGetStaticConstMacro(SpaceDimension),
-                     itkGetStaticConstMacro(SpaceDimension) > BulkTransformType;
-  typedef typename BulkTransformType::ConstPointer BulkTransformPointer;
+  /** Function to specify the transform domain mesh size. */
+  virtual void SetTransformDomainMeshSize( const MeshSizeType & );
 
-  /** This method specifies the bulk transform to be applied.
-   * The default is the identity transform.
-   */
-  itkSetConstObjectMacro(BulkTransform, BulkTransformType);
-  itkGetConstObjectMacro(BulkTransform, BulkTransformType);
+  /** Function to retrieve the transform domain mesh size. */
+  itkGetConstMacro( TransformDomainMeshSize, MeshSizeType );
 
   /** Transform points by a BSpline deformable transformation. */
-  OutputPointType  TransformPoint(const InputPointType  & point) const;
+  OutputPointType  TransformPoint( const InputPointType & point ) const;
 
   /** Interpolation weights function type. */
   typedef BSplineInterpolationWeightFunction< ScalarType,
@@ -375,14 +371,16 @@ public:
   /** Compute the Jacobian Matrix of the transformation at one point */
   virtual const JacobianType & GetJacobian(const InputPointType  & point) const;
 
+  /** Compute the Jacobian Matrix of the transformation at one point */
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p, JacobianType &j) const;
+
   /** Return the number of parameters that completely define the Transfom */
   virtual unsigned int GetNumberOfParameters(void) const;
 
+  virtual unsigned int GetNumberOfLocalParameters(void) const;
+
   /** Return the number of parameters per dimension */
   unsigned int GetNumberOfParametersPerDimension(void) const;
-
-  /** Return the region of the grid wholly within the support region */
-  itkGetConstReferenceMacro(ValidRegion, RegionType);
 
   /** Indicates that this transform is linear. That is, given two
    * points P and Q, and scalar coefficients a and b, then
@@ -392,6 +390,8 @@ public:
   virtual bool IsLinear() const { return false; }
 
   unsigned int GetNumberOfAffectedWeights() const;
+
+  virtual bool HasLocalSupport() const { return true; }
 
 protected:
   /** Print contents of an BSplineDeformableTransform. */
@@ -408,30 +408,15 @@ protected:
   void WrapAsImages();
 
 private:
-  void SetFixedParametersRegionFromCoefficientImageInformation() const;
-  void SetFixedParametersOriginFromCoefficientImageInformation() const;
-  void SetFixedParametersSpacingFromCoefficientImageInformation() const;
-  void SetFixedParametersDirectionFromCoefficientImageInformation() const;
-  void SetFixedParametersFromCoefficientImageInformation() const;
+  void SetFixedParametersGridSizeFromTransformDomainInformation() const;
+  void SetFixedParametersGridOriginFromTransformDomainInformation() const;
+  void SetFixedParametersGridSpacingFromTransformDomainInformation() const;
+  void SetFixedParametersGridDirectionFromTransformDomainInformation() const;
+  void SetFixedParametersFromTransformDomainInformation() const;
   void SetCoefficientImageInformationFromFixedParameters();
-  void UpdateValidGridRegion();
 
   BSplineDeformableTransform(const Self &); //purposely not implemented
   void operator=(const Self &);             //purposely not implemented
-
-  CoefficientImageArray ArrayOfImagePointerGeneratorHelper(void) const;
-
-  /** The bulk transform. */
-  BulkTransformPointer m_BulkTransform;
-
-  RegionType m_ValidRegion;
-
-  /** Variables defining the interpolation support region. */
-  unsigned long m_Offset;
-  bool          m_SplineOrderOdd;
-  SizeType      m_SupportSize;
-  IndexType     m_ValidRegionLast;
-  IndexType     m_ValidRegionFirst;
 
   //NOTE:  There is a natural duality between the
   //       two representations of of the coefficients
@@ -447,20 +432,14 @@ private:
    *  in each dimension wrapped from the flat parameters in
    *  m_InternalParametersBuffer
    */
-  CoefficientImageArray m_CoefficientImage;
+  CoefficientImageArray m_CoefficientImages;
 
-  /** The variables defining the coefficient grid domain for the
-   * InternalParametersBuffer are taken from the m_CoefficientImage[0]
-   * image, and must be kept in sync with them. by using
-   * references to that instance, this is more naturally enforced
-   * and does not introduce a speed penalty of dereferencing
-   * through the pointers (although it does enforce some
-   * internal class syncronization).
-   */
-  const RegionType    & m_GridRegion;
-  const OriginType    & m_GridOrigin;
-  const SpacingType   & m_GridSpacing;
-  const DirectionType & m_GridDirection;
+  OriginType                   m_TransformDomainOrigin;
+  PhysicalDimensionsType       m_TransformDomainPhysicalDimensions;
+  DirectionType                m_TransformDomainDirection;
+  DirectionType                m_TransformDomainDirectionInverse;
+
+  MeshSizeType                 m_TransformDomainMeshSize;
 
   /** Keep a pointer to the input parameters. */
   const ParametersType *m_InputParametersPointer;
@@ -474,7 +453,7 @@ private:
                  itkGetStaticConstMacro(SpaceDimension) > JacobianImageType;
   typedef typename itk::FixedArray<typename JacobianImageType::Pointer,NDimensions> JacobianImageArrayType;
 
-  JacobianImageArrayType m_JacobianImage;
+  JacobianImageArrayType m_JacobianImages;
 
   /** Keep track of last support region used in computing the Jacobian
    * for fast resetting of Jacobian to zero.

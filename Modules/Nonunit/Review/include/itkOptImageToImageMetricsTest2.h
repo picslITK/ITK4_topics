@@ -254,48 +254,26 @@ void BSplineLinearTest( FixedImageReaderType* fixedImageReader,
 
   typename TransformType::Pointer bsplineTransform = TransformType::New();
 
-  typedef typename TransformType::RegionType RegionType;
-  RegionType bsplineRegion;
-  typename RegionType::SizeType   size;
+  typename TransformType::MeshSizeType meshSize;
+  meshSize.Fill( 4 );
 
-  const unsigned int numberOfGridNodesOutsideTheImageSupport = VSplineOrder;
+  typename TransformType::PhysicalDimensionsType dimensions;
+  for( unsigned int d = 0; d < SpaceDimension; d++ )
+    {
+    dimensions[d] = fixedImage->GetSpacing()[d] *
+      ( fixedImage->GetLargestPossibleRegion().GetSize()[d] - 1.0 );
+    }
 
-  const unsigned int numberOfGridNodesInsideTheImageSupport = 5;
-
-  const unsigned int numberOfGridNodes =
-                        numberOfGridNodesInsideTheImageSupport +
-                        numberOfGridNodesOutsideTheImageSupport;
-
-  const unsigned int numberOfGridCells =
-                        numberOfGridNodesInsideTheImageSupport - 1;
+  bsplineTransform->SetTransformDomainOrigin( fixedImage->GetOrigin() );
+  bsplineTransform->SetTransformDomainMeshSize( meshSize );
+  bsplineTransform->SetTransformDomainPhysicalDimensions( dimensions );
+  bsplineTransform->SetTransformDomainDirection( fixedImage->GetDirection() );
 
   typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
-  size.Fill( numberOfGridNodes );
-  bsplineRegion.SetSize( size );
-  typedef typename TransformType::SpacingType SpacingType;
-  SpacingType spacing;
-
-  typedef typename TransformType::OriginType OriginType;
-  OriginType origin;
-
-  spacing[0] = fixedSpacing[0] * fixedSize[0]  / numberOfGridCells;
-  spacing[1] = fixedSpacing[1] * fixedSize[1]  / numberOfGridCells;
-
-  const unsigned int orderShift = VSplineOrder / 2;
-
-  origin[0] = fixedOrigin[0] - orderShift * spacing[0] - fixedSpacing[0] / 2.0;
-  origin[1] = fixedOrigin[1] - orderShift * spacing[1] - fixedSpacing[1] / 2.0;
-
-  bsplineTransform->SetGridSpacing( spacing );
-  bsplineTransform->SetGridOrigin( origin );
-  bsplineTransform->SetGridRegion( bsplineRegion );
-  bsplineTransform->SetGridDirection( fixedImage->GetDirection() );
-
-  typedef typename TransformType::ParametersType     ParametersType;
 
   const unsigned int numberOfParameters = bsplineTransform->GetNumberOfParameters();
 
-
+  typedef typename TransformType::ParametersType     ParametersType;
   ParametersType parameters( numberOfParameters );
 
   BasicTest(fixedImageReader, movingImageReader, interpolator.GetPointer(),

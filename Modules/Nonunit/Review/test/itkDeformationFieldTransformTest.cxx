@@ -23,22 +23,45 @@
 #include "itkDeformationFieldTransform.h"
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkVectorLinearInterpolateImageFunction.h"
+#include "itkCenteredAffineTransform.h"
+#include "itkImageRegionIteratorWithIndex.h"
 
-#define NDIMENSIONS 2
-typedef itk::DeformationFieldTransform<double, NDIMENSIONS>
+const unsigned int dimensions = 2;
+typedef itk::DeformationFieldTransform<double, dimensions>
                                               DeformationTransformType;
 typedef DeformationTransformType::ScalarType  ScalarType;
 
-const ScalarType epsilon = 1e-10;
-
 template <typename TPoint>
-bool samePoint( const TPoint & p1, const TPoint & p2 )
+bool samePoint( const TPoint & p1, const TPoint & p2, double epsilon=1e-10 )
   {
   bool pass=true;
   for ( unsigned int i = 0; i < TPoint::PointDimension; i++ )
     {
     if( vcl_fabs( p1[i] - p2[i] ) > epsilon )
       pass=false;
+    }
+  return pass;
+  }
+
+template <typename TArray2D>
+bool sameArray2D( const TArray2D & a1, const TArray2D & a2, double epsilon=1e-10 )
+  {
+  bool pass=true;
+
+  if ( (a1.rows() != a2.rows()) || (a1.cols() != a2.cols()) )
+    {
+    return false;
+    }
+
+  for ( unsigned int i = 0; i < a1.cols(); i++ )
+    {
+    for ( unsigned int j = 0; j < a1.rows(); j++ )
+      {
+        if( vcl_fabs( a1(j,i) - a2(j,i) ) > epsilon )
+          {
+          pass=false;
+          }
+      }
     }
   return pass;
   }
@@ -53,8 +76,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
    * vectors as well. Currently this just tests transforming
    * points. */
 
-  typedef  itk::Matrix<ScalarType, NDIMENSIONS, NDIMENSIONS>  Matrix2Type;
-  typedef  itk::Vector<ScalarType, NDIMENSIONS>               Vector2Type;
+  typedef  itk::Matrix<ScalarType, dimensions, dimensions>  Matrix2Type;
+  typedef  itk::Vector<ScalarType, dimensions>               Vector2Type;
 
   /* Create a deformation field transform */
   DeformationTransformType::Pointer deformationTransform =
@@ -65,7 +88,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   FieldType::SizeType size;
   FieldType::IndexType start;
   FieldType::RegionType region;
-  size.Fill( 30 );
+  int dimLength = 30;
+  size.Fill( dimLength );
   start.Fill( 0 );
   region.SetSize( size );
   region.SetIndex( start );
@@ -82,8 +106,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   FieldType::IndexType nonZeroFieldIndex;
   nonZeroFieldIndex[0] = 3;
   nonZeroFieldIndex[1] = 4;
-  ScalarType data1[] = {4,-2.5};
-  DeformationTransformType::OutputVectorType nonZeroFieldVector(data1);
+  ScalarType nonZeroData[] = {4,-2.5};
+  DeformationTransformType::OutputVectorType nonZeroFieldVector(nonZeroData);
   field->SetPixel( nonZeroFieldIndex, nonZeroFieldVector );
 
   deformationTransform->SetDeformationField( field );
@@ -231,29 +255,157 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     return EXIT_FAILURE;
     }
 
-  /* Test GetJacobian - Since there are no parameters for this transform,
-   * the Jacobian shouldn't be requested and will throw an exception. */
+  /* Test GetJacobian */
   DeformationTransformType::JacobianType jacobian;
+  DeformationTransformType::JacobianType jacobianTruth(dimensions,dimensions);
+  jacobianTruth(0,0) = -1.66666674614;
+  jacobianTruth(0,1) = 0;
+  jacobianTruth(1,0) = 1.66666662693;
+  jacobianTruth(1,1) = 1.0;
+
+  //std::cout.precision(12);
   DeformationTransformType::InputPointType inputPoint;
-  inputPoint[0]=1;
-  inputPoint[1]=2;
+  inputPoint[0]=nonZeroFieldIndex[0]+1;
+  inputPoint[1]=nonZeroFieldIndex[1];
   bool caughtException = false;
   try
     {
-    jacobian = deformationTransform->GetJacobian( inputPoint );
+    DeformationTransformType::JacobianType jacobian = deformationTransform->GetJacobian( inputPoint );
     }
   catch( itk::ExceptionObject & e )
     {
-    std::string description(e.GetDescription());
-    caughtException =
-      description.find("DeformationFieldTransform") != std::string::npos;
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
     }
   if( !caughtException )
     {
-    std::cout << "Expected GetJacobian to throw exception." << std::endl;
+    std::cout << "Expected GetJacobian() to throw exception." << std::endl;
     return EXIT_FAILURE;
     }
-  std::cout << "Passed Jacobian test." << std::endl;
+
+  typedef itk::CenteredAffineTransform<double,2> AffineTransformType;
+  typedef AffineTransformType::MatrixType AffineMatrixType;
+  AffineMatrixType affineMatrix;
+  affineMatrix(0,0) = 1.0;
+  affineMatrix(1,0) = 0.01;
+  affineMatrix(0,1) = 0.02;
+  affineMatrix(1,1) = 1.1;
+  DeformationTransformType::JacobianType fieldJTruth;
+  fieldJTruth.SetSize(2,2);
+  fieldJTruth(0,0) = 1.0;
+  fieldJTruth(1,0) = 0.01;
+  fieldJTruth(0,1) = 0.02;
+  fieldJTruth(1,1) = 1.1;
+  AffineTransformType::Pointer affineTransform = AffineTransformType::New();
+  affineTransform->SetIdentity();
+  affineTransform->SetMatrix( affineMatrix );
+
+  FieldType::Pointer field2 = FieldType::New();
+  field2->SetRegions( field->GetLargestPossibleRegion() );
+  field2->Allocate();
+  itk::ImageRegionIteratorWithIndex<FieldType> it( field2, field2->GetLargestPossibleRegion() );
+  it.GoToBegin();
+
+  while (! it.IsAtEnd() )
+    {
+    FieldType::PointType pt;
+    field->TransformIndexToPhysicalPoint( it.GetIndex(), pt );
+    FieldType::PointType pt2 = affineTransform->TransformPoint( pt );
+    FieldType::PointType::VectorType vec = pt2 - pt;
+    FieldType::PixelType v;
+    v[0] = vec[0];
+    v[1] = vec[1];
+    field2->SetPixel( it.GetIndex(), v );
+    ++it;
+    }
+
+  DeformationTransformType::Pointer transform2 = DeformationTransformType::New();
+  transform2->SetDeformationField( field2 );
+
+  DeformationTransformType::JacobianType fieldJ;
+  transform2->GetJacobianWithRespectToParameters( inputPoint, fieldJ );
+  std::cout << "GetJacobianWithRespectToParameters: " << std::endl
+            << "  Test point: " << testPoint << std::endl
+            << "  Truth: " << std::endl << fieldJTruth << std::endl
+            << "  Output: " << std::endl << fieldJ << std::endl;
+  if( !sameArray2D( fieldJ, fieldJTruth, 0.01 ) )
+      {
+      std::cout << "Failed calculating jacobian." << std::endl;
+      return EXIT_FAILURE;
+      }
+
+  /* Test parameter access.
+   * Parameters just point to the deformation field, but using
+   * 1D indexing. */
+  DeformationTransformType::ParametersType params;
+  params = deformationTransform->GetParameters();
+  unsigned int expectedParamSize = dimLength * dimLength * dimensions;
+  if( params.Size() != expectedParamSize )
+    {
+    std::cout << "params are not expected size. "
+              << params.Size() << " instead of " << expectedParamSize
+              << std::endl;
+    return EXIT_FAILURE;
+    }
+  /* Test reading */
+  if( params[0] != 0 )
+    {
+    std::cout << "params[0] not of expected value. "
+              << params[0] << " instead of 0." << std::endl;
+    return EXIT_FAILURE;
+    }
+  int nonZeroFieldIndex1D = dimensions *
+            ( nonZeroFieldIndex[1] * dimLength + nonZeroFieldIndex[0] );
+  if( params[nonZeroFieldIndex1D]   != nonZeroData[0] ||
+      params[nonZeroFieldIndex1D+1] != nonZeroData[1] )
+    {
+    std::cout << "params[nonZeroFieldIndex1D] not of expected value. "
+              << std::endl << "Expected: " << nonZeroData[0]
+              << " " << nonZeroData[1]
+              << std::endl << "Retrieved: " << params[nonZeroFieldIndex1D]
+              << " " << params[nonZeroFieldIndex1D+1] << std::endl;
+    for( int xx=0; xx<dimLength; xx++ )
+      {
+      for( int yy=0; yy<dimLength; yy++ )
+        {
+        if(params[yy*dimLength+xx] != 0)
+          std::cout << xx << "," << yy << ": " << params[yy*dimLength+xx]
+                  << std::endl;
+        }
+      }
+    return EXIT_FAILURE;
+    }
+
+  /* Test setting parameters */
+  DeformationTransformType::ParametersType newParams( expectedParamSize );
+  newParams.Fill(13);
+  newParams[0] = 11;
+  newParams[expectedParamSize-1] = 15;
+  deformationTransform->SetParameters( newParams );
+  /* Test that the values got copied to the deformation field image */
+  DeformationTransformType::OutputVectorType readVector;
+  FieldType::IndexType fieldIndex;
+  fieldIndex[0] = fieldIndex[1] = 0;
+  readVector = field->GetPixel(fieldIndex);
+  if( readVector[0] != 11 || readVector[1] != 13 )
+    {
+    std::cout << "Failed setting and reading parameters from field."
+              << std::endl << "Expected 11 13 "
+              << std::endl << "Read " << readVector[0] << " "
+              << readVector[1] << std::endl;
+    return EXIT_FAILURE;
+    }
+  fieldIndex[0] = fieldIndex[1] = dimLength - 1;
+  readVector = field->GetPixel(fieldIndex);
+  if( readVector[0] != 13 || readVector[1] != 15 )
+    {
+    std::cout << "Failed setting and reading parameters from field."
+              << std::endl << "Expected 13 15 "
+              << std::endl << "Read " << readVector[0] << " "
+              << readVector[1] << std::endl;
+    return EXIT_FAILURE;
+    }
+
 
   /* Test that the CreateAnother routine throws an exception.
    * See comments in .h */

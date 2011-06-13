@@ -387,7 +387,11 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   unsigned int par = 0;
 
-  this->m_Parameters = parameters;
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
 
   for ( unsigned int row = 0; row < NOutputDimensions; row++ )
     {
@@ -427,8 +431,25 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   // subblocks of diagonal matrices, each one of them having
   // a constant value in the diagonal.
 
-  this->m_Jacobian.Fill(0.0);
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
+  return this->m_Jacobian;
+}
 
+// Compute the Jacobian in one position, without setting values to m_Jacobian
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
+{
+  //This will not reallocate memory if the dimensions are equal
+  // to the matrix's current dimensions.
+  j.SetSize( NOutputDimensions, this->GetNumberOfLocalParameters() );
+  j.Fill(0.0);
+
+  // The Jacobian of the affine transform is composed of
+  // subblocks of diagonal matrices, each one of them having
+  // a constant value in the diagonal.
   const InputVectorType v = p - this->GetCenter();
 
   unsigned int blockOffset = 0;
@@ -437,7 +458,7 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     {
     for ( unsigned int dim = 0; dim < NOutputDimensions; dim++ )
       {
-      this->m_Jacobian(block, blockOffset + dim) = v[dim];
+      j(block, blockOffset + dim) = v[dim];
       }
 
     blockOffset += NInputDimensions;
@@ -445,11 +466,12 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   for ( unsigned int dim = 0; dim < NOutputDimensions; dim++ )
     {
-    this->m_Jacobian(dim, blockOffset + dim) = 1.0;
+    j(dim, blockOffset + dim) = 1.0;
     }
 
-  return this->m_Jacobian;
+  return;
 }
+
 
 // Computes offset based on center, matrix, and translation variables
 template< class TScalarType, unsigned int NInputDimensions,

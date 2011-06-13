@@ -22,6 +22,8 @@
 
 #include "itkImage.h"
 #include "itkVectorInterpolateImageFunction.h"
+#include "itkMatrixOffsetTransformBase.h"
+#include "itkImageVectorTransformParametersHelper.h"
 
 namespace itk
 {
@@ -90,6 +92,9 @@ public:
   typedef typename Superclass::InputVnlVectorType   InputVnlVectorType;
   typedef typename Superclass::OutputVnlVectorType  OutputVnlVectorType;
 
+  /** Derivative type */
+  typedef typename Superclass::DerivativeType       DerivativeType;
+
   /** Dimension of the domain spaces. */
   itkStaticConstMacro( Dimension, unsigned int, NDimensions );
 
@@ -99,9 +104,25 @@ public:
   typedef VectorInterpolateImageFunction
     <DeformationFieldType, ScalarType> InterpolatorType;
 
+  /** Standard Index type for Deformation Field */
+  typedef typename DeformationFieldType::IndexType IndexType;
+
+  /* Define tranform based upon ImageDirections of Deformation Field */
+  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
+  typedef typename AffineTransformType::Pointer AffineTransformPointer;
+
+  /** Define the internal parameter helper used to access the field */
+  typedef ImageVectorTransformParametersHelper<
+                                          ScalarType,
+                                          OutputVectorType::Dimension,
+                                          itkGetStaticConstMacro( Dimension ) >
+                                                TransformParametersHelperType;
+
   /** Get/Set the deformation field. */
   itkGetObjectMacro( DeformationField, DeformationFieldType );
-  /* Create special set accessor to update interpolator */
+  /** Set the deformation field. Create special set accessor to update
+   * interpolator and assign deformation field to transform parameters
+   * container. */
   virtual void SetDeformationField( DeformationFieldType* field );
 
   /** Get/Set the inverse deformation field. */
@@ -125,19 +146,19 @@ public:
     { itkExceptionMacro( "TransformVector unimplemented" ); }
 
   /**  Method to transform a CovariantVector. */
-  virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const
-    { itkExceptionMacro( "TransformCovariantVector unimplemented" ); }
+  virtual OutputCovariantVectorType TransformCovariantVector(
+    const InputCovariantVectorType &) const
+      { itkExceptionMacro( "TransformCovariantVector unimplemented" ); }
 
-  /** Set the transformation parameters and update internal transformation.
-   * NOTE if this is implemented eventually, refer first to itkTransform.h
-   * for notes on pass by value vs reference.
-   */
-  virtual void SetParameters(const ParametersType &)
-    { itkExceptionMacro("SetParameters unimplemented."); }
-
-  /** Get the Transformation Parameters. */
-  virtual const ParametersType & GetParameters(void) const
-    { itkExceptionMacro("GetParameters unimplemented."); }
+  /** Set the transformation parameters. This sets the deformation
+   * field image directly. */
+  virtual void SetParameters(const ParametersType & params)
+    {
+    if( &(this->m_Parameters) != &params )
+      {
+      this->m_Parameters = params;
+      }
+    }
 
   /** Set the fixed parameters and update internal transformation. */
   virtual void SetFixedParameters(const ParametersType &)
@@ -154,6 +175,12 @@ public:
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
 
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &x,
+                                                  JacobianType &j) const;
+
+  virtual void GetJacobianWithRespectToParameters(const IndexType  &x,
+                                                  JacobianType &j) const;
+
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
 
@@ -163,6 +190,10 @@ public:
   /** This transform is not linear. */
   virtual bool IsLinear() const { return false; }
 
+  virtual unsigned int GetNumberOfLocalParameters(void) const
+  { return Dimension; }
+
+  virtual bool HasLocalSupport() const { return true; }
 
 protected:
   DeformationFieldTransform();

@@ -19,45 +19,46 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
-#include "itkResampleImageFilter.h"
 
 #include "itkBSplineDeformableTransform.h"
 #include "itkBSplineDeformableTransformInitializer.h"
 
+#include "itkPermuteAxesImageFilter.h"
+
 #include <fstream>
 
+// This test is meant to demonstrate the transform domain defining issues
+// associated with the current B-spline deformable transform initializer
+// class.  Hans Johnson pointed out that the current initializer class
+// uses the image information to construct the B-spline grid in contrast
+// to how the image domain resides in physical space.  So, for example, if
+// a user initilializes a control point grid from a given image and then
+// constructs a second control point grid from a permuted version of the
+// given image (using the itkPermuteAxesImageFilter class) the second control
+// point grid will be oriented completely different from the first image
+// even though the image and it's permuted counterpart are situated in physical
+// domain precisely the same way.
 
 int itkBSplineDeformableTransformInitializerTest2( int argc, char * argv[] )
 {
 
-  if( argc < 5 )
+  if( argc < 2 )
     {
     std::cerr << "Missing Parameters " << std::endl;
-    std::cerr << "Usage: " << argv[0];
-    std::cerr << " coefficientsFile fixedImage ";
-    std::cerr << "movingImage deformedMovingImage" << std::endl;
-    std::cerr << "[deformationField]" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " fixedImage ";
     return EXIT_FAILURE;
     }
 
   const     unsigned int   ImageDimension = 2;
 
-  typedef   unsigned char                            PixelType;
-  typedef   itk::Image< PixelType, ImageDimension >  FixedImageType;
-  typedef   itk::Image< PixelType, ImageDimension >  MovingImageType;
+  typedef   unsigned char                             PixelType;
+  typedef   itk::Image< PixelType, ImageDimension >   FixedImageType;
 
-  typedef   itk::ImageFileReader< FixedImageType  >  FixedReaderType;
-  typedef   itk::ImageFileReader< MovingImageType >  MovingReaderType;
-
-  typedef   itk::ImageFileWriter< MovingImageType >  MovingWriterType;
-
-
+  typedef   itk::ImageFileReader< FixedImageType  >   FixedReaderType;
   FixedReaderType::Pointer fixedReader = FixedReaderType::New();
-  fixedReader->SetFileName( argv[2] );
+  fixedReader->SetFileName( argv[1] );
 
   try
     {
@@ -70,47 +71,10 @@ int itkBSplineDeformableTransformInitializerTest2( int argc, char * argv[] )
     return EXIT_FAILURE;
     }
 
-
-  MovingReaderType::Pointer movingReader = MovingReaderType::New();
-  MovingWriterType::Pointer movingWriter = MovingWriterType::New();
-
-  movingReader->SetFileName( argv[3] );
-  movingWriter->SetFileName( argv[4] );
-
+  // We first use the passed fixed image to construct the control point
+  // grid and save the control point locations.
 
   FixedImageType::ConstPointer fixedImage = fixedReader->GetOutput();
-
-
-  typedef itk::ResampleImageFilter< MovingImageType,
-                                    FixedImageType  >  FilterType;
-
-  FilterType::Pointer resampler = FilterType::New();
-
-  typedef itk::LinearInterpolateImageFunction<
-                       MovingImageType, double >  InterpolatorType;
-
-  InterpolatorType::Pointer interpolator = InterpolatorType::New();
-
-  resampler->SetInterpolator( interpolator );
-
-  FixedImageType::SpacingType   fixedSpacing    = fixedImage->GetSpacing();
-  FixedImageType::PointType     fixedOrigin     = fixedImage->GetOrigin();
-  FixedImageType::DirectionType fixedDirection  = fixedImage->GetDirection();
-
-  resampler->SetOutputSpacing( fixedSpacing );
-  resampler->SetOutputOrigin(  fixedOrigin  );
-  resampler->SetOutputDirection(  fixedDirection  );
-
-
-  FixedImageType::RegionType fixedRegion = fixedImage->GetBufferedRegion();
-  FixedImageType::SizeType   fixedSize =  fixedRegion.GetSize();
-  resampler->SetSize( fixedSize );
-  resampler->SetOutputStartIndex(  fixedRegion.GetIndex() );
-
-
-  resampler->SetInput( movingReader->GetOutput() );
-
-  movingWriter->SetInput( resampler->GetOutput() );
 
   const unsigned int SpaceDimension = ImageDimension;
   const unsigned int SplineOrder = 3;
@@ -123,110 +87,86 @@ int itkBSplineDeformableTransformInitializerTest2( int argc, char * argv[] )
 
   TransformType::Pointer bsplineTransform = TransformType::New();
 
-
   typedef itk::BSplineDeformableTransformInitializer<
                   TransformType,
                   FixedImageType >      InitializerType;
 
-  InitializerType::Pointer transformInitilizer = InitializerType::New();
+  InitializerType::Pointer transformInitializer = InitializerType::New();
 
+  transformInitializer->SetTransform( bsplineTransform );
+  transformInitializer->SetImage( fixedImage );
 
-  transformInitilizer->SetTransform( bsplineTransform );
-  transformInitilizer->SetImage( fixedImage );
+  TransformType::CoefficientImageArray coefficientImages;
 
-  const unsigned int numberOfGridNodesInsideTheImageSupport = 5;
+  transformInitializer->InitializeTransform();
 
-  transformInitilizer->SetNumberOfGridNodesInsideTheImage(
-    numberOfGridNodesInsideTheImageSupport );
+  TransformType::MeshSizeType meshSize;
+  meshSize[0] = 5;
+  meshSize[1] = 6;
 
-  transformInitilizer->InitializeTransform();
+  bsplineTransform->SetTransformDomainMeshSize( meshSize );
+  coefficientImages = bsplineTransform->GetCoefficientImages();
 
-  typedef TransformType::ParametersType     ParametersType;
+  std::vector<FixedImageType::PointType> controlPointLocations;
 
-  const unsigned int numberOfParameters =
-               bsplineTransform->GetNumberOfParameters();
-
-  const unsigned int numberOfNodes = numberOfParameters / SpaceDimension;
-
-  ParametersType parameters( numberOfParameters );
-
-  std::ifstream infile;
-
-  infile.open( argv[1] );
-
-  for( unsigned int n=0; n < numberOfNodes; n++ )
+  typedef TransformType::ImageType CoefficientImageType;
+  itk::ImageRegionIteratorWithIndex<CoefficientImageType> It(
+    coefficientImages[0], coefficientImages[0]->GetLargestPossibleRegion() );
+  for( It.GoToBegin(); !It.IsAtEnd(); ++It )
     {
-    infile >>  parameters[n];
-    infile >>  parameters[n+numberOfNodes];
+    FixedImageType::PointType point;
+    coefficientImages[0]->TransformIndexToPhysicalPoint(
+      It.GetIndex(), point );
+    controlPointLocations.push_back( point );
     }
 
-  infile.close();
+  // We permute the fixed image and construct the control point grid using
+  // the same grid size.  The idea is that since the two images reside in
+  // physical space precisely the same way, the two sets of control points should
+  // be the same.
 
-  bsplineTransform->SetParameters( parameters );
+  typedef itk::PermuteAxesImageFilter<FixedImageType> PermuterType;
+  PermuterType::Pointer permuter = PermuterType::New();
+  PermuterType::PermuteOrderArrayType array;
 
-  resampler->SetTransform( bsplineTransform );
+  array[0] = 1;
+  array[1] = 0;
 
-  try
+  permuter->SetInput( fixedImage );
+  permuter->SetOrder( array );
+  permuter->Update();
+
+  TransformType::Pointer bsplineTransform2 = TransformType::New();
+  InitializerType::Pointer transformInitializer2 = InitializerType::New();
+
+  transformInitializer2->SetTransform( bsplineTransform2 );
+  transformInitializer2->SetImage( permuter->GetOutput() );
+
+  transformInitializer2->InitializeTransform();
+
+  bsplineTransform2->SetTransformDomainMeshSize( meshSize );
+  coefficientImages = bsplineTransform2->GetCoefficientImages();
+
+  std::vector<FixedImageType::PointType> controlPointLocations2;
+
+  itk::ImageRegionIteratorWithIndex<CoefficientImageType> It2(
+    coefficientImages[0], coefficientImages[0]->GetLargestPossibleRegion() );
+  for( It2.GoToBegin(); !It2.IsAtEnd(); ++It2 )
     {
-    movingWriter->Update();
-    }
-  catch( itk::ExceptionObject & excp )
-    {
-    std::cerr << "Exception thrown " << std::endl;
-    std::cerr << excp << std::endl;
-    return EXIT_FAILURE;
-    }
-
-
-  typedef itk::Point<  float, ImageDimension >        PointType;
-  typedef itk::Vector< float, ImageDimension >        VectorType;
-  typedef itk::Image< VectorType, ImageDimension >    DeformationFieldType;
-
-  DeformationFieldType::Pointer field = DeformationFieldType::New();
-  field->SetRegions( fixedRegion );
-  field->SetOrigin( fixedOrigin );
-  field->SetSpacing( fixedSpacing );
-  field->SetDirection( fixedDirection );
-  field->Allocate();
-
-  typedef itk::ImageRegionIterator< DeformationFieldType > FieldIterator;
-  FieldIterator fi( field, fixedRegion );
-
-  fi.GoToBegin();
-
-  TransformType::InputPointType  fixedPoint;
-  TransformType::OutputPointType movingPoint;
-  DeformationFieldType::IndexType index;
-
-  VectorType displacement;
-
-  while( ! fi.IsAtEnd() )
-    {
-    index = fi.GetIndex();
-    field->TransformIndexToPhysicalPoint( index, fixedPoint );
-    movingPoint = bsplineTransform->TransformPoint( fixedPoint );
-    displacement = movingPoint - fixedPoint;
-    fi.Set( displacement );
-    ++fi;
+    FixedImageType::PointType point;
+    coefficientImages[0]->TransformIndexToPhysicalPoint(
+      It2.GetIndex(), point );
+    controlPointLocations2.push_back( point );
     }
 
-
-  typedef itk::ImageFileWriter< DeformationFieldType >  FieldWriterType;
-  FieldWriterType::Pointer fieldWriter = FieldWriterType::New();
-
-  fieldWriter->SetInput( field );
-
-  if( argc >= 6 )
+  std::vector<FixedImageType::PointType>::const_iterator it;
+  std::vector<FixedImageType::PointType>::const_iterator it2;
+  for( it = controlPointLocations.begin(), it2 = controlPointLocations2.begin();
+    it != controlPointLocations.end(); ++it, ++it2 )
     {
-    fieldWriter->SetFileName( argv[5] );
-    try
+    if( *it != *it2 )
       {
-      fieldWriter->Update();
-      }
-    catch( itk::ExceptionObject & excp )
-      {
-      std::cerr << "Exception thrown " << std::endl;
-      std::cerr << excp << std::endl;
+      std::cerr << "Control point locations are different." << std::endl;
       return EXIT_FAILURE;
       }
     }
