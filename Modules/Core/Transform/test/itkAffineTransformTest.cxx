@@ -585,25 +585,20 @@ int itkAffineTransformTest(int, char *[])
         return EXIT_FAILURE;
         }
       }
-    /* Test updating a subset of parameters, with a scaling factor */
+    /* Update with a non-unit scaling factor */
     double factor = 0.5;
-    unsigned int j = paff->GetNumberOfParameters()/2;
-    unsigned int i = 1;
-    for( unsigned int k=i; k<=j; k++ )
+    for( unsigned int i=0; i<paff->GetNumberOfParameters(); i++ )
       {
-      update[k] = 100*k;
-      updateTruth[k] += update[k] * factor;
+      update[i] = i;
+      updateTruth[i] += update[i] * factor;
       }
-    paff->UpdateTransformParameters( update, factor, i, j );
+    paff->UpdateTransformParameters( update, factor );
     parametersRead = paff->GetParameters();
     for( unsigned int k = 0; k < paff->GetNumberOfParameters(); k++ )
       {
       if( updateTruth[k] != parametersRead[k] )
         {
         std::cout << "UpdateTransformParameters 2 failed." << std::endl;
-        std::cout << "updateTruth: " << std::endl << updateTruth << std::endl;
-        std::cout << "parametersRead: " << std::endl << parametersRead
-                  << std::endl;
         return EXIT_FAILURE;
         }
       }

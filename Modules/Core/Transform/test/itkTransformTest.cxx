@@ -144,7 +144,6 @@ int itkTransformTest(int, char* [] )
   try
     {
     transform->UpdateTransformParameters( update );
-    transform->UpdateTransformParameters( update, 0.5, 1, 3 );
     }
   catch( itk::ExceptionObject & e )
     {
