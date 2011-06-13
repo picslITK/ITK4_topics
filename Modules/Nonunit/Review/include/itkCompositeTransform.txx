@@ -536,12 +536,17 @@ template
 void
 CompositeTransform<TScalar, NDimensions>
 ::UpdateTransformParameters(  DerivativeType & update,
-                              ScalarType  factor,
-                              unsigned int i,
-                              unsigned int j )
+                              ScalarType  factor )
 {
-  /* Update parameters within the sub-transforms set to be optimized.
-   * This can span multiple sub-transforms. */
+  /* Update parameters within the sub-transforms set to be optimized. */
+  /* NOTE: We might want to thread this over each sub-transform, if we
+   * find we're working with longer lists of sub-transforms that do
+   * not implement any threading of their own for UpdateTransformParameters.
+   * Since the plan is for a UpdateTransformParameters functor that is
+   * user-assignable, we would need a method in the
+   * functor to return whether or not it does therading. If all sub-transforms
+   * return that they don't thread, we could do each sub-transform in its
+   * own thread from here. */
   unsigned int numberOfParameters = this->GetNumberOfParameters();
 
   if( update.Size() != numberOfParameters )
@@ -550,21 +555,9 @@ CompositeTransform<TScalar, NDimensions>
                       " be same as transform parameter size, "
                       << numberOfParameters << std::endl);
     }
-  /* Note that i & j are inclusive */
-  if( j >= numberOfParameters )
-    {
-    itkExceptionMacro("Parameter range (inclusive), [" << i << "," << j <<
-                      "], is out of range, "
-                      << numberOfParameters << std::endl);
-    }
 
-  if( i == 0 && j == 0 )
-    {
-    j = numberOfParameters-1;
-    }
-
-  unsigned int p0 = 0;
-  TransformTypePointer transform;
+  unsigned int offset = 0;
+  TransformTypePointer subtransform;
 
   for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
           tind >= 0; tind-- )
@@ -572,23 +565,16 @@ CompositeTransform<TScalar, NDimensions>
     if( this->GetNthTransformToOptimize( tind ) )
       {
       transform = this->GetNthTransform( tind );
-      unsigned int pN = transform->GetNumberOfParameters();
-      unsigned int p1 = p0 + pN - 1;
-      unsigned int ii, jj;
-      /* Does the update range fall within this transform? */
-      if( i <= p1 && j >= p0 )
-        {
-        /* Calc indecies for sub-transform parameter array */
-        ii = ( i > p0 ) ? i-p0 : 0;
-        jj = ( p1 < j ) ? p1-p0 : j-p0;
-        /* Create an array that points to subregion in input array */
-        DerivativeType subUpdate( &((update.data_block())[p0]),
-                                  transform->GetNumberOfParameters(), false );
-        /* This call will also call SetParameters, so don't need to call it
-         * expliclity here. */
-        transform->UpdateTransformParameters( subUpdate, factor, ii, jj );
-        }
-      p0 += pN;
+      /* The input values are in a monolithic block, so we have to point
+       * to the subregion corresponding to the individual subtransform.
+       * This simply creates an Array object with data pointer, no
+       * memory is allocated or copied. */
+      DerivativeType subUpdate( &((update.data_block())[offset]),
+                                subtransform->GetNumberOfParameters(), false );
+      /* This call will also call SetParameters, so don't need to call it
+       * expliclity here. */
+      transform->UpdateTransformParameters( subUpdate, factor );
+      offset += subtransform->GetNumberOfParameters();
       }
     }
   this->Modified();
@@ -601,6 +587,8 @@ bool
 CompositeTransform<TScalar, NDimensions>
 ::HasLocalSupport() const
 {
+  /* We only return true if all subtransforms return true for
+   * HasLocalSupport. */
   bool result = true;
   for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
           tind >= 0; tind-- )

@@ -365,11 +365,6 @@ public:
    //virtual void PrepareForUse(void);
 
   /** Update the transform's parameters by the values in \c update.
-   * For the sake of efficiency, we put the
-   * burden of thread-safe use of this function on the developer.
-   * That is, each threads should only update an inclusive sub-range [i,j] of
-   * the transform where i <= j and both are less than  k, where k is the
-   * number of parameters.  If i==j==0 (default) then update all parameters.
    * We assume \c update is of the same length as Parameters. Throw
    * exception otherwise.
    * \c factor is a scalar multiplier for each value in update.
@@ -378,9 +373,7 @@ public:
    * a converion to member variables for use in TransformPoint.
    */
   virtual void UpdateTransformParameters( DerivativeType & update,
-                                          ScalarType  factor = 1.0,
-                                          unsigned int i = 0,
-                                          unsigned int j = 0 );
+                                          ScalarType  factor = 1.0 );
 
   /** Indicates if this transform is a "global" transform
    *  e.g. an affine transform or a local one, e.g. a deformation field.
