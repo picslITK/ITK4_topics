@@ -33,7 +33,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
     Self::GetValueAndDerivativeMultiThreadedCallback );
-  this->m_ValueAndDerivativeThreader->SetHolder(...);
+  this->m_ValueAndDerivativeThreader->SetHolder( this );
 
   /* These will be instantiated if needed in Initialize */
   m_MovingGradientCalculator = NULL;
@@ -41,10 +41,62 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /*
+ * Initialize
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::Initialize()
+{
+  //Allocate and initialize memory for holding derivative results.
+  this->m_DerivativesPerThread.resize( this->m_NumberOfThreads );
+  this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
+  /* This size always comes from the moving image */
+  unsigned long globalDerivativeSize =
+    this->m_Metric->GetMovingImageTransform()->GetNumberOfParameters();
+  itkDebugMacro("ImageToImageObjectMetric::Initialize: deriv size  "
+                  << globalDerivativeSize << std::endl);
+  this->m_GlobalDerivative.SetSize( globalDerivativeSize );
+  /* For transforms with local support, e.g. deformation field,
+   * use a single derivative container that's updated by region
+   * in multiple threads. */
+  if ( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
+    {
+    itkDebugMacro(
+      "ImageToImageObjectMetric::Initialize: tx HAS local support\n");
+    for (int i=0; i<this->m_NumberOfThreads; i++)
+      {
+      this->m_DerivativesPerThread[i].SetData(
+                                    this->m_GlobalDerivative.data_block(),
+                                    this->m_GlobalDerivative.Size(),
+                                    false );
+      }
+    }
+  else
+    {
+    itkDebugMacro(
+      "ImageToImageObjectMetric::Initialize: tx does NOT have local support\n");
+    /* Global transforms get a separate derivatives container for each thread
+     * that holds the result for a particular region. */
+    for (int i=0; i<this->m_NumberOfThreads; i++)
+      {
+      this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
+      /* Be sure to init to 0 here, because the threader may not use
+       * all the threads if the region is better split into fewer
+       * subregions. */
+      this->m_DerivativesPerThread[i].Fill( 0 );
+      }
+    }
+}
+
+/*
  * Threader callback.
  * Iterates over image region and calls derived class for calculations.
  */
-void GetValueAndDerivativeMultiThreadedCallback(
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::GetValueAndDerivativeMultiThreadedCallback(
                 const ThreaderInputObjectType& virtualImageSubRegion,
                 int threadId,
                 Self * self)
@@ -65,9 +117,7 @@ void GetValueAndDerivativeMultiThreadedCallback(
 
   //FIXME: handle different coord systems, will need diff tranform?
   //  what if using coord system 'both'?
-  DerivativeType              localDerivative(
-                                self->m_MovingImageTransform->
-                                GetNumberOfLocalParameters() );
+  DerivativeType            localDerivative( self->GetLocalDerivativeSize() );
 
   /* Iterate over the sub region */
   ItV.GoToBegin();
@@ -79,7 +129,8 @@ void GetValueAndDerivativeMultiThreadedCallback(
 
     /* Transform the point into fixed and moving spaces, and evaluate.
      * These methods will check that the point lies within the mask if
-     * one has been set, and then verify they lie in the warped space.
+     * one has been set, and then verify they lie in the fixed or moving
+     * space as appropriate.
      * If both tests pass, the point is evaluated and 'true' is returned. */
     self->TransformAndEvaluateFixedPoint( virtualPoint,
                                           mappedFixedPoint,
@@ -142,6 +193,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       FixedImageDerivativesType & fixedGradient,
                       unsigned int threadID) const
 {
+TODO: make sure image deriv is done right in terms of doing in either fixed or moving space and then mapping to virutal, like the switch I made in Demons. Need to multiply by Jacobian after transforming into virtual space, Brian mentioned this. Am I doing that already?
+
   pointIsValid = true;
   fixedImageValue = 0;
   mappedFixedPoint = m_FixedImageTransform->TransformPoint( point );
@@ -340,6 +393,34 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       gradient = m_MovingGradientCalculator->Evaluate(mappedPoint);
       }
     }
+}
+
+/*
+ * Get the size of localDerivative
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+SizeValueType
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::GetLocalDerivativeSize()
+{
+  switch( this->m_CoordinateSystem )
+    {
+    case Moving:
+      return this->m_MovingImageTransform->GetNumberOfLocalParameters() );
+      break;
+    case Fixed:
+      return this->m_FixedImageTransform->GetNumberOfLocalParameters() );
+      break;
+    case Both:
+      /* TODO: this isn't completely settled, what to do here. Derived
+       * classes may need to override to provide different behavior. */
+      return VirtualImageDimension;
+      break;
+    default:
+      itkExceptionMacro("Invalid CoordinateSystem enum: "
+                         << this->m_CoordinateSystem );
+    }
+  return 0;
 }
 
 }//namespace itk

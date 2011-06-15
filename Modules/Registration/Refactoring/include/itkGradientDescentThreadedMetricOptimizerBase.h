@@ -57,8 +57,8 @@ public:
   itkSuperclassTraitMacro( MetricType );
   itkSuperclassTraitMacro( MetricTypePointer );
   /** Threader type */
-  itkSuperclassTraitMacro( MetricThreaderType );
-  itkSuperclassTraitMacro( MetricThreaderTypePointer );
+//  itkSuperclassTraitMacro( MetricThreaderType );
+//  itkSuperclassTraitMacro( MetricThreaderTypePointer );
   /** Measure type */
   itkSuperclassTraitMacro( MeasureType );
   /** Image region type */
@@ -122,36 +122,16 @@ public:
 protected:
 
   /** Update the metric's value and derivative for the current iteration.
-   * This wraps the threading process by calling
-   * BeforeMetricThreadedGenerateData, GenerateData and
-   * AfterMetricThreadedGenerateData.
    * Results are stored in member variables. */
+   ???
   virtual void UpdateMetricValueAndDerivative();
 
   /** Initialize threading memory before starting optimization.
    * This is a one-time initialization, i.e. not performed at every
    * iteration.
    * Must be called from a derived class during its initialization. */
+   needed if we dont do metric threading here anymore?
   void InitializeForThreading();
-
-  /** Perform any per-iteration operations before the metric is
-   * updated. This method is not threaded by the optimizer, but
-   * can contain calls to threaded methods or filters. */
-  virtual void BeforeMetricThreadedGenerateData();
-
-  /** Callback to perform metric update. Gets assigned to the threader's
-   * ThreadedGenerateData. Must be static so it can be used as a callback.
-   * An instance of this optimizer class is referenced through
-   * \c holder, which is passed in via the threader's user data. */
-  static void ComputeMetricValueInRegionThreaded(
-                                  const ImageRegionType & regionForThread,
-                                  int threadId,
-                                  Self *inHolder );
-
-  /** Perform per-iteration operations after the metric values have been
-   * updated via threading. In particular this will gather the results
-   * from the threads. */
-  virtual void AfterMetricThreadedGenerateData();
 
   /** Modify the gradient in place, to advance the optimization.
    * This call performs a threaded modification for transforms with
@@ -167,7 +147,7 @@ protected:
     /* Perform the modification either with or without threading */
     if( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
       {
-      /* This ends up calling ModifyGradientThreaded frome each thread */
+      /* This ends up calling ModifyGradientThreaded from each thread */
       this->m_ModifyGradientThreader->GenerateData();
       }
     else
@@ -227,8 +207,8 @@ protected:
 
 private:
 
-  DerivativeType                  m_GlobalDerivative;
-  std::vector< DerivativeType >   m_DerivativesPerThread;
+//  DerivativeType                  m_GlobalDerivative;
+//  std::vector< DerivativeType >   m_DerivativesPerThread;
 
   //purposely not implemented
   GradientDescentThreadedMetricOptimizerBase( const Self & );

@@ -55,7 +55,7 @@ public:
   typedef SmartPointer<const Self>                          ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(DemonsImageToImageMetric, ObjectToObjectMetric);
+  itkTypeMacro(Self, Superclass);
 
   /** Type used internally for computations */
   typedef double  InternalComputationValueType;
@@ -317,6 +317,11 @@ public:
    * taking CoordinateSystemType into account */
   virtual unsigned int GetNumberOfParameters() const;
 
+  /** Return the size of local derivatives, taking CoordinateSystem
+   * into account. Derived classes may need to override to provide
+   * special behavior. */
+  virtual SizeValueType GetLocalDerivativeSize() const;
+
   /* Initialize the metric before calling GetValue or GetDerivative.
    * Derived classes must call this Superclass version if they override
    * this to perform their own initialization.
@@ -496,6 +501,11 @@ protected:
 
   /** Intermediary threaded metric value storage. */
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
+  DerivativeType                              m_GlobalDerivative;
+  std::vector< DerivativeType >               m_DerivativesPerThread;
+
+
+
   other threading stuff from GradientDescent and Obj2ObjOptimizer...
   need Set/Get routines too...
   TODO
