@@ -76,6 +76,11 @@ void GetValueAndDerivativeMultiThreadedCallback(
 
     self->m_VirtualImage->TransformIndexToPhysicalPoint(
                                               ItV.GetIndex(), virtualPoint);
+
+    /* Transform the point into fixed and moving spaces, and evaluate.
+     * These methods will check that the point lies within the mask if
+     * one has been set, and then verify they lie in the warped space.
+     * If both tests pass, the point is evaluated and 'true' is returned. */
     self->TransformAndEvaluateFixedPoint( virtualPoint,
                                           mappedFixedPoint,
                                           pointIsValid,
@@ -94,6 +99,8 @@ void GetValueAndDerivativeMultiThreadedCallback(
                                             threadID );
       }
 
+    /* Call the user method in derived classes to do the specific
+     * calculations for value and derivative. */
     if( pointIsValid )
       {
       pointIsValid = self->GetValueAndDerivativeProcessPoint(
@@ -111,17 +118,12 @@ void GetValueAndDerivativeMultiThreadedCallback(
 
     if( pointIsValid )
       {
-      increment count of pixels used in computation, prob in pre-thread var
+      increment count of pixels used in computation, prob in per-thread var
       }
 
     //next index
     ++ItV;
   }
-
-
-  //transform points to fixed and moving
-
-  //if both points valid, pass to derived class for calcs
 
   //save results to per-thread containers
 }

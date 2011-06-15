@@ -410,9 +410,24 @@ protected:
    * always be 1 there, but maybe b/c wasn't fully setup for vector images yet? */
   unsigned int m_InputImageVectorLength;
 
-  /** User worker method to calculate value and derivative at a given point.
-   * Must be provided by derived classes.
-   * Results are returned in \c metricValue and \c localDerivatives.
+  /** User worker method to calculate value and derivative,
+   * given the point, value and image derivative for both fixed and moving
+   * spaces, calculated from \c virtualPoint.
+   * Must be overriden by derived classes.
+   * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
+   * that have passed bounds checking, and lie within any mask that may
+   * be assigned.
+   * \c threadID may be used as needed, for example to access any per-thread
+   * data cached during pre-processing by the derived class. The derived
+   * class should use \c m_NumberOfThreads from this base class to assure
+   * that the same number of threads are used.
+   */
+   TODO: Actually, threader may not use all the threads available if
+    the Split method decides not to. Also, threader will be splitting over
+    region, and will derived classes be threading similarly?
+  /*
+   * Results are returned in \c metricValue and \c localDerivatives, and
+   * will be managed by this base class.
    * \warning  This is called from the threader, and thus must be thread-safe.
    */
   virtual inline bool GetValueAndDerivativeProcessPoint(
