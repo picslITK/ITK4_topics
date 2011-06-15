@@ -125,6 +125,13 @@ public:
                            itkGetStaticConstMacro(OutputSpaceDimension) >
   OutputCovariantVectorType;
 
+  /** Standard tensor type for this class */
+  typedef typename Superclass::InputTensorType InputTensorType;
+  typedef typename Superclass::OutputTensorType OutputTensorType;
+
+  typedef typename Superclass::InputTensorEigenVectorType InputTensorEigenVectorType;
+  typedef typename Superclass::OutputTensorEigenVectorType OutputTensorEigenVectorType;
+
   /** Standard vnl_vector type for this class   */
   typedef vnl_vector_fixed< TScalarType,
                             itkGetStaticConstMacro(InputSpaceDimension) >
@@ -326,6 +333,8 @@ public:
 
   OutputCovariantVectorType TransformCovariantVector(
     const InputCovariantVectorType & vector) const;
+
+  OutputTensorType TransformTensor( const InputTensorType & tensor) const;
 
   /** Compute the Jacobian of the transformation
    *

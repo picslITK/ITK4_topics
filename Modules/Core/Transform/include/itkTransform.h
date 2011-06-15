@@ -20,6 +20,8 @@
 
 #include "itkTransformBase.h"
 #include "itkVector.h"
+#include "itkSymmetricSecondRankTensor.h"
+#include "itkDiffusionTensor3D.h"
 #include "vnl/vnl_vector_fixed.h"
 #include "itkMatrix.h"
 
@@ -107,6 +109,17 @@ public:
   typedef Vector< TScalarType, NInputDimensions >  InputVectorType;
   typedef Vector< TScalarType, NOutputDimensions > OutputVectorType;
 
+  /* Standard tensor type for this class */
+  typedef DiffusionTensor3D< TScalarType >         InputTensorType;
+  typedef DiffusionTensor3D< TScalarType >         OutputTensorType;
+
+  typedef CovariantVector<TScalarType, InputTensorType::Dimension> InputTensorEigenVectorType;
+  typedef CovariantVector<TScalarType, OutputTensorType::Dimension> OutputTensorEigenVectorType;
+
+  /** Standard tensor matrix type for this class */
+  typedef typename SymmetricSecondRankTensor<TScalarType>::MatrixType       InputTensorMatrixType;
+  typedef typename SymmetricSecondRankTensor<TScalarType>::MatrixType       OutputTensorMatrixType;
+
   /** Standard covariant vector type for this class */
   typedef CovariantVector< TScalarType, NInputDimensions >  InputCovariantVectorType;
   typedef CovariantVector< TScalarType, NOutputDimensions > OutputCovariantVectorType;
@@ -140,11 +153,29 @@ public:
   /**  Method to transform a vector. */
   virtual OutputVectorType    TransformVector(const InputVectorType &) const = 0;
 
+  /** Method to transform a vector at a given location*/
+  virtual OutputVectorType    TransformVector(const InputVectorType & vector, const InputPointType & point) const
+    { return TransformVector( vector ); }
+
   /**  Method to transform a vnl_vector. */
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const = 0;
 
+  virtual OutputVnlVectorType    TransformVector(const InputVnlVectorType & vector, const InputPointType & point) const
+    { return TransformVector( vector ); }
+
   /**  Method to transform a CovariantVector. */
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const = 0;
+
+  //virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType & vector, const InputPointType & point) const
+  //  { return TransformCovariantVector( vector ); }
+
+  /** Method to transform a diffusion tensor */
+  virtual OutputTensorType TransformTensor( const InputTensorType & tensor ) const
+    { return tensor; }
+
+  /** Method to transform a diffusion tensor  */
+  virtual OutputTensorType TransformTensor( const InputTensorType & tensor,  const InputPointType & point ) const
+    { return tensor; }
 
   /** Set the transformation parameters and update internal transformation.
    * SetParameters gives the transform the option to set it's
@@ -229,6 +260,12 @@ public:
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                     JacobianType &j) const = 0;
 
+  /** This provides the ability to get a local jacobian value
+   *  in a dense deformation field as in this case it would
+   *  would be unclear what parameters would refer to. */
+  virtual const MatrixType & GetJacobianWithRespectToPosition() const
+  { return m_IdentityMatrix; }
+
   /** Update the transform's parameters by the values in \c update.
    * We assume \c update is of the same length as Parameters. Throw
    * exception otherwise.
@@ -282,10 +319,6 @@ public:
 
   /** Generate a platform independant name */
   virtual std::string GetTransformTypeAsString() const;
-
-  /** FIXME:  Needs documentation. */
-  virtual const MatrixType & GetJacobianWithRespectToPosition() const
-  { return m_IdentityMatrix; }
 
   /** Indicates if this transform is linear. A transform is defined to be
    * linear if the transform of a linear combination of points is equal to the
