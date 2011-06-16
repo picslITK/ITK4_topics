@@ -94,6 +94,7 @@ double ComputeLocalContributionToMetricAndDerivative(PointType mappedFixedPoint,
   MovingImagePixelType mpix=this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
   FixedImagePixelType diff = fpix - mpix ;
   metricval+=fabs(diff)/(double)FixedImageDimension;
+  /* Stauff: this is ok. It will actually just return an identity matrix. */
   this->m_MovingImageTransform->GetJacobianWithRespectToParameters(
     mappedMovingPoint, jacobian);
 
@@ -214,6 +215,8 @@ double ComputeMetricAndDerivative(const ImageRegionType &thread_region, Derivati
         }
         else {
           // update derivative at some index
+          // this requires the moving image deformation field to be
+          // same size as virtual image
           OffsetValueType offset=this->m_VirtualImage->ComputeOffset(ItV.GetIndex());
           offset*=this->m_MovingImageTransform->GetNumberOfLocalParameters();
           for (unsigned int i=0; i< this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++) {

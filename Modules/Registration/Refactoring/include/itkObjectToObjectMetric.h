@@ -64,19 +64,19 @@ public:
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
   /** Type of coordinate system used to calculate values, derivatives */
-  typedef enum  { Fixed=0, Moving, Both } CoordinateSystemType;
+  typedef enum  { Fixed=0, Moving, Both } DerivativeSourceType;
 
   /**
-   * Set coordinate system type.  This variable allows the user to switch
-   * between calculating the value and derivative with respect to the fixed
+   * Set source of derivative.  This variable allows the user to switch
+   * between calculating the derivative with respect to the fixed
    * object or moving object.
    */
-  itkSetMacro( CoordinateSystem, CoordinateSystemType );
+  itkSetMacro( DerivativeSource, DerivativeSourceType );
 
   /**
    * Get coordinate system type.
    */
-  itkGetConstMacro( CoordinateSystem, CoordinateSystemType );
+  itkGetConstMacro( DerivativeSource, DerivativeSourceType );
 
   /** Initialize the Metric by making sure that all the components
    *  are present and plugged together correctly     */
@@ -86,15 +86,15 @@ public:
   virtual MeasureType GetValue() const = 0;
 
   /** This method returns the derivative of the cost function */
-  virtual void GetDerivative(DerivativeType & derivative) const = 0;
+  virtual void GetDerivative(DerivativeType & derivative) const
+  {
+    MeasureType value;
+    this->GetValueAndDerivative(value, derivative);
+  }
 
   /** This method returns the value and derivative of the cost function */
   virtual void GetValueAndDerivative(MeasureType & value,
-                                     DerivativeType & derivative) const
-  {
-    value = this->GetValue();
-    this->GetDerivative(derivative);
-  }
+                                     DerivativeType & derivative) const = 0;
 
 protected:
   ObjectToObjectMetric();
@@ -105,7 +105,7 @@ protected:
   /* Necessary ?? */
   mutable ParametersType      m_Parameters;
 
-  CoordinateSystemType       m_CoordinateSystem;
+  DerivativeSourceType       m_DerivativeSource;
 
 private:
   ObjectToObjectMetric(const Self &); //purposely not implemented

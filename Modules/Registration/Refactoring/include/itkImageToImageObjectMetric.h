@@ -303,7 +303,7 @@ public:
   itkBooleanMacro(UseGaussianGradient);
 
   /** Computes the gradient image of the fixed and/or moving image(s),
-   * depending on CoordinateSystemType setting, using the
+   * depending on DerivativeSourceType setting, using the
    * GradientRecursiveGaussianImageFilter, assigning the output to
    * and assigns it to m_[Fixed|Moving]GaussianGradientImage. */
   virtual void ComputeGaussianGradient(void);
@@ -313,11 +313,14 @@ public:
   /** Get Moving Gradient Image. */
   itkGetConstObjectMacro(MovingGaussianGradientImage, MovingGradientImageType);
 
+  /** Get number of valid points from most recent update */
+  itkGetConstMacro( NumberOfValidPoints, SizeValueType );
+
   /** Return the number of parameters,
-   * taking CoordinateSystemType into account */
+   * taking DerivativeSourceType into account */
   virtual unsigned int GetNumberOfParameters() const;
 
-  /** Return the size of local derivatives, taking CoordinateSystem
+  /** Return the size of local derivatives, taking DerivativeSource
    * into account. Derived classes may need to override to provide
    * special behavior. */
   virtual SizeValueType GetLocalDerivativeSize() const;
@@ -342,7 +345,8 @@ protected:
    * one is set, and that is within the moving image buffer, in which
    * case \c pointIsValid will be true on return.
    * \c mappedFixedPoint and \c fixedImageValue are also returned, and
-   * \c fixedImageGradient is returned if \c computeImageGradient is set.
+   * \c fixedImageGradient is returned if \c computeImageGradient is set,
+   * and it is mapped into the virtual space.
    * \note It would be better for maintainence to have a single method
    * that could work for either fixed or moving domains. However setting
    * that up is complicated because dimensionality and pixel type may
@@ -411,14 +415,17 @@ protected:
   FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
   MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
 
-  /* This was from DemonsImageToImage - not sure if still needed. Seems to
-   * always be 1 there, but maybe b/c wasn't fully setup for vector images yet? */
-  unsigned int m_InputImageVectorLength;
+  /** Derivative results holder. */
+  DerivativeType                              m_GlobalDerivative;
+  /** Store the number of points used during most recent value and derivative
+   * calculation. */
+  SizeValueType                               m_NumberOfValidPoints;
 
-  /** User worker method to calculate value and derivative,
+  /** User worker method to calculate value and derivative
    * given the point, value and image derivative for both fixed and moving
-   * spaces, calculated from \c virtualPoint.
-   * Must be overriden by derived classes.
+   * spaces. The provided values have been calculated from \c virtualPoint,
+   * which is provided in case it's needed.
+   * Must be overriden by derived classes to do anything meaninful.
    * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
    * that have passed bounds checking, and lie within any mask that may
    * be assigned.
@@ -430,6 +437,11 @@ protected:
    TODO: Actually, threader may not use all the threads available if
     the Split method decides not to. Also, threader will be splitting over
     region, and will derived classes be threading similarly?
+    Maybe we call the SplitRegion method during init to get the # of threads
+    its going to use, then set m_NumberOfThreads and threader to that. However
+    this requries that derived classes not set and threading stuff until
+    Superclass::Initialize has been called. which means they could do it
+    in their own Initialize routine which is reasonable I think.
   /*
    * Results are returned in \c metricValue and \c localDerivatives, and
    * will be managed by this base class.
@@ -460,23 +472,17 @@ protected:
    * VirtualDomainRegion.
    * See ... */
   void GetValueAndDerivativeMultiThreadedInitiate();
-    {
-    maybe have flag in method args to zero the gradientAccumulator var,
-      which defaults to true. For use from MultiVariate metric.
-    init value sum to zero, and per-thread value sums
-    start threader
-    }
 
   /** Default post-processing after multi-threaded calculation of
    * value and derivative. Typically called by derived classes after
    * GetValueAndDerivativeMultiThreadedInitiate.
-   * Derived classes may not call this if they require special handling.
+   * Results are stored in m_Value and m_GlobalDerivative on return.
+   * Pass false for \c doAverage to not average value and derivative
+   * by the number of valid points.
+   * Derived classes need not call this if they require special handling.
    */
-  virtual void GetValueAndDerivativeMultiThreadedPostProcess();
-    {
-    collect values and derivs from threads
-    calc avg based on number of points calced
-    }
+  virtual void GetValueAndDerivativeMultiThreadedPostProcess(
+                                                      bool doAverage = true);
 
   /** Type of the default threader used for GetValue and GetDerivative.
    * This splits an image region in per-thread sub-regions over the outermost
@@ -501,10 +507,8 @@ protected:
 
   /** Intermediary threaded metric value storage. */
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
-  DerivativeType                              m_GlobalDerivative;
   std::vector< DerivativeType >               m_DerivativesPerThread;
-
-
+  std::vector< SizeValueType >                m_NumberOfValidPointsPerThread;
 
   other threading stuff from GradientDescent and Obj2ObjOptimizer...
   need Set/Get routines too...

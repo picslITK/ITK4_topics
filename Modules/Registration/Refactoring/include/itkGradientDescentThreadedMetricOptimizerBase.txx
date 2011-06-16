@@ -104,42 +104,6 @@ for regular step grad descent:
     }
 
 */
-  //Allocate and initialize memory for holding derivative results.
-  this->m_DerivativesPerThread.resize( this->m_NumberOfThreads );
-  this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
-  unsigned long globalDerivativeSize =
-    this->m_Metric->GetMovingImageTransform()->GetNumberOfParameters();
-  std::cout << "  Initialize: deriv size  "
-            << globalDerivativeSize << std::endl;
-  this->m_GlobalDerivative.SetSize( globalDerivativeSize );
-  /* For transforms with local support, e.g. deformation field,
-   * use a single derivative container that's updated by region
-   * in multiple threads. */
-  if ( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
-    {
-    std::cout << " Initialize: tx HAS local support\n";
-    for (int i=0; i<this->m_NumberOfThreads; i++)
-      {
-      this->m_DerivativesPerThread[i].SetData(
-                                    this->m_GlobalDerivative.data_block(),
-                                    this->m_GlobalDerivative.Size(),
-                                    false );
-      }
-    }
-  else
-    {
-    std::cout << " Initialize: tx does NOT have local support\n";
-    /* Global transforms get a separate derivatives container for each thread
-     * that holds the result for a particular region. */
-    for (int i=0; i<this->m_NumberOfThreads; i++)
-      {
-      this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
-      /* Be sure to init to 0 here, because the threader may not use
-       * all the threads if the region is better split into fewer
-       * subregions. */
-      this->m_DerivativesPerThread[i].Fill( 0 );
-      }
-    }
   std::cout << " end Initialize " << std::endl;
 }
 
@@ -174,23 +138,6 @@ void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::AfterMetricThreadedGenerateData()
 {
-  /* For global transforms, sum the derivatives from each region. */
-  if (  ! this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
-    {
-    this->m_GlobalDerivative.Fill(0);
-    for (int i=0; i<this->m_NumberOfThreads; i++)
-      {
-      this->m_GlobalDerivative += this->m_DerivativesPerThread[i];
-      }
-    }
-
-  /* Accumulate the metric value from threads and store */
-  this->m_Value =
-    NumericTraits<InternalComputationValueType>::Zero;
-  for(unsigned int i=0; i< this->m_MeasurePerThread.size(); i++)
-    {
-    this->m_Value += this->m_MeasurePerThread[i];
-    }
 
   std::cout << " end after threaded generate data. global derivative: "
             << this->m_GlobalDerivative << std::endl;
