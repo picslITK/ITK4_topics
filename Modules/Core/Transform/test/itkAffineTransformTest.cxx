@@ -498,7 +498,7 @@ int itkAffineTransformTest(int, char *[])
 
     /* Test output of GetJacobian */
     Affine3DType::Pointer jaff = Affine3DType::New();
-    Affine3DType::MatrixType jaffMatrix = jaff->GetMatrix();
+    Affine3DType::OffsetType jaffVector = jaff->GetOffset();
 
     Affine3DType::InputPointType jpoint;
     jpoint[0] = 5.0;
@@ -523,6 +523,24 @@ int itkAffineTransformTest(int, char *[])
         if( !testValue( expectedJacobian[i][j], jaffJacobian[i][j] ) )
           {
           std::cout << "GetJacobian test failed." << std::endl;
+          return EXIT_FAILURE;
+          }
+        }
+      }
+
+    /* Test GetJacobianWithRespectToPosition. Should return Matrix. */
+    Affine3DType::MatrixType jaffMatrix = jaff->GetMatrix();
+    jaff->GetJacobianWithRespectToPosition( jpoint, jaffJacobian );
+    for( unsigned int i=0; i < Affine3DType::MatrixType::RowDimensions; i++ )
+      {
+      for( unsigned int j=0;
+            j < Affine3DType::MatrixType::ColumnDimensions; j++ )
+        {
+        if( !testValue( jaffJacobian[i][j], jaffMatrix[i][j] ) )
+          {
+          std::cout << "Failed GetJacobianWithRespectToPosition." << std::endl
+                    << "jaffJacobian: " << jaffJacobian << std::endl
+                    << "jaffMatrix: " << jaffMatrix << std::endl;
           return EXIT_FAILURE;
           }
         }

@@ -253,7 +253,7 @@ public:
    *  m_Jacobian could be changed for different values in different threads.
    *  This is also used for efficient computation of a point-local jacobian
    *  for dense transforms.
-   *  'j' is assumed to be thread-local variable, otherwise memory corruption
+   *  \c j is assumed to be thread-local variable, otherwise memory corruption
    *  will most likely occur during multi-threading.
    *  To avoid repeatitive memory allocation, pass in 'j' with its size
    *  already set. */
@@ -262,9 +262,14 @@ public:
 
   /** This provides the ability to get a local jacobian value
    *  in a dense deformation field as in this case it would
-   *  would be unclear what parameters would refer to. */
-  virtual const MatrixType & GetJacobianWithRespectToPosition() const
-  { return m_IdentityMatrix; }
+   *  would be unclear what parameters would refer to.
+   *  By default it returns identity, and should be overridden in
+   *  dervied classes as needed. */
+  virtual void GetJacobianWithRespectToPosition(
+                                          const InputPointType & x,
+                                          JacobianType &j ) const
+  { j = m_IdentityJacobian; }
+
 
   /** Update the transform's parameters by the values in \c update.
    * We assume \c update is of the same length as Parameters. Throw
@@ -342,7 +347,6 @@ public:
    */
   virtual bool HasLocalSupport() const { return false; }
 
-
 protected:
   Transform();
   Transform(unsigned int Dimension, unsigned int NumberOfParameters);
@@ -352,6 +356,10 @@ protected:
   mutable ParametersType m_FixedParameters;
 
   mutable JacobianType m_Jacobian;
+
+  /* Store an identity jacobian for convenience */
+  JacobianType m_IdentityJacobian;
+
 private:
   Transform(const Self &);      //purposely not implemented
   void operator=(const Self &); //purposely not implemented
@@ -371,8 +379,6 @@ private:
     std::string rval("double");
     return rval;
   }
-
-  MatrixType m_IdentityMatrix;
 };
 } // end namespace itk
 
