@@ -177,25 +177,36 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     }
 
 
-  bool caughtException = false;
-  try
+  /* Test GetJacobianWithRespectToParameters. Should return identity */
+  DeformationTransformType::JacobianType
+    identity(dimensions, dimensions), testIdentity;
+  identity.Fill(0);
+  for( unsigned int i=0; i < dimensions; i++ )
     {
-    deformationTransform->GetJacobianWithRespectToParameters( testPoint, jacobian );
+    identity[i][i] = 1.0;
     }
-  catch( itk::ExceptionObject & e )
+  deformationTransform->GetJacobianWithRespectToParameters(
+                                                    testPoint, testIdentity );
+  if( !sameArray2D( identity, testIdentity, 1e-10 ) )
     {
-    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
-    caughtException = true;
+    std::cout << "Failed returning identity for "
+                 "GetJacobianWithRespectToParameters( point, ... )"
+              << std::endl;
+    return EXIT_FAILURE;
     }
-
-  if (!caughtException)
+  DeformationTransformType::IndexType testIndex;
+  testIdentity.SetSize(1,1); //make sure it gets resized properly
+  deformationTransform->GetJacobianWithRespectToParameters(
+                                                    testIndex, testIdentity );
+  if( !sameArray2D( identity, testIdentity, 1e-10 ) )
     {
-    std::cout << "Expected GetJacobianWithRespectToParameters() to throw exception." << std::endl;
+    std::cout << "Failed returning identity for "
+                 "GetJacobianWithRespectToParameters( index, ... )"
+              << std::endl;
     return EXIT_FAILURE;
     }
 
   /** Test transforming of points */
-
 
   DeformationTransformType::OutputPointType deformOutput, deformTruth;
 
@@ -227,7 +238,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       return EXIT_FAILURE;
       }
 
-  caughtException = false;
+  bool caughtException = false;
   try
     {
     deformVector = deformationTransform->TransformVector( testVector );

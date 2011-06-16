@@ -193,25 +193,32 @@ public:
     { itkExceptionMacro("GetFixedParameters unimplemented."); }
 
   /**
-   * Compute the jacobian with respect to the parameters.  Since there are
-   * no parameters for this transform, the Jacobian shouldn't be requested.
-   * Definition in txx file throws an exception.
+   * Compute the jacobian with respect to the parameters.
+   * Returns identity.
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
 
-  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
-                                                  JacobianType &j) const;
-
-  virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
-                                                  JacobianType &j) const;
-
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &x,
                                                   JacobianType &j) const
-    { itkExceptionMacro("GetJacobianWithRespectToParameters unimplemented. Use GetJacobianWithRespectToPosition"); }
+  { j = this->m_IdentityJacobian; }
 
   virtual void GetJacobianWithRespectToParameters(const IndexType  &x,
                                                   JacobianType &j) const
-    { itkExceptionMacro("GetJacobianWithRespectToParameters unimplemented. Use GetJacobianWithRespectToPosition"); }
+  { j = this->m_IdentityJacobian; }
+
+  /**
+   * Compute the jacobian with respect to the position, by point.
+   * \c j will be resized as needed.
+   */
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &j) const;
+
+  /**
+   * Compute the jacobian with respect to the position, by index.
+   * \c j will be resized as needed.
+   */
+  virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
+                                                  JacobianType &j) const;
 
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
