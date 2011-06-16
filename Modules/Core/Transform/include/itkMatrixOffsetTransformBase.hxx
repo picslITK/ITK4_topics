@@ -570,6 +570,23 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   return;
 }
 
+//Return jacobian with respect to position.
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+{
+  jac.SetSize( MatrixType::RowDimensions, MatrixType::ColumnDimensions );
+  for( unsigned int i=0; i < MatrixType::RowDimensions; i++ )
+    {
+    for( unsigned int j=0; j < MatrixType::ColumnDimensions; j++ )
+      {
+      jac[i][j] = this->GetMatrix()[i][j];
+      }
+    }
+}
 
 // Computes offset based on center, matrix, and translation variables
 template< class TScalarType, unsigned int NInputDimensions,

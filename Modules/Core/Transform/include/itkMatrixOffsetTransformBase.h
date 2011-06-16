@@ -345,15 +345,16 @@ public:
   const JacobianType & GetJacobian(const InputPointType & point) const;
 
   /** get local Jacobian for the given point
-   *
+   * \c j will sized properly as needed.
    * This is a thread-safe version for GetJacobian(). Otherwise,
    * m_Jacobian could be changed for different values in different threads. */
   void GetJacobianWithRespectToParameters(const InputPointType  &x,
                                           JacobianType &j) const;
 
-  /** FIXME:  Needs documentation. */
-  virtual const MatrixType & GetJacobianWithRespectToPosition() const
-  { return this->GetMatrix(); }
+  /** Get the jacobian with respect to position. This simply returns
+   * the current Matrix. \jac will be resized as needed. */
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const;
 
   /** Create inverse of an affine transformation
    *
