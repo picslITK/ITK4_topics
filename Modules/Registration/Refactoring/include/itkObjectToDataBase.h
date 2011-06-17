@@ -125,6 +125,13 @@ public:
   /** Start the threading process */
   virtual void GenerateData();
 
+  /** Determine the number of threads that will be used by calling
+   * SplitRequestedObject once and getting the return value. This uses
+   * m_NumberOfThreads and requires that \c m_OverallObject has been set.
+   * The number may be less than m_NumberOfThreads if SplitRequestedObject
+   * determines that fewer threads would be more efficient. */
+  ThreadIdType DetermineNumberOfThreadsToUse(void);
+
 protected:
   ObjectToDataBase();
   virtual ~ObjectToDataBase() {}
@@ -133,14 +140,15 @@ protected:
    * returning piece \c i as \c splitObject. "Pieces" may represent
    * an image region, or a index range for a parameter array, etc, depending
    * on the type of object over which this class is templated.
-   * This method is called \c requestedTotal times. The
+   * This method is called \c requestedTotal times, which is the number of
+   * threads available for use. The
    * pieces must not overlap. The method returns the number of pieces that
    * the routine is capable of splitting the output RequestedObject,
    * i.e. return value is less than or equal to \c requestedTotal.
    * This must be overridden by derived classes to provide specialized
    * behavior. */
   virtual
-  ThreadIdType SplitRequestedObject(ThreadIdType i,
+  ThreadIdType SplitRequestedObject(ThreadIdType threadID,
                            ThreadIdType requestedTotal,
                            InputObjectType& overallObject,
                            InputObjectType& splitObject) const = 0;

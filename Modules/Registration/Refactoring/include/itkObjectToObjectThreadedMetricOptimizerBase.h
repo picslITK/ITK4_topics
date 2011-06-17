@@ -17,7 +17,6 @@
 #ifndef __itkObjectToObjectThreadedMetricOptimizerBase_h
 #define __itkObjectToObjectThreadedMetricOptimizerBase_h
 
-#include "itkImageToData.h"
 #include "itkTransformParameters.h"
 
 namespace itk
@@ -25,9 +24,8 @@ namespace itk
 /** \class ObjectToObjectThreadedMetricOptimizerBase
  * \brief Abstract base for object-to-object metric optimizers.
  *
- * Threading of the metric updates is handled within this optimizer.
- * Threading of other optimizer operations may also be handled within
- * the optimizer, for example in GradientDescentThreadedMetricOptimizer.
+ * Threading of some optimizer operations may be handled within
+ * derived classes, for example in GradientDescentThreadedMetricOptimizer.
  *
  * Derived classes must override StartOptimization, which is called
  * to initialize and run the optimization.
@@ -71,23 +69,18 @@ public:
   /** Internal computation type, for maintaining a desired precision */
   typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
 
-  /** Metric Threader type */
-  typedef ImageToData<MovingImageType::ImageDimension> MetricThreaderType;
-  typedef typename MetricThreaderType::Pointer         MetricThreaderPointer;
-
   /** Accessors for Metric */
   itkGetObjectMacro( Metric, MetricType );
   itkSetObjectMacro( Metric, MetricType );
 
   /** Accessor for metric value */
+  // ??? Do we need this here ?
   itkGetConstReferenceMacro( Value, InternalComputationValueType );
-
-  /** Accessor for Metric Threader */
-  itkGetObjectMacro( MetricThreader, MetricThreaderType );
 
   /** Set current parameters scaling. */
   void SetScales(const ScalesType & scales)
   {
+    if( scales != m_scales )
     itkDebugMacro("setting scales to " <<  scales);
     m_Scales = scales;
     this->Modified();
@@ -96,10 +89,8 @@ public:
   /** Get current parameters scaling. */
   itkGetConstReferenceMacro(Scales, ScalesType);
 
-  /** Set the number of threads to use when threading.
-   * This is initialized by default to the global default number of
-   * threads from itkMultiThreader. */
-  virtual void SetNumberOfThreads( int number )
+  /** Set the number of threads to use when threading. */
+  virtual void SetNumberOfThreads( ThreadIdType number )
   {
     if( number < 1 )
       {
@@ -108,20 +99,8 @@ public:
     if( number != this->m_NumberOfThreads )
       {
       this->m_NumberOfThreads = number;
-      this->m_MetricThreader->SetNumberOfThreads( number );
       this->Modified();
       }
-  }
-
-  /** Set the full image region over which to optimize */
-  // NOTE: this should be more general, i.e. for any object type.
-  // ACTUALLY we're moving metric threading out of optimizer, so
-  // I think this can go completely away.
-  void SetOverallRegion( ImageRegionType & region )
-  {
-    m_OverallRegion = region;
-    m_MetricThreader->SetOverallRegion( region );
-    this->Modified();
   }
 
   /** Run the optimization */
@@ -132,32 +111,23 @@ protected:
   /** Default constructor */
   ObjectToObjectThreadedMetricOptimizerBase()
   {
-    /* Setup Metric threader. The callback must be set
-     * from derived class. */
-    this->m_MetricThreader = MetricThreaderType::New();
-    //this->m_MetricThreader->SetHolder( static_cast<void*>(this) );
-    this->m_MetricThreader->SetHolder( this );
-    //Is this necessary, or will it already have been set to global default?
-    this->SetNumberOfThreads( this->m_MetricThreader->
-      GetMultiThreader()->GetGlobalDefaultNumberOfThreads() );
-
     this->m_Metric = NULL;
     this->m_Value = 0;
   }
 
   MetricTypePointer             m_Metric;
-  int                           m_NumberOfThreads;
+  ThreadIdType                  m_NumberOfThreads; // ??? Needed any more?
 //  MetricThreaderPointer         m_MetricThreader;
 
   /** Metric measure value at a given iteration */
+  // ??? Why are we storing this here?
   MeasureType                                 m_Value;
 
   virtual ~ObjectToObjectThreadedMetricOptimizerBase(){}
 
 private:
 
-  ImageRegionType         m_OverallRegion;
-  ScalesType              m_Scales;
+  ScalesType::Pointer              m_Scales;
 
   //purposely not implemented
   ObjectToObjectThreadedMetricOptimizerBase( const Self & );

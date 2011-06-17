@@ -32,11 +32,33 @@ template<class TFixedImage,class TMovingImage,class TVirtualImage>
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ImageToImageObjectMetric
 {
+  /* Instantiate the default threader, and set the callback and user-data
+   * holder for threading */
+  this->m_ValueAndDerivativeThreader = ValueAndDerivativeThreaderType::New();
   this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
     Self::GetValueAndDerivativeMultiThreadedCallback );
   this->m_ValueAndDerivativeThreader->SetHolder( this );
+  this->m_NumberOfThreads =
+      this->m_ValueAndDerivativeThreader->GetNumberOfThreads();
 
+  m_FixedImage = NULL;
+  m_FixedImageTransform = NULL;
+  m_MovingImage = NULL;
+  m_MovingImageTransform = NULL;
+  m_VirtualDomainImage = NULL;
+
+  /* Interpolators. Default to linear. */
+  m_FixedInterpolator = FixedLinearInterpolatorType::New();
+  m_MovingInterpolator = MovingLinearInterpolatorType::New();
+  /* m_[Fixed|Moving]Interpolator get assigned to this during Initialize
+   * if they're found to be bspline interpolators. */
+  m_FixedBSplineInterpolator = NULL;
+  m_MovingBSplineInterpolator = NULL:
+
+  m_PrecomputeGradient = true;
   /* These will be instantiated if needed in Initialize */
+  m_FixedGaussianGradientImage = NULL;
+  m_MovingGaussianGradientImage = NULL:
   m_MovingGradientCalculator = NULL;
   m_FixedGradientCalculator = NULL;
 }
@@ -51,23 +73,96 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::Initialize()
 {
 
-  Verify that virtual domain and moving image are the same size, when
-  moving image transform is dense (e.g. deformation field). Effects
-  calc of offset in UpdateDerivativeResult.
-  if( PixelTraits< VirtualImagePixelType >::Dimension != 1 )
-    ...
-    Or can I check this at compile time? ConceptChecking has a
-    HasPixelTraits thingy, but looks like it just verifies that type T
-    has PixelTraits associated with it.
+  /* Verify things are connected */
+  if ( !m_FixedImage )
+    {
+    itkExceptionMacro(<< "FixedImage is not present");
+    }
+  if ( !m_MovingImage )
+    {
+    itkExceptionMacro(<< "MovingImage is not present");
+    }
+  if ( !m_FixedImageTransform )
+    {
+    itkExceptionMacro(<< "FixedImageTransform is not present");
+    }
+  if ( !m_MovingImageTransform )
+    {
+    itkExceptionMacro(<< "MovingImageTransform is not present");
+    }
 
-  Verify virtual image pixel type is scalar. Effects calc of offset
-  in UpdateDerivativeResult. Right??
+  // If the image is provided by a source, update the source.
+  if ( m_MovingImage->GetSource() )
+    {
+    m_MovingImage->GetSource()->Update();
+    }
 
-  /* Initialize memory for per-thread results */
+  // If the image is provided by a source, update the source.
+  if ( m_FixedImage->GetSource() )
+    {
+    m_FixedImage->GetSource()->Update();
+    }
 
-  /* Memory for per-thread measure results */
+  /* If a virtual image has not been set, create one from fixed image */
+  if( ! m_VirtualDomainImage )
+    {
+    itkDebugMacro("Creating VirtualDomainImage from FixedImage");
+    /* This instantiation will fail at compilation if user has provided
+     * a different type for VirtualImage in the template parameters. */
+    m_VirtualDomainImage = FixedImageType::New()
+    /* Graft the virtual image onto the fixed, to conserve memory. */
+    m_VirtualDomainImage.Graft( m_FixedImage );
+    }
+
+  if( m_MovingImageTransform->HasLocalSupport() )
+    {
+    /* Verify that virtual domain and moving image are the same size, when
+    moving image transform is dense (e.g. deformation field). Effects
+    calc of offset in UpdateDerivativeResult. */
+    VirtualRegionType virtualRegion = m_VirtualDomainImage.GetRequestedRegion();
+    MovingImageRegionType movingRegion = m_MovingImage.GetRequestedRegion();
+    if( virtualRegion.GetSize() != movingRegion.GetSize() ||
+        virtualRegion.GetIndex() != movingRegion.GetIndex() )
+      {
+      itkExceptionMacro("Virtual and Moving images must have the same size "
+                        " and index for use with dense transforms."
+                        << std::endl << "Virtual size/index: "
+                        << virtualRegion.GetSize() << " / "
+                        << virtualRegion.GetIndex() << std::endl
+                        "Moving size/index: "
+                        << movingRegion.GetSize() << " / "
+                        << movingRegion.GetIndex() << std::endl );
+      }
+    /* Verify virtual image pixel type is scalar. Effects calc of offset
+    in UpdateDerivativeResult.
+    NOTE:  Can this be checked at compile time? ConceptChecking has a
+    HasPixelTraits class, but looks like it just verifies that type T
+    has PixelTraits associated with it, and not a particular value. */
+    if( PixelTraits< VirtualImagePixelType >::Dimension != 1 )
+      {
+      itkExceptionMacro("VirtualImagePixelType must be scalar. "
+                        "Dimensionality is " <<
+                        PixelTraits< VirtualImagePixelType >::Dimension );
+      }
+    }//Moving transform is dense
+
+  /*
+   * Initialize for threading
+   */
+
+  /* Determine how many threads will be used. The threader uses
+   * its SplitRequestedObject method to split the image region over threads,
+   * and it may decide to that using fewer than the number of available
+   * threads is more effective. */
+  this->m_NumberOfThreads = this->m_GetValueAndDerivativeThreader->
+                                      DetermineNumberOfThreadsToUse();
+
+  /* Assign the virtual image region to the threader. */
+  this->m_ValueAndDerivativeThreader->SetOverallRegion(
+                      this->m_VirtualDomainImage->GetRequestedRegion() );
+
+  /* Per-thread results */
   this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
-
   this->m_NumberOfValidPointsPerThread.resize( this->m_NumberOfThreads );
 
   /* Allocate and initialize memory for holding derivative results.*/
@@ -79,7 +174,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                   << globalDerivativeSize << std::endl);
   /* NOTE: this does *not* get init'ed to 0. We want to be able to use
    * a single gradient array between multiple metrics. */
-  this->m_GlobalDerivative.SetSize( globalDerivativeSize );
+  this->m_DerivativeResult.SetSize( globalDerivativeSize );
   /* For transforms with local support, e.g. deformation field,
    * use a single derivative container that's updated by region
    * in multiple threads. */
@@ -90,8 +185,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     for (int i=0; i<this->m_NumberOfThreads; i++)
       {
       this->m_DerivativesPerThread[i].SetData(
-                                    this->m_GlobalDerivative.data_block(),
-                                    this->m_GlobalDerivative.Size(),
+                                    this->m_DerivativeResult.data_block(),
+                                    this->m_DerivativeResult.Size(),
                                     false );
       }
     }
@@ -106,28 +201,91 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
       }
     }
+
+  /*
+   * Interpolators and image gradients.
+   * Do this AFTER threading initialization to make sure we have the
+   * proper value in m_NumberOfThreads.
+   */
+
+  /* Inititialize interpolators */
+  m_FixedInterpolator->SetInputImage( m_FixedImage );
+  m_MovingInterpolator->SetInputImage( m_MovingImage );
+
+  /* Setup for image gradient calculations and possible BSpline interpolation.
+    Check if the interpolator is of type BSplineInterpolateImageFunction.
+    If so, we can make use of its EvaluateDerivatives method.
+    Otherwise, we instantiate an external central difference
+    derivative calculator.
+  */
+  /* Fixed */
+  FixedBSplineInterpolatorType *fixedTestPtr =
+        dynamic_cast< FixedBSplineInterpolatorType * >
+          ( this->m_FixedInterpolator.GetPointer() );
+  if ( !fixedTestPtr )
+    {
+    m_FixedInterpolatorIsBSpline = false;
+    m_FixedBSplineInterpolator = NULL;
+    if( !m_PrecomputeGradient )
+      {
+      m_FixedGradientCalculator = FixedGradientCalculatorType::New();
+      m_FixedGradientCalculator->UseImageDirectionOn();
+      m_FixedGradientCalculator->SetInputImage(this->m_FixedImage);
+      }
+    itkDebugMacro("Fixed Interpolator is not BSpline");
+    }
+  else
+    {
+    m_FixedInterpolatorIsBSpline = true;
+    m_FixedBSplineInterpolator = fixedTestPtr;
+    m_FixedBSplineInterpolator->SetNumberOfThreads(m_NumberOfThreads);
+    m_FixedBSplineInterpolator->UseImageDirectionOn();
+    m_FixedGradientCalculator = NULL;
+    itkDebugMacro("Fixed Interpolator is BSpline");
+    }
+  /* Moving */
+  MovingBSplineInterpolatorType *movingTestPtr =
+        dynamic_cast< MovingBSplineInterpolatorType * >
+          ( this->m_MovingInterpolator.GetPointer() );
+  if ( !movingTestPtr )
+    {
+    m_MovingInterpolatorIsBSpline = false;
+    m_MovingBSplineInterpolator = NULL;
+    if( ! m_PrecomputeGradient )
+      {
+      m_MovingGradientCalculator = MovingGradientCalculatorType::New();
+      m_MovingGradientCalculator->UseImageDirectionOn();
+      m_MovingGradientCalculator->SetInputImage(this->m_MovingImage);
+      }
+    itkDebugMacro("Moving Interpolator is not BSpline");
+    }
+  else
+    {
+    m_MovingInterpolatorIsBSpline = true;
+    m_MovingBSplineInterpolator = movingTestPtr;
+    m_MovingBSplineInterpolator->SetNumberOfThreads(m_NumberOfThreads);
+    m_MovingBSplineInterpolator->UseImageDirectionOn();
+    m_MovingGradientCalculator = NULL;
+    itkDebugMacro("Moving Interpolator is BSpline");
+    }
+  /* If user set to use pre-calculated gradient image, and both interpolators
+   * aren't bspline, then we need to calculate the gradient images. */
+  if ( m_PrecomputeGradient &&
+       !( m_FixedInterpolatorIsBSpline && m_MovingInterpolatorIsBSpline ) )
+    {
+    //NOTE: This could be broken into separate fixed- and moving-gaussian
+    // calculations if users will be having one interpolator as bspline
+    // and not the other.
+    ComputeGaussianGradient();
+    }
 }
 
-/*
- * Initiate threading.
- */
+
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedInitiate()
+::InitializeForIteration()
 {
-  maybe have flag in method args to zero the GlobalDerivatives/gradientAccumulator var, which defaults to true. For use from MultiVariate metric
-  Actually we may also not want to perform averaging while collecting
-  post-threading results, from the MultiVariate metric, but derived class
-  may call the default post-processing with averaging enabled.
-  Actually we want to set these options from GetValueAndDerivative() and
-  GetValue() so MultiVariate metric can access. Maybe theres an
-  m_accumulateMode flag thats false by default, and can be set to true
-  on a metric before MultiVariate metric calls it, and it controls several
-  options liking zeroing deriv and averaging results. Dont actually know
-  if MultiVariate metric will care if per-metric results are averaged.
-  Or pass accumulate flag in GetValue and GetValueAndDerivative
-
   // Initialize some threading values that require per-iteration
   // initialization.
   for (int i=0; i<this->m_NumberOfThreads; i++)
@@ -142,10 +300,46 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       this->m_DerivativesPerThread[i].Fill( 0 );
       }
     }
+  /* Clear derivative result for local transforms. This will
+   * require an option to skip for use with multivariate metric. */
+  if ( this->m_MovingImageTransform->HasLocalSupport() )
+    {
+    this->m_DerivativeResult.Fill( 0 );
+    }
+}
 
-  // Do the threaded calculations
+/*
+ * Initiate threading.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::GetValueAndDerivativeMultiThreadedInitiate()
+{
+  //Initialization required for each iteration.
+  InitializeForIteration();
+
+  // Do the threaded calculations. This ends up
+  // calling GetValueAndDerivativeMultiThreadedCallback, which
+  // calls derived class' GetValueAndDerivativeProcessPoint.
   this->m_GetValueAndDerivativeThreader->GenerateData();
 
+  // Determine the total number of points used during calculations.
+  CollectNumberOfValidPoints();
+
+  // To collect the results from each thread into final values,
+  // the derived class can call GetValueAndDerivativeMultiThreadedPostProcess,
+  // or do their own processing.
+}
+
+/*
+ * Collect number of valid points, after threading is completed.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::void CollectNumberOfValidPoints()
+{
   // Count number of valid points.
   // Other post-processing can be done by calling
   // GetValueAndDerivativeMultiThreadedPostProcess, or direclty
@@ -172,7 +366,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     for (int i=0; i<this->m_NumberOfThreads; i++)
       {
-      this->m_GlobalDerivative += this->m_DerivativesPerThread[i];
+      this->m_DerivativeResult += this->m_DerivativesPerThread[i];
       }
     }
 
@@ -188,7 +382,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     if ( ! this->m_MovingImageTransform->HasLocalSupport() )
       {
-      this->m_GlobalDerivative /= this->m_NumberOfValidPoints;
+      this->m_DerivativeResult /= this->m_NumberOfValidPoints;
       }
     this->m_Value /= this->m_NumberOfValidPoints;
     }
@@ -218,16 +412,16 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   MovingImagePixelType        movingImageValue;
   MovingImageDerivativesType  movingImageDerivatives;
   bool                        pointIsValid;
-  MeasureType                 metricValue;
+  MeasureType                 metricValueResult;
   MeasureType                 metricValueSum = 0;
 
-  DerivativeType            localDerivative( self->GetLocalDerivativeSize() );
+  DerivativeType           derivativeResult( self->GetLocalDerivativeSize() );
 
   /* Iterate over the sub region */
   ItV.GoToBegin();
   while( !ItV.IsAtEnd() )
   {
-
+    /* Get the virtual point */
     self->m_VirtualImage->TransformIndexToPhysicalPoint(
                                               ItV.GetIndex(), virtualPoint);
 
@@ -235,7 +429,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
      * These methods will check that the point lies within the mask if
      * one has been set, and then verify they lie in the fixed or moving
      * space as appropriate.
-     * If both tests pass, the point is evaluated and 'true' is returned. */
+     * If both tests pass, the point is evaluated and pointIsValid is returned
+     * as \c true. */
     self->TransformAndEvaluateFixedPoint( virtualPoint,
                                           mappedFixedPoint,
                                           pointIsValid,
@@ -262,16 +457,16 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                    virtualPoint,
                    mappedFixedPoint, fixedImageValue, fixedImageDerivatives,
                    mappedMovingPoint, movingImageValue, movingImageDerivatives,
-                   metricValue, localDerivative, threadID );
+                   metricValueResult, derivativeResult, threadID );
       }
 
     if( pointIsValid )
       {
       this->m_NumberOfValidPointsPerThread[i]++;
-      metricValueSum += metricValue;
+      metricValueSum += metricValueResult;
       /* Store the localDerivative. This depends on what type of
        * transform is being used. */
-      UpdateDerivativeResult( localDerivative,
+      StoreDerivativeResult( derivativeResult,
                               ItV.GetIndex(), threadID );
       }
 
@@ -289,18 +484,18 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::UpdateDerivativeResult(  DerivativeType & localDerivative,
+::StoreDerivativeResult(  DerivativeType & derivative,
                            VirtualIndexType & virtualIndex,
                            ThreadIdType threadID )
 {
-  check this...
   DerivativeType & derivativeResult = this->m_DerivativesPerThread[threadID];
   if ( ! this->m_MovingImageTransform->HasLocalSupport() )
     {
-    derivativeResult += localDerivative;
+    derivativeResult += derivative;
     }
   else
     {
+    // Dense transform, e.g. deformation field.
     // update derivative at some index
     // this requires the moving image deformation field to be
     // same size as virtual image, and that VirtualImage PixelType
@@ -310,7 +505,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     for (unsigned int i=0;
           i < this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++)
       {
-      derivativeResult[offset+i]=localDerivative[i];
+      /* Be sure to add here and not assign. Required for proper behavior
+       * with multi-variate metric. */
+      derivativeResult[offset+i] += derivative[i];
       }
     }
 }
@@ -338,66 +535,68 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   // If user provided a mask over the fixed image
   if ( m_FixedImageMask )
     {
-    // Check if mapped point is within the support region of the moving image
+    // Check if mapped point is within the support region of the fixed image
     // mask
     pointIsValid = m_FixedImageMask->IsInside( mappedFixedPoint );
     }
 
-  if( pointIsValid )
+  if( ! pointIsValid )
     {
-    if ( m_FixedInterpolatorIsBSpline )
-      {
-      // Check if mapped point inside image buffer
-      pointIsValid =
-        m_FixedBSplineInterpolator->IsInsideBuffer( mappedFixedPoint );
-      if ( pointIsValid )
-        {
-        if( computeImageGradient )
-          {
-          /* The assumption here is that calling EvaluateValueAndDerivative
-           * is faster than separately calling Evaluate and EvaluateDerivative,
-           * because of setup for the bspline evaluation. */
-          m_FixedBSplineInterpolator->EvaluateValueAndDerivative(
-                                                        mappedFixedPoint,
-                                                        fixedImageValue,
-                                                        fixedGradient,
-                                                        threadID);
-          }
-        else
-          {
-          fixedImageValue =
-            m_FixedBSplineInterpolator->Evaluate(mappedFixedPoint, threadID);
-          }
-        }
-      }
-    else
-      {
-      // Check if mapped point is inside image buffer
-      pointIsValid = m_FixedInterpolator->IsInsideBuffer(mappedFixedPoint);
-      if ( pointIsValid )
-        {
-        fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
-        if( computeImageGradient )
-          {
-          this->ComputeFixedImageDerivatives(mappedFixedPoint,
-                                             fixedGradient,
-                                             threadID);
-          }
-        }
-      }
+    return;
+    }
 
-    if( pointIsValid && computeImageGradient )
+  if ( m_FixedInterpolatorIsBSpline )
+    {
+    // Check if mapped point inside image buffer
+    pointIsValid =
+      m_FixedBSplineInterpolator->IsInsideBuffer( mappedFixedPoint );
+    if ( pointIsValid )
       {
-      //Transform the gradient into the virtual domain. We compute gradient
-      // in the fixed and moving domains and then transform to virtual, because
-      // first warping the fixed and moving images to virtual domain and then
-      // calculating gradient would create threading issues with the creation
-      // of the warped image, unless they were created during initilization.
-      // But, pre-warping the images would be inefficient when a mask or
-      // sampling is used to compute only a subset of points.
-      fixedGradient =
-        m_FixedImageTransform->TransformCovariantVector( fixedGradient );
+      if( computeImageGradient )
+        {
+        /* The assumption here is that calling EvaluateValueAndDerivative
+         * is faster than separately calling Evaluate and EvaluateDerivative,
+         * because of setup for the bspline evaluation. */
+        m_FixedBSplineInterpolator->EvaluateValueAndDerivative(
+                                                      mappedFixedPoint,
+                                                      fixedImageValue,
+                                                      fixedGradient,
+                                                      threadID);
+        }
+      else
+        {
+        fixedImageValue =
+          m_FixedBSplineInterpolator->Evaluate(mappedFixedPoint, threadID);
+        }
       }
+    }
+  else
+    {
+    // Check if mapped point is inside image buffer
+    pointIsValid = m_FixedInterpolator->IsInsideBuffer(mappedFixedPoint);
+    if ( pointIsValid )
+      {
+      fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
+      if( computeImageGradient )
+        {
+        this->ComputeFixedImageDerivatives(mappedFixedPoint,
+                                           fixedGradient,
+                                           threadID);
+        }
+      }
+    }
+
+  if( pointIsValid && computeImageGradient )
+    {
+    //Transform the gradient into the virtual domain. We compute gradient
+    // in the fixed and moving domains and then transform to virtual, because
+    // first warping the fixed and moving images to virtual domain and then
+    // calculating gradient would create threading issues with the creation
+    // of the warped image, unless they were created during initilization.
+    // But, pre-warping the images would be inefficient when a mask or
+    // sampling is used to compute only a subset of points.
+    fixedGradient =
+      m_FixedImageTransform->TransformCovariantVector( fixedGradient );
     }
 }
 
@@ -427,57 +626,56 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     pointIsValid = m_MovingImageMask->IsInside( mappedMovingPoint );
     }
 
-  if( pointIsValid )
+  if( ! pointIsValid )
     {
-    if ( m_MovingInterpolatorIsBSpline )
+    return;
+    }
+
+  if ( m_MovingInterpolatorIsBSpline )
+    {
+    // Check if mapped point inside image buffer
+    pointIsValid =
+      m_MovingBSplineInterpolator->IsInsideBuffer( mappedMovingPoint );
+    if ( pointIsValid )
       {
-      // Check if mapped point inside image buffer
-      pointIsValid =
-        m_MovingBSplineInterpolator->IsInsideBuffer( mappedMovingPoint );
-      if ( pointIsValid )
+      if( computeImageGradient )
         {
-        if( computeImageGradient )
-          {
-          /* The assumption here is that calling EvaluateValueAndDerivative
-           * is faster than separately calling Evaluate and EvaluateDerivative,
-           * because of setup for the bspline evaluation. */
-          m_MovingBSplineInterpolator->EvaluateValueAndDerivative(
-                                                        mappedMovingPoint,
-                                                        movingImageValue,
-                                                        movingGradient,
-                                                        threadID);
-          // Transform into the virtual space
-          gradient =
-            m_MovingImageTransform->TransformCovariantVector( gradient );
-          }
-        else
-          {
-          movingImageValue =
-            m_MovingBSplineInterpolator->Evaluate(mappedMovingPoint, threadID);
-          }
+        /* The assumption here is that calling EvaluateValueAndDerivative
+         * is faster than separately calling Evaluate and EvaluateDerivative,
+         * because of setup for the bspline evaluation. */
+        m_MovingBSplineInterpolator->EvaluateValueAndDerivative(
+                                                      mappedMovingPoint,
+                                                      movingImageValue,
+                                                      movingGradient,
+                                                      threadID);
+        }
+      else
+        {
+        movingImageValue =
+          m_MovingBSplineInterpolator->Evaluate(mappedMovingPoint, threadID);
         }
       }
-    else
+    }
+  else
+    {
+    // Check if mapped point inside image buffer
+    pointIsValid = m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint);
+    if ( pointIsValid )
       {
-      // Check if mapped point inside image buffer
-      pointIsValid = m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint);
-      if ( pointIsValid )
+      movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
+      if( computeImageGradient )
         {
-        movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
-        if( computeImageGradient )
-          {
-          this->ComputeMovingImageDerivatives(mappedMovingPoint,
-                                              movingGradient,
-                                              threadID);
-          }
+        this->ComputeMovingImageDerivatives(mappedMovingPoint,
+                                            movingGradient,
+                                            threadID);
         }
       }
-    if( pointIsValid && computeImageGradient )
-      {
-      // Transform into the virtual space
-      movingGradient =
-        m_MovingImageTransform->TransformCovariantVector( movingGradient );
-      }
+    }
+  if( pointIsValid && computeImageGradient )
+    {
+    // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
+    movingGradient =
+      m_MovingImageTransform->TransformCovariantVector( movingGradient );
     }
 }
 
@@ -502,7 +700,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    if ( m_UseGaussianGradient )
+    if ( m_PrecomputeGradient )
       {
       ContinuousIndex< double, FixedImageDimension > tempIndex;
       m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
@@ -538,7 +736,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    if ( m_UseGaussianGradient )
+    if ( m_PrecomputeGradient )
       {
       ContinuousIndex< double, MovingImageDimension > tempIndex;
       m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
@@ -553,9 +751,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       gradient = m_MovingGradientCalculator->Evaluate(mappedPoint);
       }
     }
-
-  //Transform the gradient into the virtual domain.
-  gradient = m_MovingImageTransform->TransformCovariantVector( gradient );
 }
 
 /*
@@ -585,5 +780,77 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   return 0;
 }
+
+/*
+ * ComputeGaussianGradient
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::ComputeGaussianGradient()
+{
+  /* Fixed */
+  {
+  FixedGradientImageFilterType::Pointer
+    gradientFilter = FixedGradientImageFilterType::New();
+  gradientFilter->SetInput(m_FixedImage);
+  const typename FixedImageType::SpacingType & spacing = m_FixedImage
+                                                          ->GetSpacing();
+  double maximumSpacing = 0.0;
+  for ( unsigned int i = 0; i < FixedImageDimension; i++ )
+    {
+    if ( spacing[i] > maximumSpacing )
+      {
+      maximumSpacing = spacing[i];
+      }
+    }
+  gradientFilter->SetSigma(maximumSpacing);
+  gradientFilter->SetNormalizeAcrossScale(true);
+  gradientFilter->SetNumberOfThreads(m_NumberOfThreads);
+  gradientFilter->SetUseImageDirection(true);
+  gradientFilter->Update();
+
+  m_FixedGaussianGradientImage = gradientFilter->GetOutput();
+  }
+  /* Moving */
+  {
+  MovingGradientImageFilterType::Pointer
+    gradientFilter = MovingGradientImageFilterType::New();
+
+  gradientFilter->SetInput(m_MovingImage);
+
+  const typename MovingImageType::SpacingType & spacing = m_MovingImage
+                                                          ->GetSpacing();
+  double maximumSpacing = 0.0;
+  for ( unsigned int i = 0; i < MovingImageDimension; i++ )
+    {
+    if ( spacing[i] > maximumSpacing )
+      {
+      maximumSpacing = spacing[i];
+      }
+    }
+  gradientFilter->SetSigma(maximumSpacing);
+  gradientFilter->SetNormalizeAcrossScale(true);
+  gradientFilter->SetNumberOfThreads(m_NumberOfThreads);
+  gradientFilter->SetUseImageDirection(true);
+  gradientFilter->Update();
+
+  m_MovingGaussianGradientImage = gradientFilter->GetOutput();
+  }
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::SetNumberOfThreads( ThreadIdType number )
+{
+  if( number != this->m_NumberOfThreads )
+    {
+    this->m_NumberOfThreads = number;
+    this->m_ValueAndDerivativeThreader->SetNumberOfThreads( number );
+    this->Modified();
+    }
+}
+
 
 }//namespace itk
