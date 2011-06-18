@@ -207,9 +207,6 @@ protected:
 
 private:
 
-//  DerivativeType                  m_GlobalDerivative;
-//  std::vector< DerivativeType >   m_DerivativesPerThread;
-
   //purposely not implemented
   GradientDescentThreadedMetricOptimizerBase( const Self & );
   void operator=( const Self& );      //purposely not implemented

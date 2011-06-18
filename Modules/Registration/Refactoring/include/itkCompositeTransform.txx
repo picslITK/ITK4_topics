@@ -251,8 +251,8 @@ CompositeTransform<TScalar, NDimensions>
 
         if (offset > 0){
             JacobianType old_j = j.extract(NDimensions,offset,0,0);
-            j.update( transform->GetJacobianWithRespectToPosition() * old_j, 0, 0);
-
+//            j.update( transform->GetJacobianWithRespectToPosition() * old_j, 0, 0);
+itkExceptionMacro(" To sort out with new GetJacobianWithRespectToPosition prototype ");
         }
 
         /* Transform the point so it's ready for next transform's Jacobian */

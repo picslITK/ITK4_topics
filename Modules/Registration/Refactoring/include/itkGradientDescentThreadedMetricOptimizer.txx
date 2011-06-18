@@ -132,7 +132,7 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
 
   this->ModifyGradient();
   this->m_Metric->GetMovingImageTransform()->
-                    UpdateTransformParameters( m_GlobalDerivative );
+                    UpdateTransformParameters( m_Gradient ??? );
   this->InvokeEvent( IterationEvent() );
 }
 

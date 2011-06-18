@@ -29,11 +29,6 @@ void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::GradientDescentThreadedMetricOptimizerBase()
 {
-  /* Point the metric threader to the threading worker callback.
-   * The rest of the threader is initialed in Superclass. */
-  this->m_MetricThreader->SetThreadedGenerateData(
-    Self::ComputeMetricValueInRegionThreaded );
-
   this->m_ModifyGradientThreader->SetThreadedGenerateData(
     Self::ModifyGradientThreaded );
 
@@ -113,11 +108,11 @@ void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::UpdateMetricValueAndDerivative()
 {
-  this->BeforeMetricThreadedGenerateData();
+//  this->BeforeMetricThreadedGenerateData();
   /* Calculate new metric value and derivative with threading. */
   this->m_MetricThreader->GenerateData();
   /* Collect metric results from the threads. */
-  this->AfterMetricThreadedGenerateData();
+//  this->AfterMetricThreadedGenerateData();
 }
 
 //-------------------------------------------------------------------
@@ -129,7 +124,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
   /* Allow the metric to do any per-iteration initialization it
    * requires. This method is not expected to be thread-safe, and
    * may implement its own threading */
-  this->m_Metric->BeforeThreadedGetValueAndDerivative();
+//  this->m_Metric->BeforeThreadedGetValueAndDerivative();
 }
 
 //-------------------------------------------------------------------
@@ -139,8 +134,8 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::AfterMetricThreadedGenerateData()
 {
 
-  std::cout << " end after threaded generate data. global derivative: "
-            << this->m_GlobalDerivative << std::endl;
+//  std::cout << " end after threaded generate data. global derivative: "
+  //          << this->m_GlobalDerivative << std::endl;
 }
 
 //-------------------------------------------------------------------
@@ -149,35 +144,7 @@ void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::CleanupFromThreading()
 {
-  // Free some memory used during threading. This probably
-  // doesn't actually amount to much.
-  // We could also free m_GlobalDerivatives by setting its size to 0,
-  // but user may want to examine it when optimization is stopped.
-  if ( ! this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
-    {
-    for (int i=0; i<this->m_NumberOfThreads; i++)
-      {
-      this->m_DerivativesPerThread[i].SetSize(0);
-      }
-    }
-}
-
-//-------------------------------------------------------------------
-template<class TMetricFunction>
-void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
-::ComputeMetricValueInRegionThreaded( const ImageRegionType & regionForThread,
-                                      int threadId,
-                                      Self *holder )
-{
-  //    std::cout << regionForThread << std::endl;
-  InternalComputationValueType local_metric;
-  //Self * holder = static_cast<Self*>(inHolder);
-  /** Compute one iteration of the metric */
-  local_metric = holder->m_Metric->ComputeMetricAndDerivative(
-                                  regionForThread,
-                                  holder->m_DerivativesPerThread[threadId] );
-  holder->m_MeasurePerThread[threadId] = local_metric;
+removed metric-threading stuff
 }
 
 //-------------------------------------------------------------------
@@ -186,9 +153,8 @@ void
 GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 ::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
                           int threadId,
-                          void *inHolder )
+                          Self *holder )
 {
-  Self * holder = static_cast<Self*>(inHolder);
   holder->ModifyGradientOverSubRange( rangeForThread );
 }
 

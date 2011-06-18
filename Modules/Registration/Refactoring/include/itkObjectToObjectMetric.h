@@ -83,10 +83,10 @@ public:
   virtual void Initialize(void) throw ( ExceptionObject ) = 0;
 
   /** This method returns the value of the cost function */
-  virtual MeasureType GetValue() const = 0;
+  virtual MeasureType GetValue() = 0;
 
   /** This method returns the derivative of the cost function */
-  virtual void GetDerivative(DerivativeType & derivative) const
+  virtual void GetDerivative(DerivativeType & derivative)
   {
     MeasureType value;
     this->GetValueAndDerivative(value, derivative);
@@ -94,7 +94,7 @@ public:
 
   /** This method returns the value and derivative of the cost function */
   virtual void GetValueAndDerivative(MeasureType & value,
-                                     DerivativeType & derivative) const = 0;
+                                     DerivativeType & derivative) = 0;
 
 protected:
   ObjectToObjectMetric();

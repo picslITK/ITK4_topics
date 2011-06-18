@@ -54,16 +54,16 @@ class ITK_EXPORT ImageToData
 {
 public:
   /** Standard class typedefs. */
-  typedef ImageToData                      Self;
-  typedef ObjectToDataBase<TInputObject>   Superclass;
-  typedef SmartPointer<Self>               Pointer;
-  typedef SmartPointer<const Self>         ConstPointer;
+  typedef ImageToData                                 Self;
+  typedef ObjectToDataBase<TInputObject, TDataHolder> Superclass;
+  typedef SmartPointer<Self>                          Pointer;
+  typedef SmartPointer<const Self>                    ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(ImageToData,Superclass);
+  itkTypeMacro(Self,Superclass);
 
   /** Type of the object being threaded over */
   typedef typename Superclass::InputObjectType  InputObjectType;
@@ -93,8 +93,8 @@ protected:
    * the routine is capable of splitting the output RequestedObject,
    * i.e. return value is less than or equal to \c requestedTotal. */
   virtual
-  int SplitRequestedObject(int i,
-                           int requestedTotal,
+  ThreadIdType SplitRequestedObject(ThreadIdType i,
+                           ThreadIdType requestedTotal,
                            InputObjectType& overallRegion,
                            InputObjectType& splitRegion) const;
 

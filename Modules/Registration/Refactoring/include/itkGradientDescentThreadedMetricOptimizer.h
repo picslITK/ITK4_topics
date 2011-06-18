@@ -51,8 +51,9 @@ public:
   itkSuperclassTraitMacro( MetricType );
   itkSuperclassTraitMacro( MetricTypePointer );
   /** Threader type */
-  itkSuperclassTraitMacro( MetricThreaderType );
-  itkSuperclassTraitMacro( MetricThreaderTypePointer );
+//  itkSuperclassTraitMacro( MetricThreaderType );
+//  itkSuperclassTraitMacro( MetricThreaderTypePointer );
+need these anymore?
   /** Measure type */
   itkSuperclassTraitMacro( MeasureType );
   /** Image region type */

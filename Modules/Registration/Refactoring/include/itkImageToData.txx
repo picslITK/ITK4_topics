@@ -37,9 +37,9 @@ ImageToData<VDimension, TDataHolder, TInputObject>
 
 //----------------------------------------------------------------------------
 template <unsigned int VDimension, class TDataHolder, typename TInputObject>
-int
+ThreadIdType
 ImageToData<VDimension, TDataHolder, TInputObject>
-::SplitRequestedObject(int i, int requestedTotal,
+::SplitRequestedObject(ThreadIdType i, ThreadIdType requestedTotal,
                        InputObjectType &overallRegion,
                        InputObjectType& splitRegion) const
 {
@@ -73,8 +73,10 @@ ImageToData<VDimension, TDataHolder, TInputObject>
 
   // determine the actual number of pieces that will be generated
   typename SizeType::SizeValueType range = requestedRegionSize[splitAxis];
-  int valuesPerThread = Math::Ceil<int>(range/(double)requestedTotal);
-  int maxThreadIdUsed = Math::Ceil<int>(range/(double)valuesPerThread) - 1;
+  ThreadIdType valuesPerThread =
+    Math::Ceil<ThreadIdType>(range/(double)requestedTotal);
+  ThreadIdType maxThreadIdUsed =
+    Math::Ceil<ThreadIdType>(range/(double)valuesPerThread) - 1;
 
   // Split the region
   if (i < maxThreadIdUsed)

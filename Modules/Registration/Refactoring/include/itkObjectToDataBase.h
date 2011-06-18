@@ -97,7 +97,15 @@ public:
                                                 DataHolderType * holder);
 
   /** Set the overall (i.e. complete) object over which to thread */
-  itkSetMacro( OverallObject, InputObjectType );
+  void SetOverallObject( InputObjectType & object )
+    {
+    if( object != m_OverallObject )
+      {
+      m_OverallObject = object;
+      m_OverallObjectHasBeenSet = true;
+      this->Modified();
+      }
+    }
 
   /** Set the threaded worker callback. Used by the user class
    * to assign the worker callback.
@@ -165,7 +173,11 @@ protected:
     Pointer Filter;
     };
 
+  /** The object over which to thread. */
+  //This should probably be made into a SmartPointer
   InputObjectType               m_OverallObject;
+  /** Flag is set when user calls SetOveralObject */
+  bool                          m_OverallObjectHasBeenSet;
   /** Raw C-pointer to the data holder */
   DataHolderType *              m_Holder;
 

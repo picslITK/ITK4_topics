@@ -47,7 +47,7 @@ ObjectToDataBase<TInputObject, TDataHolder>
 
   this->m_Holder = NULL;
   this->m_ThreadedGenerateData = NULL;
-  this->m_OverallObject = NULL;
+  this->m_OverallObjectHasBeenSet = false;
   this->m_NumberOfThreadsUsed = 0;
 }
 
@@ -66,7 +66,7 @@ ObjectToDataBase<TInputObject, TDataHolder>
     {
     itkExceptionMacro("m_ThreadedGenereateData must be defined.");
     }
-  if( this->m_OverallObject == NULL )
+  if( ! this->m_OverallObjectHasBeenSet )
     {
     itkExceptionMacro("m_OverallObject must be set.");
     }
@@ -134,15 +134,15 @@ ThreadIdType
 ObjectToDataBase<TInputObject, TDataHolder>
 ::DetermineNumberOfThreadsToUse(void)
 {
-  if( this->m_OverallObject == NULL )
+  if( ! this->m_OverallObjectHasBeenSet )
     {
     itkExceptionMacro("m_OverallObject must be set.");
     }
   InputObjectType splitObject;
-  return str->Filter->SplitRequestedObject( 0,
-                                            this->GetNumberOfThreads(),
-                                            str->Filter->m_OverallObject,
-                                            splitObject);
+  return this->SplitRequestedObject( 0,
+                                    this->GetNumberOfThreads(),
+                                    this->m_OverallObject,
+                                    splitObject);
 }
 
 } // end namespace itk

@@ -42,6 +42,9 @@ namespace itk
  * fully computed gradient image.
  * 3) lastly, CentralDifferenceImageFunction is used if m_PrecomputeGradient
  * option has been set to false.
+ *
+ * Derived classes must implement pure virtual methods declared in
+ * ObjectToObjectMetric.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
@@ -69,16 +72,23 @@ public:
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
+  /** Derivative source type */
+  typedef typename Superclass::DerivativeSourceType DerivativeSourceType;
+
   /** Image-accessor typedefs */
   typedef TFixedImage                             FixedImageType;
   typedef typename FixedImageType::PixelType      FixedImagePixelType;
   typedef typename FixedImageType::Pointer        FixedImagePointer;
   typedef typename FixedImageType::ConstPointer   FixedImageConstPointer;
+  typedef typename FixedImageType::PointType      FixedImagePointType;
+  typedef typename FixedImageType::IndexType      FixedImageIndexType;
   typedef TMovingImage                            MovingImageType;
   typedef typename MovingImageType::PixelType     MovingImagePixelType;
   typedef typename MovingImageType::Pointer       MovingImagePointer;
   typedef typename MovingImageType::ConstPointer  MovingImageConstPointer;
-
+  typedef typename MovingImageType::PointType     MovingImagePointType;
+  typedef typename MovingImageType::RegionType    MovingImageRegionType;
+  typedef typename MovingImageType::IndexType     MovingImageIndexType;
   /** Types for the virtual domain */
   typedef TVirtualImage                             VirtualImageType;
   typedef typename VirtualImageType::PixelType      VirtualImagePixelType;
@@ -102,12 +112,12 @@ public:
 
   /**  Type of the Transform Base classes */
   typedef Transform<CoordinateRepresentationType,
-    itkGetStaticConstMacro( MovingPointSetDimension ),
-    itkGetStaticConstMacro( FixedPointSetDimension )>  MovingTransformType;
+    itkGetStaticConstMacro( MovingImageDimension ),
+    itkGetStaticConstMacro( VirtualImageDimension )>  MovingTransformType;
 
   typedef Transform<CoordinateRepresentationType,
-    itkGetStaticConstMacro( FixedPointSetDimension ),
-    itkGetStaticConstMacro( MovingPointSetDimension )> FixedTransformType;
+    itkGetStaticConstMacro( FixedImageDimension ),
+    itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
   typedef typename FixedTransformType::Pointer         FixedTransformPointer;
   typedef typename FixedTransformType::InputPointType  FixedInputPointType;
@@ -236,37 +246,75 @@ public:
   /** Define the virtual reference space. This space defines the resolution,
    *  at which the registration is performed as well as the physical coordinate
    *  system.  Useful for unbiased registration.  If the user does not set this
-   *  explicitly then it is taken from the fixed image in Initialize method.
-   *  To set all settings from a reference image, use SetVirtualDomainImage.
+   *  explicitly then it is taken from the fixed image in \c Initialize method.
+   *  This method will allocate \c m_VirtualDomainImage with the passed
+   *  information, and set \c m_VirtualDomainRegion, the region over which
+   *  metric evaluation is performed. The region can also be set separately
+   *  using \c SetVirtualDomainRegion, which replaces the region information set
+   *  with this method.
+   *  To set all settings from an existing image, use \c SetVirtualDomainImage.
    */
+  void CreateVirtualDomainImage( VirtualSpacingType &,
+                                    VirtualOriginType &,
+                                    VirtualDirectionType &,
+                                    VirtualSizeType &,
+                                    VirtualIndexType & );
+  /** Alternate version that takes the region itself */
+  void CreateVirtualDomainImage( VirtualSpacingType &,
+                                    VirtualOriginType &,
+                                    VirtualDirectionType &,
+                                    VirtualRegionType & );
+
+  const VirtualSpacingType GetVirtualDomainSpacing( void );
+  const VirtualOriginType GetVirtualDomainOrigin( void );
+  const VirtualDirectionType GetVirtualDomainDirection( void );
+  /* It gets messy to have individual set accessors for the domain
+   * settings. Have to track if each has been set before initializing.
   itkSetMacro(VirtualDomainSpacing, VirtualSpacingType);
   itkGetMacro(VirtualDomainSpacing, VirtualSpacingType);
   itkSetMacro(VirtualDomainOrigin, VirtualOriginType);
   itkGetMacro(VirtualDomainOrigin, VirtualOriginType);
   itkSetMacro(VirtualDomainDirection, VirtualDirectionType);
   itkGetMacro(VirtualDomainDirection, VirtualDirectionType);
-
-  /** Set/Get the size of the virtual domain region over which to compute
+  */
+  /** Set the size of the virtual domain region over which to compute
    * the metric. Any subsequent call to SetVirtualRegion will override
    * these values. */
-  void SetVirtualDomainSize( VirtualDomainIndex& index );
-  const VirtualDomainSize GetVirtualDomainIndex( void );
+  //void SetVirtualDomainSize( VirtualSizeType& index );
+  //const VirtualSizeType GetVirtualDomainSize( void );
 
   /** Set/Get the index of the virtual domain region over which to compute
    * the metric. Any subsequent call to SetVirtualRegion will override
    * these values. */
-  void SetVirtualDomainIndex( VirtualDomainIndex& index );
-  const VirtualDomainIndex GetVirtualDomainIndex( void );
+  //void SetVirtualDomainIndex( VirtualDomainIndex& index );
+  //const VirtualIndexType GetVirtualDomainIndex( void );
 
   /** Set/Get the region of the virtual domain over which to compute
-   * the metric. The region passed here will be modified by
-   * any subsequent calls to SetVirtualDomainSize or SetVirtualDomainIndex */
-  itkSetMacro(VirtualDomainRegion, VirtualRegionType);
+   * the metric. If not set by user either here or by
+   * CreateVirtualDomainImage, or by SetVirtualDomainImage, it will be set
+   * from m_FixedImage.GetRequestedRegion() in Intitialize.
+   * The region passed here will be replaced by
+   * any subsequent calls to CreateVirtualDomainImage. */
+  // FIXME: handle const-ness properly
+  void SetVirtualDomainRegion( VirtualRegionType & region )
+    { SetVirtualDomainImage( static_cast<const VirtualRegionType& >(region) ); }
+  void SetVirtualDomainRegion( const VirtualRegionType & region )
+    {
+    if( region != m_VirtualDomainRegion || ! m_VirtualDomainRegionHasBeenSet )
+      {
+      m_VirtualDomainRegionHasBeenSet = true;
+      m_VirtualDomainRegion = region;
+      this->Modified();
+      }
+    }
   itkGetMacro(VirtualDomainRegion, VirtualRegionType);
 
-  /** Set/Get all virtual domain setings at once via an image.
-   * The image is expected to have already been allocated. */
+  /** Set all virtual domain setings at once via an image.
+   * The image is expected to have already been allocated.
+   * The image's requested region will be used for VirtualDomainRegion,
+   * which can be then changed by calling SetVirtualDomainRegion. */
   virtual void SetVirtualDomainImage(VirtualImageType* image);
+  /** Get the virtual domain image */
   itkGetConstObjectMacro(VirtualDomainImage, VirtualImageType);
 
   /** Connect the fixed transform. */
@@ -330,13 +378,21 @@ public:
   /** Get number of valid points from most recent update */
   itkGetConstMacro( NumberOfValidPoints, SizeValueType );
 
-  /** Return the number of parameters,
-   * taking DerivativeSourceType into account */
-  virtual unsigned int GetNumberOfParameters() const;
+  /** Get the measure value, as computed by most recent evaluation */
+  itkGetConstMacro( Value, MeasureType );
 
-  /** Return the size of local derivatives, taking DerivativeSource
-   * into account. Derived classes may need to override to provide
-   * special behavior. */
+  /** Return the number of parameters.
+   * NOTE: this is required because we derive from CostFunction. But
+   * it's not really relevant, and may be removed if we decide not
+   * to derive from SingleValuedCostFunction. */
+  /* We return the number of parameters
+   * in moving image transform because (for now at least) that's the
+   * transform we're optimizing. */
+  virtual unsigned int GetNumberOfParameters() const
+    { return this->m_MovingImageTransform->GetNumberOfParameters(); }
+
+  /** Return the size of derivative, taking DerivativeSource
+   * into account. */
   virtual SizeValueType GetLocalDerivativeSize() const;
 
   /* Initialize the metric before calling GetValue or GetDerivative.
@@ -349,10 +405,6 @@ public:
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
 protected:
-
-  ImageToImageObjectMetric();
-  virtual ~ImageToImageObjectMetric();
-  void PrintSelf(std::ostream& os, Indent indent) const;
 
   /** Transform a point from VirtualImage domain to FixedImage domain.
    * This function also checks if mapped point is within the mask if
@@ -371,7 +423,7 @@ protected:
                               FixedImagePixelType & fixedImageValue,
                               bool computeImageGradient,
                               FixedImageDerivativesType & fixedGradient,
-                              unsigned int threadID) const;
+                              ThreadIdType threadID) const;
 
   /** Transform a point from VirtualImage domain to MovingImage domain,
    * as is done in \c TransformAndEvaluateMovingPoint. */
@@ -381,34 +433,34 @@ protected:
                               MovingImagePixelType & movingImageValue,
                               bool computeImageGradient,
                               MovingImageDerivativesType & movingGradient,
-                              unsigned int threadID) const;
+                              ThreadIdType threadID) const;
 
   /** Compute image derivatives at a point. */
   virtual void ComputeFixedImageDerivatives(
                                     const FixedImagePointType & mappedPoint,
                                     FixedImageDerivativesType & gradient,
-                                    unsigned int threadID) const;
+                                    ThreadIdType threadID) const;
   virtual void ComputeMovingImageDerivatives(
                                     const MovingImagePointType & mappedPoint,
                                     MovingImageDerivativesType & gradient,
-                                    unsigned int threadID) const;
+                                    ThreadIdType threadID) const;
 
   /** Store derivative result from a single point calculation. */
   virtual void StoreDerivativeResult(  DerivativeType & derivative,
-                                        VirtualIndexType & virtualIndex,
-                                        ThreadIdType threadID )
+                                        const VirtualIndexType & virtualIndex,
+                                        ThreadIdType threadID );
 
   /** Perform any initialization required before each evaluation of
    * value and derivative. This is distinct from Initialize, which
-   * is called only once before a number of iterations, e.g. during
-   * registration.
-   * Called from GetValueAndDerivativeMultiThreadedInitiate before
+   * is called only once before a number of iterations, e.g. before
+   * a registration loop.
+   * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
    * threading starts. */
   virtual void InitializeForIteration(void);
 
-  /** Called from GetValueAndDerivativeMultiThreadedInitiate after
+  /** Called from \c GetValueAndDerivativeMultiThreadedInitiate after
    * threading is complete, to count the total number of valid points
-   * used during calculations. */
+   * used during calculations, storing it in \c m_NumberOfValidPoints */
   virtual void CollectNumberOfValidPoints(void);
 
   FixedImageConstPointer  m_FixedImage;
@@ -418,31 +470,32 @@ protected:
   VirtualImagePointer     m_VirtualDomainImage;
 
   VirtualRegionType       m_VirtualDomainRegion;
-  VirtualSpacingType      m_VirtualDomainSpacing;
-  VirtualOriginType       m_VirtualDomainOrigin;
-  VirtualDirectionType    m_VirtualDomainDirection;
+  bool                    m_VirtualDomainRegionHasBeenSet;
+  //VirtualSpacingType      m_VirtualDomainSpacing;
+  //VirtualOriginType       m_VirtualDomainOrigin;
+  //VirtualDirectionType    m_VirtualDomainDirection;
 
   /** Pointers to interpolators */
-  FixedInterpolatorPointer  m_FixedInterpolator;
-  MovingInterpolatorPointer m_MovingInterpolator;
+  FixedInterpolatorPointer                        m_FixedInterpolator;
+  MovingInterpolatorPointer                       m_MovingInterpolator;
   /** Pointers to BSplineInterpolators */
   typename FixedBSplineInterpolatorType::Pointer  m_FixedBSplineInterpolator;
   typename MovingBSplineInterpolatorType::Pointer m_MovingBSplineInterpolator;
   /** Boolean to indicate if the fixed interpolator is BSpline. */
-  bool                               m_MovingInterpolatorIsBSpline;
-  /** Boolean to indicate if the fixed interpolator is BSpline. */
+  bool                               m_FixedInterpolatorIsBSpline;
+  /** Boolean to indicate if the moving interpolator is BSpline. */
   bool                               m_MovingInterpolatorIsBSpline;
 
-  /** Flag to control use of Gaussian gradient filter or gradient calculator
-   * for image gradient calculations. */
+  /** Flag to control use of precomputed Gaussian gradient filter or gradient
+   * calculator for image gradient calculations. */
   bool                               m_PrecomputeGradient;
   /** Gradient images to store Gaussian gradient filter output. */
-  FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
-  MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
+  typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
+  typename MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
 
   /** Image gradient calculators */
-  FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
-  MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
+  typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
+  typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
 
   /** Derivative results holder. */
   DerivativeType                              m_DerivativeResult;
@@ -450,43 +503,43 @@ protected:
    * calculation. */
   SizeValueType                               m_NumberOfValidPoints;
 
+  /** Masks */
+  FixedImageMaskConstPointer                  m_FixedImageMask;
+  MovingImageMaskConstPointer                 m_MovingImageMask;
+
+  /** Metric value, stored after evaluating */
+  MeasureType             m_Value;
+
   /** User worker method to calculate value and derivative
    * given the point, value and image derivative for both fixed and moving
    * spaces. The provided values have been calculated from \c virtualPoint,
    * which is provided in case it's needed.
-   * Must be overriden by derived classes to do anything meaninful.
+   * Must be overriden by derived classes to do anything meaningful.
    * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
    * that have passed bounds checking, and lie within any mask that may
    * be assigned.
-   * \c threadID may be used as needed, for example to access any per-thread
-   * data cached during pre-processing by the derived class. The derived
-   * class should use \c m_NumberOfThreads from this base class to assure
-   * that the same number of threads are used.
-   */
-   TODO: Actually, threader may not use all the threads available if
-    the Split method decides not to. Also, threader will be splitting over
-    region, and will derived classes be threading similarly?
-    Maybe we call the SplitRegion method during init to get the # of threads
-    its going to use, then set m_NumberOfThreads and threader to that. However
-    this requries that derived classes not set and threading stuff until
-    Superclass::Initialize has been called. which means they could do it
-    in their own Initialize routine which is reasonable I think.
-  /*
-   * Results are returned in \c metricValue and \c localDerivatives, and
+   * Results are returned in \c metricValueResult and \c derivativesResult, and
    * will be managed by this base class.
+   * \c threadID may be used as needed, for example to access any per-thread
+   * data cached during pre-processing by the derived class.
+   * \warning The derived class should use \c m_NumberOfThreads from this base
+   * class only after ImageToImageObjectMetric:: Initialize has been called, to
+   * assure that the same number of threads are used.
    * \warning  This is called from the threader, and thus must be thread-safe.
    */
   virtual inline bool GetValueAndDerivativeProcessPoint(
-            const VirtualPointType &      itkNotUsed(virtualPoint),
-            const FixedImagePointType &   itkNotUsed(mappedFixedPoint),
-            const FixedImagePixelType &   itkNotUsed(fixedImageValue),
-            const ImageDerivativesType &  itkNotUsed(FixedImageDerivatives),
-            const MovingImagePointType &  itkNotUsed(mappedMovingPoint),
-            const MovingImagePixelType &  itkNotUsed(movingImageValue),
-            const ImageDerivativesType &  itkNotUsed(movingImageDerivatives),
-            MeasureType                   itkNotUsed(metricValue),
-            DerivativeType &              itkNotUsed(localDerivatives),
-            unsigned int                  itkNotUsed(threadID) )
+        const VirtualPointType &           itkNotUsed(virtualPoint),
+        const FixedImagePointType &        itkNotUsed(mappedFixedPoint),
+        const FixedImagePixelType &        itkNotUsed(fixedImageValue),
+        const FixedImageDerivativesType &  itkNotUsed(FixedImageDerivatives),
+        const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
+        const MovingImagePixelType &       itkNotUsed(movingImageValue),
+        const MovingImageDerivativesType & itkNotUsed(movingImageDerivatives),
+        MeasureType &                      itkNotUsed(metricValueResult),
+        DerivativeType &                   itkNotUsed(derivativesResult),
+        ThreadIdType                       itkNotUsed(threadID) )
+    /* ImageToImageMetric had this method simply return false. But why not
+     * make it pure virtual ? */
     {return false;}
 
   /*
@@ -500,7 +553,7 @@ protected:
    * GetValueAndDerivativeProcessPoint for each valid point in
    * VirtualDomainRegion.
    * See ... */
-  void GetValueAndDerivativeMultiThreadedInitiate();
+  virtual void GetValueAndDerivativeMultiThreadedInitiate();
 
   /** Default post-processing after multi-threaded calculation of
    * value and derivative. Typically called by derived classes after
@@ -522,27 +575,43 @@ protected:
   typedef typename ValueAndDerivativeThreaderType::InputObjectType
                                              ThreaderInputObjectType;
 
-  /** Threader used to evaluate value and deriviative. */
-  ValueAndDerivativeThreaderType::Pointer    m_ValueAndDerivativeThreader;
-
+  /* Optinally set the threader type to use. This performs the splitting of the
+   * virtual region over threads, and user may wish to provide a different
+   * one that does a different split. The default is ImageToData. */
   itkSetObjectMacro(ValueAndDerivativeThreader,ValueAndDerivativeThreaderType);
+
+  /** Threader used to evaluate value and deriviative. */
+  typename ValueAndDerivativeThreaderType::Pointer
+                                              m_ValueAndDerivativeThreader;
+
 
   /** Intermediary threaded metric value storage. */
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
   std::vector< DerivativeType >               m_DerivativesPerThread;
   std::vector< SizeValueType >                m_NumberOfValidPointsPerThread;
 
-  other threading stuff from GradientDescent and Obj2ObjOptimizer...
-  need Set/Get routines too...
+  ImageToImageObjectMetric();
+  virtual ~ImageToImageObjectMetric() {}
+
+  void PrintSelf(std::ostream& os, Indent indent) const
+    {
+    Superclass::PrintSelf(os, indent);
+    os << indent << "ImageToImageObjectMetric: TODO..." << std::endl;
+    }
+
 
 private:
 
   /** Multi-threader callback used to iterate over image region by thread,
    * and call the derived class' user worker method to calculate
-   * value and derivative. */
+   * value and derivative.
+   * If a derived class needs to implement its own callback to replace this,
+   * define a static method with a different name, and assign it to the
+   * threader in the class' constructor by calling
+   * \c m_ValueAndDerivativeThreader->SetThreadedGenerateData( mycallback ) */
   static void GetValueAndDerivativeMultiThreadedCallback(
                           const ThreaderInputObjectType& virtualImageSubRegion,
-                          int threadId,
+                          ThreadIdType threadId,
                           Self * dataHolder);
 
   /* The number of threads to use.
