@@ -56,7 +56,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   m_FixedBSplineInterpolator = NULL;
   m_MovingBSplineInterpolator = NULL;
 
-  m_PrecomputeGradient = true;
+  m_PrecomputeImageGradient = true;
   /* These will be instantiated if needed in Initialize */
   m_FixedGaussianGradientImage = NULL;
   m_MovingGaussianGradientImage = NULL;
@@ -162,16 +162,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * Initialize for threading
    */
 
+  /* Assign the virtual image region to the threader. Do this before
+   * calling DetermineNumberOfThreasToUse. */
+  this->m_ValueAndDerivativeThreader->SetOverallRegion(
+                                            this->m_VirtualDomainRegion );
+
   /* Determine how many threads will be used. The threader uses
    * its SplitRequestedObject method to split the image region over threads,
    * and it may decide to that using fewer than the number of available
    * threads is more effective. */
   this->m_NumberOfThreads = this->m_ValueAndDerivativeThreader->
                                       DetermineNumberOfThreadsToUse();
-
-  /* Assign the virtual image region to the threader. */
-  this->m_ValueAndDerivativeThreader->SetOverallRegion(
-                                            this->m_VirtualDomainRegion );
 
   /* Per-thread results */
   this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
@@ -238,7 +239,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     m_FixedInterpolatorIsBSpline = false;
     m_FixedBSplineInterpolator = NULL;
-    if( !m_PrecomputeGradient )
+    if( !m_PrecomputeImageGradient )
       {
       m_FixedGradientCalculator = FixedGradientCalculatorType::New();
       m_FixedGradientCalculator->UseImageDirectionOn();
@@ -263,7 +264,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     m_MovingInterpolatorIsBSpline = false;
     m_MovingBSplineInterpolator = NULL;
-    if( ! m_PrecomputeGradient )
+    if( ! m_PrecomputeImageGradient )
       {
       m_MovingGradientCalculator = MovingGradientCalculatorType::New();
       m_MovingGradientCalculator->UseImageDirectionOn();
@@ -282,7 +283,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   /* If user set to use pre-calculated gradient image, and both interpolators
    * aren't bspline, then we need to calculate the gradient images. */
-  if ( m_PrecomputeGradient &&
+  if ( m_PrecomputeImageGradient &&
        !( m_FixedInterpolatorIsBSpline && m_MovingInterpolatorIsBSpline ) )
     {
     //NOTE: This could be broken into separate fixed- and moving-gaussian
@@ -312,12 +313,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       this->m_DerivativesPerThread[i].Fill( 0 );
       }
     }
-  /* Clear derivative result for local transforms. This will
+  /* Clear derivative final result. This will
    * require an option to skip for use with multivariate metric. */
-  if ( this->m_MovingImageTransform->HasLocalSupport() )
-    {
-    this->m_DerivativeResult.Fill( 0 );
-    }
+  this->m_DerivativeResult.Fill( 0 );
 }
 
 /*
@@ -331,15 +329,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   //Initialization required for each iteration.
   InitializeForIteration();
 
-  // Do the threaded calculations. This ends up
-  // calling GetValueAndDerivativeMultiThreadedCallback, which
-  // calls derived class' GetValueAndDerivativeProcessPoint.
+  // Do the threaded evaluation. This will
+  // call GetValueAndDerivativeMultiThreadedCallback, which
+  // iterates over virtual domain region and calls derived class'
+  // GetValueAndDerivativeProcessPoint.
   this->m_ValueAndDerivativeThreader->GenerateData();
 
   // Determine the total number of points used during calculations.
   CollectNumberOfValidPoints();
 
-  // To collect the results from each thread into final values,
+  // To collect the results from each thread into final values and assign
+  // to user variables for returning results,
   // the derived class can call GetValueAndDerivativeMultiThreadedPostProcess,
   // or do their own processing.
 }
@@ -371,7 +371,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage )
+::GetValueAndDerivativeMultiThreadedPostProcess( MeasureType & value,
+                                                 DerivativeType & derivative,
+                                                 bool doAverage )
 {
   /* For global transforms, sum the derivatives from each region. */
   if ( ! this->m_MovingImageTransform->HasLocalSupport() )
@@ -398,6 +400,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       }
     this->m_Value /= this->m_NumberOfValidPoints;
     }
+
+  /* Pass results back to user */
+  value = m_Value;
+  /* This will point the internal data pointer in 'derivative' to the data
+   * pointer within m_DerivativeResult. The goal is to avoid copying the
+   * the results out for the case when m_DerivativeResult is from a
+   * dense-field transformation, and is large. The memory will still be managed
+   * by m_DerivativeResult. */
+  derivative.SetData( m_DerivativeResult.data_block(),
+                      m_DerivativeResult.Size(),
+                      false /*LetArrayManageMemory*/ );
 }
 
 /*
@@ -427,67 +440,91 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   MeasureType                 metricValueResult;
   MeasureType                 metricValueSum = 0;
 
-  DerivativeType           derivativeResult( self->GetLocalDerivativeSize() );
+  DerivativeType           localDerivative( self->GetLocalDerivativeSize() );
 
-  /* Iterate over the sub region */
-  ItV.GoToBegin();
-  while( !ItV.IsAtEnd() )
-  {
-    /* Get the virtual point */
-    self->m_VirtualDomainImage->TransformIndexToPhysicalPoint(
-                                              ItV.GetIndex(), virtualPoint);
+    /* Iterate over the sub region */
+    ItV.GoToBegin();
+    while( !ItV.IsAtEnd() )
+    {
+      /* Get the virtual point */
+      self->m_VirtualDomainImage->TransformIndexToPhysicalPoint(
+                                                ItV.GetIndex(), virtualPoint);
 
-    /* Transform the point into fixed and moving spaces, and evaluate.
-     * These methods will check that the point lies within the mask if
-     * one has been set, and then verify they lie in the fixed or moving
-     * space as appropriate.
-     * If both tests pass, the point is evaluated and pointIsValid is returned
-     * as \c true. */
-    self->TransformAndEvaluateFixedPoint( virtualPoint,
-                                          mappedFixedPoint,
-                                          pointIsValid,
-                                          fixedImageValue,
-                                          true /*compute gradient*/,
-                                          fixedImageDerivatives,
-                                          threadID );
-    if( pointIsValid )
-      {
-      self->TransformAndEvaluateMovingPoint( virtualPoint,
-                                            mappedMovingPoint,
-                                            pointIsValid,
-                                            movingImageValue,
-                                            true /*compute gradient*/,
-                                            movingImageDerivatives,
-                                            threadID );
-      }
+      /* Do this in a try block to catch exceptions and print more useful info
+       * then we otherwise get when exceptions are caught in MultiThreader. */
+      try
+        {
+        /* Transform the point into fixed and moving spaces, and evaluate.
+         * These methods will check that the point lies within the mask if
+         * one has been set, and then verify they lie in the fixed or moving
+         * space as appropriate.
+         * If both tests pass, the point is evaluated and pointIsValid is
+         * returned as \c true. */
+        self->TransformAndEvaluateFixedPoint( virtualPoint,
+                                              mappedFixedPoint,
+                                              pointIsValid,
+                                              fixedImageValue,
+                                              true /*compute gradient*/,
+                                              fixedImageDerivatives,
+                                              threadID );
+        if( pointIsValid )
+          {
+          self->TransformAndEvaluateMovingPoint( virtualPoint,
+                                                mappedMovingPoint,
+                                                pointIsValid,
+                                                movingImageValue,
+                                                true /*compute gradient*/,
+                                                movingImageDerivatives,
+                                                threadID );
+          }
+        }
+      catch( ExceptionObject & exc )
+        {
+        //NOTE: there must be a cleaner way to do this:
+        std::string msg("Caught exception: \n");
+        msg += exc.what();
+        ExceptionObject err(__FILE__, __LINE__, msg);
+        throw err;
+        }
 
-    /* Call the user method in derived classes to do the specific
-     * calculations for value and derivative. */
-    if( pointIsValid )
-      {
-      pointIsValid = self->GetValueAndDerivativeProcessPoint(
+      /* Call the user method in derived classes to do the specific
+       * calculations for value and derivative. */
+      try
+        {
+        if( pointIsValid )
+          {
+          pointIsValid = self->GetValueAndDerivativeProcessPoint(
                    virtualPoint,
                    mappedFixedPoint, fixedImageValue, fixedImageDerivatives,
                    mappedMovingPoint, movingImageValue, movingImageDerivatives,
-                   metricValueResult, derivativeResult, threadID );
-      }
+                   metricValueResult, localDerivative, threadID );
+          }
+        }
+      catch( ExceptionObject & exc )
+        {
+        //NOTE: there must be a cleaner way to do this:
+        std::string msg("Caught exception: \n");
+        msg += exc.what();
+        ExceptionObject err(__FILE__, __LINE__, msg);
+        throw err;
+        }
 
-    if( pointIsValid )
-      {
-      self->m_NumberOfValidPointsPerThread[ threadID ]++;
-      metricValueSum += metricValueResult;
-      /* Store the localDerivative. This depends on what type of
-       * transform is being used. */
-      self->StoreDerivativeResult( derivativeResult,
-                              ItV.GetIndex(), threadID );
-      }
+      if( pointIsValid )
+        {
+        self->m_NumberOfValidPointsPerThread[ threadID ]++;
+        metricValueSum += metricValueResult;
+        /* Store the result. This depends on what type of
+         * transform is being used. */
+        self->StoreDerivativeResult( localDerivative,
+                                ItV.GetIndex(), threadID );
+        }
 
-    //next index
-    ++ItV;
-  }
+      //next index
+      ++ItV;
+    }
 
-  /* Store metric value result for this thread. */
-  self->m_MeasurePerThread[threadID] = metricValueSum;
+    /* Store metric value result for this thread. */
+    self->m_MeasurePerThread[threadID] = metricValueSum;
 }
 
 /*
@@ -512,15 +549,25 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // this requires the moving image deformation field to be
     // same size as virtual image, and that VirtualImage PixelType
     // is scalar.
-    OffsetValueType offset =
-      this->m_VirtualDomainImage->ComputeOffset(virtualIndex);
-    offset*=this->m_MovingImageTransform->GetNumberOfLocalParameters();
-    for (unsigned int i=0;
-          i < this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++)
+    try
       {
-      /* Be sure to add here and not assign. Required for proper behavior
-       * with multi-variate metric. */
-      derivativeResult[offset+i] += derivative[i];
+      OffsetValueType offset =
+        this->m_VirtualDomainImage->ComputeOffset(virtualIndex);
+      offset*=this->m_MovingImageTransform->GetNumberOfLocalParameters();
+      for (unsigned int i=0;
+            i < this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++)
+        {
+        /* Be sure to add here and not assign. Required for proper behavior
+         * with multi-variate metric. */
+        derivativeResult[offset+i] += derivative[i];
+        }
+      }
+    catch( ExceptionObject & exc )
+      {
+      std::string msg("Caught exception: \n");
+      msg += exc.what();
+      ExceptionObject err(__FILE__, __LINE__, msg);
+      throw err;
       }
     }
 }
@@ -609,7 +656,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // But, pre-warping the images would be inefficient when a mask or
     // sampling is used to compute only a subset of points.
     fixedGradient =
-      m_FixedImageTransform->TransformCovariantVector( fixedGradient );
+      m_FixedImageTransform->TransformCovariantVector( fixedGradient,
+                                                        mappedFixedPoint );
     }
 }
 
@@ -688,7 +736,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
     movingGradient =
-      m_MovingImageTransform->TransformCovariantVector( movingGradient );
+      m_MovingImageTransform->TransformCovariantVector( movingGradient,
+                                                        mappedMovingPoint );
     }
 }
 
@@ -713,7 +762,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    if ( m_PrecomputeGradient )
+    if ( m_PrecomputeImageGradient )
       {
       ContinuousIndex< double, FixedImageDimension > tempIndex;
       m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
@@ -749,7 +798,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    if ( m_PrecomputeGradient )
+    if ( m_PrecomputeImageGradient )
       {
       ContinuousIndex< double, MovingImageDimension > tempIndex;
       m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
@@ -767,7 +816,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /*
- * Get the size of localDerivative
+ * Get the size of derivative result
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 SizeValueType

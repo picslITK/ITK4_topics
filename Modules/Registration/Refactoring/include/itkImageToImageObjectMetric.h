@@ -40,8 +40,8 @@ namespace itk
  * 2) otherwise, GradientRecursiveGaussianImageFilter is used by default to
  * precompute the gradient for each image. This requires memory to hold the
  * fully computed gradient image.
- * 3) lastly, CentralDifferenceImageFunction is used if m_PrecomputeGradient
- * option has been set to false.
+ * 3) lastly, CentralDifferenceImageFunction is used if
+ * m_PrecomputeImageGradient option has been set to false.
  *
  * Derived classes must implement pure virtual methods declared in
  * ObjectToObjectMetric.
@@ -347,9 +347,9 @@ public:
   itkGetConstObjectMacro(FixedImageMask, FixedImageMaskType);
 
   /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter. */
-  itkSetMacro(PrecomputeGradient, bool);
-  itkGetConstReferenceMacro(PrecomputeGradient, bool);
-  itkBooleanMacro(PrecomputeGradient);
+  itkSetMacro(PrecomputeImageGradient, bool);
+  itkGetConstReferenceMacro(PrecomputeImageGradient, bool);
+  itkBooleanMacro(PrecomputeImageGradient);
 
   /** Get number of threads to use.
    * \warning This value can change during Initialize, if the threader
@@ -361,7 +361,8 @@ public:
    */
   itkGetConstMacro( NumberOfThreads, ThreadIdType );
 
-  /** Set number of threads to use.
+  /** Set number of threads to use. The default is the number of threads
+   * available as reported by MultiThreader.
    * \warning See discussion for GetNumberOfThreads. */
   void SetNumberOfThreads( ThreadIdType );
 
@@ -383,15 +384,26 @@ public:
 
   /** Return the number of parameters.
    * NOTE: this is required because we derive from CostFunction. But
-   * it's not really relevant, and may be removed if we decide not
-   * to derive from SingleValuedCostFunction. */
+   * it may not be relevant, and may be removed if we decide not
+   * to derive from SingleValuedCostFunction.
+   * However, it might still be needed for hanling different
+   * DerivativeSource modes. */
   /* We return the number of parameters
    * in moving image transform because (for now at least) that's the
    * transform we're optimizing. */
+  /* NOTE: shouldn't this go into ObjectToObjectMetric? */
   virtual unsigned int GetNumberOfParameters() const
     { return this->m_MovingImageTransform->GetNumberOfParameters(); }
 
-  /** Return the size of derivative, taking DerivativeSource
+  /** FIXME: documentation. See GetNumberOfParameters */
+  virtual unsigned int GetNumberOfLocalParameters() const
+    { return this->m_MovingImageTransform->GetNumberOfLocalParameters(); }
+
+  /** FIXME: documentation. See GetNumberOfParameters */
+  virtual bool HasLocalSupport() const
+    { return this->m_MovingImageTransform->HasLocalSupport(); }
+
+  /** Return the size of derivative result, taking DerivativeSource
    * into account. */
   virtual SizeValueType GetLocalDerivativeSize() const;
 
@@ -488,7 +500,7 @@ protected:
 
   /** Flag to control use of precomputed Gaussian gradient filter or gradient
    * calculator for image gradient calculations. */
-  bool                               m_PrecomputeGradient;
+  bool                               m_PrecomputeImageGradient;
   /** Gradient images to store Gaussian gradient filter output. */
   typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
   typename MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
@@ -518,8 +530,8 @@ protected:
    * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
    * that have passed bounds checking, and lie within any mask that may
    * be assigned.
-   * Results are returned in \c metricValueResult and \c derivativesResult, and
-   * will be managed by this base class.
+   * Results are returned in \c metricValueReturn and \c localDerivativeReturn,
+   * and will be processed by this base class.
    * \c threadID may be used as needed, for example to access any per-thread
    * data cached during pre-processing by the derived class.
    * \warning The derived class should use \c m_NumberOfThreads from this base
@@ -535,8 +547,8 @@ protected:
         const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
         const MovingImagePixelType &       itkNotUsed(movingImageValue),
         const MovingImageDerivativesType & itkNotUsed(movingImageDerivatives),
-        MeasureType &                      itkNotUsed(metricValueResult),
-        DerivativeType &                   itkNotUsed(derivativesResult),
+        MeasureType &                      itkNotUsed(metricValueReturn),
+        DerivativeType &                   itkNotUsed(localDerivativeReturn),
         ThreadIdType                       itkNotUsed(threadID) )
     /* ImageToImageMetric had this method simply return false. But why not
      * make it pure virtual ? */
@@ -559,13 +571,21 @@ protected:
    * value and derivative. Typically called by derived classes after
    * GetValueAndDerivativeMultiThreadedInitiate. Collects the results
    * from each thread and sums them.
-   * Results are stored in m_Value and m_DerivativeResult on return.
+   * Results are stored in \c m_Value and \c m_DerivativeResult, and
+   * in \c value and \c derivative. The latter two are meant to be used
+   * to assign results to user variables passed into GetValueAndDerivative.
+   * The results for \c derivative are assigned by data-pointer redirection to,
+   * \c m_DerivativeResult, and not by copying. The memory is managed by
+   * \c m_DerivativeResult. See implementation for details.
    * Pass true for \c doAverage to use the number of valid points, \c
    * m_NumberOfValidPoints, to average the value sum, and to average derivative
    * sums for global transforms only (i.e. transforms without local support).
    * Derived classes need not call this if they require special handling.
    */
-  virtual void GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage );
+  virtual void GetValueAndDerivativeMultiThreadedPostProcess(
+                                                  MeasureType & value,
+                                                  DerivativeType & derivative,
+                                                  bool doAverage );
 
   /** Type of the default threader used for GetValue and GetDerivative.
    * This splits an image region in per-thread sub-regions over the outermost
