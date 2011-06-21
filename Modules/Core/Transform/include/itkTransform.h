@@ -166,8 +166,15 @@ public:
   /**  Method to transform a CovariantVector. */
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const = 0;
 
-  //virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType & vector, const InputPointType & point) const
-  //  { return TransformCovariantVector( vector ); }
+  /** Method to transform a CovariantVector, using a point. Global transforms
+   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior.
+   * By default, \c point is ignored and \c TransformCovariantVector(vector) is
+   * called */
+  virtual OutputCovariantVectorType TransformCovariantVector(
+                               const InputCovariantVectorType & vector,
+                               const InputPointType & itkNotUsed(point) ) const
+    { return TransformCovariantVector( vector ); }
 
   /** Method to transform a diffusion tensor */
   virtual OutputTensorType TransformTensor( const InputTensorType & tensor ) const
