@@ -22,6 +22,7 @@
 #include "itkVector.h"
 #include "itkSymmetricSecondRankTensor.h"
 #include "itkDiffusionTensor3D.h"
+#include "itkVariableLengthVector.h"
 #include "vnl/vnl_vector_fixed.h"
 #include "itkMatrix.h"
 
@@ -109,16 +110,20 @@ public:
   typedef Vector< TScalarType, NInputDimensions >  InputVectorType;
   typedef Vector< TScalarType, NOutputDimensions > OutputVectorType;
 
+  /** Standard variable length vector type for this class
+   *  this provides an interface for the VectorImage class */
+  typedef VariableLengthVector< TScalarType >      InputVectorPixelType;
+  typedef VariableLengthVector< TScalarType >      OutputVectorPixelType;
+
   /* Standard tensor type for this class */
   typedef DiffusionTensor3D< TScalarType >         InputTensorType;
   typedef DiffusionTensor3D< TScalarType >         OutputTensorType;
 
+  typedef SymmetricSecondRankTensor< TScalarType, 3 >      InputTensorMatrixType;
+  typedef SymmetricSecondRankTensor< TScalarType, 3 >      OutputTensorMatrixType;
+
   typedef CovariantVector<TScalarType, InputTensorType::Dimension> InputTensorEigenVectorType;
   typedef CovariantVector<TScalarType, OutputTensorType::Dimension> OutputTensorEigenVectorType;
-
-  /** Standard tensor matrix type for this class */
-  typedef typename SymmetricSecondRankTensor<TScalarType>::MatrixType       InputTensorMatrixType;
-  typedef typename SymmetricSecondRankTensor<TScalarType>::MatrixType       OutputTensorMatrixType;
 
   /** Standard covariant vector type for this class */
   typedef CovariantVector< TScalarType, NInputDimensions >  InputCovariantVectorType;
@@ -154,13 +159,27 @@ public:
   virtual OutputVectorType    TransformVector(const InputVectorType &) const = 0;
 
   /** Method to transform a vector at a given location*/
-  virtual OutputVectorType    TransformVector(const InputVectorType & vector, const InputPointType & point) const
+  virtual OutputVectorType    TransformVector(
+                              const InputVectorType & vector,
+                              const InputPointType & itkNotUsed(point) ) const
     { return TransformVector( vector ); }
 
   /**  Method to transform a vnl_vector. */
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const = 0;
 
-  virtual OutputVnlVectorType    TransformVector(const InputVnlVectorType & vector, const InputPointType & point) const
+  virtual OutputVnlVectorType    TransformVector(
+                              const InputVnlVectorType & vector,
+                              const InputPointType & itkNotUsed(point) ) const
+    { return TransformVector( vector ); }
+
+  /** Method to transform a vector stored in a VectorImage.  */
+  virtual OutputVectorPixelType TransformVector( const InputVectorPixelType & vector ) const
+    { return vector; }
+
+  /** Method to transform a vector stored in a VectorImage.  */
+  virtual OutputVectorPixelType TransformVector(
+                              const InputVectorPixelType & vector,
+                              const InputPointType & itkNotUsed(point) ) const
     { return TransformVector( vector ); }
 
   /**  Method to transform a CovariantVector. */
@@ -176,12 +195,39 @@ public:
                                const InputPointType & itkNotUsed(point) ) const
     { return TransformCovariantVector( vector ); }
 
+
+  /**  Method to transform a CovariantVector stored in a VectorImage. */
+  virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType & vector) const
+    { return vector; }
+
+  /** Method to transform a CovariantVector, using a point. Global transforms
+   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior.
+   * By default, \c point is ignored and \c TransformCovariantVector(vector) is
+   * called */
+  virtual OutputVectorPixelType TransformCovariantVector(
+                               const InputVectorPixelType & vector,
+                               const InputPointType & itkNotUsed(point) ) const
+    { return TransformCovariantVector( vector ); }
+
   /** Method to transform a diffusion tensor */
   virtual OutputTensorType TransformTensor( const InputTensorType & tensor ) const
     { return tensor; }
 
   /** Method to transform a diffusion tensor  */
-  virtual OutputTensorType TransformTensor( const InputTensorType & tensor,  const InputPointType & point ) const
+  virtual OutputTensorType TransformTensor(
+                               const InputTensorType & tensor,
+                               const InputPointType & itkNotUsed(point) ) const
+    { return tensor; }
+
+  /** Method to transform a diffusion tensor stored in a VectorImage */
+  virtual OutputVectorPixelType TransformTensor( const InputVectorPixelType & tensor ) const
+    { return tensor; }
+
+  /** Method to transform a diffusion tensor stored in a VectorImage */
+  virtual OutputVectorPixelType TransformTensor(
+                               const InputVectorPixelType & tensor,
+                               const InputPointType & itkNotUsed(point) ) const
     { return tensor; }
 
   /** Set the transformation parameters and update internal transformation.
