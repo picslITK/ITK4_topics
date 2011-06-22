@@ -163,11 +163,62 @@ DeformationFieldTransform<TScalar, NDimensions>
   AffineTransformPointer localTransform = AffineTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
-  OutputVectorType outputVector = localTransform->TransformVector( vector );
-
-  return outputVector;
-
+  return localTransform->TransformVector( vector );
 }
+
+
+/**
+ * Transform vector
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVnlVectorType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformVector( const InputVnlVectorType& vector, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  AffineTransformPointer localTransform = AffineTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+  return localTransform->TransformVector( vector );
+}
+
+/**
+ * Transform vector
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformVector( const InputVectorPixelType& vector, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
+
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  AffineTransformPointer localTransform = AffineTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+  return localTransform->TransformVector( vector );
+}
+
 
 
 /**
@@ -193,10 +244,30 @@ DeformationFieldTransform<TScalar, NDimensions>
   LocalTransformPointer localTransform = LocalTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
+  return localTransform->TransformTensor( inputTensor );
+}
 
-  OutputTensorType result = localTransform->TransformTensor( inputTensor );
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformTensor( const InputVectorPixelType& inputTensor, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
 
-  return result;
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  LocalTransformPointer localTransform = LocalTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+  return localTransform->TransformTensor( inputTensor );
 }
 
 
