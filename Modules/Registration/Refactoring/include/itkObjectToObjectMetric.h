@@ -36,7 +36,6 @@ namespace itk
  * \ingroup ITK-Review
  */
 
-template< class TFixedObject,  class TMovingObject >
 class ITK_EXPORT ObjectToObjectMetric:
   public SingleValuedCostFunction
 {
@@ -54,14 +53,14 @@ public:
   typedef Superclass::ParametersValueType CoordinateRepresentationType;
 
   /**  Type of the measure. */
-  typedef typename Superclass::MeasureType    MeasureType;
+  typedef  Superclass::MeasureType    MeasureType;
 
   /**  Type of the derivative. */
-  typedef typename Superclass::DerivativeType DerivativeType;
+  typedef  Superclass::DerivativeType DerivativeType;
 
   /**  Type of the parameters. */
-  typedef typename Superclass::ParametersType       ParametersType;
-  typedef typename Superclass::ParametersValueType  ParametersValueType;
+  typedef  Superclass::ParametersType       ParametersType;
+  typedef  Superclass::ParametersValueType  ParametersValueType;
 
   /** Source of the object derivatives (image derivatives, in the case of
    * image to image metrics). Defaults to Moving. */
@@ -98,13 +97,11 @@ public:
                                      DerivativeType & derivative) = 0;
 
 protected:
-  ObjectToObjectMetric();
-  virtual ~ObjectToObjectMetric();
+  ObjectToObjectMetric() {}
+  virtual ~ObjectToObjectMetric() {}
 
-  void PrintSelf(std::ostream & os, Indent indent) const;
-
-  /* Necessary ?? */
-  mutable ParametersType      m_Parameters;
+  void PrintSelf(std::ostream & os, Indent indent) const
+  { Superclass::PrintSelf(os, indent); os << indent << "TODO..."; }
 
   DerivativeSourceType       m_DerivativeSource;
 
@@ -116,21 +113,23 @@ private:
    * SingleValuedCostFunction. This is a sign that we probalby shouldn't
    * be deriving this from SingleValuedCostFunction. */
   MeasureType GetValue( const ParametersType& ) const
-    {
-    itkExceptionMacro("Not implemented. Use GetValue(void).");
-    };
+  { itkExceptionMacro("Not implemented. Use GetValue(void)."); }
 
   /** This method returns the derivative of the cost function */
   void GetDerivative( const ParametersType &, DerivativeType &) const
-    {
-    itkExceptionMacro("Not implemented. Use GetDerivative(DerivativeType&).");
-    };
+  { itkExceptionMacro("Not implemented. Use GetDerivative(DerivativeType&).");}
+
+  void GetValueAndDerivative (const ParametersType &parameters,
+                              MeasureType &value,
+                              DerivativeType &derivative) const
+  { itkExceptionMacro("Not implemented. Use GetValueAndDerivative( "
+                      "MeasureType & value, DerivativeType & derivative)."); }
 
 };
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkObjectToObjectMetric.txx"
+//#include "itkObjectToObjectMetric.txx"
 #endif
 
 #endif

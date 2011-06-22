@@ -48,13 +48,13 @@ namespace itk
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
-public ObjectToObjectMetric<TFixedImage, TMovingImage>
+  public ObjectToObjectMetric
 {
 public:
 
   /** Standard class typedefs. */
   typedef ImageToImageObjectMetric                          Self;
-  typedef ObjectToObjectMetric<TFixedImage, TMovingImage>   Superclass;
+  typedef ObjectToObjectMetric                              Superclass;
   typedef SmartPointer<Self>                                Pointer;
   typedef SmartPointer<const Self>                          ConstPointer;
 

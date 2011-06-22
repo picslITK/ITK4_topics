@@ -5,7 +5,7 @@ set(ITK-RegistrationRefactoringTests
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDeformationFieldTransformRegistrationTest.cxx
   itkArray1DToDataTest.cxx
-#  itkObjectToObjectOptimizerBaseTest.cxx
+  itkObjectToObjectOptimizerBaseTest.cxx
   itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx

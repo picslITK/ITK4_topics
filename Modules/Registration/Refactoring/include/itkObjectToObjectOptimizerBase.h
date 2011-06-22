@@ -18,6 +18,8 @@
 #define __itkObjectToObjectOptimizerBase_h
 
 #include "itkTransformParameters.h"
+#include "itkObjectToObjectMetric.h"
+#include "itkIntTypes.h"
 
 namespace itk
 {
@@ -33,12 +35,11 @@ namespace itk
  * \ingroup ITK-Optimizers
  */
 
-template<class TMetricFunction>
 class ITK_EXPORT ObjectToObjectOptimizerBase : public Object
 {
 public:
   /** Standard class typedefs. */
-  typedef ObjectToObjectOptimizerBase   Self;
+  typedef ObjectToObjectOptimizerBase                 Self;
   typedef Object                                      Superclass;
   typedef SmartPointer< Self >                        Pointer;
   typedef SmartPointer< const Self >                  ConstPointer;
@@ -49,28 +50,27 @@ public:
   /**  Scale type. */
   typedef TransformParameters< double >             ScalesType;
 
-  /** Metric type over which this class is templated */
-  typedef TMetricFunction                           MetricType;
-  typedef typename MetricType::Pointer              MetricTypePointer;
+  /** Metric function type */
+  typedef ObjectToObjectMetric                      MetricType;
+  typedef MetricType::Pointer                       MetricTypePointer;
   /** Measure type */
-  typedef typename MetricType::MeasureType          MeasureType;
-  /** Image region type */
+  typedef MetricType::MeasureType                   MeasureType;
+
   /** Internal computation type, for maintaining a desired precision */
-  typedef typename MetricType::InternalComputationValueType
-                                          InternalComputationValueType;
+  //typedef typename MetricType::InternalComputationValueType
+  //                                        InternalComputationValueType;
 
   /** Accessors for Metric */
   itkGetObjectMacro( Metric, MetricType );
   itkSetObjectMacro( Metric, MetricType );
 
   /** Accessor for metric value */
-  // ??? Do we need this here ?
-  itkGetConstReferenceMacro( Value, InternalComputationValueType );
+  itkGetConstReferenceMacro( Value, MeasureType );
 
   /** Set current parameters scaling. */
   void SetScales(const ScalesType & scales)
   {
-    if( scales != m_scales )
+    if( scales != m_Scales )
     itkDebugMacro("setting scales to " <<  scales);
     m_Scales = scales;
     this->Modified();
@@ -104,20 +104,18 @@ protected:
     this->m_Metric = NULL;
     this->m_Value = 0;
   }
-
-  MetricTypePointer             m_Metric;
-  ThreadIdType                  m_NumberOfThreads; // ??? Needed any more?
-//  MetricThreaderPointer         m_MetricThreader;
-
-  /** Metric measure value at a given iteration */
-  // ??? Why are we storing this here?
-  MeasureType                                 m_Value;
-
   virtual ~ObjectToObjectOptimizerBase(){}
 
-private:
+  MetricTypePointer             m_Metric;
+  ThreadIdType                  m_NumberOfThreads;
 
-  ScalesType::Pointer              m_Scales;
+  /** Metric measure value at a given iteration */
+  MeasureType                   m_Value;
+
+  /** Scales */
+  ScalesType                    m_Scales;
+
+private:
 
   //purposely not implemented
   ObjectToObjectOptimizerBase( const Self & );

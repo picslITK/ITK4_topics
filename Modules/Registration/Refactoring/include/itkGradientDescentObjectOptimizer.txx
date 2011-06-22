@@ -47,6 +47,12 @@ GradientDescentObjectOptimizer<TMetricFunction>
   m_CurrentIteration   = 0;
 
   /* Validate some settings */
+  if( this->m_Metric.IsNull() )
+    {
+    itkExceptionMacro("m_Metric must be set.");
+    return;
+    }
+
   if( this->m_Scales.Size() != this->m_Metric->GetNumberOfParameters() )
     {
     m_StopCondition = OtherError;
@@ -82,7 +88,7 @@ GradientDescentObjectOptimizer<TMetricFunction>
     /* Compute value/derivative, using threader. */
     try
       {
-      this->UpdateMetricValueAndDerivative();
+      this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
       }
     catch ( ExceptionObject & err )
       {
@@ -130,9 +136,12 @@ GradientDescentObjectOptimizer<TMetricFunction>
 {
   itkDebugMacro("AdvanceOneStep");
 
+  /* Begin threaded gradient modification. Work is done in
+   * ModifyGradientOverSubRange */
   this->ModifyGradient();
+
   this->m_Metric->GetMovingImageTransform()->
-                    UpdateTransformParameters( m_Gradient ??? );
+                    UpdateTransformParameters( m_Gradient );
   this->InvokeEvent( IterationEvent() );
 }
 

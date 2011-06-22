@@ -26,12 +26,12 @@ namespace itkObjectToObjectMetricTestHelpers
 
 template< class TFixedObject,  class TMovingObject >
 class ITK_EXPORT ObjectToObjectMetricSurrogate:
-  public itk::ObjectToObjectMetric<TFixedObject, TMovingObject>
+  public itk::ObjectToObjectMetric
 {
 public:
   /** Standard class typedefs. */
   typedef ObjectToObjectMetricSurrogate                           Self;
-  typedef itk::ObjectToObjectMetric<TFixedObject,TMovingObject>   Superclass;
+  typedef itk::ObjectToObjectMetric                               Superclass;
   typedef itk::SmartPointer< Self >                               Pointer;
   typedef itk::SmartPointer< const Self >                         ConstPointer;
 

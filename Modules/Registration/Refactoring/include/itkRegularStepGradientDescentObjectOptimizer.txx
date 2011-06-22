@@ -33,6 +33,29 @@ RegularStepGradientDescentObjectOptimizer<TMetricFunction>
 }
 
 
+/*
+
+for regular step grad descent initialize:
+
+  const unsigned int dimensions =
+    this->m_Metric->GetNumberOfParameters();
+  // Verify parameter settings
+  if ( m_RelaxationFactor < 0.0 )
+    {
+    itkExceptionMacro(<< "Relaxation factor must be positive. "
+                         "Current value is " << m_RelaxationFactor);
+    return;
+    }
+
+  if ( m_RelaxationFactor >= 1.0 )
+    {
+    itkExceptionMacro(<< "Relaxation factor must less than 1.0. "
+                         "Current value is " << m_RelaxationFactor);
+    return;
+    }
+
+*/
+
 }//namespace itk
 
 #endif
