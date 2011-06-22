@@ -19,14 +19,14 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "itkGradientDescentThreadedMetricOptimizer.h"
+#include "itkGradientDescentObjectOptimizer.h"
 #include "itkDemonsImageToImageMetric.h"
 
 using namespace itk;
 
 /**
  */
-int itkGradientDescentThreadedMetricOptimizerTest(int , char* [])
+int itkGradientDescentObjectOptimizerTest(int , char* [])
 {
   const int ImageDimension = 2;
   typedef itk::Image<float, ImageDimension>                  ImageType;

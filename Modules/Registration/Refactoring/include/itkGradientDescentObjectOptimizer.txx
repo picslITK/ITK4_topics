@@ -15,10 +15,10 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkGradientDescentThreadedMetricOptimizer_txx
-#define __itkGradientDescentThreadedMetricOptimizer_txx
+#ifndef __itkGradientDescentObjectOptimizer_txx
+#define __itkGradientDescentObjectOptimizer_txx
 
-#include "itkGradientDescentThreadedMetricOptimizer.h"
+#include "itkGradientDescentObjectOptimizer.h"
 
 namespace itk
 {
@@ -28,8 +28,8 @@ namespace itk
  */
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
-::GradientDescentThreadedMetricOptimizer()
+GradientDescentObjectOptimizer<TMetricFunction>
+::GradientDescentObjectOptimizer()
 {
   m_LearningRate = 1.0;
 }
@@ -39,7 +39,7 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
  */
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer<TMetricFunction>
 ::StartOptimization()
 {
   itkDebugMacro("StartOptimization");
@@ -65,7 +65,7 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
  */
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer<TMetricFunction>
 ::ResumeOptimization()
 {
   /* Do threading initialization here so we can also do some cleanup
@@ -125,7 +125,7 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
  */
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer<TMetricFunction>
 ::AdvanceOneStep()
 {
   itkDebugMacro("AdvanceOneStep");
@@ -141,7 +141,7 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
  */
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer<TMetricFunction>
 ::ModifyGradientOverSubRange( IndexRangeType& subrange )
 {
   double direction;

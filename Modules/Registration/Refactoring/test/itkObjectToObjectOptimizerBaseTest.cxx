@@ -19,7 +19,7 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "itkObjectToObjectThreadedMetricOptimizerBase.h"
+#include "itkObjectToObjectOptimizerBase.h"
 #include "itkDemonsImageToImageMetric.h"
 
 using namespace itk;
@@ -34,12 +34,12 @@ typedef MetricType::RegionType                                ImageRegionType;
 
 /* Define a simple derived class. */
 class TestOptimizer
-  : public ObjectToObjectThreadedMetricOptimizerBase< MetricType >
+  : public ObjectToObjectOptimizerBase< MetricType >
 {
 public:
   /** Standard "Self" typedef. */
   typedef TestOptimizer                           Self;
-  typedef ObjectToObjectThreadedMetricOptimizerBase< MetricType >
+  typedef ObjectToObjectOptimizerBase< MetricType >
                                                   Superclass;
   typedef SmartPointer< Self >                    Pointer;
   typedef SmartPointer< const Self >              ConstPointer;
@@ -62,7 +62,7 @@ public:
 
 /**
  */
-int itkObjectToObjectThreadedMetricOptimizerBaseTest(int , char* [])
+int itkObjectToObjectOptimizerBaseTest(int , char* [])
 {
   MetricType::Pointer metric = MetricType::New();
   TestOptimizer::Pointer optimizer = TestOptimizer::New();

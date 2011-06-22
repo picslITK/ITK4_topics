@@ -15,10 +15,10 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkGradientDescentThreadedMetricOptimizerBase_txx
-#define __itkGradientDescentThreadedMetricOptimizerBase_txx
+#ifndef __itkGradientDescentObjectOptimizerBase_txx
+#define __itkGradientDescentObjectOptimizerBase_txx
 
-#include "itkGradientDescentThreadedMetricOptimizerBase.h"
+#include "itkGradientDescentObjectOptimizerBase.h"
 
 namespace itk
 {
@@ -26,8 +26,8 @@ namespace itk
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
-::GradientDescentThreadedMetricOptimizerBase()
+GradientDescentObjectOptimizerBase<TMetricFunction>
+::GradientDescentObjectOptimizerBase()
 {
   this->m_ModifyGradientThreader->SetThreadedGenerateData(
     Self::ModifyGradientThreaded );
@@ -42,7 +42,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 const std::string
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::GetStopConditionDescription() const
 {
   return m_StopConditionDescription.str();
@@ -51,7 +51,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 const std::string
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::StopOptimization(void)
 {
   itkDebugMacro("StopOptimization");
@@ -64,7 +64,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::InitializeForThreading()
 {
   if( this->m_Metric.IsNull() )
@@ -105,7 +105,7 @@ for regular step grad descent:
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::UpdateMetricValueAndDerivative()
 {
 //  this->BeforeMetricThreadedGenerateData();
@@ -118,7 +118,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::BeforeMetricThreadedGenerateData()
 {
   /* Allow the metric to do any per-iteration initialization it
@@ -130,7 +130,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::AfterMetricThreadedGenerateData()
 {
 
@@ -141,7 +141,7 @@ GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::CleanupFromThreading()
 {
 removed metric-threading stuff
@@ -150,7 +150,7 @@ removed metric-threading stuff
 //-------------------------------------------------------------------
 template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase<TMetricFunction>
 ::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
                           int threadId,
                           Self *holder )

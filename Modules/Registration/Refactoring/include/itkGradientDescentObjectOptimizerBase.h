@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGradientDescentThreadedMetricOptimizerBase.h,v $
+  Module:    $RCSfile: itkGradientDescentObjectOptimizerBase.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,25 +14,25 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkGradientDescentThreadedMetricOptimizerBase_h
-#define __itkGradientDescentThreadedMetricOptimizerBase_h
+#ifndef __itkGradientDescentObjectOptimizerBase_h
+#define __itkGradientDescentObjectOptimizerBase_h
 
 #include "itkPoint.h"
 #include "itkIndex.h"
-#include "itkObjectToObjectThreadedMetricOptimizerBase.h"
+#include "itkObjectToObjectOptimizerBase.h"
 #include "itkArray1DToData.h"
 
 namespace itk
 {
 
 template<class TMetricFunction>
-class ITK_EXPORT GradientDescentThreadedMetricOptimizerBase
-  : public ObjectToObjectThreadedMetricOptimizerBase< TMetricFunction >
+class ITK_EXPORT GradientDescentObjectOptimizerBase
+  : public ObjectToObjectOptimizerBase< TMetricFunction >
 {
 public:
   /** Standard class typedefs. */
-  typedef GradientDescentThreadedMetricOptimizerBase     Self;
-  typedef ObjectToObjectThreadedMetricOptimizerBase < TMetricFunction >
+  typedef GradientDescentObjectOptimizerBase     Self;
+  typedef ObjectToObjectOptimizerBase < TMetricFunction >
                                                          Superclass;
   typedef SmartPointer< Self >                           Pointer;
   typedef SmartPointer< const Self >                     ConstPointer;
@@ -199,8 +199,8 @@ protected:
   bool               m_Maximize;
 
   /** Default constructor */
-  GradientDescentThreadedMetricOptimizerBase();
-  virtual ~GradientDescentThreadedMetricOptimizerBase(){}
+  GradientDescentObjectOptimizerBase();
+  virtual ~GradientDescentObjectOptimizerBase(){}
 
   /** Threader for grandient modification */
   ModifyGradientThreaderType      m_ModifyGradientThreader;
@@ -208,7 +208,7 @@ protected:
 private:
 
   //purposely not implemented
-  GradientDescentThreadedMetricOptimizerBase( const Self & );
+  GradientDescentObjectOptimizerBase( const Self & );
   void operator=( const Self& );      //purposely not implemented
 
 };
@@ -216,7 +216,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkGradientDescentThreadedMetricOptimizerBase.txx"
+# include "itkGradientDescentObjectOptimizerBase.txx"
 #endif
 
 #endif

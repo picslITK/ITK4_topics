@@ -5,7 +5,7 @@ set(ITK-RegistrationRefactoringTests
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDeformationFieldTransformRegistrationTest.cxx
   itkArray1DToDataTest.cxx
-#  itkObjectToObjectThreadedMetricOptimizerBaseTest.cxx
+#  itkObjectToObjectOptimizerBaseTest.cxx
   itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
@@ -36,9 +36,9 @@ itk_add_test(NAME itkDeformationFieldTransformRegistrationTest
 itk_add_test(NAME itkArray1DToDataTest
          COMMAND ITK-RegistrationRefactoringTestDriver itkArray1DToDataTest)
 
-itk_add_test(NAME itkObjectToObjectThreadedMetricOptimizerBaseTest
+itk_add_test(NAME itkObjectToObjectOptimizerBaseTest
          COMMAND ITK-RegistrationRefactoringTestDriver
-         itkObjectToObjectThreadedMetricOptimizerBaseTest)
+         itkObjectToObjectOptimizerBaseTest)
 itk_add_test(NAME itkCompositeTransformTest
       COMMAND ITK-RegistrationRefactoringTestDriver itkCompositeTransformTest)
 itk_add_test(NAME itkObjectToObjectMetricTest
