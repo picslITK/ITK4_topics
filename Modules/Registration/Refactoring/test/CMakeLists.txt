@@ -2,7 +2,7 @@ itk_module_test()
 set(ITK-RegistrationRefactoringTests
   itkNewClassExampleTest.cxx
 #  itkTransformVirtualDomainCalculatorTest.cxx
-#  itkDemonsImageToImageMetricTest.cxx
+  itkDemonsImageToImageObjectMetricTest.cxx
   itkDeformationFieldTransformRegistrationTest.cxx
   itkArray1DToDataTest.cxx
 #  itkObjectToObjectThreadedMetricOptimizerBaseTest.cxx
@@ -22,8 +22,12 @@ itk_add_test(NAME itkTransformVirtualDomainCalculatorTest2D
 itk_add_test(NAME itkTransformVirtualDomainCalculatorTest3D
       COMMAND ITK-RegistrationRefactoringTestDriver itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd)
 
-#itk_add_test(NAME itkDemonsImageToImageMetricTest
-#      COMMAND ITK-RegistrationRefactoringTestDriver itkDemonsImageToImageMetricTest ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd 2)
+itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkDemonsImageToImageObjectMetricTest)
+
+#itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver itkDemonsImageToImageObjectMetricTest ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd 2)
 
 itk_add_test(NAME itkDeformationFieldTransformRegistrationTest
           COMMAND ITK-RegistrationRefactoringTestDriver

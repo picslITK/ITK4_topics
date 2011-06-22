@@ -44,17 +44,17 @@ public:
   itkTypeMacro(Self, Superclass);
 
   /** superclass types */
-  typedef typename Superclass::MeasureType                    MeasureType;
-  typedef typename Superclass::DerivativeType                 DerivativeType;
-  typedef typename Superclass::VirtualPointType             VirtualPointType;
-  typedef typename Superclass::FixedImagePointType          FixedImagePointType;
-  typedef typename Superclass::FixedImagePixelType          FixedImagePixelType;
+  typedef typename Superclass::MeasureType                MeasureType;
+  typedef typename Superclass::DerivativeType             DerivativeType;
+  typedef typename Superclass::VirtualPointType           VirtualPointType;
+  typedef typename Superclass::FixedImagePointType        FixedImagePointType;
+  typedef typename Superclass::FixedImagePixelType        FixedImagePixelType;
   typedef typename Superclass::FixedImageDerivativesType
-                                                      FixedImageDerivativesType;
-  typedef typename Superclass::MovingImagePointType         MovingImagePointType;
-  typedef typename Superclass::MovingImagePixelType         MovingImagePixelType;
+                                                     FixedImageDerivativesType;
+  typedef typename Superclass::MovingImagePointType       MovingImagePointType;
+  typedef typename Superclass::MovingImagePixelType       MovingImagePixelType;
   typedef typename Superclass::MovingImageDerivativesType
-                                                      MovingImageDerivativesType;
+                                                    MovingImageDerivativesType;
 
   /* Implement pure virtual methods */
   void Initialize() throw ( itk::ExceptionObject )
@@ -89,8 +89,7 @@ public:
     */
 
     for ( unsigned int par = 0;
-          par < this->m_MovingImageTransform->GetNumberOfLocalParameters();
-          par++ )
+          par < this->GetNumberOfLocalParameters(); par++ )
       {
       double sum = 0.0;
       for ( unsigned int dim = 0;
@@ -113,31 +112,35 @@ public:
   MeasureType GetValue()
   {
     //TODO
-    return 1.0;
+    return 0.0;
   }
 
   //This is of one two evaluation methods that the user may call.
-  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative)
+  void GetValueAndDerivative( MeasureType & valueReturn,
+                              DerivativeType & derivativeReturn)
   {
     //1) Do any pre-processing required for your metric. To help with
     // threading, you can use ImageToData or Array1DToData classes,
     // or derive your own from ObjectToData.
 
     //2) Call GetValueAndDerivativeMultiThreadedInitiate.
-    //This will iterate of image region and call your
+    //This will iterate over virtual image region and call your
     // GetValueAndDerivativeProcessPoint method, see definition in
     // base.
-    this->GetValueAndDerivativeMultiThreadedInitiate();
+    this->GetValueAndDerivativeMultiThreadedInitiate( derivativeReturn );
 
     //3) Optionally call GetValueAndDerivativeMultiThreadedPostProcess for
     // default post-processing, which sums up results from each thread,
     // and optionally averages them. It then assigns the results to
     // 'value' and 'derivative', without copying in the case of 'derivative'.
     //Do your own post-processing as needed.
-    this->GetValueAndDerivativeMultiThreadedPostProcess(
-                                      value, derivative, true /*doAverage*/ );
+    this->GetValueAndDerivativeMultiThreadedPostProcess( true /*doAverage*/ );
 
-    //That's it. Easy as 1, 2, 3.
+    //4) Return the value result. The derivative result has already been
+    // written to derivativeReturn.
+    valueReturn = this->GetValueResult();
+
+    //That's it. Easy as 1, 2, 3 (and 4).
   }
 
 protected:
@@ -171,8 +174,8 @@ bool testArray( const TVector & v1, const TVector & v2 )
 const unsigned int imageSize = 4;
 const unsigned int imageDimensionality = 2;
 typedef Image< double, imageDimensionality >              ImageType;
-typedef Transform< double, imageDimensionality, imageDimensionality >
-                                                          TransformType;
+//typedef Transform< double, imageDimensionality, imageDimensionality >
+//                                                          TransformType;
 typedef TestDerivedMetric<ImageType,ImageType,ImageType>  TestMetricType;
 
 ////////////////////////////////////////////////////////////
@@ -181,13 +184,31 @@ int RunTest( TestMetricType::Pointer & metric,
              ImageType::Pointer & movingImage )
 {
   // Initialize.
-  metric->Initialize();
+  try
+    {
+    metric->Initialize();
+    }
+  catch( ExceptionObject & exc )
+    {
+    std::cout << "Caught unexpected exception during Initialize: "
+              << exc;
+    return EXIT_FAILURE;
+    }
 
   // Evaluate
   TestMetricType::MeasureType valueReturn;
   TestMetricType::DerivativeType derivativeReturn;
   std::cout << "Calling GetValueAndDerivative..." << std::endl;
-  metric->GetValueAndDerivative( valueReturn, derivativeReturn );
+  try
+    {
+    metric->GetValueAndDerivative( valueReturn, derivativeReturn );
+    }
+  catch( ExceptionObject & exc )
+    {
+    std::cout << "Caught unexpected exception during GetValueAndDerivative: "
+              << exc;
+    return EXIT_FAILURE;
+    }
   std::cout << "...done GetValueAndDerivative." << std::endl;
 
   //Check number of threads and valid points
@@ -233,7 +254,7 @@ int RunTest( TestMetricType::Pointer & metric,
     // Get the image derivatives. Because this test is using identity transforms,
     // simply retrieve by index.
     fixedImageDerivative = fixedGradientImage->GetPixel( itFixed.GetIndex() );
-    movingImageDerivative = movingGradientImage->GetPixel( itFixed.GetIndex() );
+    movingImageDerivative = movingGradientImage->GetPixel( itMoving.GetIndex() );
     /*
     std::cout << "Truth: " << itMoving.GetIndex() << ": movingImageDerivative:"
               << movingImageDerivative << std::endl
@@ -310,7 +331,7 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
   ImageType::DirectionType  direction;
   direction.SetIdentity();
 
-  //Create test images.
+  // Create simple test images.
   ImageType::Pointer fixedImage = ImageType::New();
   fixedImage->SetRegions( region );
   fixedImage->SetSpacing( spacing );
@@ -325,7 +346,7 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
   movingImage->SetDirection( direction );
   movingImage->Allocate();
 
-  // Fill
+  // Fill images
   ImageRegionIterator<ImageType> itFixed( fixedImage, region );
   itFixed.GoToBegin();
   unsigned int count = 1;
@@ -410,6 +431,19 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
     {
     result = EXIT_FAILURE;
     }
+
+
+  /////////////// TODO
+
+  // Test assigning deformation field of wrong size, expect exception
+
+  // Test with deformation field for fixed image tx
+
+  // Test evaluating over sub-region, maybe with non-identity tx's
+
+  // Test assigning different virtual image
+
+  // Exercise other methods
 
   return result;
 }

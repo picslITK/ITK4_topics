@@ -63,7 +63,8 @@ public:
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
-  /** Type of coordinate system used to calculate values, derivatives */
+  /** Source of the object derivatives (image derivatives, in the case of
+   * image to image metrics). Defaults to Moving. */
   typedef enum  { Fixed=0, Moving, Both } DerivativeSourceType;
 
   /**

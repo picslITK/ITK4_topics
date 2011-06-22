@@ -379,19 +379,17 @@ public:
   /** Get number of valid points from most recent update */
   itkGetConstMacro( NumberOfValidPoints, SizeValueType );
 
-  /** Get the measure value, as computed by most recent evaluation */
-  itkGetConstMacro( Value, MeasureType );
+  /** Get the measure value in m_Value, as computed by most recent evaluation.
+   * Need to differentiate it from GetValue method in base class. */
+  MeasureType GetValueResult()
+  { return m_Value; }
 
-  /** Return the number of parameters.
-   * NOTE: this is required because we derive from CostFunction. But
-   * it may not be relevant, and may be removed if we decide not
-   * to derive from SingleValuedCostFunction.
-   * However, it might still be needed for hanling different
-   * DerivativeSource modes. */
-  /* We return the number of parameters
-   * in moving image transform because (for now at least) that's the
-   * transform we're optimizing. */
-  /* NOTE: shouldn't this go into ObjectToObjectMetric? */
+  /** Return the number of parameters. Convenience methods for derived
+   * classes mainly.
+   * We're always optimizing the moving image transform, so return
+   * its number of parameters. */
+  /* NOTE: could this go into ObjectToObjectMetric, along with a base
+   * pointer to transform? Or are transforms only every used for images? */
   virtual unsigned int GetNumberOfParameters() const
     { return this->m_MovingImageTransform->GetNumberOfParameters(); }
 
@@ -405,7 +403,10 @@ public:
 
   /** Return the size of derivative result, taking DerivativeSource
    * into account. */
-  virtual SizeValueType GetLocalDerivativeSize() const;
+  /* Actually I think this is wrong. Local derivate is always relevant to
+   * moving transform since we're always optimizing moving transform. And
+   * DerivativeSource is only for source of image derivatives. */
+  //virtual SizeValueType GetLocalDerivativeSize() const;
 
   /* Initialize the metric before calling GetValue or GetDerivative.
    * Derived classes must call this Superclass version if they override
@@ -413,10 +414,51 @@ public:
    * \note This is meant to be called once for a particular metric setup.
    * That is, when used in registration, this method would be called once
    * before entering the registration loop, during which GetValue or
-   * GetDerivative will be called repeatedly. */
+   * GetDerivative will be called repeatedly. It must be called again if
+   * metric settings are changed before beginning a new registration. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
 protected:
+
+  /** User worker method to calculate value and derivative
+   * given the point, value and image derivative for both fixed and moving
+   * spaces. The provided values have been calculated from \c virtualPoint,
+   * which is provided in case it's needed.
+   * Must be overriden by derived classes to do anything meaningful.
+   * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
+   * that have passed bounds checking, and lie within any mask that may
+   * be assigned.
+   * Results are returned in \c metricValueReturn and \c localDerivativeReturn,
+   * and will be processed by this base class.
+   * \c threadID may be used as needed, for example to access any per-thread
+   * data cached during pre-processing by the derived class.
+   * \warning The derived class should use \c m_NumberOfThreads from this base
+   * class only after ImageToImageObjectMetric:: Initialize has been called, to
+   * assure that the same number of threads are used.
+   * \warning  This is called from the threader, and thus must be thread-safe.
+   */
+  virtual inline bool GetValueAndDerivativeProcessPoint(
+        const VirtualPointType &           itkNotUsed(virtualPoint),
+        const FixedImagePointType &        itkNotUsed(mappedFixedPoint),
+        const FixedImagePixelType &        itkNotUsed(fixedImageValue),
+        const FixedImageDerivativesType &  itkNotUsed(FixedImageDerivatives),
+        const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
+        const MovingImagePixelType &       itkNotUsed(movingImageValue),
+        const MovingImageDerivativesType & itkNotUsed(movingImageDerivatives),
+        MeasureType &                      itkNotUsed(metricValueReturn),
+        DerivativeType &                   itkNotUsed(localDerivativeReturn),
+        ThreadIdType                       itkNotUsed(threadID) )
+    /* ImageToImageMetric had this method simply return false. But why not
+     * make it pure virtual ? */
+    {return false;}
+
+  /** Perform any initialization required before each evaluation of
+   * value and derivative. This is distinct from Initialize, which
+   * is called only once before a number of iterations, e.g. before
+   * a registration loop.
+   * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
+   * threading starts. */     //NOTE: make this private?
+  virtual void InitializeForIteration(void);
 
   /** Transform a point from VirtualImage domain to FixedImage domain.
    * This function also checks if mapped point is within the mask if
@@ -457,18 +499,13 @@ protected:
                                     MovingImageDerivativesType & gradient,
                                     ThreadIdType threadID) const;
 
-  /** Store derivative result from a single point calculation. */
+  /** Store derivative result from a single point calculation.
+   * \warning If this method is overridden or otherwise not used
+   * in a derived class, be sure to *accumulate* results in
+   * \c derivative, and not assign them. */
   virtual void StoreDerivativeResult(  DerivativeType & derivative,
                                         const VirtualIndexType & virtualIndex,
                                         ThreadIdType threadID );
-
-  /** Perform any initialization required before each evaluation of
-   * value and derivative. This is distinct from Initialize, which
-   * is called only once before a number of iterations, e.g. before
-   * a registration loop.
-   * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
-   * threading starts. */
-  virtual void InitializeForIteration(void);
 
   /** Called from \c GetValueAndDerivativeMultiThreadedInitiate after
    * threading is complete, to count the total number of valid points
@@ -509,8 +546,12 @@ protected:
   typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
   typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
 
-  /** Derivative results holder. */
-  DerivativeType                              m_DerivativeResult;
+  /** Derivative results holder. User a raw pointer so we can point it
+   * to a user-provided object. This enables
+   * safely sharing a derivative object between metrics during multi-variate
+   * analsys, for memory efficiency. */
+  DerivativeType*                             m_DerivativeResult;
+
   /** Store the number of points used during most recent value and derivative
    * calculation. */
   SizeValueType                               m_NumberOfValidPoints;
@@ -522,70 +563,44 @@ protected:
   /** Metric value, stored after evaluating */
   MeasureType             m_Value;
 
-  /** User worker method to calculate value and derivative
-   * given the point, value and image derivative for both fixed and moving
-   * spaces. The provided values have been calculated from \c virtualPoint,
-   * which is provided in case it's needed.
-   * Must be overriden by derived classes to do anything meaningful.
-   * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
-   * that have passed bounds checking, and lie within any mask that may
-   * be assigned.
-   * Results are returned in \c metricValueReturn and \c localDerivativeReturn,
-   * and will be processed by this base class.
-   * \c threadID may be used as needed, for example to access any per-thread
-   * data cached during pre-processing by the derived class.
-   * \warning The derived class should use \c m_NumberOfThreads from this base
-   * class only after ImageToImageObjectMetric:: Initialize has been called, to
-   * assure that the same number of threads are used.
-   * \warning  This is called from the threader, and thus must be thread-safe.
-   */
-  virtual inline bool GetValueAndDerivativeProcessPoint(
-        const VirtualPointType &           itkNotUsed(virtualPoint),
-        const FixedImagePointType &        itkNotUsed(mappedFixedPoint),
-        const FixedImagePixelType &        itkNotUsed(fixedImageValue),
-        const FixedImageDerivativesType &  itkNotUsed(FixedImageDerivatives),
-        const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
-        const MovingImagePixelType &       itkNotUsed(movingImageValue),
-        const MovingImageDerivativesType & itkNotUsed(movingImageDerivatives),
-        MeasureType &                      itkNotUsed(metricValueReturn),
-        DerivativeType &                   itkNotUsed(localDerivativeReturn),
-        ThreadIdType                       itkNotUsed(threadID) )
-    /* ImageToImageMetric had this method simply return false. But why not
-     * make it pure virtual ? */
-    {return false;}
-
   /*
    * Multi-threading variables and methods
    */
 
-  /** Initiates multi-threading to calculate the current metric value
+  /** Initialize memory for threading.
+   * \c derivativeReturn will be used to store the derivative results.
+   * Typically this will be the user-supplied object from a call to
+   * GetValueAndDerivative.
+   */ //NOTE: make this private, or will a derived class want to override?
+  virtual void InitializeThreadingMemory( DerivativeType & derivativeReturn );
+
+  /** Initiates multi-threading to evaluate the current metric value
    * and derivatives.
    * Derived classes should call this in their GetValueAndDerivative method.
    * This will end up calling the derived class'
    * GetValueAndDerivativeProcessPoint for each valid point in
    * VirtualDomainRegion.
-   * See ... */
-  virtual void GetValueAndDerivativeMultiThreadedInitiate();
+   * Pass in \c derivativeReturn from user. Results are written directly
+   * into this parameter.
+   * \sa GetValueAndDerivativeMultiThreadedPostProcess
+   */
+  virtual void GetValueAndDerivativeMultiThreadedInitiate( DerivativeType &
+                                                            derivativeReturn );
 
   /** Default post-processing after multi-threaded calculation of
    * value and derivative. Typically called by derived classes after
    * GetValueAndDerivativeMultiThreadedInitiate. Collects the results
    * from each thread and sums them.
-   * Results are stored in \c m_Value and \c m_DerivativeResult, and
-   * in \c value and \c derivative. The latter two are meant to be used
-   * to assign results to user variables passed into GetValueAndDerivative.
-   * The results for \c derivative are assigned by data-pointer redirection to,
-   * \c m_DerivativeResult, and not by copying. The memory is managed by
-   * \c m_DerivativeResult. See implementation for details.
+   * Results are stored in \c m_Value and \c m_DerivativeResult.
+   * \c m_DerivativeResult is set during initialization to point to the
+   * user-supplied derivative parameter in GetValueAndDerivative. Thus,
+   * the derivative results are written directly to this parameter.
    * Pass true for \c doAverage to use the number of valid points, \c
    * m_NumberOfValidPoints, to average the value sum, and to average derivative
    * sums for global transforms only (i.e. transforms without local support).
    * Derived classes need not call this if they require special handling.
    */
-  virtual void GetValueAndDerivativeMultiThreadedPostProcess(
-                                                  MeasureType & value,
-                                                  DerivativeType & derivative,
-                                                  bool doAverage );
+  virtual void GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage );
 
   /** Type of the default threader used for GetValue and GetDerivative.
    * This splits an image region in per-thread sub-regions over the outermost
@@ -604,7 +619,6 @@ protected:
   typename ValueAndDerivativeThreaderType::Pointer
                                               m_ValueAndDerivativeThreader;
 
-
   /** Intermediary threaded metric value storage. */
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
   std::vector< DerivativeType >               m_DerivativesPerThread;
@@ -619,7 +633,6 @@ protected:
     os << indent << "ImageToImageObjectMetric: TODO..." << std::endl;
     }
 
-
 private:
 
   /** Multi-threader callback used to iterate over image region by thread,
@@ -633,6 +646,10 @@ private:
                           const ThreaderInputObjectType& virtualImageSubRegion,
                           ThreadIdType threadId,
                           Self * dataHolder);
+
+  /** Flag to track if threading memory has been initialized since last
+   * call to Initialize. */
+  bool                    m_ThreadingMemoryHasBeenInitialized;
 
   /* The number of threads to use.
    * /warning See discussion in GetNumberOfThreads.
