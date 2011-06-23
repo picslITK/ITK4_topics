@@ -289,7 +289,6 @@ DeformationFieldTransform<TScalar, NDimensions>
 }
 
 
-
 /**
  * return an inverse transformation
  */
@@ -501,8 +500,6 @@ DeformationFieldTransform<TScalar, NDimensions>
       }
     }
 }
-
-
 
 template<class TScalar, unsigned int NDimensions>
 void DeformationFieldTransform<TScalar, NDimensions>
