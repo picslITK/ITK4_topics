@@ -219,13 +219,13 @@ typename MatrixOffsetTransformBase< TScalarType,
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 ::TransformVector(const InputVectorPixelType & vect) const
 {
-
   const unsigned int vectorDim = vect.Size();
   vnl_vector< TScalarType > vnl_vect( vectorDim );
   vnl_matrix< TScalarType > vnl_mat( vectorDim, vect.Size(), 0.0 );
 
   for (unsigned int i=0; i<vectorDim; i++)
     {
+    vnl_vect[i] = vect[i];
     for (unsigned int j=0; j<vectorDim; j++)
       {
       if ( (i < NInputDimensions) && (j < NInputDimensions) )
@@ -289,11 +289,12 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   for (unsigned int i=0; i<vectorDim; i++)
     {
+    vnl_vect[i] = vect[i];
     for (unsigned int j=0; j<vectorDim; j++)
       {
       if ( (i < NInputDimensions) && (j < NInputDimensions) )
         {
-        vnl_mat(i,j) = this->GetInverseMatrix()(i,j);
+        vnl_mat(i,j) = this->GetInverseMatrix()(j,i);
         }
       else if (i == j)
         {

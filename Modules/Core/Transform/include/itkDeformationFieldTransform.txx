@@ -133,10 +133,30 @@ DeformationFieldTransform<TScalar, NDimensions>
   AffineTransformPointer localTransform = AffineTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
-  OutputCovariantVectorType outputVector = localTransform->TransformCovariantVector( vector );
+  return localTransform->TransformCovariantVector( vector );
+}
 
-  return outputVector;
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformCovariantVector( const InputVectorPixelType& vector, const InputPointType & point ) const
+{
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  if( !this->m_Interpolator )
+    {
+    itkExceptionMacro( "No interpolator is specified." );
+    }
 
+  JacobianType jacobian;
+  this->GetJacobianWithRespectToPosition( point, jacobian );
+
+  AffineTransformPointer localTransform = AffineTransformType::New();
+  localTransform->SetIdentity();
+  localTransform->SetMatrix( jacobian );
+  return localTransform->TransformCovariantVector( vector );
 }
 
 
