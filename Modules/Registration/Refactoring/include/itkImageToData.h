@@ -63,7 +63,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self,Superclass);
+  itkTypeMacro(ImageToData,ObjectToDataBase);
 
   /** Type of the object being threaded over */
   typedef typename Superclass::InputObjectType  InputObjectType;

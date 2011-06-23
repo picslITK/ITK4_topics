@@ -32,14 +32,14 @@ class ITK_EXPORT GradientDescentObjectOptimizer
 {
 public:
   /** Standard class typedefs. */
-  typedef GradientDescentObjectOptimizer     Self;
-  typedef GradientDescentObjectOptimizerBase< TMetricFunction >
-                                                        Superclass;
-  typedef SmartPointer< Self >                      Pointer;
-  typedef SmartPointer< const Self >                ConstPointer;
+  typedef GradientDescentObjectOptimizer                          Self;
+  typedef GradientDescentObjectOptimizerBase< TMetricFunction >   Superclass;
+  typedef SmartPointer< Self >                                    Pointer;
+  typedef SmartPointer< const Self >                              ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(GradientDescentObjectOptimizer,
+               GradientDescentObjectOptimizerBase);
 
   /** New macro for creation of through a Smart Pointer   */
   itkNewMacro(Self);

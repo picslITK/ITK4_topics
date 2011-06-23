@@ -59,7 +59,7 @@ public:
   typedef SmartPointer<const Self>                          ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(ImageToImageObjectMetric, ObjectToObjectMetric);
 
   /** Type used internally for computations */
   typedef typename Superclass::InternalComputationValueType

@@ -45,7 +45,7 @@ public:
   typedef SmartPointer< const Self >                  ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(ObjectToObjectOptimizerBase, Object);
 
   /**  Scale type. */
   typedef TransformParameters< double >             ScalesType;

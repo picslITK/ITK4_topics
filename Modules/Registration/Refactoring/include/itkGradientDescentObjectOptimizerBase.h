@@ -36,7 +36,7 @@ public:
   typedef SmartPointer< const Self >             ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(GradientDescentObjectOptimizerBase, ObjectToObjectOptimizerBase);
 
   /** Codes of stopping conditions. */
   typedef enum {

@@ -45,7 +45,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(TestOptimizer, ObjectToObjectOptimizerBase);
 
   /* Provide an override for the pure virtual StartOptimization */
   void StartOptimization()

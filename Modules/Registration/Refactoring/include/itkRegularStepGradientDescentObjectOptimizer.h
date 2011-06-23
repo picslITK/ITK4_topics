@@ -39,7 +39,8 @@ public:
   typedef SmartPointer< const Self >                            ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(RegularStepGradientDescentObjectOptimizer,
+               GradientDescentObjectOptimizerBase);
 
   /** New macro for creation of through a Smart Pointer   */
   itkNewMacro(Self);

@@ -31,7 +31,7 @@ public ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 public:
 
   /** Standard class typedefs. */
-  typedef DemonsImageToImageObjectMetric                            Self;
+  typedef DemonsImageToImageObjectMetric                      Self;
   typedef ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
                                                               Superclass;
   typedef SmartPointer<Self>                                  Pointer;
@@ -41,7 +41,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, Superclass);
+  itkTypeMacro(DemonsImageToImageObjectMetric, ImageToImageObjectMetric);
 
   /** superclass types */
   typedef typename Superclass::MeasureType             MeasureType;
