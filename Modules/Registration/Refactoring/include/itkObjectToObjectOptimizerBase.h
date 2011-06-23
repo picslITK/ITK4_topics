@@ -55,10 +55,9 @@ public:
   typedef MetricType::Pointer                       MetricTypePointer;
   /** Measure type */
   typedef MetricType::MeasureType                   MeasureType;
-
-  /** Internal computation type, for maintaining a desired precision */
-  //typedef typename MetricType::InternalComputationValueType
-  //                                        InternalComputationValueType;
+  /** Internal computation value type */
+  typedef MetricType::InternalComputationValueType
+                                                InternalComputationValueType;
 
   /** Accessors for Metric */
   itkGetObjectMacro( Metric, MetricType );

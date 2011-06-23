@@ -96,6 +96,13 @@ public:
   virtual void GetValueAndDerivative(MeasureType & value,
                                      DerivativeType & derivative) = 0;
 
+  /** Update the metric parameters. Typically the transform
+   * parameters. \c derivative must be the proper size, as retrieved
+   * from GetNumberOfParameters. */
+  //FIXME: Will some metrics have parameters in something other than a
+  // transform? Need to put GetNumberOfParameters in this class.
+  virtual void UpdateParameters( DerivativeType & derivative ) const = 0;
+
 protected:
   ObjectToObjectMetric() {}
   virtual ~ObjectToObjectMetric() {}

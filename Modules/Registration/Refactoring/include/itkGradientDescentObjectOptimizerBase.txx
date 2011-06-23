@@ -24,9 +24,8 @@ namespace itk
 {
 
 //-------------------------------------------------------------------
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase
 ::GradientDescentObjectOptimizerBase()
 {
   this->m_ModifyGradientThreader->SetThreadedGenerateData(
@@ -40,18 +39,16 @@ GradientDescentObjectOptimizerBase<TMetricFunction>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction>
 const std::string
-GradientDescentObjectOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase
 ::GetStopConditionDescription() const
 {
   return m_StopConditionDescription.str();
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction>
 const std::string
-GradientDescentObjectOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase
 ::StopOptimization(void)
 {
   itkDebugMacro("StopOptimization");
@@ -62,9 +59,8 @@ GradientDescentObjectOptimizerBase<TMetricFunction>
 }
 
 //-------------------------------------------------------------------
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizerBase<TMetricFunction>
+GradientDescentObjectOptimizerBase
 ::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
                           int threadId,
                           Self *holder )

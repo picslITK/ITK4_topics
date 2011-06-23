@@ -50,16 +50,18 @@ public:
 
 
   /** Metric type over which this class is templated */
-  itkSuperclassTraitMacro( MetricType );
-  itkSuperclassTraitMacro( MetricTypePointer );
+  typedef Superclass::MetricType                    MetricType;
+  typedef MetricType::Pointer                       MetricTypePointer;
 
   /** Derivative type */
-  typedef Metric::DerivativeType                    DerivativeType;
+  typedef MetricType::DerivativeType                DerivativeType;
 
   /** Measure type */
-  itkSuperclassTraitMacro( MeasureType );
+  typedef Superclass::MeasureType                   MeasureType;
+
   /** Internal computation type, for maintaining a desired precision */
-  itkSuperclassTraitMacro( InternalComputationValueType );
+  typedef Superclass::InternalComputationValueType
+                                                InternalComputationValueType;
 
   /** Threader for gradient update */
   typedef Array1DToData<Self>                       ModifyGradientThreaderType;
@@ -119,7 +121,7 @@ protected:
   virtual void ModifyGradient()
   {
     /* Perform the modification either with or without threading */
-    if( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
+    if( this->m_Metric->HasLocalSupport() )
       {
       /* This ends up calling ModifyGradientThreaded from each thread */
       this->m_ModifyGradientThreader->GenerateData();

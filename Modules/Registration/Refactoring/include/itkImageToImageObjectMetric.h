@@ -393,6 +393,11 @@ public:
   virtual unsigned int GetNumberOfParameters() const
     { return this->m_MovingImageTransform->GetNumberOfParameters(); }
 
+  /** Update the metric's transform parameters.
+   * \c derivative must be the proper size, as retrieved
+   * from GetNumberOfParameters. */
+  virtual void UpdateParameters( DerivativeType & derivative ) const;
+
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual unsigned int GetNumberOfLocalParameters() const
     { return this->m_MovingImageTransform->GetNumberOfLocalParameters(); }

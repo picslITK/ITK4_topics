@@ -50,7 +50,12 @@ public:
     return 1.0;
     }
   void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative )
-    { value = 1.0; derivative.Fill(0.0); }
+    {
+    value = 1.0; derivative.Fill(0.0);
+    }
+  void UpdateParameters( DerivativeType & ) const
+    {
+    }
   void Initialize(void) throw ( itk::ExceptionObject ) {}
   void PrintSelf(std::ostream& os, itk::Indent indent) const
   {

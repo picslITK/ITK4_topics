@@ -26,9 +26,8 @@ namespace itk
 /**
  * Default constructor
  */
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::GradientDescentObjectOptimizer()
 {
   m_LearningRate = 1.0;
@@ -37,9 +36,8 @@ GradientDescentObjectOptimizer<TMetricFunction>
 /**
  * Start and run the optimization
  */
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::StartOptimization()
 {
   itkDebugMacro("StartOptimization");
@@ -69,9 +67,8 @@ GradientDescentObjectOptimizer<TMetricFunction>
 /**
  * Resume optimization.
  */
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::ResumeOptimization()
 {
   /* Do threading initialization here so we can also do some cleanup
@@ -129,9 +126,8 @@ GradientDescentObjectOptimizer<TMetricFunction>
 /**
  * Advance one Step following the gradient direction
  */
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::AdvanceOneStep()
 {
   itkDebugMacro("AdvanceOneStep");
@@ -140,17 +136,16 @@ GradientDescentObjectOptimizer<TMetricFunction>
    * ModifyGradientOverSubRange */
   this->ModifyGradient();
 
-  this->m_Metric->GetMovingImageTransform()->
-                    UpdateTransformParameters( m_Gradient );
+  this->m_Metric->UpdateParameters( m_Gradient );
+
   this->InvokeEvent( IterationEvent() );
 }
 
 /**
  * Modify the gradient over a given index range.
  */
-template<class TMetricFunction>
 void
-GradientDescentObjectOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::ModifyGradientOverSubRange( IndexRangeType& subrange )
 {
   double direction;
