@@ -19,51 +19,16 @@
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkVector.h"
-
-// #include "itkObjectToObjectMetric.h"
-// #include "itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction.h"
-// #include "itkImageToData.h"
-
-
-
-
-
-
-/*=========================================================================
- *
- *  Copyright Insight Software Consortium
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0.txt
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- *=========================================================================*/
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkImage.h"
-#include "itkVector.h"
-#include "itkObjectToObjectMetric.h"
-// #include "itkObjectToObjectThreadedMetricOptimizer.h"
 #include "itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric.h"
+
+
 #include "itkIdentityTransform.h"
+#include "itkTranslationTransform.h"
 #include "itkDeformationFieldTransform.h"
 #include "itkCompositeTransform.h"
-#include "itkTranslationTransform.h"
-#include "itkImageToData.h"
 
 
-
-
-
-int itkDemonsImageToImageMetricTest(int argc, char * argv[])
+int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, char * argv[])
 {
 
   if (argc <= 3) {
@@ -76,7 +41,8 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   int number_of_threads = atoi(argv[3]);
 
   const int ImageDimension = 2;
-  //  typedef itk::VectorImage< float,ImageDimension > ImageType;
+
+
   typedef itk::Image<float, ImageDimension> ImageType;
   typedef ImageType::Pointer ImagePointerType;
   typedef ImageType::RegionType RegionType;
@@ -90,7 +56,9 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   typedef itk::TranslationTransform<double,ImageDimension>  TranslationTransformType;
   typedef itk::DeformationFieldTransform<double,ImageDimension>  DeformationTransformType;
   typedef DeformationTransformType::DeformationFieldType FieldType;
+
   IdentityTransformType::Pointer transformFId = IdentityTransformType::New();
+
   IdentityTransformType::Pointer transformMId = IdentityTransformType::New();
   DeformationTransformType::Pointer transformMdeformation = DeformationTransformType::New();
   TranslationTransformType::Pointer transformMtranslation = TranslationTransformType::New();
@@ -98,35 +66,89 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   CompositeTransformType::Pointer transformMComp = CompositeTransformType::New();
   CompositeTransformType::Pointer transformFComp = CompositeTransformType::New();
 
-  typedef itk::ImageFileReader<ImageType> ReaderType;
-  ReaderType::Pointer reader = ReaderType::New();
-  reader->SetFileName(filename1);
-  reader->Update();
-  ImagePointerType fixed_image = reader->GetOutput();
+//  typedef itk::ImageFileReader<ImageType> ReaderType;
+//  ReaderType::Pointer reader = ReaderType::New();
+//  reader->SetFileName(filename1);
+//  reader->Update();
+//  ImagePointerType fixedImage = reader->GetOutput();
+//
+//  ReaderType::Pointer reader2 = ReaderType::New();
+//  reader2->SetFileName(filename2);
+//  reader2->Update();
+//  ImagePointerType movingImage = reader2->GetOutput();
 
-  ReaderType::Pointer reader2 = ReaderType::New();
-  reader2->SetFileName(filename2);
-  reader2->Update();
-  ImagePointerType moving_image = reader2->GetOutput();
+  const unsigned int imageSize = 5;
+  const unsigned int imageDimensionality = 2;
+
+
+  ImageType::SizeType       size;
+  size.Fill( imageSize );
+  ImageType::IndexType      index;
+  index.Fill( 0 );
+  ImageType::RegionType     region;
+  region.SetSize( size );
+  region.SetIndex( index );
+  ImageType::SpacingType    spacing;
+  spacing.Fill(1.0);
+  ImageType::PointType      origin;
+  origin.Fill(0);
+  ImageType::DirectionType  direction;
+  direction.SetIdentity();
+
+  /* Create simple test images. */
+  ImageType::Pointer fixedImage = ImageType::New();
+  fixedImage->SetRegions( region );
+  fixedImage->SetSpacing( spacing );
+  fixedImage->SetOrigin( origin );
+  fixedImage->SetDirection( direction );
+  fixedImage->Allocate();
+
+  ImageType::Pointer movingImage = ImageType::New();
+  movingImage->SetRegions( region );
+  movingImage->SetSpacing( spacing );
+  movingImage->SetOrigin( origin );
+  movingImage->SetDirection( direction );
+  movingImage->Allocate();
+
+  /* Fill images */
+  ImageRegionIterator<ImageType> itFixed( fixedImage, region );
+  itFixed.GoToBegin();
+  unsigned int count = 1;
+  while( !itFixed.IsAtEnd() )
+    {
+    itFixed.Set( count*count );
+    count++;
+    ++itFixed;
+    }
+  ImageRegionIteratorWithIndex<ImageType> itMoving( movingImage, region );
+  itMoving.GoToBegin();
+  count = 1;
+  while( !itMoving.IsAtEnd() )
+    {
+    itMoving.Set( count*count) );
+    count++;
+    ++itMoving;
+    }
+
 
   VectorType zero;
   float def_value=2.5;
   def_value=0.5;
   zero.Fill(def_value);
   FieldType::Pointer field = FieldType::New();
-  field->SetRegions(fixed_image->GetLargestPossibleRegion());
-  field->SetSpacing(fixed_image->GetSpacing());
-  field->SetOrigin(fixed_image->GetOrigin());
-  field->SetDirection(fixed_image->GetDirection());
+  field->SetRegions(fixedImage->GetLargestPossibleRegion());
+  field->SetSpacing(fixedImage->GetSpacing());
+  field->SetOrigin(fixedImage->GetOrigin());
+  field->SetDirection(fixedImage->GetDirection());
   field->Allocate();
   field->FillBuffer(zero);
 
   FieldType::Pointer fieldInv = FieldType::New();
   zero.Fill(def_value*(-1.0));
-  fieldInv->SetRegions(fixed_image->GetLargestPossibleRegion());
-  fieldInv->SetSpacing(fixed_image->GetSpacing());
-  fieldInv->SetOrigin(fixed_image->GetOrigin());
-  fieldInv->SetDirection(fixed_image->GetDirection());
+  fieldInv->SetRegions(fixedImage->GetLargestPossibleRegion());
+  fieldInv->SetSpacing(fixedImage->GetSpacing());
+  fieldInv->SetOrigin(fixedImage->GetOrigin());
+  fieldInv->SetDirection(fixedImage->GetDirection());
   fieldInv->Allocate();
   fieldInv->FillBuffer(zero);
 
@@ -141,24 +163,71 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   transformMComp->AddTransform(transformMtranslation);
 //  transformMComp->AddTransform(transformMdeformation);
   transformFComp->AddTransform(transformFId);
-  typedef itk::NeighborhoodNormalizedCrossCorrelationImageToImageMetric<ImageType,ImageType> ObjectMetricType;
-  typedef ObjectMetricType::Pointer MetricTypePointer;
+  typedef itk::NeighborhoodNormalizedCrossCorrelationImageToImageMetric<ImageType,ImageType> MetricType;
+  typedef MetricType::Pointer MetricTypePointer;
   MetricTypePointer objectMetric = ObjectMetricType::New();
-  objectMetric->SetFixedImage(fixed_image);
-  objectMetric->SetMovingImage(moving_image);
+  objectMetric->SetFixedImage(fixedImage);
+  objectMetric->SetMovingImage(movingImage);
   objectMetric->SetFixedImageTransform(transformFComp);
   objectMetric->SetMovingImageTransform(transformMComp);
-  objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
-  objectMetric->SetVirtualDomainIndex(fixed_image->GetRequestedRegion().GetIndex());
-  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
-  objectMetric->SetVirtualDomainOrigin(fixed_image->GetOrigin());
-  objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
 
 
-  itk::Size<ImageDimension> neighborhood_radius;
-   neighborhood_radius.Fill(0);
 
-  objectMetric->SetRadius(neighborhood_radius);
+  // metric->SetMovingImageTransform( movingTransform );
+
+  /* Initialize. */
+  try
+    {
+    std::cout << "Calling Initialize..." << std::endl;
+    objectMetric->Initialize();
+    }
+  catch( ExceptionObject & exc )
+    {
+    std::cout << "Caught unexpected exception during Initialize: "
+              << exc;
+    return EXIT_FAILURE;
+    }
+
+  // Evaluate
+  MetricType::MeasureType valueReturn;
+  MetricType::DerivativeType derivativeReturn;
+  try
+    {
+    std::cout << "Calling GetValueAndDerivative..." << std::endl;
+    objectMetric->GetValueAndDerivative( valueReturn, derivativeReturn );
+    }
+  catch( ExceptionObject & exc )
+    {
+    std::cout << "Caught unexpected exception during GetValueAndDerivative: "
+              << exc;
+    return EXIT_FAILURE;
+    }
+
+  std::cout << "Test passed." << std::endl;
+  return EXIT_SUCCESS;
+
+
+
+
+
+
+
+
+
+
+
+
+//  objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
+//  objectMetric->SetVirtualDomainIndex(fixed_image->GetRequestedRegion().GetIndex());
+//  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
+//  objectMetric->SetVirtualDomainOrigin(fixed_image->GetOrigin());
+//  objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
+//
+//
+//  itk::Size<ImageDimension> neighborhood_radius;
+//   neighborhood_radius.Fill(0);
+//
+//  objectMetric->SetRadius(neighborhood_radius);
 
   typedef ObjectMetricType::MeasureType MeasureType;
   typedef ObjectMetricType::DerivativeType DerivativeType;
@@ -172,27 +241,6 @@ int itkDemonsImageToImageMetricTest(int argc, char * argv[])
   std::cout << "derivative = " << derivative << std::endl;
 
 
-  // Compute one iteration of the metric
-  // objectMetric->Initialize();
-
-  /* The threader type might be definable w/in the optimizer ? */
-  // typedef itk::ObjectToObjectThreadedMetricOptimizer<ObjectMetricType>
-  //                                                 MetricThreadedOptimizerType;
-
-  // pseudo code
-//  MetricThreadedOptimizerType::Pointer metricOptimizer =
-//    MetricThreadedOptimizerType::New();
-//  metricOptimizer->SetMetric( objectMetric );
-//  ImageType::RegionType inboundary_region = fixed_image->GetRequestedRegion();
-//  metricOptimizer->SetOverallRegion( inboundary_region );
-//  metricOptimizer->SetNumberOfThreads(number_of_threads);
-//
-//  metricOptimizer->StartOptimization();
-//
-//  float energy = static_cast<float> ( metricOptimizer->GetValue() );
-//
-//  std::cout << "metric = " << energy << std::endl;
-//  return EXIT_FAILURE; //not yet a full test
 
 }
 

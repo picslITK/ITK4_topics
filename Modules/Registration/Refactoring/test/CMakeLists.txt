@@ -28,9 +28,6 @@ itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
-      COMMAND ITK-RegistrationRefactoringTestDriver itkDemonsImageToImageObjectMetricTest ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd 2)
-
 itk_add_test(NAME itkDeformationFieldTransformRegistrationTest
           COMMAND ITK-RegistrationRefactoringTestDriver
             itkDeformationFieldTransformRegistrationTest)
@@ -52,7 +49,7 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
+itk_add_test(NAME itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
 
