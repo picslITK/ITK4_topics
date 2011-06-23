@@ -62,7 +62,8 @@ public:
   itkTypeMacro(Self, Superclass);
 
   /** Type used internally for computations */
-  typedef double  InternalComputationValueType;
+  typedef typename Superclass::InternalComputationValueType
+                                                  InternalComputationValueType;
 
   /** Type used for representing parameter values  */
   typedef typename Superclass::CoordinateRepresentationType
@@ -396,7 +397,7 @@ public:
   /** Update the metric's transform parameters.
    * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
-  virtual void UpdateParameters( DerivativeType & derivative ) const;
+  virtual void UpdateTransformParameters( DerivativeType & derivative ) const;
 
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual unsigned int GetNumberOfLocalParameters() const

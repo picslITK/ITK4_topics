@@ -38,16 +38,12 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(Self, Superclass);
 
-  /** New macro for creation of through a Smart Pointer   */
-  itkNewMacro(Self);
-
   /** Codes of stopping conditions. */
   typedef enum {
     MaximumNumberOfIterations,
     MetricError,
     OtherError
     } StopConditionType;
-
 
   /** Metric type over which this class is templated */
   typedef Superclass::MetricType                    MetricType;
@@ -109,6 +105,10 @@ public:
 
 protected:
 
+  /** Default constructor */
+  GradientDescentObjectOptimizerBase();
+  virtual ~GradientDescentObjectOptimizerBase(){}
+
   /** Modify the gradient in place, to advance the optimization.
    * This call performs a threaded modification for transforms with
    * local support (assumed to be dense). Otherwise the modification
@@ -118,28 +118,34 @@ protected:
    * parameters. Derived classes may hold additional results in
    * other member variables.
    */
-  virtual void ModifyGradient()
-  {
-    /* Perform the modification either with or without threading */
-    if( this->m_Metric->HasLocalSupport() )
-      {
-      /* This ends up calling ModifyGradientThreaded from each thread */
-      this->m_ModifyGradientThreader->GenerateData();
-      }
-    else
-      {
-      IndexRangeType fullrange;
-      fullrange[0] = 0;
-      fullrange[1] = this->m_Gradient.GetSize()-1; //range is inclusive
-      this->m_ModifyGradientOverSubRange( fullrange );
-      }
-  }
+  virtual void ModifyGradient();
 
   /** Derived classes define this worker method to modify the gradient.
    * Modifications must be performed over the index range defined in
    * \c subrange.
-   * Called from the threaded operation started in ModifyGradient(). */
+   * Called from ModifyGradient(), either directly or via threaded
+   * operation. */
   virtual void ModifyGradientOverSubRange( IndexRangeType& subrange ) = 0;
+
+  /** Get the reason for termination */
+  virtual const std::string GetStopConditionDescription() const;
+
+  /* Common variables for optimization control and reporting */
+  bool               m_Stop;
+  StopConditionType  m_StopCondition;
+  std::ostringstream m_StopConditionDescription;
+  SizeValueType      m_NumberOfIterations;
+  SizeValueType      m_CurrentIteration;
+  bool               m_Maximize;
+
+  /** Current gradient */
+  DerivativeType     m_Gradient;
+
+private:
+
+  //purposely not implemented
+  GradientDescentObjectOptimizerBase( const Self & );
+  void operator=( const Self& );      //purposely not implemented
 
   /** Callback used during threaded gradient modification.
    * Gets assigned to the modify-gradient threader's
@@ -153,32 +159,8 @@ protected:
                                   int threadId,
                                   Self *inHolder );
 
-  /** Get the reason for termination */
-  virtual const std::string GetStopConditionDescription() const;
-
-  /* Common variables for optimization control and reporting */
-  bool               m_Stop;
-  StopConditionType  m_StopCondition;
-  std::ostringstream m_StopConditionDescription;
-  SizeValueType      m_NumberOfIterations;
-  SizeValueType      m_CurrentIteration;
-  bool               m_Maximize;
-
-  /** Default constructor */
-  GradientDescentObjectOptimizerBase();
-  virtual ~GradientDescentObjectOptimizerBase(){}
-
-  /** Current gradient */
-  DerivativeType     m_Gradient;
-
   /** Threader for grandient modification */
-  ModifyGradientThreaderType      m_ModifyGradientThreader;
-
-private:
-
-  //purposely not implemented
-  GradientDescentObjectOptimizerBase( const Self & );
-  void operator=( const Self& );      //purposely not implemented
+  ModifyGradientThreaderType::Pointer      m_ModifyGradientThreader;
 
 };
 

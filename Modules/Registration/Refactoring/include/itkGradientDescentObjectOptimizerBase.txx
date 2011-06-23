@@ -28,6 +28,7 @@ void
 GradientDescentObjectOptimizerBase
 ::GradientDescentObjectOptimizerBase()
 {
+  this->m_ModifyGradientThreader = ModifyGradientThreaderType::New();
   this->m_ModifyGradientThreader->SetThreadedGenerateData(
     Self::ModifyGradientThreaded );
 
@@ -58,6 +59,26 @@ GradientDescentObjectOptimizerBase
   InvokeEvent( EndEvent() );
 }
 
+//-------------------------------------------------------------------
+void
+GradientDescentObjectOptimizerBase
+::ModifyGradient()
+{
+  /* Perform the modification either with or without threading */
+  if( this->m_Metric->HasLocalSupport() )
+    {
+    /* This ends up calling ModifyGradientThreaded from each thread */
+    this->m_ModifyGradientThreader->GenerateData();
+    }
+  else
+    {
+    /* Global transforms are small, so update without threading. */
+    IndexRangeType fullrange;
+    fullrange[0] = 0;
+    fullrange[1] = this->m_Gradient.GetSize()-1; //range is inclusive
+    this->m_ModifyGradientOverSubRange( fullrange );
+    }
+}
 //-------------------------------------------------------------------
 void
 GradientDescentObjectOptimizerBase

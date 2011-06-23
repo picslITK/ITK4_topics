@@ -937,7 +937,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::UpdateParameters( DerivativeType & derivative ) const
+::UpdateTransformParameters( DerivativeType & derivative ) const
 {
   if( derivative.GetSize() != this->GetNumberOfParameters() )
     {

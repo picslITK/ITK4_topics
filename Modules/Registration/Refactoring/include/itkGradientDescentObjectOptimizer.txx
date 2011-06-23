@@ -136,7 +136,7 @@ GradientDescentObjectOptimizer
    * ModifyGradientOverSubRange */
   this->ModifyGradient();
 
-  this->m_Metric->UpdateParameters( m_Gradient );
+  this->m_Metric->UpdateTransformParameters( m_Gradient );
 
   this->InvokeEvent( IterationEvent() );
 }

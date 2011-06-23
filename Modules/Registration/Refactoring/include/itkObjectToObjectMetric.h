@@ -52,11 +52,14 @@ public:
   /** Type used for representing object components  */
   typedef Superclass::ParametersValueType CoordinateRepresentationType;
 
+  /** Type for internal computations */
+  typedef double                          InternalComputationValueType;
+
   /**  Type of the measure. */
-  typedef  Superclass::MeasureType    MeasureType;
+  typedef  Superclass::MeasureType        MeasureType;
 
   /**  Type of the derivative. */
-  typedef  Superclass::DerivativeType DerivativeType;
+  typedef  Superclass::DerivativeType     DerivativeType;
 
   /**  Type of the parameters. */
   typedef  Superclass::ParametersType       ParametersType;
@@ -96,12 +99,19 @@ public:
   virtual void GetValueAndDerivative(MeasureType & value,
                                      DerivativeType & derivative) = 0;
 
-  /** Update the metric parameters. Typically the transform
-   * parameters. \c derivative must be the proper size, as retrieved
+  /** Methods for working with the metric's 'active' transform, e.g. the
+   * transform being optimized in the case of registration. Some of these are
+   * used in non-metric classes, e.g. optimizers. */
+  virtual unsigned int GetNumberOfParameters() const = 0;
+  virtual unsigned int GetNumberOfLocalParameters() const = 0;
+  /** Return whether the metric's active transform has local support,
+   * i.e. is dense. */
+  virtual bool HasLocalSupport() const = 0;
+  /** Update the parameters of the metric's active transform.
+   * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
-  //FIXME: Will some metrics have parameters in something other than a
-  // transform? Need to put GetNumberOfParameters in this class.
-  virtual void UpdateParameters( DerivativeType & derivative ) const = 0;
+  virtual void UpdateTransformParameters( DerivativeType & derivative )
+    const = 0;
 
 protected:
   ObjectToObjectMetric() {}
