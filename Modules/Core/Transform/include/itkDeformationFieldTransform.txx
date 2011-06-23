@@ -239,8 +239,6 @@ DeformationFieldTransform<TScalar, NDimensions>
   return localTransform->TransformVector( vector );
 }
 
-
-
 /**
  * Transform tensor
  */
