@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction_h
-#define __itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction_h
+#ifndef __itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric_h
+#define __itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric_h
 
 #include "itkImageToImageMetric.h"
 #include "itkCentralDifferenceImageFunction.h"
@@ -334,7 +334,7 @@ public:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction.txx"
+#include "itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric.txx"
 #endif
 
 #endif

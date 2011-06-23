@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGradientDescentThreadedMetricOptimizer.h,v $
+  Module:    $RCSfile: itkGradientDescentObjectOptimizer.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,12 +14,12 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkGradientDescentThreadedMetricOptimizer_h
-#define __itkGradientDescentThreadedMetricOptimizer_h
+#ifndef __itkGradientDescentObjectOptimizer_h
+#define __itkGradientDescentObjectOptimizer_h
 
 #include "itkPoint.h"
 #include "itkIndex.h"
-#include "itkGradientDescentThreadedMetricOptimizerBase.h"
+#include "itkGradientDescentObjectOptimizerBase.h"
 
 namespace itk
 {
@@ -27,13 +27,13 @@ namespace itk
 // functor for threading using the metric function class
 // assuming function has output allocated already
 template<class TMetricFunction>
-class ITK_EXPORT GradientDescentThreadedMetricOptimizer
-  : public GradientDescentThreadedMetricOptimizerBase< TMetricFunction >
+class ITK_EXPORT GradientDescentObjectOptimizer
+  : public GradientDescentObjectOptimizerBase< TMetricFunction >
 {
 public:
   /** Standard class typedefs. */
-  typedef GradientDescentThreadedMetricOptimizer     Self;
-  typedef GradientDescentThreadedMetricOptimizerBase< TMetricFunction >
+  typedef GradientDescentObjectOptimizer     Self;
+  typedef GradientDescentObjectOptimizerBase< TMetricFunction >
                                                         Superclass;
   typedef SmartPointer< Self >                      Pointer;
   typedef SmartPointer< const Self >                ConstPointer;
@@ -96,14 +96,14 @@ protected:
   double m_LearningRate;
 
   /** Default constructor */
-  GradientDescentThreadedMetricOptimizer();
+  GradientDescentObjectOptimizer();
 
-  virtual ~GradientDescentThreadedMetricOptimizer(){}
+  virtual ~GradientDescentObjectOptimizer(){}
 
 private:
 
   //purposely not implemented
-  GradientDescentThreadedMetricOptimizer( const Self & );
+  GradientDescentObjectOptimizer( const Self & );
   void operator=( const Self& );      //purposely not implemented
 
 };
@@ -111,7 +111,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkGradientDescentThreadedMetricOptimizer.txx"
+# include "itkGradientDescentObjectOptimizer.txx"
 #endif
 
 #endif

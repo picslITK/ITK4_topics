@@ -210,6 +210,46 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   return m_Matrix * vect;
 }
 
+// Transform a variable length vector
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputVectorPixelType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformVector(const InputVectorPixelType & vect) const
+{
+  const unsigned int vectorDim = vect.Size();
+  vnl_vector< TScalarType > vnl_vect( vectorDim );
+  vnl_matrix< TScalarType > vnl_mat( vectorDim, vect.Size(), 0.0 );
+
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    vnl_vect[i] = vect[i];
+    for (unsigned int j=0; j<vectorDim; j++)
+      {
+      if ( (i < NInputDimensions) && (j < NInputDimensions) )
+        {
+        vnl_mat(i,j) = m_Matrix(i,j);
+        }
+      else if (i == j)
+        {
+        vnl_mat(i,j) = 1.0;
+        }
+      }
+    }
+
+  vnl_vector< TScalarType > tvect = vnl_mat * vnl_vect;
+  OutputVectorPixelType outVect;
+  outVect.SetSize( vectorDim );
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    outVect[i] = tvect(i);
+    }
+
+  return outVect;
+}
+
 // Transform a CovariantVector
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
@@ -232,6 +272,48 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     }
   return result;
 }
+
+// Transform a variable length vector
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputVectorPixelType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformCovariantVector(const InputVectorPixelType & vect) const
+{
+
+  const unsigned int vectorDim = vect.Size();
+  vnl_vector< TScalarType > vnl_vect( vectorDim );
+  vnl_matrix< TScalarType > vnl_mat( vectorDim, vect.Size(), 0.0 );
+
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    vnl_vect[i] = vect[i];
+    for (unsigned int j=0; j<vectorDim; j++)
+      {
+      if ( (i < NInputDimensions) && (j < NInputDimensions) )
+        {
+        vnl_mat(i,j) = this->GetInverseMatrix()(j,i);
+        }
+      else if (i == j)
+        {
+        vnl_mat(i,j) = 1.0;
+        }
+      }
+    }
+
+  vnl_vector< TScalarType > tvect = vnl_mat * vnl_vect;
+  OutputVectorPixelType outVect;
+  outVect.SetSize( vectorDim );
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    outVect[i] = tvect(i);
+    }
+
+  return outVect;
+}
+
 
 // Transform a Tensor
 template< class TScalarType, unsigned int NInputDimensions,
@@ -326,6 +408,36 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   result[3] = rotated(1,1);
   result[4] = rotated(1,2);
   result[5] = rotated(2,2);
+
+  return result;
+}
+
+
+// Transform a Tensor
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputVectorPixelType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformTensor(const InputVectorPixelType & tensor) const
+{
+  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted vector
+  result.Fill( 0.0 );
+
+  InputTensorType dt(0.0);
+  const unsigned int tDim = tensor.Size();
+  for (unsigned int i=0; i<tDim; i++)
+    {
+    dt[i] = tensor[i];
+    }
+
+  OutputTensorType outDT = this->TransformTensor( dt );
+
+  for (unsigned int i=0; i<InputTensorType::InternalDimension; i++)
+    {
+    result[i] = outDT[i];
+    }
 
   return result;
 }

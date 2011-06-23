@@ -125,6 +125,9 @@ public:
                            itkGetStaticConstMacro(OutputSpaceDimension) >
   OutputCovariantVectorType;
 
+  typedef typename Superclass::InputVectorPixelType InputVectorPixelType;
+  typedef typename Superclass::OutputVectorPixelType OutputVectorPixelType;
+
   /** Standard tensor type for this class */
   typedef typename Superclass::InputTensorType InputTensorType;
   typedef typename Superclass::OutputTensorType OutputTensorType;
@@ -325,16 +328,54 @@ public:
    * vector.  The TransformPoint method transforms its argument as
    * an affine point, whereas the TransformVector method transforms
    * its argument as a vector. */
-  OutputPointType     TransformPoint(const InputPointType & point) const;
+  OutputPointType       TransformPoint(const InputPointType & point) const;
 
-  OutputVectorType    TransformVector(const InputVectorType & vector) const;
+  OutputVectorType      TransformVector(const InputVectorType & vector) const;
 
-  OutputVnlVectorType TransformVector(const InputVnlVectorType & vector) const;
+  OutputVectorType      TransformVector(const InputVectorType & vector,
+                                        const InputPointType & itkNotUsed(point) ) const
+    { return TransformVector( vector ); }
+
+  OutputVnlVectorType   TransformVector(const InputVnlVectorType & vector) const;
+
+  OutputVnlVectorType   TransformVector(const InputVnlVectorType & vector,
+                                        const InputPointType & itkNotUsed(point) ) const
+    { return TransformVector( vector ); }
+
+  OutputVectorPixelType TransformVector(const InputVectorPixelType & vector) const;
+
+  OutputVectorPixelType TransformVector(const InputVectorPixelType & vector,
+                                        const InputPointType & itkNotUsed(point) ) const
+    { return TransformVector( vector ); }
+
 
   OutputCovariantVectorType TransformCovariantVector(
-    const InputCovariantVectorType & vector) const;
+      const InputCovariantVectorType & vector) const;
+
+  OutputCovariantVectorType TransformCovariantVector(
+      const InputCovariantVectorType & vector,
+      const InputPointType & itkNotUsed(point) ) const
+    { return TransformCovariantVector( vector ); }
+
+  OutputVectorPixelType TransformCovariantVector(
+      const InputVectorPixelType & vector) const;
+
+  OutputVectorPixelType TransformCovariantVector(
+      const InputVectorPixelType & vector,
+      const InputPointType & itkNotUsed(point) ) const
+    { return TransformCovariantVector( vector ); }
 
   OutputTensorType TransformTensor( const InputTensorType & tensor) const;
+
+  OutputTensorType TransformTensor( const InputTensorType & tensor,
+                                    const InputPointType & itkNotUsed(point) ) const
+    { return TransformTensor( tensor ); }
+
+  OutputVectorPixelType TransformTensor( const InputVectorPixelType & tensor ) const;
+
+  OutputVectorPixelType TransformTensor( const InputVectorPixelType & tensor,
+                                         const InputPointType & itkNotUsed(tensor) ) const
+    { return TransformTensor( tensor ); }
 
   /** Compute the Jacobian of the transformation
    *

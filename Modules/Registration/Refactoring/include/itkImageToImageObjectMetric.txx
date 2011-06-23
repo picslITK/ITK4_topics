@@ -931,6 +931,21 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   }
 }
 
+/*
+ * UpdateParameters
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::UpdateParameters( DerivativeType & derivative ) const
+{
+  if( derivative.GetSize() != this->GetNumberOfParameters() )
+    {
+    itkExceptionMacro("derivative is not the proper size");
+    }
+  this->m_MovingImageTransform->UpdateTransformParameters( derivative );
+}
+
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >

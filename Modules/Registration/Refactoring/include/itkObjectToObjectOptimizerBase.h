@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkObjectToObjectThreadedMetricOptimizerBase.h,v $
+  Module:    $RCSfile: itkObjectToObjectOptimizerBase.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,18 +14,20 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkObjectToObjectThreadedMetricOptimizerBase_h
-#define __itkObjectToObjectThreadedMetricOptimizerBase_h
+#ifndef __itkObjectToObjectOptimizerBase_h
+#define __itkObjectToObjectOptimizerBase_h
 
 #include "itkTransformParameters.h"
+#include "itkObjectToObjectMetric.h"
+#include "itkIntTypes.h"
 
 namespace itk
 {
-/** \class ObjectToObjectThreadedMetricOptimizerBase
+/** \class ObjectToObjectOptimizerBase
  * \brief Abstract base for object-to-object metric optimizers.
  *
  * Threading of some optimizer operations may be handled within
- * derived classes, for example in GradientDescentThreadedMetricOptimizer.
+ * derived classes, for example in GradientDescentOptimizer.
  *
  * Derived classes must override StartOptimization, which is called
  * to initialize and run the optimization.
@@ -33,12 +35,11 @@ namespace itk
  * \ingroup ITK-Optimizers
  */
 
-template<class TMetricFunction>
-class ITK_EXPORT ObjectToObjectThreadedMetricOptimizerBase : public Object
+class ITK_EXPORT ObjectToObjectOptimizerBase : public Object
 {
 public:
   /** Standard class typedefs. */
-  typedef ObjectToObjectThreadedMetricOptimizerBase   Self;
+  typedef ObjectToObjectOptimizerBase                 Self;
   typedef Object                                      Superclass;
   typedef SmartPointer< Self >                        Pointer;
   typedef SmartPointer< const Self >                  ConstPointer;
@@ -49,38 +50,26 @@ public:
   /**  Scale type. */
   typedef TransformParameters< double >             ScalesType;
 
-  /** Metric type over which this class is templated */
-  typedef TMetricFunction                           MetricType;
-  typedef typename MetricType::Pointer              MetricTypePointer;
+  /** Metric function type */
+  typedef ObjectToObjectMetric                      MetricType;
+  typedef MetricType::Pointer                       MetricTypePointer;
   /** Measure type */
-  typedef typename MetricType::MeasureType          MeasureType;
-  /** Image region type */
-  typedef typename MetricType::RegionType           ImageRegionType; //used only in threading
-  /** Fixed image type */
-//  typedef typename MetricType::FixedImageType       FixedImageType;
-  /** Fixed image pointer */
-//  typedef typename FixedImageType::Pointer          FixedImagePointer;
-  /** Moving image type */
-  typedef typename MetricType::MovingImageType      MovingImageType; //used only to define threader type.
-  /** Moving image pointer */
-//  typedef typename MovingImageType::Pointer         MovingImagePointer;
-  /** Tranform pointer */
-//  typedef typename MetricType::TransformPointer     TransformPointer;
-  /** Internal computation type, for maintaining a desired precision */
-  typedef typename MetricType::InternalComputationValueType InternalComputationValueType;
+  typedef MetricType::MeasureType                   MeasureType;
+  /** Internal computation value type */
+  typedef MetricType::InternalComputationValueType
+                                                InternalComputationValueType;
 
   /** Accessors for Metric */
   itkGetObjectMacro( Metric, MetricType );
   itkSetObjectMacro( Metric, MetricType );
 
   /** Accessor for metric value */
-  // ??? Do we need this here ?
-  itkGetConstReferenceMacro( Value, InternalComputationValueType );
+  itkGetConstReferenceMacro( Value, MeasureType );
 
   /** Set current parameters scaling. */
   void SetScales(const ScalesType & scales)
   {
-    if( scales != m_scales )
+    if( scales != m_Scales )
     itkDebugMacro("setting scales to " <<  scales);
     m_Scales = scales;
     this->Modified();
@@ -109,28 +98,26 @@ public:
 protected:
 
   /** Default constructor */
-  ObjectToObjectThreadedMetricOptimizerBase()
+  ObjectToObjectOptimizerBase()
   {
     this->m_Metric = NULL;
     this->m_Value = 0;
   }
+  virtual ~ObjectToObjectOptimizerBase(){}
 
   MetricTypePointer             m_Metric;
-  ThreadIdType                  m_NumberOfThreads; // ??? Needed any more?
-//  MetricThreaderPointer         m_MetricThreader;
+  ThreadIdType                  m_NumberOfThreads;
 
   /** Metric measure value at a given iteration */
-  // ??? Why are we storing this here?
-  MeasureType                                 m_Value;
+  MeasureType                   m_Value;
 
-  virtual ~ObjectToObjectThreadedMetricOptimizerBase(){}
+  /** Scales */
+  ScalesType                    m_Scales;
 
 private:
 
-  ScalesType::Pointer              m_Scales;
-
   //purposely not implemented
-  ObjectToObjectThreadedMetricOptimizerBase( const Self & );
+  ObjectToObjectOptimizerBase( const Self & );
   void operator=( const Self& );      //purposely not implemented
 
 };

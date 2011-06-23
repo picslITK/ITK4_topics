@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGradientDescentThreadedMetricOptimizerBase.h,v $
+  Module:    $RCSfile: itkGradientDescentObjectOptimizerBase.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,28 +14,26 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkGradientDescentThreadedMetricOptimizerBase_h
-#define __itkGradientDescentThreadedMetricOptimizerBase_h
+#ifndef __itkGradientDescentObjectOptimizerBase_h
+#define __itkGradientDescentObjectOptimizerBase_h
 
 #include "itkPoint.h"
 #include "itkIndex.h"
-#include "itkObjectToObjectThreadedMetricOptimizerBase.h"
+#include "itkObjectToObjectOptimizerBase.h"
 #include "itkArray1DToData.h"
 
 namespace itk
 {
 
-template<class TMetricFunction>
-class ITK_EXPORT GradientDescentThreadedMetricOptimizerBase
-  : public ObjectToObjectThreadedMetricOptimizerBase< TMetricFunction >
+class ITK_EXPORT GradientDescentObjectOptimizerBase
+  : public ObjectToObjectOptimizerBase
 {
 public:
   /** Standard class typedefs. */
-  typedef GradientDescentThreadedMetricOptimizerBase     Self;
-  typedef ObjectToObjectThreadedMetricOptimizerBase < TMetricFunction >
-                                                         Superclass;
-  typedef SmartPointer< Self >                           Pointer;
-  typedef SmartPointer< const Self >                     ConstPointer;
+  typedef GradientDescentObjectOptimizerBase     Self;
+  typedef ObjectToObjectOptimizerBase            Superclass;
+  typedef SmartPointer< Self >                   Pointer;
+  typedef SmartPointer< const Self >             ConstPointer;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(Self, Superclass);
@@ -50,37 +48,27 @@ public:
     OtherError
     } StopConditionType;
 
-  /** Derivative type */
-  typedef typename TMetricFunction::DerivativeType  DerivativeType;
 
   /** Metric type over which this class is templated */
-  itkSuperclassTraitMacro( MetricType );
-  itkSuperclassTraitMacro( MetricTypePointer );
-  /** Threader type */
-//  itkSuperclassTraitMacro( MetricThreaderType );
-//  itkSuperclassTraitMacro( MetricThreaderTypePointer );
-  /** Measure type */
-  itkSuperclassTraitMacro( MeasureType );
-  /** Image region type */
-  itkSuperclassTraitMacro( ImageRegionType );
-  /** Fixed image type */
-  itkSuperclassTraitMacro( FixedImageType );
-  /** Fixed image pointer */
-  itkSuperclassTraitMacro( FixedImagePointer );
-  /** Moving image pointer */
-  itkSuperclassTraitMacro( MovingImagePointer );
-  /** Tranform pointer */
-  itkSuperclassTraitMacro( TransformPointer );
-  /** Internal computation type, for maintaining a desired precision */
-  itkSuperclassTraitMacro( InternalComputationValueType );
+  typedef Superclass::MetricType                    MetricType;
+  typedef MetricType::Pointer                       MetricTypePointer;
 
-  /** Threader for grandient update */
-  typedef Array1DToData<Self>             ModifyGradientThreaderType;
+  /** Derivative type */
+  typedef MetricType::DerivativeType                DerivativeType;
+
+  /** Measure type */
+  typedef Superclass::MeasureType                   MeasureType;
+
+  /** Internal computation type, for maintaining a desired precision */
+  typedef Superclass::InternalComputationValueType
+                                                InternalComputationValueType;
+
+  /** Threader for gradient update */
+  typedef Array1DToData<Self>                       ModifyGradientThreaderType;
   typedef ModifyGradientThreaderType::IndexRangeType  IndexRangeType;
 
-  /** Global derivative accessor */
-  const DerivativeType & GetGlobalDerivative(void)
-  { return this->m_GlobalDerivative; }
+  /** Get the most recent gradient values. */
+  itkGetConstReferenceMacro( Gradient, DerivativeType );
 
   /** Get stop condition enum */
   itkGetConstReferenceMacro(StopCondition, StopConditionType);
@@ -121,18 +109,6 @@ public:
 
 protected:
 
-  /** Update the metric's value and derivative for the current iteration.
-   * Results are stored in member variables. */
-   ???
-  virtual void UpdateMetricValueAndDerivative();
-
-  /** Initialize threading memory before starting optimization.
-   * This is a one-time initialization, i.e. not performed at every
-   * iteration.
-   * Must be called from a derived class during its initialization. */
-   needed if we dont do metric threading here anymore?
-  void InitializeForThreading();
-
   /** Modify the gradient in place, to advance the optimization.
    * This call performs a threaded modification for transforms with
    * local support (assumed to be dense). Otherwise the modification
@@ -145,7 +121,7 @@ protected:
   virtual void ModifyGradient()
   {
     /* Perform the modification either with or without threading */
-    if( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
+    if( this->m_Metric->HasLocalSupport() )
       {
       /* This ends up calling ModifyGradientThreaded from each thread */
       this->m_ModifyGradientThreader->GenerateData();
@@ -154,10 +130,15 @@ protected:
       {
       IndexRangeType fullrange;
       fullrange[0] = 0;
-      fullrange[1] = this->m_Gradient.Size()-1; //range is inclusive
+      fullrange[1] = this->m_Gradient.GetSize()-1; //range is inclusive
       this->m_ModifyGradientOverSubRange( fullrange );
       }
   }
+
+  /** Derived classes define this worker method to modify the gradient.
+   * Modifications must be performed over the index range defined in
+   * \c subrange.
+   * Called from the threaded operation started in ModifyGradient(). */
   virtual void ModifyGradientOverSubRange( IndexRangeType& subrange ) = 0;
 
   /** Callback used during threaded gradient modification.
@@ -172,21 +153,6 @@ protected:
                                   int threadId,
                                   Self *inHolder );
 
-  /** Advance one step following the gradient direction
-   * This method verifies if a change in direction is required
-   * and if a reduction in steplength is required. */
-//  virtual void AdvanceOneStep(void);
-
-  /** Advance one step along the corrected gradient taking into
-   * account the steplength represented by factor.
-   * This method is invoked by AdvanceOneStep.
-   * \sa AdvanceOneStep */
-//  virtual void StepAlongGradient(void) = 0;
-
-  /** Cleanup after optimization is complete.
-   * Should be called at end of StartOptimization by derived class. */
-  virtual void CleanupFromThreading(void);
-
   /** Get the reason for termination */
   virtual const std::string GetStopConditionDescription() const;
 
@@ -199,8 +165,11 @@ protected:
   bool               m_Maximize;
 
   /** Default constructor */
-  GradientDescentThreadedMetricOptimizerBase();
-  virtual ~GradientDescentThreadedMetricOptimizerBase(){}
+  GradientDescentObjectOptimizerBase();
+  virtual ~GradientDescentObjectOptimizerBase(){}
+
+  /** Current gradient */
+  DerivativeType     m_Gradient;
 
   /** Threader for grandient modification */
   ModifyGradientThreaderType      m_ModifyGradientThreader;
@@ -208,7 +177,7 @@ protected:
 private:
 
   //purposely not implemented
-  GradientDescentThreadedMetricOptimizerBase( const Self & );
+  GradientDescentObjectOptimizerBase( const Self & );
   void operator=( const Self& );      //purposely not implemented
 
 };
@@ -216,7 +185,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkGradientDescentThreadedMetricOptimizerBase.txx"
+# include "itkGradientDescentObjectOptimizerBase.txx"
 #endif
 
 #endif

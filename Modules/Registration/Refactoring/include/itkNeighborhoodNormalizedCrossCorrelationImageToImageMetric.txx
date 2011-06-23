@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction_txx
-#define __itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction_txx
+#ifndef __itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric_txx
+#define __itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric_txx
 
 #include "itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction.h"
 #include "itkNumericTraits.h"

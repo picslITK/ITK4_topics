@@ -1,15 +1,16 @@
 itk_module_test()
 set(ITK-RegistrationRefactoringTests
   itkNewClassExampleTest.cxx
-#  itkTransformVirtualDomainCalculatorTest.cxx
+# itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDeformationFieldTransformRegistrationTest.cxx
   itkArray1DToDataTest.cxx
-#  itkObjectToObjectThreadedMetricOptimizerBaseTest.cxx
+# itkObjectToObjectOptimizerBaseTest.cxx
   itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
 #  itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest
+#  itkGradientDescentObjectOptimizerTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -27,8 +28,8 @@ itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectMetricTest)
 
-#itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
-#      COMMAND ITK-RegistrationRefactoringTestDriver itkDemonsImageToImageObjectMetricTest ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd 2)
+itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
+      COMMAND ITK-RegistrationRefactoringTestDriver itkDemonsImageToImageObjectMetricTest ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd 2)
 
 itk_add_test(NAME itkDeformationFieldTransformRegistrationTest
           COMMAND ITK-RegistrationRefactoringTestDriver
@@ -37,9 +38,9 @@ itk_add_test(NAME itkDeformationFieldTransformRegistrationTest
 itk_add_test(NAME itkArray1DToDataTest
          COMMAND ITK-RegistrationRefactoringTestDriver itkArray1DToDataTest)
 
-itk_add_test(NAME itkObjectToObjectThreadedMetricOptimizerBaseTest
+itk_add_test(NAME itkObjectToObjectOptimizerBaseTest
          COMMAND ITK-RegistrationRefactoringTestDriver
-         itkObjectToObjectThreadedMetricOptimizerBaseTest)
+         itkObjectToObjectOptimizerBaseTest)
 
 itk_add_test(NAME itkCompositeTransformTest
       COMMAND ITK-RegistrationRefactoringTestDriver itkCompositeTransformTest)
@@ -51,6 +52,10 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
 
-#itk_add_test(NAME itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
-#      COMMAND ITK-RegistrationRefactoringTestDriver
-#      itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
+itk_add_test(NAME itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
+
+itk_add_test(NAME itkGradientDescentObjectOptimizerTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkGradientDescentObjectOptimizerTest)
