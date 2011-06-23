@@ -48,13 +48,13 @@ namespace itk
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
-public ObjectToObjectMetric<TFixedImage, TMovingImage>
+  public ObjectToObjectMetric
 {
 public:
 
   /** Standard class typedefs. */
   typedef ImageToImageObjectMetric                          Self;
-  typedef ObjectToObjectMetric<TFixedImage, TMovingImage>   Superclass;
+  typedef ObjectToObjectMetric                              Superclass;
   typedef SmartPointer<Self>                                Pointer;
   typedef SmartPointer<const Self>                          ConstPointer;
 
@@ -392,6 +392,11 @@ public:
    * pointer to transform? Or are transforms only every used for images? */
   virtual unsigned int GetNumberOfParameters() const
     { return this->m_MovingImageTransform->GetNumberOfParameters(); }
+
+  /** Update the metric's transform parameters.
+   * \c derivative must be the proper size, as retrieved
+   * from GetNumberOfParameters. */
+  virtual void UpdateParameters( DerivativeType & derivative ) const;
 
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual unsigned int GetNumberOfLocalParameters() const

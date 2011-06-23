@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkRegularStepGradientDescentThreadedMetricOptimizer.h,v $
+  Module:    $RCSfile: itkRegularStepGradientDescentObjectOptimizer.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,12 +14,12 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkRegularStepGradientDescentThreadedMetricOptimizer_h
-#define __itkRegularStepGradientDescentThreadedMetricOptimizer_h
+#ifndef __itkRegularStepGradientDescentObjectOptimizer_h
+#define __itkRegularStepGradientDescentObjectOptimizer_h
 
 #include "itkPoint.h"
 #include "itkIndex.h"
-#include "itkGradientDescentThreadedMetricOptimizerBase.h"
+#include "itkGradientDescentObjectOptimizerBase.h"
 
 namespace itk
 {
@@ -27,13 +27,13 @@ namespace itk
 // functor for threading using the metric function class
 // assuming function has output allocated already
 template<class TMetricFunction>
-class ITK_EXPORT RegularStepGradientDescentThreadedMetricOptimizer
-  : public GradientDescentThreadedMetricOptimizerBase<TMetricFunction>
+class ITK_EXPORT RegularStepGradientDescentObjectOptimizer
+  : public GradientDescentObjectOptimizerBase<TMetricFunction>
 {
 public:
   /** Standard class typedefs. */
-  typedef RegularStepGradientDescentThreadedMetricOptimizer     Self;
-  typedef GradientDescentThreadedMetricOptimizerBase <TMetricFunction>
+  typedef RegularStepGradientDescentObjectOptimizer     Self;
+  typedef GradientDescentObjectOptimizerBase <TMetricFunction>
                                                                 Superclass;
   typedef SmartPointer< Self >                                  Pointer;
   typedef SmartPointer< const Self >                            ConstPointer;
@@ -273,7 +273,7 @@ protected:
   }
 
   /** Default constructor */
-  RegularStepGradientDescentThreadedMetricOptimizer()
+  RegularStepGradientDescentObjectOptimizer()
   {
     /* Point the threader to the threading worker callback.
      * The rest of the threader is initialed in Superclass. */
@@ -281,7 +281,7 @@ protected:
       Self::ComputeMetricValueInRegionThreaded );
   }
 
-  virtual ~RegularStepGradientDescentThreadedMetricOptimizer(){}
+  virtual ~RegularStepGradientDescentObjectOptimizer(){}
 
 private:
 
@@ -289,7 +289,7 @@ private:
   std::vector< DerivativeType >   m_DerivativesPerThread;
 
   //purposely not implemented
-  RegularStepGradientDescentThreadedMetricOptimizer( const Self & );
+  RegularStepGradientDescentObjectOptimizer( const Self & );
   void operator=( const Self& );      //purposely not implemented
 
 };
@@ -297,7 +297,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkRegularStepGradientDescentThreadedMetricOptimizer.txx"
+# include "itkRegularStepGradientDescentObjectOptimizer.txx"
 #endif
 
 #endif

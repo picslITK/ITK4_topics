@@ -15,10 +15,10 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkGradientDescentThreadedMetricOptimizer_txx
-#define __itkGradientDescentThreadedMetricOptimizer_txx
+#ifndef __itkGradientDescentObjectOptimizer_txx
+#define __itkGradientDescentObjectOptimizer_txx
 
-#include "itkGradientDescentThreadedMetricOptimizer.h"
+#include "itkGradientDescentObjectOptimizer.h"
 
 namespace itk
 {
@@ -26,10 +26,9 @@ namespace itk
 /**
  * Default constructor
  */
-template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
-::GradientDescentThreadedMetricOptimizer()
+GradientDescentObjectOptimizer
+::GradientDescentObjectOptimizer()
 {
   m_LearningRate = 1.0;
 }
@@ -37,9 +36,8 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
 /**
  * Start and run the optimization
  */
-template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::StartOptimization()
 {
   itkDebugMacro("StartOptimization");
@@ -47,6 +45,12 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
   m_CurrentIteration   = 0;
 
   /* Validate some settings */
+  if( this->m_Metric.IsNull() )
+    {
+    itkExceptionMacro("m_Metric must be set.");
+    return;
+    }
+
   if( this->m_Scales.Size() != this->m_Metric->GetNumberOfParameters() )
     {
     m_StopCondition = OtherError;
@@ -63,9 +67,8 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
 /**
  * Resume optimization.
  */
-template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::ResumeOptimization()
 {
   /* Do threading initialization here so we can also do some cleanup
@@ -82,7 +85,7 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
     /* Compute value/derivative, using threader. */
     try
       {
-      this->UpdateMetricValueAndDerivative();
+      this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
       }
     catch ( ExceptionObject & err )
       {
@@ -123,25 +126,26 @@ GradientDescentThreadedMetricOptimizer<TMetricFunction>
 /**
  * Advance one Step following the gradient direction
  */
-template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::AdvanceOneStep()
 {
   itkDebugMacro("AdvanceOneStep");
 
+  /* Begin threaded gradient modification. Work is done in
+   * ModifyGradientOverSubRange */
   this->ModifyGradient();
-  this->m_Metric->GetMovingImageTransform()->
-                    UpdateTransformParameters( m_Gradient ??? );
+
+  this->m_Metric->UpdateParameters( m_Gradient );
+
   this->InvokeEvent( IterationEvent() );
 }
 
 /**
  * Modify the gradient over a given index range.
  */
-template<class TMetricFunction>
 void
-GradientDescentThreadedMetricOptimizer<TMetricFunction>
+GradientDescentObjectOptimizer
 ::ModifyGradientOverSubRange( IndexRangeType& subrange )
 {
   double direction;

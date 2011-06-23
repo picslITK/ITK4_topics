@@ -19,28 +19,25 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "itkObjectToObjectThreadedMetricOptimizerBase.h"
-#include "itkDemonsImageToImageMetric.h"
+#include "itkObjectToObjectOptimizerBase.h"
+#include "itkDemonsImageToImageObjectMetric.h"
 
 using namespace itk;
 
 namespace{
 
 const int ImageDimension = 2;
-typedef itk::Image<float, ImageDimension>                     ImageType;
+typedef itk::Image<double, ImageDimension>                    ImageType;
 typedef ImageType::Pointer                                    ImagePointerType;
-typedef DemonsImageToImageMetric< ImageType, ImageType >      MetricType;
-typedef MetricType::RegionType                                ImageRegionType;
 
 /* Define a simple derived class. */
 class TestOptimizer
-  : public ObjectToObjectThreadedMetricOptimizerBase< MetricType >
+  : public ObjectToObjectOptimizerBase
 {
 public:
   /** Standard "Self" typedef. */
   typedef TestOptimizer                           Self;
-  typedef ObjectToObjectThreadedMetricOptimizerBase< MetricType >
-                                                  Superclass;
+  typedef ObjectToObjectOptimizerBase             Superclass;
   typedef SmartPointer< Self >                    Pointer;
   typedef SmartPointer< const Self >              ConstPointer;
 
@@ -62,34 +59,21 @@ public:
 
 /**
  */
-int itkObjectToObjectThreadedMetricOptimizerBaseTest(int , char* [])
+int itkObjectToObjectOptimizerBaseTest(int , char* [])
 {
+  typedef DemonsImageToImageObjectMetric<ImageType,ImageType>   MetricType;
   MetricType::Pointer metric = MetricType::New();
   TestOptimizer::Pointer optimizer = TestOptimizer::New();
-  ImageRegionType imageRegion;
 
   /* exercise some methods */
   optimizer->SetMetric( metric );
-  MetricType::Pointer metricReturn = optimizer->GetMetric();
-  if( metricReturn != metric )
+  if( optimizer->GetMetric() != metric )
     {
     std::cerr << "Set/GetMetric failed." << std::endl;
     return EXIT_FAILURE;
     }
 
   std::cout << "value: " << optimizer->GetValue() << std::endl;
-
-  TestOptimizer::MetricThreaderPointer threader =
-    optimizer->GetMetricThreader();
-  /*check that the threader's holder has been properly set */
-  if( threader->GetHolder() != static_cast<void*>(optimizer.GetPointer()) )
-    {
-    std::cerr << "Set/GetHolder failed." << std::endl;
-    std::cerr << "GetHolder(): " << threader->GetHolder() << std::endl
-              << "optimizer.GetPointer(): " << optimizer.GetPointer()
-              << std::endl;
-    return EXIT_FAILURE;
-    }
 
   /* Test set/get of scales */
   TestOptimizer::ScalesType scales;
@@ -103,8 +87,6 @@ int itkObjectToObjectThreadedMetricOptimizerBaseTest(int , char* [])
     }
 
   optimizer->SetNumberOfThreads( 1 );
-
-  optimizer->SetOverallRegion( imageRegion );
 
   optimizer->StartOptimization();
 
