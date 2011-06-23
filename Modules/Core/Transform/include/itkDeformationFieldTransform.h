@@ -82,6 +82,9 @@ public:
   typedef typename Superclass::InputVectorType      InputVectorType;
   typedef typename Superclass::OutputVectorType     OutputVectorType;
 
+  typedef typename Superclass::InputVectorPixelType   InputVectorPixelType;
+  typedef typename Superclass::OutputVectorPixelType  OutputVectorPixelType;
+
   /** Standard covariant vector type for this class */
   typedef typename Superclass::InputCovariantVectorType
     InputCovariantVectorType;
@@ -156,17 +159,26 @@ public:
   virtual OutputVectorType TransformVector(const InputVectorType &) const
     { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
 
+  virtual OutputVectorPixelType TransformVector(const InputVectorPixelType &) const
+    { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
+
   virtual OutputVectorType TransformVector(const InputVectorType &, const InputPointType & ) const;
+
+  virtual OutputVectorPixelType TransformVector(const InputVectorPixelType &, const InputPointType & ) const;
 
   /**  Method to transform a vnl_vector. */
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const
     { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
+
+  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &, const InputPointType & ) const;
 
   /** Method to transform a tensor */
   OutputTensorType TransformTensor(const InputTensorType & ) const
     { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use TransformTensor(Tensor,Point)" ); }
 
   OutputTensorType TransformTensor(const InputTensorType &, const InputPointType &) const;
+
+  OutputVectorPixelType TransformTensor(const InputVectorPixelType &, const InputPointType &) const;
 
   /**  Method to transform a CovariantVector. */
   virtual OutputCovariantVectorType TransformCovariantVector( const InputCovariantVectorType &) const
