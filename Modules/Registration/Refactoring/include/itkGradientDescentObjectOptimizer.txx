@@ -26,7 +26,6 @@ namespace itk
 /**
  * Default constructor
  */
-void
 GradientDescentObjectOptimizer
 ::GradientDescentObjectOptimizer()
 {
@@ -42,24 +41,10 @@ GradientDescentObjectOptimizer
 {
   itkDebugMacro("StartOptimization");
 
-  m_CurrentIteration   = 0;
+  /* Must call the superclass version for basic validation and setup */
+  Superclass::StartOptimization();
 
-  /* Validate some settings */
-  if( this->m_Metric.IsNull() )
-    {
-    itkExceptionMacro("m_Metric must be set.");
-    return;
-    }
-
-  if( this->m_Scales.Size() != this->m_Metric->GetNumberOfParameters() )
-    {
-    m_StopCondition = OtherError;
-    m_StopConditionDescription << "Scales size error";
-    StopOptimization();
-    itkExceptionMacro("Size of scales (" << this->m_Scales.Size()
-                      << ") must match size of parameters (" <<
-                      this->m_Metric->GetNumberOfParameters() << ").");
-    }
+  m_CurrentIteration = 0;
 
   this->ResumeOptimization();
 }
@@ -71,10 +56,6 @@ void
 GradientDescentObjectOptimizer
 ::ResumeOptimization()
 {
-  /* Do threading initialization here so we can also do some cleanup
-   * when we stop, and still be able to resume. */
-  this->InitializeForThreading();
-
   m_StopConditionDescription.str("");
   m_StopConditionDescription << this->GetNameOfClass() << ": ";
   InvokeEvent( StartEvent() );
@@ -85,6 +66,8 @@ GradientDescentObjectOptimizer
     /* Compute value/derivative, using threader. */
     try
       {
+      /* m_Gradient will be sized as needed by metric. If it's already
+       * proper size, no new allocation is done. */
       this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
       }
     catch ( ExceptionObject & err )
@@ -136,6 +119,7 @@ GradientDescentObjectOptimizer
    * ModifyGradientOverSubRange */
   this->ModifyGradient();
 
+  /* Pass graident to transform and let it do its own updating */
   this->m_Metric->UpdateTransformParameters( m_Gradient );
 
   this->InvokeEvent( IterationEvent() );
@@ -146,9 +130,9 @@ GradientDescentObjectOptimizer
  */
 void
 GradientDescentObjectOptimizer
-::ModifyGradientOverSubRange( IndexRangeType& subrange )
+::ModifyGradientOverSubRange( const IndexRangeType& subrange )
 {
-  double direction;
+  InternalComputationValueType direction;
   if ( this->m_Maximize )
     {
     direction = 1.0;
@@ -158,12 +142,19 @@ GradientDescentObjectOptimizer
     direction = -1.0;
     }
 
-  ScalesType& scales = this->GetScales();
+  const ScalesType& scales = this->GetScales();
 
-  double direction_learning = direction * m_LearningRate;
+  InternalComputationValueType direction_learning = direction * m_LearningRate;
   for ( unsigned int j = subrange[0]; j <= subrange[1]; j++ )
     {
-    m_Gradient[j] = m_Gradient[j] / scales[j] * direction_learning;
+    if( this->m_UseScalarScale )
+      {
+      m_Gradient[j] = m_Gradient[j] / this->m_ScalarScale * direction_learning;
+      }
+    else
+      {
+      m_Gradient[j] = m_Gradient[j] / scales[j] * direction_learning;
+      }
     }
 }
 

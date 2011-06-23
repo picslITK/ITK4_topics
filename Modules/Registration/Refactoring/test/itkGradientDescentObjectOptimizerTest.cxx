@@ -63,24 +63,29 @@ public:
     m_Parameters.Fill( 0 );
   }
 
+  void Initialize(void) throw ( itk::ExceptionObject ) {}
+
   void GetValueAndDerivative( MeasureType & value,
-                              DerivativeType & derivative ) const
+                              DerivativeType & derivative )
   {
-    double x = parameters[0];
-    double y = parameters[1];
+    if( derivative.Size() != 2 )
+      derivative.SetSize(2);
+
+    double x = m_Parameters[0];
+    double y = m_Parameters[1];
 
     std::cout << "GetValueAndDerivative( " ;
     std::cout << x << " ";
-    std::cout << y << ") = ";
+    std::cout << y << ") = " << std::endl;
 
-    MeasureType value = 0.5*(3*x*x+4*x*y+6*y*y) - 2*x + 8*y;
+    value = 0.5*(3*x*x+4*x*y+6*y*y) - 2*x + 8*y;
 
-    std::cout << value << std::endl;
+    std::cout << "value: " << value << std::endl;
 
     derivative[0] = 3 * x + 2 * y -2;
     derivative[1] = 2 * x + 6 * y +8;
 
-    std::cout << derivative << std::endl << std::endl;
+    std::cout << "derivative: " << derivative << std::endl;
   }
 
   MeasureType  GetValue()
@@ -88,7 +93,7 @@ public:
     return 0.0;
   }
 
-  void UpdateParameters( DerivativeType & update ) const
+  void UpdateTransformParameters( DerivativeType & update )
   {
     m_Parameters += update;
   }
@@ -104,9 +109,19 @@ public:
   }
 
   unsigned int GetNumberOfParameters(void) const
-    {
+  {
     return SpaceDimension;
-    }
+  }
+
+  unsigned int GetNumberOfLocalParameters() const
+  {
+    return SpaceDimension;
+  }
+
+  bool HasLocalSupport() const
+  {
+    return false;
+  }
 
 private:
 

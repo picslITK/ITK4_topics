@@ -88,14 +88,18 @@ public:
   /** This method returns the value of the cost function */
   virtual MeasureType GetValue() = 0;
 
-  /** This method returns the derivative of the cost function */
+  /** This method returns the derivative of the cost function.
+   * \c derivative will be sized and allocated as needed by metric.
+   * If it's already allocated at proper size, no new allocation is done. */
   virtual void GetDerivative(DerivativeType & derivative)
   {
     MeasureType value;
     this->GetValueAndDerivative(value, derivative);
   }
 
-  /** This method returns the value and derivative of the cost function */
+  /** This method returns the value and derivative of the cost function.
+   * \c derivative will be sized and allocated as needed by metric.
+   * If it's already proper size, no new allocation is done. */
   virtual void GetValueAndDerivative(MeasureType & value,
                                      DerivativeType & derivative) = 0;
 
@@ -104,14 +108,15 @@ public:
    * used in non-metric classes, e.g. optimizers. */
   virtual unsigned int GetNumberOfParameters() const = 0;
   virtual unsigned int GetNumberOfLocalParameters() const = 0;
+
   /** Return whether the metric's active transform has local support,
    * i.e. is dense. */
   virtual bool HasLocalSupport() const = 0;
+
   /** Update the parameters of the metric's active transform.
    * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
-  virtual void UpdateTransformParameters( DerivativeType & derivative )
-    const = 0;
+  virtual void UpdateTransformParameters( DerivativeType & derivative ) = 0;
 
 protected:
   ObjectToObjectMetric() {}
@@ -144,9 +149,5 @@ private:
 
 };
 } // end namespace itk
-
-#ifndef ITK_MANUAL_INSTANTIATION
-//#include "itkObjectToObjectMetric.txx"
-#endif
 
 #endif

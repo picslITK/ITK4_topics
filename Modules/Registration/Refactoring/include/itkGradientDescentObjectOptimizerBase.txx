@@ -24,7 +24,6 @@ namespace itk
 {
 
 //-------------------------------------------------------------------
-void
 GradientDescentObjectOptimizerBase
 ::GradientDescentObjectOptimizerBase()
 {
@@ -48,14 +47,12 @@ GradientDescentObjectOptimizerBase
 }
 
 //-------------------------------------------------------------------
-const std::string
+void
 GradientDescentObjectOptimizerBase
 ::StopOptimization(void)
 {
   itkDebugMacro("StopOptimization");
-
   m_Stop = true;
-  this->CleanupFromThreading();
   InvokeEvent( EndEvent() );
 }
 
@@ -76,14 +73,14 @@ GradientDescentObjectOptimizerBase
     IndexRangeType fullrange;
     fullrange[0] = 0;
     fullrange[1] = this->m_Gradient.GetSize()-1; //range is inclusive
-    this->m_ModifyGradientOverSubRange( fullrange );
+    this->ModifyGradientOverSubRange( fullrange );
     }
 }
 //-------------------------------------------------------------------
 void
 GradientDescentObjectOptimizerBase
 ::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
-                          int threadId,
+                          ThreadIdType threadId,
                           Self *holder )
 {
   holder->ModifyGradientOverSubRange( rangeForThread );

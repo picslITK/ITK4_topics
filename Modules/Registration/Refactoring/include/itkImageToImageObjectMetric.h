@@ -397,7 +397,7 @@ public:
   /** Update the metric's transform parameters.
    * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
-  virtual void UpdateTransformParameters( DerivativeType & derivative ) const;
+  virtual void UpdateTransformParameters( DerivativeType & derivative );
 
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual unsigned int GetNumberOfLocalParameters() const

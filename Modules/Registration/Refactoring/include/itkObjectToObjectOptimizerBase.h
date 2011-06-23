@@ -70,13 +70,27 @@ public:
   void SetScales(const ScalesType & scales)
   {
     if( scales != m_Scales )
-    itkDebugMacro("setting scales to " <<  scales);
-    m_Scales = scales;
-    this->Modified();
+      {
+      itkDebugMacro("setting scales to " <<  scales);
+      m_Scales = scales;
+      this->Modified();
+      }
   }
 
   /** Get current parameters scaling. */
   itkGetConstReferenceMacro(Scales, ScalesType);
+
+  /** Set Scalar scaling value. Does NOT set the m_UseScalarScaling flag
+   * to true. */
+  itkSetMacro( ScalarScale, InternalComputationValueType );
+
+  /** Get the scalar scaling value. */
+  itkGetConstReferenceMacro( ScalarScale, InternalComputationValueType );
+
+  /** Accessors for UseScalarScale flag */
+  itkSetMacro(UseScalarScale, bool);
+  itkGetConstReferenceMacro(UseScalarScale, bool);
+  itkBooleanMacro(UseScalarScale);
 
   /** Set the number of threads to use when threading. */
   virtual void SetNumberOfThreads( ThreadIdType number )
@@ -92,9 +106,38 @@ public:
       }
   }
 
-  /** Run the optimization */
-  virtual void StartOptimization() = 0;
+  /** Run the optimization.
+   * \note Derived classes must override and call this supercall method, then
+   * perform any additional initialization, and call \c ResumeOptimization. */
+  virtual void StartOptimization()
+  {
+    /* Validate some settings */
+    if( this->m_Metric.IsNull() )
+      {
+      itkExceptionMacro("m_Metric must be set.");
+      return;
+      }
 
+    /* Initialize or validate scales, if not using a scalar scale value. */
+    if( ! m_UseScalarScale )
+      {
+      if ( m_Scales.Size() == 0 )
+        {
+        ScalesType scales( this->m_Metric->GetNumberOfParameters() );
+        scales.Fill(1.0f);
+        SetScales(scales);
+        }
+      else
+        {
+        if( this->m_Scales.Size() != this->m_Metric->GetNumberOfParameters() )
+          {
+          itkExceptionMacro("Size of scales (" << this->m_Scales.Size()
+                            << ") must match size of parameters (" <<
+                            this->m_Metric->GetNumberOfParameters() << ").");
+          }
+        }
+      }
+  }
 protected:
 
   /** Default constructor */
@@ -102,6 +145,8 @@ protected:
   {
     this->m_Metric = NULL;
     this->m_Value = 0;
+    this->m_ScalarScale = 1.0;
+    this->m_UseScalarScale = false;
   }
   virtual ~ObjectToObjectOptimizerBase(){}
 
@@ -111,8 +156,18 @@ protected:
   /** Metric measure value at a given iteration */
   MeasureType                   m_Value;
 
-  /** Scales */
+  /** Scales. Gets set to size of metric parameters and filled
+   * with 1.0 in StartOptimization, if has not yet otherwise
+   * been set, and not using a scalar scaling factor. */
   ScalesType                    m_Scales;
+
+  /** A scalar scale value to use instead of an array of scales.
+   * Useful for dense transforms. Defaults to 1.0 */
+  InternalComputationValueType  m_ScalarScale;
+
+  /** Flag to indicate if a scalar scale value is being used instead
+   * of a scales array. Defaults to false. */
+  bool                          m_UseScalarScale;
 
 private:
 

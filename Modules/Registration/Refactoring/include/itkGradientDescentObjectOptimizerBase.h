@@ -91,9 +91,6 @@ public:
   /** Get the current iteration number. */
   itkGetConstMacro(CurrentIteration, SizeValueType);
 
-  /** Start and run the optimization */
-  virtual void StartOptimization() = 0;
-
   /** Resume optimization.
    * This runs the optimization loop, and allows continuation
    * of stopped optimization */
@@ -102,6 +99,9 @@ public:
   /** Stop optimization. The object is left in a state so the
    * optimization can be resumed by calling ResumeOptimization. */
   virtual void StopOptimization(void);
+
+  /** Get the reason for termination */
+  virtual const std::string GetStopConditionDescription() const;
 
 protected:
 
@@ -125,10 +125,7 @@ protected:
    * \c subrange.
    * Called from ModifyGradient(), either directly or via threaded
    * operation. */
-  virtual void ModifyGradientOverSubRange( IndexRangeType& subrange ) = 0;
-
-  /** Get the reason for termination */
-  virtual const std::string GetStopConditionDescription() const;
+  virtual void ModifyGradientOverSubRange( const IndexRangeType& subrange ) = 0;
 
   /* Common variables for optimization control and reporting */
   bool               m_Stop;
@@ -156,7 +153,7 @@ private:
    * \c holder, which is passed in via the threader's user data. */
   static void ModifyGradientThreaded(
                                   const IndexRangeType& rangeForThread,
-                                  int threadId,
+                                  ThreadIdType threadId,
                                   Self *inHolder );
 
   /** Threader for grandient modification */

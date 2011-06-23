@@ -53,11 +53,11 @@ public:
     {
     value = 1.0; derivative.Fill(0.0);
     }
-
-  unsigned int GetNumberOfParameters() const = {}
-  unsigned int GetNumberOfLocalParameters() const {}
-  bool HasLocalSupport() const {}
-  void UpdateTransformParameters( DerivativeType & ) const {}
+  unsigned int GetNumberOfLocalParameters() const
+  { return 0; }
+  bool HasLocalSupport() const
+  { return false; }
+  void UpdateTransformParameters( DerivativeType & ) {}
 
   void Initialize(void) throw ( itk::ExceptionObject ) {}
   void PrintSelf(std::ostream& os, itk::Indent indent) const

@@ -26,16 +26,15 @@ namespace itk
 
 // functor for threading using the metric function class
 // assuming function has output allocated already
-template<class TMetricFunction>
 class ITK_EXPORT GradientDescentObjectOptimizer
-  : public GradientDescentObjectOptimizerBase< TMetricFunction >
+  : public GradientDescentObjectOptimizerBase
 {
 public:
   /** Standard class typedefs. */
-  typedef GradientDescentObjectOptimizer                          Self;
-  typedef GradientDescentObjectOptimizerBase< TMetricFunction >   Superclass;
-  typedef SmartPointer< Self >                                    Pointer;
-  typedef SmartPointer< const Self >                              ConstPointer;
+  typedef GradientDescentObjectOptimizer       Self;
+  typedef GradientDescentObjectOptimizerBase   Superclass;
+  typedef SmartPointer< Self >                 Pointer;
+  typedef SmartPointer< const Self >           ConstPointer;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(GradientDescentObjectOptimizer,
@@ -45,35 +44,17 @@ public:
   itkNewMacro(Self);
 
   /** Derivative type */
-  typedef typename TMetricFunction::DerivativeType  DerivativeType;
+  typedef Superclass::DerivativeType      DerivativeType;
 
   /** Metric type over which this class is templated */
-  itkSuperclassTraitMacro( MetricType );
-  itkSuperclassTraitMacro( MetricTypePointer );
-  /** Threader type */
-//  itkSuperclassTraitMacro( MetricThreaderType );
-//  itkSuperclassTraitMacro( MetricThreaderTypePointer );
-need these anymore?
-  /** Measure type */
-  itkSuperclassTraitMacro( MeasureType );
-  /** Image region type */
-  itkSuperclassTraitMacro( ImageRegionType );
-  /** Fixed image type */
-  itkSuperclassTraitMacro( FixedImageType );
-  /** Fixed image pointer */
-  itkSuperclassTraitMacro( FixedImagePointer );
-  /** Moving image pointer */
-  itkSuperclassTraitMacro( MovingImagePointer );
-  /** Tranform pointer */
-  itkSuperclassTraitMacro( TransformPointer );
-  /** Internal computation type, for maintaining a desired precision */
-  itkSuperclassTraitMacro( InternalComputationValueType );
+  typedef Superclass::MeasureType                  MeasureType;
+  typedef Superclass::InternalComputationValueType InternalComputationValueType;
 
   /** Set the learning rate. */
-  itkSetMacro(LearningRate, double);
+  itkSetMacro(LearningRate, InternalComputationValueType);
 
   /** Get the learning rate. */
-  itkGetConstReferenceMacro(LearningRate, double);
+  itkGetConstReferenceMacro(LearningRate, InternalComputationValueType);
 
 public:
 
@@ -91,9 +72,9 @@ protected:
   virtual void AdvanceOneStep(void);
 
   /** Modify the gradient over a given index range. */
-  virtual void ModifyGradientOverSubRange( IndexRangeType& subrange );
+  virtual void ModifyGradientOverSubRange( const IndexRangeType& subrange );
 
-  double m_LearningRate;
+  InternalComputationValueType  m_LearningRate;
 
   /** Default constructor */
   GradientDescentObjectOptimizer();
