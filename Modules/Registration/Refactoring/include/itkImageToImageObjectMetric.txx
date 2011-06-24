@@ -130,22 +130,50 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( m_MovingImageTransform->HasLocalSupport() )
     {
-    /* Verify that virtual domain and moving image are the same size, when
-    moving image transform is dense (e.g. deformation field). Effects
-    calc of offset in StoreDerivativeResult. */
-    VirtualRegionType virtualRegion = m_VirtualDomainImage->GetRequestedRegion();
-    MovingImageRegionType movingRegion = m_MovingImage->GetRequestedRegion();
-    if( virtualRegion.GetSize() != movingRegion.GetSize() ||
-        virtualRegion.GetIndex() != movingRegion.GetIndex() )
+    /* Verify that virtual domain and deformation field are the same size.
+     * Effects transformation, and calc of offset in StoreDerivativeResult.
+     * If it's a composite transform and the deformation field is the first
+     * to be applied (i.e. the most recently added), then it has to be
+     * of the same size, otherwise not. But actually at this point, if
+     * a CompositeTransform has local support, it means all its sub-transforms
+     * have local support. So they should all be deformation fields, so just
+     * verify that the first one is at least.
+     * Eventually we'll want a method in Transform something like a
+     * GetInputDomainSize to check this cleanly. */
+    MovingTransformType* transform;
+    transform = this->m_MovingImageTransform.GetPointer();
+    MovingCompositeTransformType* comptx =
+                 dynamic_cast< MovingCompositeTransformType * > ( transform );
+    if( comptx != NULL )
       {
-      itkExceptionMacro("Virtual and Moving images must have the same size "
-                        " and index for use with dense transforms."
+      transform = comptx->GetBackTransform().GetPointer();
+      }
+    MovingDeformationFieldTransformType* deftx =
+            dynamic_cast< MovingDeformationFieldTransformType * >( transform );
+    if( deftx == NULL )
+      {
+      itkExceptionMacro("Expected m_MovingImageTransform to be of type "
+                        "DeformationFieldTransform" );
+      }
+    typedef typename MovingDeformationFieldTransformType::DeformationFieldType
+                                                                      FieldType;
+    typename FieldType::Pointer field = deftx->GetDeformationField();
+    typename FieldType::RegionType
+      fieldRegion = field->GetLargestPossibleRegion();
+    VirtualRegionType virtualRegion =
+                              m_VirtualDomainImage->GetLargestPossibleRegion();
+    if( virtualRegion.GetSize()  != fieldRegion.GetSize() ||
+        virtualRegion.GetIndex() != fieldRegion.GetIndex() )
+      {
+      itkExceptionMacro("Virtual domain and moving transform deformation field"
+                        " must have the same size and index for "
+                        " LargestPossibleRegion."
                         << std::endl << "Virtual size/index: "
                         << virtualRegion.GetSize() << " / "
                         << virtualRegion.GetIndex() << std::endl
-                        << "Moving size/index: "
-                        << movingRegion.GetSize() << " / "
-                        << movingRegion.GetIndex() << std::endl );
+                        << "Deformation field size/index: "
+                        << fieldRegion.GetSize() << " / "
+                        << fieldRegion.GetIndex() << std::endl );
       }
     /* Verify virtual image pixel type is scalar. Effects calc of offset
     in StoreDerivativeResult.

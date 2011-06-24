@@ -98,16 +98,6 @@ public:
     m_Parameters += update;
   }
 
-  void SetParameters( ParametersType & parameters )
-  {
-    m_Parameters = parameters;
-  }
-
-  ParametersType & GetParameters()
-  {
-    return m_Parameters;
-  }
-
   unsigned int GetNumberOfParameters(void) const
   {
     return SpaceDimension;
@@ -121,6 +111,18 @@ public:
   bool HasLocalSupport() const
   {
     return false;
+  }
+
+  /* These Set/Get methods are only needed for this test derivation that
+   * isn't using a transform */
+  void SetParameters( ParametersType & parameters )
+  {
+    m_Parameters = parameters;
+  }
+
+  ParametersType & GetParameters()
+  {
+    return m_Parameters;
   }
 
 private:

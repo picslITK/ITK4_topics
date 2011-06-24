@@ -25,6 +25,8 @@
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
 #include "itkImageToData.h"
+#include "itkDeformationFieldTransform.h"
+#include "itkCompositeTransform.h"
 
 namespace itk
 {
@@ -119,6 +121,15 @@ public:
   typedef Transform<CoordinateRepresentationType,
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
+
+  /** Typedef's for convenience */
+  typedef DeformationFieldTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingDeformationFieldTransformType;
+  typedef CompositeTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingCompositeTransformType;
+
 
   typedef typename FixedTransformType::Pointer         FixedTransformPointer;
   typedef typename FixedTransformType::InputPointType  FixedInputPointType;

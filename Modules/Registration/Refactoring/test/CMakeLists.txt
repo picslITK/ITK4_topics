@@ -10,6 +10,7 @@ set(ITK-RegistrationRefactoringTests
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
   itkGradientDescentObjectOptimizerTest.cxx
+  itkDemonsImageToImageObjectRegistrationTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -50,3 +51,6 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
 itk_add_test(NAME itkGradientDescentObjectOptimizerTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkGradientDescentObjectOptimizerTest)
+itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkDemonsImageToImageObjectRegistrationTest)
