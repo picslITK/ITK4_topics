@@ -15,39 +15,77 @@
  *  limitations under the License.
  *
  *=========================================================================*/
+
+
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkVector.h"
-#include "itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric.h"
-
-
+#include "itkDemonsImageToImageObjectMetric.h"
 #include "itkIdentityTransform.h"
-#include "itkTranslationTransform.h"
 #include "itkDeformationFieldTransform.h"
 #include "itkCompositeTransform.h"
+#include "itkTranslationTransform.h"
+
+
+#include "itkImageRegionConstIterator.h"
+
+
+// #include "itkNeighborhoodNormalizedCrossCorrelationImageToImageMetric.h"
+
+using namespace itk;
+
+
+template<class ImagePointerType>
+void PrintImage(const ImagePointerType &image){
+
+    typedef typename ImagePointerType::ObjectType ImageType;
+    typename ImageType::RegionType imageRegion = image->GetBufferedRegion();
+
+    // only display the first slice
+    unsigned int dim0 = imageRegion.GetSize()[0];
+    unsigned int dim1 = imageRegion.GetSize()[1];
+
+    typedef ImageRegionConstIterator<ImageType> IteratorType;
+    IteratorType it(image, imageRegion);
+    it.Begin();
+    unsigned int cnt = 0;
+    for(unsigned ycnt=0; ycnt<dim1; ycnt++) {
+        for(unsigned xcnt=0; xcnt<dim0; xcnt++) {
+            std::cout << it.Get() << "\t";
+            ++it;
+        }
+        std::cout << std::endl;
+    }
+
+
+    return;
+}
+
+
+
 
 
 int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, char * argv[])
 {
 
-  if (argc <= 3) {
-    std::cout << "Args: 2D_fixed_image 2D_moving_image number_of_threads" << std::endl;
-    exit(-1);
-  }
+//  if (argc <= 3) {
+//    std::cout << "Args: 2D_fixed_image 2D_moving_image number_of_threads" << std::endl;
+//    exit(-1);
+//  }
 
-  const char * filename1 = argv[1];
-  const char * filename2 = argv[2];
-  int number_of_threads = atoi(argv[3]);
+//  const char * filename1 = argv[1];
+//  const char * filename2 = argv[2];
+//  int number_of_threads = atoi(argv[3]);
 
   const int ImageDimension = 2;
 
 
-  typedef itk::Image<float, ImageDimension> ImageType;
+  typedef itk::Image<double, ImageDimension> ImageType;
   typedef ImageType::Pointer ImagePointerType;
   typedef ImageType::RegionType RegionType;
 
-  typedef itk::Vector<float, ImageDimension> VectorType;
+  typedef itk::Vector<double, ImageDimension> VectorType;
   typedef itk::Image<VectorType, ImageDimension> VectorImageType;
 
   typedef itk::Transform<double,ImageDimension>  TransformType;
@@ -125,7 +163,7 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, ch
   count = 1;
   while( !itMoving.IsAtEnd() )
     {
-    itMoving.Set( count*count) );
+    itMoving.Set( count*count );
     count++;
     ++itMoving;
     }
@@ -163,13 +201,33 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, ch
   transformMComp->AddTransform(transformMtranslation);
 //  transformMComp->AddTransform(transformMdeformation);
   transformFComp->AddTransform(transformFId);
-  typedef itk::NeighborhoodNormalizedCrossCorrelationImageToImageMetric<ImageType,ImageType> MetricType;
+
+
+
+
+  // typedef itk::NeighborhoodNormalizedCrossCorrelationImageToImageMetric<ImageType,ImageType> MetricType;
+  typedef DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType > MetricType;
+
+
   typedef MetricType::Pointer MetricTypePointer;
-  MetricTypePointer objectMetric = ObjectMetricType::New();
-  objectMetric->SetFixedImage(fixedImage);
-  objectMetric->SetMovingImage(movingImage);
-  objectMetric->SetFixedImageTransform(transformFComp);
-  objectMetric->SetMovingImageTransform(transformMComp);
+  MetricTypePointer metric = MetricType::New();
+  metric->SetFixedImage(fixedImage);
+  metric->SetMovingImage(movingImage);
+  metric->SetFixedImageTransform(transformFComp);
+  metric->SetMovingImageTransform(transformMComp);
+
+
+  std::cout << "fixedImage:" << std::endl;
+  PrintImage(fixedImage);
+
+  std::cout << "movingImage:" << std::endl;
+  PrintImage(movingImage);
+
+  std::cout << "fixed transform field:" << std::endl;
+  PrintImage(field);
+
+  std::cout << "moving transform field:" << std::endl;
+  PrintImage(fieldInv);
 
 
 
@@ -179,7 +237,7 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, ch
   try
     {
     std::cout << "Calling Initialize..." << std::endl;
-    objectMetric->Initialize();
+    metric->Initialize();
     }
   catch( ExceptionObject & exc )
     {
@@ -194,7 +252,7 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, ch
   try
     {
     std::cout << "Calling GetValueAndDerivative..." << std::endl;
-    objectMetric->GetValueAndDerivative( valueReturn, derivativeReturn );
+    metric->GetValueAndDerivative( valueReturn, derivativeReturn );
     }
   catch( ExceptionObject & exc )
     {
@@ -204,17 +262,10 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, ch
     }
 
   std::cout << "Test passed." << std::endl;
-  return EXIT_SUCCESS;
 
 
-
-
-
-
-
-
-
-
+  std::cout << "derivative of moving transform field:" << std::endl;
+  PrintImage(fieldInv);
 
 
 //  objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
@@ -229,18 +280,18 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest(int argc, ch
 //
 //  objectMetric->SetRadius(neighborhood_radius);
 
-  typedef ObjectMetricType::MeasureType MeasureType;
-  typedef ObjectMetricType::DerivativeType DerivativeType;
+  typedef MetricType::MeasureType MeasureType;
+  typedef MetricType::DerivativeType DerivativeType;
 
   MeasureType measure;
   DerivativeType derivative;
 
-  objectMetric->GetValueAndDerivative(measure, derivative);
+  metric->GetValueAndDerivative(measure, derivative);
 
   std::cout << "measure = " << measure << std::endl;
   std::cout << "derivative = " << derivative << std::endl;
 
-
+  return EXIT_SUCCESS;
 
 }
 

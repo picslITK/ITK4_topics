@@ -9,7 +9,7 @@ set(ITK-RegistrationRefactoringTests
   itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
-#  itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest
+  itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest
 #  itkGradientDescentObjectOptimizerTest.cxx
 )
 
