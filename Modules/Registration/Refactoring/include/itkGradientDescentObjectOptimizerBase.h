@@ -42,6 +42,7 @@ public:
   typedef enum {
     MaximumNumberOfIterations,
     MetricError,
+    UpdateTransformParametersError,
     OtherError
     } StopConditionType;
 
@@ -163,8 +164,8 @@ private:
 
 } // end namespace itk
 
-#ifndef ITK_MANUAL_INSTANTIATION
-# include "itkGradientDescentObjectOptimizerBase.txx"
-#endif
+//#ifndef ITK_MANUAL_INSTANTIATION
+//# include "itkGradientDescentObjectOptimizerBase.txx"
+//#endif
 
 #endif

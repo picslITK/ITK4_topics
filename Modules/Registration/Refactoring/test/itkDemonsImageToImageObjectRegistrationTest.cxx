@@ -65,14 +65,26 @@ using namespace itk;
 int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc < 4 )
+  if( argc < 4 || argc > 7)
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
-    std::cerr << " outputImageFile " << std::endl;
+    std::cerr << " outputImageFile ";
+    std::cerr << " [numberOfIterations] ";
+    std::cerr << " [scalarScale] [learningRate] " << std::endl;
     return EXIT_FAILURE;
     }
+  std::cout << argc << std::endl;
+  unsigned int numberOfIterations = 10;
+  double scalarScale = 1.0;
+  double learningRate = 0.1;
+  if( argc >= 5 )
+    numberOfIterations = atoi( argv[4] );
+  if( argc >= 6)
+    scalarScale = atof( argv[5] );
+  if( argc == 7 )
+    learningRate = atof( argv[6] );
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -103,7 +115,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   matcher->ThresholdAtMeanIntensityOn();
 
   //get the images
+  fixedImageReader->Update();
   FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
+  matcher->Update();
   MovingImageType::Pointer movingImage = matcher->GetOutput();
 
   //demons registration
@@ -142,7 +156,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
-  field->SetRegions( fixedImage->GetBufferedRegion() );
+  field->SetRegions( fixedImage->GetLargestPossibleRegion() );
+  std::cout << "fixedImage->GetLargestPossibleRegion(): "
+            << fixedImage->GetLargestPossibleRegion() << std::endl
+            << "fixedImage->GetBufferedRegion(): "
+            << fixedImage->GetBufferedRegion() << std::endl;
   field->Allocate();
   // Fill it with 0's
   DeformationTransformType::OutputVectorType zeroVector;
@@ -170,14 +188,23 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetFixedImageTransform( identityTransform );
   metric->SetMovingImageTransform( deformationTransform );
 
+  //Initialize the metric to prepare for use
+  metric->Initialize();
+
   // Optimizer
   typedef GradientDescentObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->MinimizeOn();
-  optimizer->SetLearningRate( 0.1 );
-  optimizer->SetNumberOfIterations( 100 );
+  optimizer->SetLearningRate( learningRate );
+  optimizer->SetNumberOfIterations( numberOfIterations );
+  optimizer->SetScalarScale( scalarScale );
+  optimizer->SetUseScalarScale(true);
 
+  std::cout << "Start optimization..." << std::endl
+            << "Number of iterations: " << numberOfIterations << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl;
   try
     {
     optimizer->StartOptimization();
@@ -185,11 +212,37 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   catch( ExceptionObject & e )
     {
     std::cout << "Exception thrown ! " << std::endl;
-    std::cout << "An error ocurred during Optimization" << std::endl;
-    std::cout << "Location    = " << e.GetLocation()    << std::endl;
-    std::cout << "Description = " << e.GetDescription() << std::endl;
+    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << e.GetLocation() << std::endl;
+    std::cout << e.GetDescription() << std::endl;
+    std::cout << e.what()    << std::endl;
     return EXIT_FAILURE;
     }
+
+  std::cout << "...finished. " << std::endl
+            << "StopCondition: " << optimizer->GetStopConditionDescription()
+            << std::endl
+            << "Metric: NumberOfValidPoints: "
+            << metric->GetNumberOfValidPoints()
+            << std::endl;
+
+  field = deformationTransform->GetDeformationField();
+  std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
+            << std::endl;
+  ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
+  for(unsigned int i=100; i< 105; i++ )
+    {
+     for(unsigned int j=100; j< 105; j++ )
+      {
+      DeformationFieldType::IndexType index;
+      index[0] = i;
+      index[1] = j;
+      it.SetIndex(index);
+      std::cout << it.Value() << " - ";
+      }
+    std::cout << std::endl;
+    }
+
 
   //
   // results

@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkGradientDescentObjectOptimizer_txx
-#define __itkGradientDescentObjectOptimizer_txx
+//#ifndef __itkGradientDescentObjectOptimizer_txx
+//#define __itkGradientDescentObjectOptimizer_txx
 
 #include "itkGradientDescentObjectOptimizer.h"
 
@@ -119,8 +119,20 @@ GradientDescentObjectOptimizer
    * ModifyGradientOverSubRange */
   this->ModifyGradient();
 
-  /* Pass graident to transform and let it do its own updating */
-  this->m_Metric->UpdateTransformParameters( m_Gradient );
+  try
+    {
+    /* Pass graident to transform and let it do its own updating */
+    this->m_Metric->UpdateTransformParameters( m_Gradient );
+    }
+  catch ( ExceptionObject & err )
+    {
+    m_StopCondition = UpdateTransformParametersError;
+    m_StopConditionDescription << "UpdateTransformParameters error";
+    StopOptimization();
+
+    // Pass exception to caller
+    throw err;
+    }
 
   this->InvokeEvent( IterationEvent() );
 }
@@ -160,4 +172,4 @@ GradientDescentObjectOptimizer
 
 }//namespace itk
 
-#endif
+//#endif

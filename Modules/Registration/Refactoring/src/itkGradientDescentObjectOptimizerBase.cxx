@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkGradientDescentObjectOptimizerBase_txx
-#define __itkGradientDescentObjectOptimizerBase_txx
+//#ifndef __itkGradientDescentObjectOptimizerBase_txx
+//#define __itkGradientDescentObjectOptimizerBase_txx
 
 #include "itkGradientDescentObjectOptimizerBase.h"
 
@@ -30,6 +30,7 @@ GradientDescentObjectOptimizerBase
   this->m_ModifyGradientThreader = ModifyGradientThreaderType::New();
   this->m_ModifyGradientThreader->SetThreadedGenerateData(
     Self::ModifyGradientThreaded );
+  this->m_ModifyGradientThreader->SetHolder( this );
 
   m_Maximize = false;
   m_NumberOfIterations = 100;
@@ -61,18 +62,19 @@ void
 GradientDescentObjectOptimizerBase
 ::ModifyGradient()
 {
+  IndexRangeType fullrange;
+  fullrange[0] = 0;
+  fullrange[1] = this->m_Gradient.GetSize()-1; //range is inclusive
   /* Perform the modification either with or without threading */
   if( this->m_Metric->HasLocalSupport() )
     {
+    this->m_ModifyGradientThreader->SetOverallIndexRange( fullrange );
     /* This ends up calling ModifyGradientThreaded from each thread */
     this->m_ModifyGradientThreader->GenerateData();
     }
   else
     {
     /* Global transforms are small, so update without threading. */
-    IndexRangeType fullrange;
-    fullrange[0] = 0;
-    fullrange[1] = this->m_Gradient.GetSize()-1; //range is inclusive
     this->ModifyGradientOverSubRange( fullrange );
     }
 }
@@ -88,4 +90,4 @@ GradientDescentObjectOptimizerBase
 
 }//namespace itk
 
-#endif
+//#endif
