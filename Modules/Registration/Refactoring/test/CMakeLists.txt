@@ -9,7 +9,7 @@ set(ITK-RegistrationRefactoringTests
   itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
-  itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest
+  itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest
 #  itkGradientDescentObjectOptimizerTest.cxx
 )
 
@@ -49,9 +49,9 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest
+itk_add_test(NAME itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
-      itkNeighborhoodNormalizedCrossCorrelationImageToImageMetricTest)
+      itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkGradientDescentObjectOptimizerTest
       COMMAND ITK-RegistrationRefactoringTestDriver
