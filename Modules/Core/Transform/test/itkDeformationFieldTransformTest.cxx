@@ -55,6 +55,27 @@ bool sameVector( const TVector & p1, const TVector & p2, double epsilon=1e-8 )
   return pass;
   }
 
+template <typename TVector>
+bool sameVariableVector( const TVector & p1, const TVector & p2, double epsilon=1e-8 )
+  {
+  bool pass=true;
+
+  const unsigned int D1 = p1.Size();
+  const unsigned int D2 = p2.Size();
+
+  if (D1 != D2)
+    {
+    return false;
+    }
+
+  for ( unsigned int i = 0; i < D1; i++ )
+    {
+    if( vcl_fabs( p1[i] - p2[i] ) > epsilon )
+      pass=false;
+    }
+  return pass;
+  }
+
 template <typename TTensor>
 bool sameTensor( const TTensor & p1, const TTensor & p2, double epsilon=1e-8 )
   {
@@ -255,6 +276,42 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     return EXIT_FAILURE;
     }
 
+
+  /** Test VectorTransform for variable length vector which does not
+   *  need do have the dimensionality as the transform */
+  DeformationTransformType::InputVectorPixelType testVVector(3);
+  DeformationTransformType::OutputVectorPixelType deformVVector, deformVVectorTruth(3);
+  testVVector[0] = 0.5;
+  testVVector[1] = 0.5;
+  testVVector[2] = 1.0;
+
+  deformVVectorTruth = affineTransform->TransformVector( testVVector );
+  deformVVector = deformationTransform->TransformVector( testVVector, testPoint );
+  std::cout << "variable length vector 1 transformed: " << deformVVector << std::endl;
+  if( !sameVariableVector( deformVVector, deformVVectorTruth, 0.0001 ) )
+      {
+      std::cout << "Failed transforming variable length vector 1. Should be " << deformVVectorTruth << std::endl;
+      return EXIT_FAILURE;
+      }
+
+  caughtException = false;
+  try
+    {
+    deformVVector = deformationTransform->TransformVector( testVVector );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
+    }
+
+  if (!caughtException)
+    {
+    std::cout << "Expected TransformVector(vector) to throw exception." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+
   DeformationTransformType::InputCovariantVectorType testcVector;
   DeformationTransformType::OutputCovariantVectorType deformcVector, deformcVectorTruth;
   testcVector[0] = 0.5;
@@ -285,6 +342,40 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     std::cout << "Expected TransformCovariantVector(vector) to throw exception." << std::endl;
     return EXIT_FAILURE;
     }
+
+
+  DeformationTransformType::InputVectorPixelType testcVVector(3);
+  DeformationTransformType::OutputVectorPixelType deformcVVector, deformcVVectorTruth(3);
+  testcVVector[0] = 0.5;
+  testcVVector[1] = 0.5;
+  testcVVector[2] = 1.0;
+
+  deformcVVectorTruth = affineTransform->TransformCovariantVector( testcVVector );
+  deformcVVector = deformationTransform->TransformCovariantVector( testcVVector, testPoint );
+  std::cout << "variable length covariant vector 1 transformed: " << deformcVVector << std::endl;
+  if( !sameVariableVector( deformcVVector, deformcVVectorTruth, 0.0001 ) )
+      {
+      std::cout << "Failed transforming variable length covariant vector 1. Should be " << deformcVVectorTruth << std::endl;
+      return EXIT_FAILURE;
+      }
+
+  caughtException = false;
+  try
+    {
+    deformcVVector = deformationTransform->TransformCovariantVector( testcVVector );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception:" << std::endl << e << std::endl;
+    caughtException = true;
+    }
+
+  if (!caughtException)
+    {
+    std::cout << "Expected TransformCovariantVector(vector) to throw exception." << std::endl;
+    return EXIT_FAILURE;
+    }
+
 
   DeformationTransformType::InputTensorType testTensor;
   DeformationTransformType::OutputTensorType deformTensor, deformTensorTruth;

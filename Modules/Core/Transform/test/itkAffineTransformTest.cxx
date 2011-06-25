@@ -71,6 +71,25 @@ bool testVector( const TVector & v1, const TVector & v2 )
   return pass;
   }
 
+template <typename TVector>
+bool testVariableVector( const TVector & v1, const TVector & v2 )
+  {
+  bool pass=true;
+  const unsigned int D1 = v1.Size();
+  const unsigned int D2 = v2.Size();
+  if (D1 != D2)
+    {
+    return false;
+    }
+
+  for ( unsigned int i = 0; i < D1; i++ )
+    {
+    if( vcl_fabs( v1[i] - v2[i] ) > epsilon )
+      pass=false;
+    }
+  return pass;
+  }
+
 bool testValue( const double v1, const double v2 )
   {
   return vcl_fabs( v1 - v2 ) <= epsilon;
@@ -377,6 +396,8 @@ int itkAffineTransformTest(int, char *[])
       return EXIT_FAILURE;
       }
 
+
+
     /* Back transform a vector */
     //y2 = aff2->BackTransform(x2);
     //std::cout << "Back transform a vnl_vector:" << std::endl
@@ -398,24 +419,73 @@ int itkAffineTransformTest(int, char *[])
       return EXIT_FAILURE;
       }
 
+    v3 = aff2->TransformVector(u3, u2);
+    std::cout << "Transform a vector with a point:" << std::endl
+              << v3[0] << " , " << v3[1] << std::endl;
+
+    v3T[0] = 35.37;
+    v3T[1] = 22.254;
+    if( !testVector( v3, v3T ) )
+      {
+      std::cout << "Transform a vector with a point test failed." << std::endl;
+      return EXIT_FAILURE;
+      }
+
+    /* Transform a variable length vector */
+    itk::VariableLengthVector<double> l3, m3, m3T;
+    l3.SetSize(2);
+    m3T.SetSize(2);
+    l3[0] = 3;
+    l3[1] = 5;
+    m3 = aff2->TransformVector(l3);
+    std::cout << "Transform a variable length vector:" << std::endl
+              << m3[0] << " , " << m3[1] << std::endl;
+
+    m3T[0] = 35.37;
+    m3T[1] = 22.254;
+    if( !testVariableVector( m3, m3T ) )
+      {
+      std::cout << "Transform a variable length vector test failed." << std::endl;
+      return EXIT_FAILURE;
+      }
+
     /* Back transform a vector */
     //v3 = aff2->BackTransform(u3);
     //std::cout << "Back transform a vector :" << std::endl
               //<< v3[0] << " , " << v3[1] << std::endl;
 
     /* Transform a Covariant vector */
-    itk::Vector<double, 2> u4, v4, v4T;
+    itk::CovariantVector<double, 2> u4, v4, v4T;
     u4[0] = 3;
     u4[1] = 5;
-    v4 = aff2->TransformVector(u4);
+    v4 = aff2->TransformCovariantVector(u4);
     std::cout << "Transform a Covariant vector:" << std::endl
               << v4[0] << " , " << v4[1] << std::endl;
 
-    v4T[0] = 35.37;
-    v4T[1] = 22.254;
+    v4T[0] = -379.16666666679;
+    v4T[1] = 604.16666666687;
     if( !testVector( v4, v4T ) )
       {
       std::cout << "Transform a covariant vector test failed." << std::endl;
+      return EXIT_FAILURE;
+      }
+
+
+    /* Transform a variable length vector as covariant vector */
+    itk::VariableLengthVector<double> l4, m4, m4T;
+    l4.SetSize(2);
+    m4T.SetSize(2);
+    l4[0] = 3;
+    l4[1] = 5;
+    m4 = aff2->TransformCovariantVector(l4);
+    std::cout << "Transform a variable length covariant vector:" << std::endl
+              << m4[0] << " , " << m4[1] << std::endl;
+
+    m4T[0] = -379.16666666679;
+    m4T[1] = 604.16666666687;
+    if( !testVariableVector( m4, m4T ) )
+      {
+      std::cout << "Transform a variable length covariant vector test failed." << std::endl;
       return EXIT_FAILURE;
       }
 
