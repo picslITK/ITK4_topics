@@ -5,8 +5,8 @@ if(ITK_USE_SYSTEM_GDCM)
   set(ITK-GDCM_SYSTEM_INCLUDE_DIRS
     ${GDCM_INCLUDE_DIRS}
     )
-  set(ITK-GDCM_LIBRARIES  gdcmDICT gdcmMSFF )
-  set(ITK-GDCM_NO_SRC 1)
+  set(ITK-GDCM_INCLUDE_DIRS ${GDCM_INCLUDE_DIRS})
+  set(ITK-GDCM_LIBRARIES ITK-GDCM)
 else()
   set(ITK-GDCM_INCLUDE_DIRS
     ${ITK-GDCM_BINARY_DIR}
@@ -21,11 +21,11 @@ else()
   include(CheckIncludeFile)
   check_include_file("stdint.h"       GDCM_HAVE_STDINT_H)
   if(NOT GDCM_HAVE_STDINT_H)
-    # for MSVC only gdcm has a stdint.h that works for that
-    # compiler found in Utilities/C99
-    if(MSVC)
-      list(APPEND ITK-GDCM_INCLUDE_DIRS
-        ${ITK-GDCM_SOURCE_DIR}/src/gdcm/Utilities/C99)
+    if( WIN32 )
+      if(MSVC OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
+        list(APPEND ITK-GDCM_INCLUDE_DIRS
+          ${ITK-GDCM_SOURCE_DIR}/src/gdcm/Utilities/C99)
+      endif()
     endif()
   endif()
   set(ITK-GDCM_LIBRARIES  gdcmDICT gdcmMSFF )

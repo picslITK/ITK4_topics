@@ -209,7 +209,7 @@ GradientDescentOptimizer
     newPosition[j] = currentPosition[j]
                      + direction * m_LearningRate * transformedGradient[j];
     }
-
+  //std::cout << " transformedGradient" << GetCurrentIteration() << " = " << transformedGradient << std::endl;
   this->SetCurrentPosition(newPosition);
 
   this->InvokeEvent( IterationEvent() );
