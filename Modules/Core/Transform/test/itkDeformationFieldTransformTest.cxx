@@ -135,7 +135,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   FieldType::SizeType size;
   FieldType::IndexType start;
   FieldType::RegionType region;
-  int dimLength = 30;
+  int dimLength = 20;
   size.Fill( dimLength );
   start.Fill( 0 );
   region.SetSize( size );
@@ -322,7 +322,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   std::cout << "covariant vector 1 transformed: " << deformcVector << std::endl;
   if( !sameVector( deformcVector, deformcVectorTruth, 0.0001 ) )
       {
-      std::cout << "Failed transforming vector 1. Should be " << deformcVectorTruth << std::endl;
+      std::cout << "Failed transforming vector 1. Should be "
+                << deformcVectorTruth << std::endl;
       return EXIT_FAILURE;
       }
 
@@ -339,7 +340,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
 
   if (!caughtException)
     {
-    std::cout << "Expected TransformCovariantVector(vector) to throw exception." << std::endl;
+    std::cout << "Expected TransformCovariantVector(vector) to throw exception."
+              << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -352,10 +354,13 @@ int itkDeformationFieldTransformTest(int ,char *[] )
 
   deformcVVectorTruth = affineTransform->TransformCovariantVector( testcVVector );
   deformcVVector = deformationTransform->TransformCovariantVector( testcVVector, testPoint );
-  std::cout << "variable length covariant vector 1 transformed: " << deformcVVector << std::endl;
+  std::cout << "variable length covariant vector 1 transformed: "
+            << deformcVVector << std::endl;
   if( !sameVariableVector( deformcVVector, deformcVVectorTruth, 0.0001 ) )
       {
-      std::cout << "Failed transforming variable length covariant vector 1. Should be " << deformcVVectorTruth << std::endl;
+      std::cout
+        << "Failed transforming variable length covariant vector 1. Should be "
+        << deformcVVectorTruth << std::endl;
       return EXIT_FAILURE;
       }
 
@@ -372,7 +377,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
 
   if (!caughtException)
     {
-    std::cout << "Expected TransformCovariantVector(vector) to throw exception." << std::endl;
+    std::cout << "Expected TransformCovariantVector(vector) to throw exception."
+              << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -393,7 +399,8 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   std::cout << "tensor 1 transformed: " << deformTensor << std::endl;
   if( !sameTensor( deformTensor, deformTensorTruth, 0.0001 ) )
       {
-      std::cout << "Failed transforming tensor 1. Should be " << deformTensorTruth << std::endl;
+      std::cout << "Failed transforming tensor 1. Should be "
+                << deformTensorTruth << std::endl;
       //return EXIT_FAILURE;
       }
 
@@ -410,11 +417,74 @@ int itkDeformationFieldTransformTest(int ,char *[] )
 
   if (!caughtException)
     {
-    std::cout << "Expected TransformTensor(tensor) to throw exception." << std::endl;
+    std::cout << "Expected TransformTensor(tensor) to throw exception."
+              << std::endl;
     return EXIT_FAILURE;
     }
 
+  /* Test setting of parameters with wrong size */
+  caughtException = false;
+  try
+    {
+    DeformationTransformType::ParametersType params(1);
+    params.Fill(0);
+    deformationTransform->SetParameters( params );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Caught expected exception: " << std::endl << e << std::endl;
+    caughtException = true;
+    }
+  if( !caughtException )
+    {
+    std::cout << "Expected SetParameters with wrong size to throw exception."
+              << std::endl;
+    return EXIT_FAILURE;
+    }
 
+  /* Test SmoothDeformationFieldGauss */
+  std::cout << "Test SmoothDeformationFieldGauss" << std::endl;
+  DeformationTransformType::ParametersType params;
+  DeformationTransformType::ParametersType
+                  paramsFill( deformationTransform->GetNumberOfParameters() );
+  paramsFill.Fill( 1.2 );
+  deformationTransform->SetParameters( paramsFill );
+  /* This should leave the field with all 1.2, even after the
+   * smoothing that is applied.
+   * TODO - verify that there aren't any expected boundary effects. */
+  deformationTransform->SmoothDeformationFieldGauss();
+  params = deformationTransform->GetParameters();
+  std::cout << "params after SmoothDeformationFieldGauss: " << std::endl
+            << params << std::endl;
+
+  /* Test UpdateTransformParameters */
+  std::cout << "Testing UpdateTransformParameters." << std::endl;
+  /* fill with 0 */
+  field->FillBuffer( zeroVector ); //!! This isn't changing the field/parameters
+  DeformationTransformType::DerivativeType
+                    derivative( deformationTransform->GetNumberOfParameters() );
+  derivative.Fill(0.5);
+  deformationTransform->UpdateTransformParameters( derivative );
+  params = deformationTransform->GetParameters();
+  if( params != derivative )
+    {
+    std::cout << "Failed UpdateTransformParameters from 0 to 0.5." << std::endl
+              << "derivative( truth ): " << std::endl << derivative << std::endl
+              << "params: " << std::endl << params << std::endl;
+//    return EXIT_FAILURE;
+    }
+  /* Update with an uneven field to verify some smoothing is happening. */
+  //TODO: verify the result numerically.
+  field->FillBuffer( zeroVector );
+  std::cout << "params after field->FillBuffer ( 0 ): " << std::endl
+            << deformationTransform->GetParameters() << std::endl;
+  //deformationTransform->SetDeformationField( field );
+  derivative.Fill( 0 );
+  derivative( dimLength*2 + dimLength / 2 ) = 123456789.0;
+  deformationTransform->UpdateTransformParameters( derivative );
+  params = deformationTransform->GetParameters();
+  std::cout << "UpdateTransformParameters with uneven update: " << std::endl
+            << "params: " << std::endl << params << std::endl;
 
   /* Test IsLinear()
    * Should always return false */

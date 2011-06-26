@@ -21,6 +21,9 @@
 #include "itkDeformationFieldTransform.h"
 
 #include "itkVectorLinearInterpolateImageFunction.h"
+#include "itkVectorNeighborhoodOperatorImageFilter.h"
+#include "itkGaussianOperator.h"
+#include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
 
 namespace itk
@@ -49,6 +52,8 @@ DeformationFieldTransform() : Superclass( NDimensions, 0 )
   //After assigning this, m_Parametes will manage this,
   // deleting when appropriate.
   this->m_Parameters.SetHelper( helper );
+
+  m_GaussianSmoothSigma = 3;
 }
 
 /**
@@ -499,6 +504,139 @@ DeformationFieldTransform<TScalar, NDimensions>
       jacobian(i,i) = 1.0;
       }
     }
+}
+
+template<class TScalar, unsigned int NDimensions>
+void
+DeformationFieldTransform<TScalar, NDimensions>
+::UpdateTransformParameters( DerivativeType & update, ScalarType factor)
+{
+  //This simply adds the values
+  Superclass::UpdateTransformParameters( update, factor );
+
+  //Now we smooth the result
+  SmoothDeformationFieldGauss();
+}
+
+template<class TScalar, unsigned int NDimensions>
+void DeformationFieldTransform<TScalar, NDimensions>
+::SmoothDeformationFieldGauss()
+{
+  itkDebugMacro(" enter gauss smooth. m_GaussianSmoothSigma: "
+                << m_GaussianSmoothSigma);
+  if( this->m_GaussianSmoothSigma <= 0 )
+    {
+    return;
+    }
+
+  typename DeformationFieldType::Pointer field = this->GetDeformationField();
+  typename DeformationFieldType::Pointer tempField =
+                                                  DeformationFieldType::New();
+  tempField->SetSpacing( field->GetSpacing() );
+  tempField->SetOrigin( field->GetOrigin() );
+  tempField->SetDirection( field->GetDirection() );
+  tempField->SetLargestPossibleRegion( field->GetLargestPossibleRegion() );
+  tempField->SetRequestedRegion( field->GetRequestedRegion() );
+  tempField->SetBufferedRegion( field->GetBufferedRegion() );
+  tempField->Allocate();
+
+  //testing with this...does not show up in erroneous 1st two elements
+  //OutputVectorType zeroVector;
+  //zeroVector.Fill( 123 );
+  //tempField->FillBuffer( zeroVector );
+
+  typedef typename DeformationFieldType::PixelType    VectorType;
+  typedef typename VectorType::ValueType              ScalarType;
+  typedef GaussianOperator<ScalarType,Dimension>      OperatorType;
+  typedef VectorNeighborhoodOperatorImageFilter< DeformationFieldType,
+                                                 DeformationFieldType >
+                                                            SmootherType;
+
+  OperatorType * oper = new OperatorType;
+  typename SmootherType::Pointer smoother = SmootherType::New();
+
+  typedef typename DeformationFieldType::PixelContainerPointer
+                                                        PixelContainerPointer;
+  PixelContainerPointer swapPtr;
+
+  // graft the output field onto the mini-pipeline
+  smoother->GraftOutput( tempField );
+
+  for( unsigned int j = 0; j < Dimension; j++ )
+    {
+    // smooth along this dimension
+    oper->SetDirection( j );
+    oper->SetVariance( m_GaussianSmoothSigma );
+    oper->SetMaximumError(0.001 );
+    oper->SetMaximumKernelWidth( 256 );
+    oper->CreateDirectional();
+
+    // todo: make sure we only smooth within the buffered region
+    smoother->SetOperator( *oper );
+    smoother->SetInput( field );
+    try
+      {
+      //smoother->Update();
+      }
+    catch( ExceptionObject & exc )
+      {
+      delete oper;
+      std::string msg("Caught exception: ");
+      msg += exc.what();
+      itkExceptionMacro( << msg );
+      }
+
+    if ( j < Dimension - 1 )
+      {
+      // swap the containers
+      swapPtr = smoother->GetOutput()->GetPixelContainer();
+      smoother->GraftOutput( field );
+      field->SetPixelContainer( swapPtr );
+      smoother->Modified();
+      }
+    }
+
+  // graft the output back to this filter
+  // Do we need this here?
+  tempField->SetPixelContainer( field->GetPixelContainer() );
+
+  //make sure boundary does not move
+  ScalarType weight = 1.0;
+  if (m_GaussianSmoothSigma < 0.5)
+    {
+    weight=1.0 - 1.0 * ( this->m_GaussianSmoothSigma / 0.5);
+    }
+  ScalarType weight2 = 1.0 - weight;
+  typedef ImageRegionIteratorWithIndex<DeformationFieldType> Iterator;
+  typename DeformationFieldType::SizeType size =
+                                field->GetLargestPossibleRegion().GetSize();
+  Iterator outIter( field, field->GetLargestPossibleRegion() );
+  for( outIter.GoToBegin(); !outIter.IsAtEnd(); ++outIter )
+  {
+    bool onboundary=false;
+    typename DeformationFieldType::IndexType index= outIter.GetIndex();
+    for (int i=0; i < Dimension; i++)
+      {
+      if (index[i] < 1 || index[i] >= static_cast<int>( size[i] )-1 )
+        {
+        onboundary=true;
+        }
+      }
+    if( onboundary )
+      {
+      VectorType vec;
+      vec.Fill(0.0);
+      outIter.Set(vec);
+      }
+    else
+      {
+      VectorType svec = smoother->GetOutput()->GetPixel( index );
+      outIter.Set( svec * weight + outIter.Get() * weight2);
+      }
+  }
+
+  delete oper;
+  itkDebugMacro("done gauss smooth ");
 }
 
 template<class TScalar, unsigned int NDimensions>

@@ -152,6 +152,10 @@ public:
   /* Create out own set accessor that assigns the deformation field */
   virtual void SetInterpolator( InterpolatorType* interpolator );
 
+  /** Get/Set the GaussianOperator variance */
+  itkSetMacro( GaussianSmoothSigma, ScalarType );
+  itkGetConstReferenceMacro( GaussianSmoothSigma, ScalarType );
+
   /**  Method to transform a point. */
   virtual OutputPointType TransformPoint( const InputPointType& thisPoint ) const;
 
@@ -193,14 +197,21 @@ public:
 
   virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType &, const InputPointType & ) const;
 
-
   /** Set the transformation parameters. This sets the deformation
    * field image directly. */
   virtual void SetParameters(const ParametersType & params)
     {
     if( &(this->m_Parameters) != &params )
       {
+      if( params.Size() != this->m_Parameters.Size() )
+        {
+        itkExceptionMacro("Input parameters size (" << params.Size()
+                          << ") does not match internal size ("
+                          << this->m_Parameters.Size() << ").");
+        }
+      /* copy into existing object */
       this->m_Parameters = params;
+      this->Modified();
       }
     }
 
@@ -240,6 +251,21 @@ public:
   virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
                                                   JacobianType &j) const;
 
+  /** Update the transform's parameters by the values in \c update.
+   * We assume \c update is of the same length as Parameters. Throw
+   * exception otherwise.
+   * \c factor is a scalar multiplier for each value in update.
+   * \c SmoothDeformationFieldGaussian is called after the update is
+   * added to the field.
+   * See base class for more details.
+   */
+  virtual void UpdateTransformParameters( DerivativeType & update,
+                                          ScalarType factor = 1.0 );
+
+  /** Smooth the deformation field in-place.
+   * Uses m_GaussSmoothSigma to set the variance for the GaussianOperator. */
+  virtual void SmoothDeformationFieldGauss();
+
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
 
@@ -265,6 +291,10 @@ protected:
 
   /** The interpolator. */
   typename InterpolatorType::Pointer          m_Interpolator;
+
+  /** Used in SmoothDeformationFieldGauss to as variance for the
+   * GaussianOperator */
+  ScalarType                                  m_GaussianSmoothSigma;
 
 private:
   DeformationFieldTransform( const Self& ); //purposely not implemented
