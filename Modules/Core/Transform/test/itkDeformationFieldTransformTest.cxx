@@ -447,38 +447,61 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   DeformationTransformType::ParametersType params;
   DeformationTransformType::ParametersType
                   paramsFill( deformationTransform->GetNumberOfParameters() );
-  paramsFill.Fill( 1.2 );
+  DeformationTransformType::ParametersValueType paramsFillValue = 1.0;
+  paramsFill.Fill( paramsFillValue );
+  // Add an outlier to see that some smoothing is taking place.
+  unsigned int outlier = dimLength*dimensions*4 + dimLength*dimensions / 2;
+  paramsFill( outlier ) = 9999.0;
+  paramsFill( outlier + 1 ) = 9999.0;
+  deformationTransform->SetGaussianSmoothSigma(3);
   deformationTransform->SetParameters( paramsFill );
-  /* This should leave the field with all 1.2, even after the
-   * smoothing that is applied.
-   * TODO - verify that there aren't any expected boundary effects. */
+  params = deformationTransform->GetParameters();
+  //std::cout << "field->GetPixelContainter *before* Smooth: "
+  //          << field->GetPixelContainer() << std::endl;
+  //std::cout << "params *before* SmoothDeformationFieldGauss: " << std::endl
+  //          << params << std::endl;
   deformationTransform->SmoothDeformationFieldGauss();
   params = deformationTransform->GetParameters();
-  std::cout << "params after SmoothDeformationFieldGauss: " << std::endl
-            << params << std::endl;
+  //std::cout << "field->GetPixelContainter *after* Smooth: "
+  //          << field->GetPixelContainer() << std::endl;
+  /* print out result. We should see 0's on all boundaries from the smoothing
+   * routine, and then some smoothing around the outlier we set above. */
+  std::cout << "Parameters *after* SmoothDeformationFieldGauss, around "
+            << "outlier: " << std::endl;
+  for(int i=-2; i< 3; i++ )
+    {
+     for(int j=-2; j< 3; j++ )
+      {
+      unsigned int index = outlier +
+        (unsigned int) (i * (signed int)(dimLength*dimensions) + j);
+      std::cout << params(index) << " ";
+      if( params(index) == paramsFillValue )
+        {
+        std::cout << "Expected to read a smoothed value at this index."
+                  << " Instead, read " << params(index) << std::endl;
+        return EXIT_FAILURE;
+        }
+      }
+    std::cout << std::endl;
+    }
+
 
   /* Test UpdateTransformParameters */
-  std::cout << "Testing UpdateTransformParameters." << std::endl;
+  std::cout << "Testing UpdateTransformParameters..." << std::endl;
   /* fill with 0 */
-  field->FillBuffer( zeroVector ); //!! This isn't changing the field/parameters
+  field->FillBuffer( zeroVector );
   DeformationTransformType::DerivativeType
                     derivative( deformationTransform->GetNumberOfParameters() );
-  derivative.Fill(0.5);
+  derivative.Fill(1.2);
   deformationTransform->UpdateTransformParameters( derivative );
   params = deformationTransform->GetParameters();
-  if( params != derivative )
-    {
-    std::cout << "Failed UpdateTransformParameters from 0 to 0.5." << std::endl
-              << "derivative( truth ): " << std::endl << derivative << std::endl
-              << "params: " << std::endl << params << std::endl;
-//    return EXIT_FAILURE;
-    }
+  //TODO create derivateTruth with zero's on boundaries and compare to
+  // results from UpdateTransformParameters
+  //std::cout  << "params: " << std::endl << params << std::endl;
+             //<< "derivativeTruth: " << std::endl << derivative << std::endl
+
   /* Update with an uneven field to verify some smoothing is happening. */
-  //TODO: verify the result numerically.
   field->FillBuffer( zeroVector );
-  std::cout << "params after field->FillBuffer ( 0 ): " << std::endl
-            << deformationTransform->GetParameters() << std::endl;
-  //deformationTransform->SetDeformationField( field );
   derivative.Fill( 0 );
   derivative( dimLength*2 + dimLength / 2 ) = 123456789.0;
   deformationTransform->UpdateTransformParameters( derivative );
@@ -504,9 +527,6 @@ int itkDeformationFieldTransformTest(int ,char *[] )
     std::cout << "Expected GetInverse() to fail." << std::endl;
     return EXIT_FAILURE;
     }
-
-
-
 
   return EXIT_SUCCESS;
 }

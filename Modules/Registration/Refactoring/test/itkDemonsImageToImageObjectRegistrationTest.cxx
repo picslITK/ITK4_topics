@@ -101,6 +101,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   fixedImageReader->SetFileName( argv[1] );
   movingImageReader->SetFileName( argv[2] );
 
+  /*
   //matching intensity histogram
   typedef HistogramMatchingImageFilter<
                                     MovingImageType,
@@ -113,12 +114,14 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   matcher->SetNumberOfHistogramLevels( 1024 );
   matcher->SetNumberOfMatchPoints( 7 );
   matcher->ThresholdAtMeanIntensityOn();
-
+  */
   //get the images
   fixedImageReader->Update();
   FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
-  matcher->Update();
-  MovingImageType::Pointer movingImage = matcher->GetOutput();
+  //matcher->Update();
+  //MovingImageType::Pointer movingImage = matcher->GetOutput();
+  movingImageReader->Update();
+  MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
   //demons registration
 /*  typedef Vector< float, Dimension >             VectorPixelType;
@@ -230,15 +233,16 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
   ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
-  for(unsigned int i=100; i< 105; i++ )
+  /* print out a few deformation field vectors */
+  for(unsigned int i=0; i< 5; i++ )
     {
-     for(unsigned int j=100; j< 105; j++ )
+     for(unsigned int j=0; j< 5; j++ )
       {
       DeformationFieldType::IndexType index;
       index[0] = i;
       index[1] = j;
       it.SetIndex(index);
-      std::cout << it.Value() << " - ";
+      std::cout << it.Value() << " ";
       }
     std::cout << std::endl;
     }
