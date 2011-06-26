@@ -31,7 +31,7 @@ namespace itk
  * Constructor
  */
 template< class TFixedImage, class TMovingImage >
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::MeanSquaresImageToImageMetric()
 {
   this->SetComputeGradient(true);
@@ -48,7 +48,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 }
 
 template< class TFixedImage, class TMovingImage >
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::~MeanSquaresImageToImageMetric()
 {
   if ( m_ThreaderMSE != NULL )
@@ -67,9 +67,9 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Print out internal information about this class
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -80,7 +80,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
  */
 template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::Initialize(void)
 throw ( ExceptionObject )
 {
@@ -98,16 +98,16 @@ throw ( ExceptionObject )
     delete[] m_ThreaderMSEDerivatives;
     }
   m_ThreaderMSEDerivatives = new DerivativeType[this->m_NumberOfThreads];
-  for ( ThreadIdType threadID = 0; threadID < this->m_NumberOfThreads; threadID++ )
+  for ( unsigned int threadID = 0; threadID < this->m_NumberOfThreads; threadID++ )
     {
     m_ThreaderMSEDerivatives[threadID].SetSize(this->m_NumberOfParameters);
     }
 }
 
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage >
 inline bool
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
-::GetValueThreadProcessSample(ThreadIdType threadID,
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+::GetValueThreadProcessSample(unsigned int threadID,
                               SizeValueType fixedImageSample,
                               const MovingImagePointType & itkNotUsed(mappedPoint),
                               double movingImageValue) const
@@ -119,10 +119,10 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
   return true;
 }
 
-template< class TFixedImage, class TMovingImage  >
-typename MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage >
+typename MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::MeasureType
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::GetValue(const ParametersType & parameters) const
 {
   itkDebugMacro("GetValue( " << parameters << " ) ");
@@ -167,10 +167,10 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
   return mse;
 }
 
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage >
 inline bool
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
-::GetValueAndDerivativeThreadProcessSample(ThreadIdType threadID,
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
+::GetValueAndDerivativeThreadProcessSample(unsigned int threadID,
                                            SizeValueType fixedImageSample,
                                            const MovingImagePointType & itkNotUsed(mappedPoint),
                                            double movingImageValue,
@@ -201,8 +201,8 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
     }
 
   // Jacobian should be evaluated at the unmapped (fixed image) point.
-  const TransformJacobianType & jacobian = transform
-                                           ->GetJacobian(fixedImagePoint);
+  TransformJacobianType jacobian;
+  transform->GetJacobianWithRespectToParameters(fixedImagePoint, jacobian);
 
   for ( unsigned int par = 0; par < this->m_NumberOfParameters; par++ )
     {
@@ -220,9 +220,9 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the both Value and Derivative Measure
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::GetValueAndDerivative(const ParametersType & parameters,
                         MeasureType & value,
                         DerivativeType & derivative) const
@@ -250,7 +250,7 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
           0,
           this->m_NumberOfParameters * sizeof( double ) );
 
-  for ( ThreadIdType threadID = 0; threadID < this->m_NumberOfThreads; threadID++ )
+  for ( unsigned int threadID = 0; threadID < this->m_NumberOfThreads; threadID++ )
     {
     memset( m_ThreaderMSEDerivatives[threadID].data_block(),
             0,
@@ -296,9 +296,9 @@ MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
 /**
  * Get the match measure derivative
  */
-template< class TFixedImage, class TMovingImage  >
+template< class TFixedImage, class TMovingImage >
 void
-MeanSquaresImageToImageMetric< TFixedImage, TMovingImage >
+MeanSquaresImageToImageMetric< TFixedImage, TMovingImage  >
 ::GetDerivative(const ParametersType & parameters,
                 DerivativeType & derivative) const
 {

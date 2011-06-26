@@ -26,12 +26,12 @@ namespace itkObjectToObjectMetricTestHelpers
 
 template< class TFixedObject,  class TMovingObject >
 class ITK_EXPORT ObjectToObjectMetricSurrogate:
-  public itk::ObjectToObjectMetric<TFixedObject, TMovingObject>
+  public itk::ObjectToObjectMetric
 {
 public:
   /** Standard class typedefs. */
   typedef ObjectToObjectMetricSurrogate                           Self;
-  typedef itk::ObjectToObjectMetric<TFixedObject,TMovingObject>   Superclass;
+  typedef itk::ObjectToObjectMetric                               Superclass;
   typedef itk::SmartPointer< Self >                               Pointer;
   typedef itk::SmartPointer< const Self >                         ConstPointer;
 
@@ -45,13 +45,20 @@ public:
 
   // Pure virtual functions that all Metrics must provide
   unsigned int GetNumberOfParameters() const { return 5; }
-  MeasureType GetValue( const ParametersType & parameters ) const
+  MeasureType GetValue()
     {
-    this->m_Parameters = parameters;
     return 1.0;
     }
-  void GetDerivative(const ParametersType &,
-                             DerivativeType & derivative) const { derivative.Fill(0.0); }
+  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative )
+    {
+    value = 1.0; derivative.Fill(0.0);
+    }
+  unsigned int GetNumberOfLocalParameters() const
+  { return 0; }
+  bool HasLocalSupport() const
+  { return false; }
+  void UpdateTransformParameters( DerivativeType & ) {}
+
   void Initialize(void) throw ( itk::ExceptionObject ) {}
   void PrintSelf(std::ostream& os, itk::Indent indent) const
   {
@@ -84,7 +91,7 @@ int itkObjectToObjectMetricTest(int ,char * [])
   ParametersType parameters(13);
   parameters.Fill( 19.5);
 
-  objectMetric->GetValue( parameters );
+  objectMetric->GetValue( );
 
   return EXIT_SUCCESS;
 }

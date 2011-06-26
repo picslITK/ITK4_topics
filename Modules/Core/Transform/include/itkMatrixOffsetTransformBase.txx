@@ -210,6 +210,46 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   return m_Matrix * vect;
 }
 
+// Transform a variable length vector
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputVectorPixelType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformVector(const InputVectorPixelType & vect) const
+{
+  const unsigned int vectorDim = vect.Size();
+  vnl_vector< TScalarType > vnl_vect( vectorDim );
+  vnl_matrix< TScalarType > vnl_mat( vectorDim, vect.Size(), 0.0 );
+
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    vnl_vect[i] = vect[i];
+    for (unsigned int j=0; j<vectorDim; j++)
+      {
+      if ( (i < NInputDimensions) && (j < NInputDimensions) )
+        {
+        vnl_mat(i,j) = m_Matrix(i,j);
+        }
+      else if (i == j)
+        {
+        vnl_mat(i,j) = 1.0;
+        }
+      }
+    }
+
+  vnl_vector< TScalarType > tvect = vnl_mat * vnl_vect;
+  OutputVectorPixelType outVect;
+  outVect.SetSize( vectorDim );
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    outVect[i] = tvect(i);
+    }
+
+  return outVect;
+}
+
 // Transform a CovariantVector
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
@@ -232,6 +272,176 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     }
   return result;
 }
+
+// Transform a variable length vector
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputVectorPixelType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformCovariantVector(const InputVectorPixelType & vect) const
+{
+
+  const unsigned int vectorDim = vect.Size();
+  vnl_vector< TScalarType > vnl_vect( vectorDim );
+  vnl_matrix< TScalarType > vnl_mat( vectorDim, vect.Size(), 0.0 );
+
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    vnl_vect[i] = vect[i];
+    for (unsigned int j=0; j<vectorDim; j++)
+      {
+      if ( (i < NInputDimensions) && (j < NInputDimensions) )
+        {
+        vnl_mat(i,j) = this->GetInverseMatrix()(j,i);
+        }
+      else if (i == j)
+        {
+        vnl_mat(i,j) = 1.0;
+        }
+      }
+    }
+
+  vnl_vector< TScalarType > tvect = vnl_mat * vnl_vect;
+  OutputVectorPixelType outVect;
+  outVect.SetSize( vectorDim );
+  for (unsigned int i=0; i<vectorDim; i++)
+    {
+    outVect[i] = tvect(i);
+    }
+
+  return outVect;
+}
+
+
+// Transform a Tensor
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputTensorType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformTensor(const InputTensorType & tensor) const
+{
+  OutputTensorType result;     // Converted vector
+
+  typename InputTensorType::EigenValuesArrayType eigenValues;
+  typename InputTensorType::EigenVectorsMatrixType eigenVectors;
+
+  tensor.ComputeEigenAnalysis( eigenValues, eigenVectors );
+
+
+  InputTensorEigenVectorType ev1;
+  InputTensorEigenVectorType ev2;
+  InputTensorEigenVectorType ev3;
+
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    ev1[i] = eigenVectors(2,i);
+    ev2[i] = eigenVectors(1,i);
+    ev3[i] = eigenVectors(0,i);
+    }
+
+  //Get Tensor-space version of local transform (i.e. always 3D)
+  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
+  typename  EigenVectorTransformType::MatrixType matrix;
+  matrix.Fill(0.0);
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    matrix(i,i) = 1.0;
+    }
+
+  for (unsigned int i=0; i<NOutputDimensions; i++)
+    {
+    for (unsigned int j=0; j<NInputDimensions; j++)
+      {
+      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
+        {
+        matrix(i,j) = this->m_Matrix(i,j);
+        }
+      }
+    }
+
+  typename EigenVectorTransformType::Pointer tensorTransform = EigenVectorTransformType::New();
+  tensorTransform->SetIdentity();
+  tensorTransform->SetMatrix( matrix );
+
+  InputTensorEigenVectorType ev1r = tensorTransform->TransformCovariantVector( ev1 );
+  ev1r.Normalize();
+
+  // Get aspect of rotated e2 that is perpendicular to rotated e1
+  InputTensorEigenVectorType ev2a = tensorTransform->TransformCovariantVector( ev2 );
+  if ( (ev2a * ev1r) < 0 )
+    {
+    ev2a = ev2a*(-1.0);
+    }
+  InputTensorEigenVectorType ev2r = ev2a - (ev2a*ev1r)*ev1r;
+  ev2r.Normalize();
+
+
+  InputTensorEigenVectorType ev3r; // = CrossProduct(ev1r, ev2r);
+  ev3r[0] = ev1r[1]*ev2r[2] - ev1r[2]*ev2r[1];
+  ev3r[1] = ev1r[2]*ev2r[0] - ev1r[0]*ev2r[2];
+  ev3r[2] = ev1r[0]*ev2r[1] - ev1r[1]*ev2r[0];
+  ev3r.Normalize();
+
+  // Outer product matrices
+  typename EigenVectorTransformType::MatrixType e1;
+  typename EigenVectorTransformType::MatrixType e2;
+  typename EigenVectorTransformType::MatrixType e3;
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    for (unsigned int j=0; j<InputTensorType::Dimension; j++)
+      {
+      e1(i,j) = eigenValues[2] * ev1r[i]*ev1r[j];
+      e2(i,j) = eigenValues[1] * ev2r[i]*ev2r[j];
+      e3(i,j) = eigenValues[0] * ev3r[i]*ev3r[j];
+      }
+    }
+
+  typename EigenVectorTransformType::MatrixType rotated = e1 + e2 + e3;
+
+  result[0] = rotated(0,0);
+  result[1] = rotated(0,1);
+  result[2] = rotated(0,2);
+  result[3] = rotated(1,1);
+  result[4] = rotated(1,2);
+  result[5] = rotated(2,2);
+
+  return result;
+}
+
+
+// Transform a Tensor
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename MatrixOffsetTransformBase< TScalarType,
+                                    NInputDimensions,
+                                    NOutputDimensions >::OutputVectorPixelType
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformTensor(const InputVectorPixelType & tensor) const
+{
+  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted vector
+  result.Fill( 0.0 );
+
+  InputTensorType dt(0.0);
+  const unsigned int tDim = tensor.Size();
+  for (unsigned int i=0; i<tDim; i++)
+    {
+    dt[i] = tensor[i];
+    }
+
+  OutputTensorType outDT = this->TransformTensor( dt );
+
+  for (unsigned int i=0; i<InputTensorType::InternalDimension; i++)
+    {
+    result[i] = outDT[i];
+    }
+
+  return result;
+}
+
 
 // Recompute the inverse matrix (internal)
 template< class TScalarType, unsigned int NInputDimensions,
@@ -387,7 +597,11 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   unsigned int par = 0;
 
-  this->m_Parameters = parameters;
+  //Save parameters. Needed for proper operation of TransformUpdateParameters.
+  if( &parameters != &(this->m_Parameters) )
+    {
+    this->m_Parameters = parameters;
+    }
 
   for ( unsigned int row = 0; row < NOutputDimensions; row++ )
     {
@@ -427,8 +641,25 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   // subblocks of diagonal matrices, each one of them having
   // a constant value in the diagonal.
 
-  this->m_Jacobian.Fill(0.0);
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
+  return this->m_Jacobian;
+}
 
+// Compute the Jacobian in one position, without setting values to m_Jacobian
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
+{
+  //This will not reallocate memory if the dimensions are equal
+  // to the matrix's current dimensions.
+  j.SetSize( NOutputDimensions, this->GetNumberOfLocalParameters() );
+  j.Fill(0.0);
+
+  // The Jacobian of the affine transform is composed of
+  // subblocks of diagonal matrices, each one of them having
+  // a constant value in the diagonal.
   const InputVectorType v = p - this->GetCenter();
 
   unsigned int blockOffset = 0;
@@ -437,7 +668,7 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     {
     for ( unsigned int dim = 0; dim < NOutputDimensions; dim++ )
       {
-      this->m_Jacobian(block, blockOffset + dim) = v[dim];
+      j(block, blockOffset + dim) = v[dim];
       }
 
     blockOffset += NInputDimensions;
@@ -445,10 +676,28 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   for ( unsigned int dim = 0; dim < NOutputDimensions; dim++ )
     {
-    this->m_Jacobian(dim, blockOffset + dim) = 1.0;
+    j(dim, blockOffset + dim) = 1.0;
     }
 
-  return this->m_Jacobian;
+  return;
+}
+
+//Return jacobian with respect to position.
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
+::GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+{
+  jac.SetSize( MatrixType::RowDimensions, MatrixType::ColumnDimensions );
+  for( unsigned int i=0; i < MatrixType::RowDimensions; i++ )
+    {
+    for( unsigned int j=0; j < MatrixType::ColumnDimensions; j++ )
+      {
+      jac[i][j] = this->GetMatrix()[i][j];
+      }
+    }
 }
 
 // Computes offset based on center, matrix, and translation variables

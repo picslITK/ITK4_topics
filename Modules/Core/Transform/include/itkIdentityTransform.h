@@ -163,6 +163,13 @@ public:
     return this->m_Jacobian;
   }
 
+  /** Compute the Jacobian Matrix of the transformation at one point */
+  virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
+                                 JacobianType & jacobian) const
+  {
+    jacobian = this->m_Jacobian;
+  }
+
   /** Return an inverse of the identity transform - another identity transform.
     */
   virtual InverseTransformBasePointer GetInverseTransform() const
