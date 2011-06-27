@@ -135,6 +135,20 @@ DeformationFieldTransform<TScalar, NDimensions>
   JacobianType jacobian;
   this->GetJacobianWithRespectToPosition( point, jacobian );
 
+  OutputCovariantVectorType result;     // Converted vector
+
+  for ( unsigned int i = 0; i < NDimensions; i++ )
+    {
+    result[i] = NumericTraits< ScalarType >::Zero;
+    for ( unsigned int j = 0; j < NDimensions; j++ )
+      {
+      result[i] += jacobian[j][i] * vector[j]; // Inverse
+                                                            // transposed
+      }
+    }
+  return result;
+
+
   AffineTransformPointer localTransform = AffineTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
@@ -464,12 +478,12 @@ DeformationFieldTransform<TScalar, NDimensions>
     llpix = direction->TransformVector( llpix );
     //}
 
-    rpix = rpix*h+cpix*(1.-h);
-    lpix = lpix*h+cpix*(1.-h);
+    rpix =  rpix*h+cpix*(1.-h);
+    lpix =  lpix*h+cpix*(1.-h);
     rrpix = rrpix*h+rpix*(1.-h);
     llpix = llpix*h+lpix*(1.-h);
 
-    OutputVectorType dPix = ( lpix*8.0 + llpix - rrpix - rpix*8.0 )*space/(12.0); //4th order centered difference
+    OutputVectorType dPix = ( lpix*8.0 + llpix - rrpix - rpix*8.0 )*space/(-12.0); //4th order centered difference
 
     //typename DeformationFieldType::PixelType dPix=( lpix - rpix )*space/(2.0*h); //2nd order centered difference
 
