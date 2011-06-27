@@ -111,8 +111,8 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   matcher->SetInput( movingImageReader->GetOutput() );
   matcher->SetReferenceImage( fixedImageReader->GetOutput() );
 
-  matcher->SetNumberOfHistogramLevels( 1024 );
-  matcher->SetNumberOfMatchPoints( 7 );
+  matcher->SetNumberOfHistogramLevels( 256 );
+  matcher->SetNumberOfMatchPoints( 10 );
   matcher->ThresholdAtMeanIntensityOn();
   //get the images
   fixedImageReader->Update();
