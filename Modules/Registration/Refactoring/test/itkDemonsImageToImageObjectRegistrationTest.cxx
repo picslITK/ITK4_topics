@@ -26,6 +26,7 @@
 #include "itkGradientDescentObjectOptimizer.h"
 
 #include "itkIdentityTransform.h"
+#include "itkTranslationTransform.h"
 #include "itkDeformationFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
@@ -53,7 +54,7 @@ public:
     std::cout << "Metric: "   << m_Process->GetMetric()   << "  ";
     std::cout << "RMSChange: " << m_Process->GetRMSChange() << "  ";
     std::cout << std::endl;
-    if ( m_Process->GetElapsedIterations() == 150 )
+    if ( m_Process->GetElapsedIterations() == 10 )
       { m_Process->StopRegistration(); }
     }
   typename TRegistration::Pointer m_Process;
@@ -101,7 +102,6 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   fixedImageReader->SetFileName( argv[1] );
   movingImageReader->SetFileName( argv[2] );
 
-  /*
   //matching intensity histogram
   typedef HistogramMatchingImageFilter<
                                     MovingImageType,
@@ -114,14 +114,13 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   matcher->SetNumberOfHistogramLevels( 1024 );
   matcher->SetNumberOfMatchPoints( 7 );
   matcher->ThresholdAtMeanIntensityOn();
-  */
   //get the images
   fixedImageReader->Update();
   FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
-  //matcher->Update();
-  //MovingImageType::Pointer movingImage = matcher->GetOutput();
   movingImageReader->Update();
-  MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
+  matcher->Update();
+  MovingImageType::Pointer movingImage = matcher->GetOutput();
+  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
   //demons registration
 /*  typedef Vector< float, Dimension >             VectorPixelType;
@@ -150,6 +149,12 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 */
 
   //create a deformation field transform
+  typedef TranslationTransform<double, Dimension>
+                                                    TranslationTransformType;
+  TranslationTransformType::Pointer translationTransform =
+                                                  TranslationTransformType::New();
+  translationTransform->SetIdentity();
+
   typedef DeformationFieldTransform<double, Dimension>
                                                     DeformationTransformType;
   DeformationTransformType::Pointer deformationTransform =
@@ -187,10 +192,12 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   // Assign images and transforms.
   // By not setting a virtual domain image or virtual domain settings,
   // the metric will use the fixed image for the virtual domain.
+  metric->SetVirtualDomainImage( fixedImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedImageTransform( identityTransform );
   metric->SetMovingImageTransform( deformationTransform );
+  //  metric->SetMovingImageTransform( translationTransform );
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -255,7 +262,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   //
   // results
   //
-
+  //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
   //warp the image with the deformation field
   typedef WarpImageFilter<
                           MovingImageType,
@@ -274,8 +281,15 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
+  typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
+  DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
+  std::string defout=std::string("def_")+std::string(argv[3]);
+  deformationwriter->SetFileName( defout.c_str() );
+  deformationwriter->SetInput( deformationTransform->GetDeformationField() );
+  deformationwriter->Update();
+
   //write the warped image into a file
-  typedef  unsigned char                           OutputPixelType;
+  typedef double                           OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
