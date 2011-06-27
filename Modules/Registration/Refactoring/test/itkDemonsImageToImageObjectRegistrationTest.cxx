@@ -171,6 +171,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   deformationTransform->SetDeformationField( field );
+  deformationTransform->SetGaussianSmoothSigma( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -234,6 +235,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
             << std::endl;
   ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
   /* print out a few deformation field vectors */
+  std::cout
+      << "First few elements of first few rows of final deformation field:"
+      << std::endl;
   for(unsigned int i=0; i< 5; i++ )
     {
      for(unsigned int j=0; j< 5; j++ )
