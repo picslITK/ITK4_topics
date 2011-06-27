@@ -75,6 +75,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID)
 {
+  localDerivativeReturn.Fill(0);
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = fixedImageValue - movingImageValue;
   metricValueReturn =
@@ -90,11 +91,12 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
     double sum = 0.0;
     for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
       {
-      sum += 2.0 * diff * m_Jacobian(dim, par) * movingImageDerivatives[dim];
+        sum += 2.0 * diff * m_Jacobian(dim, par) * movingImageDerivatives[dim];
+//      sum += 2.0 * diff * m_Jacobian(dim, par) * fixedImageDerivatives[dim];
       }
-    localDerivativeReturn[par]+=sum;
+    localDerivativeReturn[par]+=sum*1.e-5;
   }
-
+//  std::cout << localDerivativeReturn << std::endl;
   // Return true if the point was used in evaluation
   return true;
 }
