@@ -32,7 +32,6 @@ GradientDescentObjectOptimizerBase
     Self::ModifyGradientThreaded );
   this->m_ModifyGradientThreader->SetHolder( this );
 
-  m_Maximize = false;
   m_NumberOfIterations = 100;
   m_CurrentIteration = 0;
   m_StopCondition = MaximumNumberOfIterations;

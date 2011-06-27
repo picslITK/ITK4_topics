@@ -37,6 +37,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
+#include "itksys/SystemTools.hxx"
 
 namespace{
 // The following class is used to support callbacks
@@ -206,7 +207,6 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   typedef GradientDescentObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
-  optimizer->MinimizeOn();
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
   optimizer->SetScalarScale( scalarScale );
@@ -281,9 +281,12 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
+  //write out the deformation field
   typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
-  std::string defout=std::string("def_")+std::string(argv[3]);
+  std::string outfilename( argv[3] );
+  std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
+  std::string defout=outfilename + std::string("_def") + ext;
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
   deformationwriter->Update();

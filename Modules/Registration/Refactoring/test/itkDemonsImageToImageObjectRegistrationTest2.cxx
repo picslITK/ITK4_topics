@@ -256,7 +256,6 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   typedef itk::GradientDescentObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
-  optimizer->MinimizeOn();
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
   optimizer->SetScalarScale( scalarScale );

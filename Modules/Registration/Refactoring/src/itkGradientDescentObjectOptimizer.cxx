@@ -144,28 +144,17 @@ void
 GradientDescentObjectOptimizer
 ::ModifyGradientOverSubRange( const IndexRangeType& subrange )
 {
-  InternalComputationValueType direction;
-  if ( this->m_Maximize )
-    {
-    direction = 1.0;
-    }
-  else
-    {
-    direction = -1.0;
-    }
-
   const ScalesType& scales = this->GetScales();
 
-  InternalComputationValueType direction_learning = direction * m_LearningRate;
   for ( unsigned int j = subrange[0]; j <= subrange[1]; j++ )
     {
     if( this->m_UseScalarScale )
       {
-      m_Gradient[j] = m_Gradient[j] / this->m_ScalarScale * direction_learning;
+      m_Gradient[j] = m_Gradient[j] / this->m_ScalarScale * m_LearningRate;
       }
     else
       {
-      m_Gradient[j] = m_Gradient[j] / scales[j] * direction_learning;
+      m_Gradient[j] = m_Gradient[j] / scales[j] * m_LearningRate;
       }
     }
 }

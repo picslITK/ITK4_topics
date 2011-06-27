@@ -82,8 +82,12 @@ public:
 
     std::cout << "value: " << value << std::endl;
 
-    derivative[0] = 3 * x + 2 * y -2;
-    derivative[1] = 2 * x + 6 * y +8;
+    /* The optimizer simply takes the derivative from the metric
+     * and adds it to the transform after scaling. So instead of
+     * setting a 'minimize' option in the gradient, we return
+     * a minimizing derivative. */
+    derivative[0] = -( 3 * x + 2 * y -2 );
+    derivative[1] = -( 2 * x + 6 * y +8 );
 
     std::cout << "derivative: " << derivative << std::endl;
   }
@@ -161,7 +165,6 @@ int itkGradientDescentObjectOptimizerTest(int, char* [] )
   initialPosition[1] = -100;
   metric->SetParameters( initialPosition );
 
-  itkOptimizer->MinimizeOn();
   itkOptimizer->SetLearningRate( 0.1 );
   itkOptimizer->SetNumberOfIterations( 50 );
 
@@ -195,14 +198,14 @@ int itkGradientDescentObjectOptimizerTest(int, char* [] )
     }
 
   // Exercise various member functions.
-  std::cout << "Maximize: " << itkOptimizer->GetMaximize() << std::endl;
   std::cout << "LearningRate: " << itkOptimizer->GetLearningRate();
   std::cout << std::endl;
   std::cout << "NumberOfIterations: " << itkOptimizer->GetNumberOfIterations();
   std::cout << std::endl;
 
   itkOptimizer->Print( std::cout );
-  std::cout << "Stop description   = " << itkOptimizer->GetStopConditionDescription() << std::endl;
+  std::cout << "Stop description   = "
+            << itkOptimizer->GetStopConditionDescription() << std::endl;
 
   if( !pass )
     {
