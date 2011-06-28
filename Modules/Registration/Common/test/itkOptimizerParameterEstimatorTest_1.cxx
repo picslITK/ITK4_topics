@@ -182,7 +182,7 @@ int itkOptimizerParameterEstimatorTest_1_Dimension
   iterationCommand->SetOptimizer(  optimizer.GetPointer() );
 
   // Testing optimizer parameter estimator
-  typedef OptimizerParameterEstimator< FixedImageType,
+  typedef itk::OptimizerParameterEstimator< FixedImageType,
                                         MovingImageType,
                                         TransformType >
                                         OptimizerParameterEstimatorType;
