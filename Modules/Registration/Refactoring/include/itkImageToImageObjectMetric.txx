@@ -124,7 +124,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     if( ! m_VirtualDomainRegionHasBeenSet )
       {
       /* Make sure we set this before assigning it to threader below */
-      this->SetVirtualDomainRegion( m_VirtualDomainImage->GetRequestedRegion());
+      this->SetVirtualDomainRegion( m_VirtualDomainImage->GetBufferedRegion());
       }
     }
 
@@ -159,9 +159,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                                       FieldType;
     typename FieldType::Pointer field = deftx->GetDeformationField();
     typename FieldType::RegionType
-      fieldRegion = field->GetLargestPossibleRegion();
+      fieldRegion = field->GetBufferedRegion();
     VirtualRegionType virtualRegion =
-                              m_VirtualDomainImage->GetLargestPossibleRegion();
+                              m_VirtualDomainImage->GetBufferedRegion();
     if( virtualRegion.GetSize()  != fieldRegion.GetSize() ||
         virtualRegion.GetIndex() != fieldRegion.GetIndex() )
       {
@@ -1074,7 +1074,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::SetVirtualDomainImage(VirtualImageType* image)
 {
   this->m_VirtualDomainImage = image;
-  this->SetVirtualDomainRegion( image->GetRequestedRegion() );
+  this->SetVirtualDomainRegion( image->GetBufferedRegion() );
 }
 
 }//namespace itk

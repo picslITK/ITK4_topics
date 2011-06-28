@@ -20,6 +20,8 @@
 #endif
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
+#include "itkDeformationFieldTransform.h"
+#include "itkIdentityTransform.h"
 
 #include "itkIndex.h"
 #include "itkImageRegionIteratorWithIndex.h"
@@ -88,15 +90,27 @@ typename TImage::PixelType backgnd )
 
 }//anonymous namespace
 
-int itkDemonsRegistrationFilterTest(int, char* [] )
+int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
 {
 
-  typedef unsigned char PixelType;
+  //typedef unsigned char PixelType;
+  typedef double PixelType;
   enum {ImageDimension = 2};
   typedef itk::Image<PixelType,ImageDimension> ImageType;
   typedef ImageType::IndexType  IndexType;
   typedef ImageType::SizeType   SizeType;
   typedef ImageType::RegionType RegionType;
+
+
+  unsigned int numberOfIterations = 200;
+  double scalarScale = 1.0;
+  double learningRate = 0.1;
+  if( argc >= 2 )
+    numberOfIterations = atoi( argv[1] );
+  if( argc >= 3)
+    scalarScale = atof( argv[2] );
+  if( argc == 4 )
+    learningRate = atof( argv[3] );
 
   //--------------------------------------------------------
   std::cout << "Generate input images and deformation field";
@@ -138,7 +152,7 @@ int itkDemonsRegistrationFilterTest(int, char* [] )
   FillWithCircle<ImageType>( fixedImage, center, radius, fgnd, bgnd );
 
   //create a deformation field transform
-  typedef DeformationFieldTransform<double, Dimension>
+  typedef itk::DeformationFieldTransform<double, ImageDimension>
                                                     DeformationTransformType;
   DeformationTransformType::Pointer deformationTransform =
                                               DeformationTransformType::New();
@@ -159,9 +173,10 @@ int itkDemonsRegistrationFilterTest(int, char* [] )
   field->FillBuffer( zeroVector );
   // Assign to transform
   deformationTransform->SetDeformationField( field );
+  deformationTransform->SetGaussianSmoothSigma( 1.0 );
 
   //identity transform for fixed image
-  typedef IdentityTransform<double, Dimension> IdentityTransformType;
+  typedef itk::IdentityTransform<double, ImageDimension> IdentityTransformType;
   IdentityTransformType::Pointer identityTransform =
                                                   IdentityTransformType::New();
   identityTransform->SetIdentity();
@@ -213,8 +228,7 @@ int itkDemonsRegistrationFilterTest(int, char* [] )
   registrator->SetStandardDeviations( v );
   */
 
-am here in my adaptation...
-
+  /*
   typedef ShowProgressObject<RegistrationType> ProgressType;
   ProgressType progressWatch(registrator);
   itk::SimpleMemberCommand<ProgressType>::Pointer command;
@@ -222,9 +236,64 @@ am here in my adaptation...
   command->SetCallbackFunction(&progressWatch,
                                &ProgressType::ShowProgress);
   registrator->AddObserver( itk::ProgressEvent(), command);
+  */
+
+
+  // The metric
+  typedef itk::DemonsImageToImageObjectMetric< ImageType, ImageType >
+                                                                      MetricType;
+  MetricType::Pointer metric = MetricType::New();
+
+  // Assign images and transforms.
+  // By not setting a virtual domain image or virtual domain settings,
+  // the metric will use the fixed image for the virtual domain.
+  metric->SetFixedImage( fixedImage );
+  metric->SetMovingImage( movingImage );
+  metric->SetFixedImageTransform( identityTransform );
+  metric->SetMovingImageTransform( deformationTransform );
+
+  // Optimizer
+  typedef itk::GradientDescentObjectOptimizer  OptimizerType;
+  OptimizerType::Pointer  optimizer = OptimizerType::New();
+  optimizer->SetMetric( metric );
+  optimizer->SetLearningRate( learningRate );
+  optimizer->SetNumberOfIterations( numberOfIterations );
+  optimizer->SetScalarScale( scalarScale );
+  optimizer->SetUseScalarScale(true);
+
+  std::cout << "Start optimization..." << std::endl
+            << "Number of iterations: " << numberOfIterations << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl;
+
+  // Initialize the metric to prepare for use
+  metric->Initialize();
+
+  // optimizer
+  try
+    {
+    optimizer->StartOptimization();
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cout << "Exception thrown ! " << std::endl;
+    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << e.GetLocation() << std::endl;
+    std::cout << e.GetDescription() << std::endl;
+    std::cout << e.what()    << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::cout << "...finished. " << std::endl
+            << "StopCondition: " << optimizer->GetStopConditionDescription()
+            << std::endl
+            << "Metric: NumberOfValidPoints: "
+            << metric->GetNumberOfValidPoints()
+            << std::endl;
+
 
   // warp moving image
-  typedef itk::WarpImageFilter<ImageType,ImageType,FieldType> WarperType;
+  typedef itk::WarpImageFilter<ImageType,ImageType,DeformationFieldType> WarperType;
   WarperType::Pointer warper = WarperType::New();
 
   typedef WarperType::CoordRepType CoordRepType;
@@ -232,9 +301,8 @@ am here in my adaptation...
     InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
-
   warper->SetInput( movingImage );
-  warper->SetDeformationField( registrator->GetOutput() );
+  warper->SetDeformationField( deformationTransform->GetDeformationField() );
   warper->SetInterpolator( interpolator );
   warper->SetOutputSpacing( fixedImage->GetSpacing() );
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
@@ -257,7 +325,7 @@ am here in my adaptation...
   unsigned int numPixelsDifferent = 0;
   while( !fixedIter.IsAtEnd() )
     {
-    if( fixedIter.Get() != warpedIter.Get() )
+    if( vcl_fabs( fixedIter.Get() - warpedIter.Get() ) > 0.01 )
       {
       numPixelsDifferent++;
       }
@@ -274,74 +342,9 @@ am here in my adaptation...
     return EXIT_FAILURE;
     }
 
-  registrator->Print( std::cout );
-
   // -----------------------------------------------------------
-  std::cout << "Test running registrator without initial deformation field.";
-  std::cout << std::endl;
 
   bool passed = true;
-  try
-    {
-    registrator->SetInput( NULL );
-    registrator->SetNumberOfIterations( 2 );
-    registrator->Update();
-    }
-  catch( itk::ExceptionObject& err )
-    {
-    std::cout << "Unexpected error." << std::endl;
-    std::cout << err << std::endl;
-    passed = false;
-    }
-
-  if ( !passed )
-    {
-    std::cout << "Test failed" << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  //--------------------------------------------------------------
-  std::cout << "Test exception handling." << std::endl;
-
-  std::cout << "Test NULL moving image. " << std::endl;
-  passed = false;
-  try
-    {
-    registrator->SetInput( caster->GetOutput() );
-    registrator->SetMovingImage( NULL );
-    registrator->Update();
-    }
-  catch( itk::ExceptionObject & err )
-    {
-    std::cout << "Caught expected error." << std::endl;
-    std::cout << err << std::endl;
-    passed = true;
-    }
-
-  if ( !passed )
-    {
-    std::cout << "Test failed" << std::endl;
-    return EXIT_FAILURE;
-    }
-  registrator->SetMovingImage( movingImage );
-  registrator->ResetPipeline();
-
-  std::cout << "Test NULL moving image interpolator. " << std::endl;
-  passed = false;
-  try
-    {
-    fptr = dynamic_cast<FunctionType *>(
-      registrator->GetDifferenceFunction().GetPointer() );
-    fptr->SetMovingImageInterpolator( NULL );
-    registrator->SetInput( initField );
-    registrator->Update();
-    }
-  catch( itk::ExceptionObject & err )
-    {
-    std::cout << "Caught expected error." << std::endl;
-    std::cout << err << std::endl;
-    passed = true;
-    }
 
   if ( !passed )
     {

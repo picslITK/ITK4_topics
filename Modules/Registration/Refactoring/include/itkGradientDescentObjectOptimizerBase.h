@@ -24,6 +24,9 @@
 
 namespace itk
 {
+/** \class GradientDescentObjectOptimizerBase
+ *
+ */
 
 class ITK_EXPORT GradientDescentObjectOptimizerBase
   : public ObjectToObjectOptimizerBase
@@ -69,19 +72,6 @@ public:
 
   /** Get stop condition enum */
   itkGetConstReferenceMacro(StopCondition, StopConditionType);
-
-  /** Methods to configure the cost function. */
-  itkGetConstReferenceMacro(Maximize, bool);
-  itkSetMacro(Maximize, bool);
-  itkBooleanMacro(Maximize);
-  bool GetMinimize() const
-  { return !m_Maximize; }
-  void SetMinimize(bool v)
-  { this->SetMaximize(!v); }
-  void MinimizeOn()
-  { this->MaximizeOff(); }
-  void MinimizeOff()
-  { this->MaximizeOn(); }
 
   /** Set the number of iterations. */
   itkSetMacro(NumberOfIterations, SizeValueType);
@@ -134,7 +124,6 @@ protected:
   std::ostringstream m_StopConditionDescription;
   SizeValueType      m_NumberOfIterations;
   SizeValueType      m_CurrentIteration;
-  bool               m_Maximize;
 
   /** Current gradient */
   DerivativeType     m_Gradient;

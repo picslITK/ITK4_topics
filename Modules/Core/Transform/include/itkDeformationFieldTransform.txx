@@ -135,6 +135,20 @@ DeformationFieldTransform<TScalar, NDimensions>
   JacobianType jacobian;
   this->GetJacobianWithRespectToPosition( point, jacobian );
 
+  OutputCovariantVectorType result;     // Converted vector
+
+  for ( unsigned int i = 0; i < NDimensions; i++ )
+    {
+    result[i] = NumericTraits< ScalarType >::Zero;
+    for ( unsigned int j = 0; j < NDimensions; j++ )
+      {
+      result[i] += jacobian[j][i] * vector[j]; // Inverse
+                                                            // transposed
+      }
+    }
+  return result;
+
+
   AffineTransformPointer localTransform = AffineTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
@@ -464,12 +478,12 @@ DeformationFieldTransform<TScalar, NDimensions>
     llpix = direction->TransformVector( llpix );
     //}
 
-    rpix = rpix*h+cpix*(1.-h);
-    lpix = lpix*h+cpix*(1.-h);
+    rpix =  rpix*h+cpix*(1.-h);
+    lpix =  lpix*h+cpix*(1.-h);
     rrpix = rrpix*h+rpix*(1.-h);
     llpix = llpix*h+lpix*(1.-h);
 
-    OutputVectorType dPix = ( lpix*8.0 + llpix - rrpix - rpix*8.0 )*space/(12.0); //4th order centered difference
+    OutputVectorType dPix = ( lpix*8.0 + llpix - rrpix - rpix*8.0 )*space/(-12.0); //4th order centered difference
 
     //typename DeformationFieldType::PixelType dPix=( lpix - rpix )*space/(2.0*h); //2nd order centered difference
 
@@ -540,11 +554,6 @@ void DeformationFieldTransform<TScalar, NDimensions>
   tempField->SetBufferedRegion( field->GetBufferedRegion() );
   tempField->Allocate();
 
-  //testing with this...does not show up in erroneous 1st two elements
-  //OutputVectorType zeroVector;
-  //zeroVector.Fill( 123 );
-  //tempField->FillBuffer( zeroVector );
-
   typedef typename DeformationFieldType::PixelType    VectorType;
   typedef typename VectorType::ValueType              ScalarType;
   typedef GaussianOperator<ScalarType,Dimension>      OperatorType;
@@ -558,9 +567,11 @@ void DeformationFieldTransform<TScalar, NDimensions>
   typedef typename DeformationFieldType::PixelContainerPointer
                                                         PixelContainerPointer;
   PixelContainerPointer swapPtr;
-
+  PixelContainerPointer fieldOriginalPixelContainer =
+                                                    field->GetPixelContainer();
   // graft the output field onto the mini-pipeline
   smoother->GraftOutput( tempField );
+  bool fieldPixelContainerNeedsUpdate = false;
 
   for( unsigned int j = 0; j < Dimension; j++ )
     {
@@ -576,7 +587,7 @@ void DeformationFieldTransform<TScalar, NDimensions>
     smoother->SetInput( field );
     try
       {
-      //smoother->Update();
+      smoother->Update();
       }
     catch( ExceptionObject & exc )
       {
@@ -592,8 +603,29 @@ void DeformationFieldTransform<TScalar, NDimensions>
       swapPtr = smoother->GetOutput()->GetPixelContainer();
       smoother->GraftOutput( field );
       field->SetPixelContainer( swapPtr );
+      fieldPixelContainerNeedsUpdate = ! fieldPixelContainerNeedsUpdate;
       smoother->Modified();
       }
+    }
+
+  if( Dimension % 2 == 1)
+    {
+    itkExceptionMacro("Needs fix for non-even dims for getting results "
+                      " into member def field.");
+    }
+  if( fieldPixelContainerNeedsUpdate )
+    {
+    //For even number of dimensions, the final pass writes the output
+    // into field's original pixel container, so we just point back to that.
+    field->SetPixelContainer( fieldOriginalPixelContainer );
+    }
+  else
+    {
+    //I think we'll have to copy final results from tempField's pixel container
+    // into field's. But find out about ownership of container when it's
+    // assigned via SetPixelContainer, might just be able to do that.
+    // ** NOTE ** If can safely point to tempField's container, we then also
+    // have to update TransformParameters obj to point to it.
     }
 
   // graft the output back to this filter
