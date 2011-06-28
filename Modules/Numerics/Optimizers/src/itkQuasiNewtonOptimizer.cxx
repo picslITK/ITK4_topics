@@ -196,9 +196,7 @@ void QuasiNewtonOptimizer::LineSearch()
 
   double learningRate = m_LearningRate;
   const unsigned int spaceDimension =  m_CostFunction->GetNumberOfParameters();
-  unsigned int curIt = this->GetCurrentIteration();
 
-  const ParametersType & currentPosition = this->GetCurrentPosition();
   ScalesType scales = this->GetScales();
 
   ParametersType scaledPosition(spaceDimension);
@@ -222,7 +220,8 @@ void QuasiNewtonOptimizer::LineSearch()
   oldValue = this->GetValue();
 
   double t = 1.0, beta = 0.75;
-  double c1 = 1e-4, c2 = 0.9;
+  double c1 = 1e-4;
+  //double c2 = 0.9;
   double stepChange = inner_product(scaledStep, scaledGradient);
 
   for (int searchCount = 0; searchCount < 20; searchCount++)
