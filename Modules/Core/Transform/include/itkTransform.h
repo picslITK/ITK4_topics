@@ -188,11 +188,15 @@ public:
   /** Method to transform a CovariantVector, using a point. Global transforms
    * can ignore the \c point parameter. Local transforms (e.g. deformation
    * field transform) must override and provide required behavior.
-   * By default, \c point is ignored and \c TransformCovariantVector(vector) is
-   * called */
+   * \c localTransform allows passing of a raw transform pointer for
+   * optimization in some classes during threaded operation. In particular,
+   * see DeformationFieldTransform. By default, it is NULL.
+   * By default, \c point and \c localTransform are ignored and
+   * \c TransformCovariantVector(vector) is called */
   virtual OutputCovariantVectorType TransformCovariantVector(
-                               const InputCovariantVectorType & vector,
-                               const InputPointType & itkNotUsed(point) ) const
+                                   const InputCovariantVectorType & vector,
+                                   const InputPointType & itkNotUsed(point),
+                                   Self *const localTransform = NULL ) const
     { return TransformCovariantVector( vector ); }
 
 
@@ -316,11 +320,16 @@ public:
   /** This provides the ability to get a local jacobian value
    *  in a dense deformation field as in this case it would
    *  would be unclear what parameters would refer to.
-   *  By default it returns identity, and should be overridden in
+   *  \c localTransform allows passing of a raw transform pointer for
+   *  optimization in some classes during threaded operation. In particular,
+   *  see DeformationFieldTransform. By default, \c localTransform is NULL
+   *  and ignored.
+   *  By default this returns identity in \c j, and should be overridden in
    *  dervied classes as needed. */
-  virtual void GetJacobianWithRespectToPosition(
-                                          const InputPointType & x,
-                                          JacobianType &j ) const
+  inline virtual void GetJacobianWithRespectToPosition(
+                                      const InputPointType & x,
+                                      JacobianType &j,
+                                Transform *const localTransform = NULL ) const
   { j = m_IdentityJacobian; }
 
 
