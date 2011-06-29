@@ -124,11 +124,11 @@ public:
   itkSetMacro(TransformForward, bool);
 
   /** Estimate parameter scales */
-  void EstimateScales(ParametersType parameters, ScalesType &scales);
+  virtual void EstimateScales(ParametersType parameters, ScalesType &scales);
 
   /** Compute the shift in voxels when deltaParameters is applied onto the
    * current parameters. */
-  double ComputeMaximumVoxelShift(ParametersType parameters,
+  virtual double ComputeMaximumVoxelShift(ParametersType parameters,
                            ParametersType deltaParameters);
 
 
