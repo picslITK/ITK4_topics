@@ -338,9 +338,12 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* Per-thread results */
   this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
   this->m_NumberOfValidPointsPerThread.resize( this->m_NumberOfThreads );
-
-  /* Allocate and initialize memory for holding derivative results.*/
   this->m_DerivativesPerThread.resize( this->m_NumberOfThreads );
+  /* This one is intermediary, for getting per-point results. */
+  this->m_LocalDerivativesPerThread.resize( this->m_NumberOfThreads );
+  /* Per-thread pre-allocated affine transform used by DeformationFieldTransform
+   * for efficiency */
+  this->m_AffineTransformPerThread.resize( this->m_NumberOfThreads );
   /* This size always comes from the moving image */
   unsigned long globalDerivativeSize =
     this->m_MovingImageTransform->GetNumberOfParameters();
@@ -351,33 +354,39 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     this->m_DerivativeResult->SetSize( globalDerivativeSize );
     }
-  /* For transforms with local support, e.g. deformation field,
-   * use a single derivative container that's updated by region
-   * in multiple threads. */
-  if ( this->m_MovingImageTransform->HasLocalSupport() )
+  for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
     {
-    itkDebugMacro(
-      "ImageToImageObjectMetric::Initialize: tx HAS local support\n");
-    for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
+    /* Allocate intermediary per-thread storage used to get results from
+     * derived classes */
+    this->m_LocalDerivativesPerThread[i].SetSize(
+                                          this->GetNumberOfLocalParameters() );
+    /* For transforms with local support, e.g. deformation field,
+     * use a single derivative container that's updated by region
+     * in multiple threads. */
+    if ( this->m_MovingImageTransform->HasLocalSupport() )
       {
-      this->m_DerivativesPerThread[i].SetData(
-                                    this->m_DerivativeResult->data_block(),
-                                    this->m_DerivativeResult->Size(),
-                                    false );
+      itkDebugMacro(
+        "ImageToImageObjectMetric::Initialize: tx HAS local support\n");
+        /* Set each per-thread object to point to m_DerivativeResult */
+        this->m_DerivativesPerThread[i].SetData(
+                                      this->m_DerivativeResult->data_block(),
+                                      this->m_DerivativeResult->Size(),
+                                      false );
       }
-    }
-  else
-    {
-    itkDebugMacro(
+    else
+      {
+      itkDebugMacro(
       "ImageToImageObjectMetric::Initialize: tx does NOT have local support\n");
-    /* Global transforms get a separate derivatives container for each thread
-     * that holds the result for a particular region. */
-    for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
-      {
-      this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
+      /* Global transforms get a separate derivatives container for each thread
+       * that holds the result over a particular image region. */
+        this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
       }
+    /* Allocate affine transforms for use in DeformationFieldTransform::
+     * TransformCovariantVector, to avoid repeated stack allocation */
+    typedef typename MovingDeformationFieldTransformType::AffineTransformType
+                                                         AffineTransformType;
+    this->m_AffineTransformPerThread[i] = AffineTransformType::New();
     }
-
   /* This will be true until next call to Initialize */
   this->m_ThreadingMemoryHasBeenInitialized = true;
 }
@@ -489,7 +498,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   MeasureType                 metricValueResult;
   MeasureType                 metricValueSum = 0;
 
-  DerivativeType   localDerivativeResult( self->GetNumberOfLocalParameters() );
+  //DerivativeType   localDerivativeResult( self->GetNumberOfLocalParameters() );
+
+  /* Get pre-allocated local results object */
+  DerivativeType & localDerivativeResult =
+                                   self->m_LocalDerivativesPerThread[threadID];
 
   /* Iterate over the sub region */
   ItV.GoToBegin();
@@ -552,7 +565,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     catch( ExceptionObject & exc )
       {
       //NOTE: there must be a cleaner way to do this:
-      std::string msg("Caught exception: \n");
+      std::string msg("Exception in GetValueAndDerivativeProcessPoint:\n");
       msg += exc.what();
       ExceptionObject err(__FILE__, __LINE__, msg);
       throw err;
@@ -709,8 +722,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // sampling is used to compute only a subset of points.
     fixedGradient =
       m_FixedImageTransform->TransformCovariantVector( fixedGradient,
-                                                        mappedFixedPoint );
-    }
+                                                       mappedFixedPoint );
+/*      m_FixedImageTransform->TransformCovariantVector( fixedGradient,
+                                                       mappedFixedPoint,
+                     this->m_AffineTransformPerThread[threadID].GetPointer() );
+*/    }
 }
 
 /*
@@ -790,7 +806,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     movingGradient =
       m_MovingImageTransform->TransformCovariantVector( movingGradient,
                                                         mappedMovingPoint );
-    }
+/*      m_MovingImageTransform->TransformCovariantVector( movingGradient,
+                                                        mappedMovingPoint,
+                     this->m_AffineTransformPerThread[threadID].GetPointer() );
+*/    }
 }
 
 /*

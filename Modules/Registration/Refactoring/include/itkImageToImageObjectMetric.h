@@ -639,7 +639,11 @@ protected:
   /** Intermediary threaded metric value storage. */
   std::vector<InternalComputationValueType>   m_MeasurePerThread;
   std::vector< DerivativeType >               m_DerivativesPerThread;
+  std::vector< DerivativeType >               m_LocalDerivativesPerThread;
   std::vector< SizeValueType >                m_NumberOfValidPointsPerThread;
+  /** FIXME: may need separate types for fixed and moving, but ok for now. */
+  std::vector< typename MovingDeformationFieldTransformType::AffineTransformPointer >
+                                              m_AffineTransformPerThread;
 
   ImageToImageObjectMetric();
   virtual ~ImageToImageObjectMetric() {}
