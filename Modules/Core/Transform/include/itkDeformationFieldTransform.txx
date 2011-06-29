@@ -121,7 +121,7 @@ DeformationFieldTransform<TScalar, NDimensions>
 template<class TScalar, unsigned int NDimensions>
 typename DeformationFieldTransform<TScalar, NDimensions>::OutputCovariantVectorType
 DeformationFieldTransform<TScalar, NDimensions>
-::TransformCovariantVector( const InputCovariantVectorType& vector, const InputPointType & point ) const
+::TransformCovariantVector( const InputCovariantVectorType& vector, const InputPointType & point, TransformType *const allocatedDirection ) const
 {
   if( !this->m_DeformationField )
     {
@@ -133,7 +133,7 @@ DeformationFieldTransform<TScalar, NDimensions>
     }
 
   JacobianType jacobian;
-  this->GetJacobianWithRespectToPosition( point, jacobian );
+  this->GetJacobianWithRespectToPosition( point, jacobian, allocatedDirection );
 
   OutputCovariantVectorType result;     // Converted vector
 
@@ -148,11 +148,13 @@ DeformationFieldTransform<TScalar, NDimensions>
     }
   return result;
 
-
+  /* previous code. changed to avoid New()
+   *
   AffineTransformPointer localTransform = AffineTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
   return localTransform->TransformCovariantVector( vector );
+  */
 }
 
 template<class TScalar, unsigned int NDimensions>
@@ -390,25 +392,45 @@ template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToPosition( const InputPointType & point,
-                                      JacobianType & jacobian ) const
+                                      JacobianType & jacobian,
+                                      TransformType *const allocatedDirection )
+                                                                          const
 {
   IndexType idx;
   this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetJacobianWithRespectToPosition( idx, jacobian );
+  this->GetJacobianWithRespectToPosition( idx, jacobian, allocatedDirection );
 }
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToPosition( const IndexType & index,
-                                      JacobianType & jacobian ) const
+                                      JacobianType & jacobian,
+                                      TransformType *const allocatedDirection )
+                                                                          const
 {
   jacobian.SetSize(NDimensions,NDimensions);
   jacobian.Fill(0.0);
 
-  AffineTransformPointer direction = AffineTransformType::New();
-  direction->SetIdentity();
-  direction->SetMatrix( this->m_DeformationField->GetDirection() );
+  /* declare directionPointer here so it stays in scope. */
+  AffineTransformPointer directionPointer;
+  AffineTransformType *directionRaw;
+  if( allocatedDirection != NULL )
+    {
+    //directionRaw = static_cast<AffineTransformType*>(allocatedDirection);
+    directionRaw = dynamic_cast<AffineTransformType*>(allocatedDirection);
+    if( directionRaw == NULL )
+      {
+      itkExceptionMacro("Expected AffineTranformType for allocatedDirection*");
+      }
+    }
+  else
+    {
+    directionPointer = AffineTransformType::New();
+    directionRaw = directionPointer.GetPointer();
+    }
+  directionRaw->SetIdentity(); //can we skip this?
+  directionRaw->SetMatrix( this->m_DeformationField->GetDirection() );
   typename DeformationFieldType::SizeType size = this->m_DeformationField->GetLargestPossibleRegion().GetSize();
   typename DeformationFieldType::SpacingType spacing = this->m_DeformationField->GetSpacing();
 
@@ -442,7 +464,7 @@ DeformationFieldTransform<TScalar, NDimensions>
     {
 
     OutputVectorType cpix = this->m_DeformationField->GetPixel(index);
-    cpix = direction->TransformVector( cpix );
+    cpix = directionRaw->TransformVector( cpix );
 
   // itkCentralDifferenceImageFunction does not support vector images so do this manually here
   for(unsigned int row=0; row< NDimensions;row++)
@@ -472,10 +494,10 @@ DeformationFieldTransform<TScalar, NDimensions>
 
     //if (this->m_UseImageDirection)
     //{
-    rpix = direction->TransformVector( rpix );
-    lpix = direction->TransformVector( lpix );
-    rrpix = direction->TransformVector( rrpix );
-    llpix = direction->TransformVector( llpix );
+    rpix = directionRaw->TransformVector( rpix );
+    lpix = directionRaw->TransformVector( lpix );
+    rrpix = directionRaw->TransformVector( rrpix );
+    llpix = directionRaw->TransformVector( llpix );
     //}
 
     rpix =  rpix*h+cpix*(1.-h);

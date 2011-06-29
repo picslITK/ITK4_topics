@@ -123,11 +123,15 @@ public:
   typedef typename DeformationFieldType::IndexType IndexType;
 
   /* Define tranform based upon ImageDirections of Deformation Field */
-  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions > AffineTransformType;
+  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions >
+                                                          AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
 
-  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions>  LocalTransformType;
-  typedef typename LocalTransformType::Pointer                          LocalTransformPointer;
+  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions>
+                                                          LocalTransformType;
+  typedef typename LocalTransformType::Pointer         LocalTransformPointer;
+
+  typedef Transform< double, NDimensions, NDimensions >   TransformType;
 
   /** Define the internal parameter helper used to access the field */
   typedef ImageVectorTransformParametersHelper<
@@ -193,7 +197,12 @@ public:
   virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType &) const
       { itkExceptionMacro( "TransformCovariantVector(CovariantVector) unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
 
-  virtual OutputCovariantVectorType TransformCovariantVector( const InputCovariantVectorType &, const InputPointType & ) const;
+  /** For \c allocatedDirection, see GetJacobianWithRespectToPosition.
+   * FIXME: documentation. */
+  virtual OutputCovariantVectorType TransformCovariantVector(
+                        const InputCovariantVectorType &,
+                        const InputPointType &,
+                        TransformType *const allocatedDirection = NULL ) const;
 
   virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType &, const InputPointType & ) const;
 
@@ -240,16 +249,25 @@ public:
   /**
    * Compute the jacobian with respect to the position, by point.
    * \c j will be resized as needed.
+   * \c allocatedDirection is an optinal raw C-pointer to an allocated
+   * transform to be set and used in this method. The goal is efficiency
+   * by avoiding stack instantiation within the method. User
+   * classes that are threaded will need to pass in a per-thread object
+   * for thread safety. Leaving as NULL will instantiate the transform
+   * on the stack.
    */
   virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
-                                                  JacobianType &j) const;
+                                                  JacobianType &j,
+                        TransformType *const allocatedDirection = NULL) const;
 
   /**
    * Compute the jacobian with respect to the position, by index.
    * \c j will be resized as needed.
+   * \c allocatedDirection - see other method version.
    */
   virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
-                                                  JacobianType &j) const;
+                                                  JacobianType &j,
+                        TransformType *const allocatedDirection = NULL) const;
 
   /** Update the transform's parameters by the values in \c update.
    * We assume \c update is of the same length as Parameters. Throw

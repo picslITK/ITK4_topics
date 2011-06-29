@@ -500,7 +500,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   //DerivativeType   localDerivativeResult( self->GetNumberOfLocalParameters() );
 
-  /* Get pre-allocated local results object */
+  /* Get pre-allocated local results object. This actually provides very
+   * little benefit, since this only gets called once for each thread. However
+   * if we get up to the hundres of threads, it might have an impact */
   DerivativeType & localDerivativeResult =
                                    self->m_LocalDerivativesPerThread[threadID];
 
@@ -722,11 +724,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // sampling is used to compute only a subset of points.
     fixedGradient =
       m_FixedImageTransform->TransformCovariantVector( fixedGradient,
-                                                       mappedFixedPoint );
-/*      m_FixedImageTransform->TransformCovariantVector( fixedGradient,
                                                        mappedFixedPoint,
                      this->m_AffineTransformPerThread[threadID].GetPointer() );
-*/    }
+    }
 }
 
 /*
@@ -805,11 +805,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
     movingGradient =
       m_MovingImageTransform->TransformCovariantVector( movingGradient,
-                                                        mappedMovingPoint );
-/*      m_MovingImageTransform->TransformCovariantVector( movingGradient,
                                                         mappedMovingPoint,
                      this->m_AffineTransformPerThread[threadID].GetPointer() );
-*/    }
+    }
 }
 
 /*
