@@ -122,6 +122,8 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
    */
   this->SetParameters( this->m_Parameters );
 
+  /* Call Modified, following behavior of other transform when their
+   * parameters change, e.g. MatrixOffsetTransformBase */
   this->Modified();
 }
 
