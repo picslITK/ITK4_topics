@@ -54,6 +54,10 @@ DeformationFieldTransform() : Superclass( NDimensions, 0 )
   this->m_Parameters.SetHelper( helper );
 
   m_GaussianSmoothSigma = 3;
+  /** This is init'ed the first time it's used in SmoothDeformatFieldGauss */
+  m_SmoothGaussTempField = NULL;
+  m_DeformationFieldSetTime = 0;
+  m_SmoothGaussTempFieldModifiedTime = 0;
 }
 
 /**
@@ -547,10 +551,12 @@ void
 DeformationFieldTransform<TScalar, NDimensions>
 ::UpdateTransformParameters( DerivativeType & update, ScalarType factor)
 {
-  //This simply adds the values
+  //This simply adds the values.
+  //TODO: This should be multi-threaded probably, via image add filter.
   Superclass::UpdateTransformParameters( update, factor );
 
-  //Now we smooth the result
+  //Now we smooth the result. Not thread safe. Does it's own
+  // threading.
   SmoothDeformationFieldGauss();
 }
 
@@ -566,15 +572,23 @@ void DeformationFieldTransform<TScalar, NDimensions>
     }
 
   typename DeformationFieldType::Pointer field = this->GetDeformationField();
-  typename DeformationFieldType::Pointer tempField =
-                                                  DeformationFieldType::New();
-  tempField->SetSpacing( field->GetSpacing() );
-  tempField->SetOrigin( field->GetOrigin() );
-  tempField->SetDirection( field->GetDirection() );
-  tempField->SetLargestPossibleRegion( field->GetLargestPossibleRegion() );
-  tempField->SetRequestedRegion( field->GetRequestedRegion() );
-  tempField->SetBufferedRegion( field->GetBufferedRegion() );
-  tempField->Allocate();
+
+  /* Allocate temp field if new deformation field has been set.
+   * We only want to allocate this field if this method is used */
+  if( this->GetDeformationFieldSetTime() >
+      this->m_SmoothGaussTempFieldModifiedTime )
+    {
+    this->m_SmoothGaussTempFieldModifiedTime = this->GetMTime();
+    m_SmoothGaussTempField = DeformationFieldType::New();
+    m_SmoothGaussTempField->SetSpacing( field->GetSpacing() );
+    m_SmoothGaussTempField->SetOrigin( field->GetOrigin() );
+    m_SmoothGaussTempField->SetDirection( field->GetDirection() );
+    m_SmoothGaussTempField->SetLargestPossibleRegion(
+                                          field->GetLargestPossibleRegion() );
+    m_SmoothGaussTempField->SetRequestedRegion( field->GetRequestedRegion() );
+    m_SmoothGaussTempField->SetBufferedRegion( field->GetBufferedRegion() );
+    m_SmoothGaussTempField->Allocate();
+    }
 
   typedef typename DeformationFieldType::PixelType    VectorType;
   typedef typename VectorType::ValueType              ScalarType;
@@ -592,7 +606,7 @@ void DeformationFieldTransform<TScalar, NDimensions>
   PixelContainerPointer fieldOriginalPixelContainer =
                                                     field->GetPixelContainer();
   // graft the output field onto the mini-pipeline
-  smoother->GraftOutput( tempField );
+  smoother->GraftOutput( m_SmoothGaussTempField );
   bool fieldPixelContainerNeedsUpdate = false;
 
   for( unsigned int j = 0; j < Dimension; j++ )
@@ -643,16 +657,16 @@ void DeformationFieldTransform<TScalar, NDimensions>
     }
   else
     {
-    //I think we'll have to copy final results from tempField's pixel container
+    //I think we'll have to copy final results from m_SmoothGaussTempField's pixel container
     // into field's. But find out about ownership of container when it's
     // assigned via SetPixelContainer, might just be able to do that.
-    // ** NOTE ** If can safely point to tempField's container, we then also
+    // ** NOTE ** If can safely point to m_SmoothGaussTempField's container, we then also
     // have to update TransformParameters obj to point to it.
     }
 
   // graft the output back to this filter
   // Do we need this here?
-  tempField->SetPixelContainer( field->GetPixelContainer() );
+  m_SmoothGaussTempField->SetPixelContainer( field->GetPixelContainer() );
 
   //make sure boundary does not move
   ScalarType weight = 1.0;
@@ -702,6 +716,10 @@ void DeformationFieldTransform<TScalar, NDimensions>
     {
     this->m_DeformationField = field;
     this->Modified();
+    /* Store this separately for use in smoothing because we only want
+     * to know when the deformation field object has changed, not just
+     * its contents. */
+    this->m_DeformationFieldSetTime = this->GetMTime();
     if( ! this->m_Interpolator.IsNull() )
       {
       this->m_Interpolator->SetInputImage( this->m_DeformationField );

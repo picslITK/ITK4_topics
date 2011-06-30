@@ -160,6 +160,9 @@ public:
   itkSetMacro( GaussianSmoothSigma, ScalarType );
   itkGetConstReferenceMacro( GaussianSmoothSigma, ScalarType );
 
+  /** Get the modification time of deformation field */
+  itkGetConstReferenceMacro( DeformationFieldSetTime, unsigned long );
+
   /**  Method to transform a point. */
   virtual OutputPointType TransformPoint( const InputPointType& thisPoint ) const;
 
@@ -281,7 +284,8 @@ public:
                                           ScalarType factor = 1.0 );
 
   /** Smooth the deformation field in-place.
-   * Uses m_GaussSmoothSigma to set the variance for the GaussianOperator. */
+   * Uses m_GaussSmoothSigma to set the variance for the GaussianOperator.
+   * \warning Not thread safe. Does its own threading. */
   virtual void SmoothDeformationFieldGauss();
 
   /** Return an inverse of this transform. */
@@ -314,10 +318,18 @@ protected:
    * GaussianOperator */
   ScalarType                                  m_GaussianSmoothSigma;
 
+  /** Track when the deformation field was last set/assiend, as
+   * distinct from when it may have had its contents modified. */
+  unsigned long                             m_DeformationFieldSetTime;
+
 private:
   DeformationFieldTransform( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
+  /** Used to holder temporary deformation field during smoothing.
+   * Use member variable to avoid allocation on stack. */
+  typename DeformationFieldType::Pointer    m_SmoothGaussTempField;
+  unsigned long                             m_SmoothGaussTempFieldModifiedTime;
 };
 
 } // end namespace itk
