@@ -25,7 +25,7 @@
 #include "itkVariableLengthVector.h"
 #include "vnl/vnl_vector_fixed.h"
 #include "itkMatrix.h"
-
+#include "itkUpdateTransformFunction.h"
 
 namespace itk
 {
@@ -149,6 +149,15 @@ public:
                   itkGetStaticConstMacro(InputSpaceDimension) >
                                                                 MatrixType;
 
+  /** Type of the parameter update function. */
+  typedef UpdateTransformFunction< Self >        UpdateTransformFunctionType;
+  typedef typename UpdateTransformFunctionType::Pointer
+                                                 UpdateTransformFunctionPointer;
+
+  /** Friend UpdateTransformFunction so it can use a pointer to transform
+   * and access all methods and members */
+  template <class T> friend class UpdateTransformFunction;
+
   /**  Method to transform a point.
    * \warning This method must be thread-safe. See, e.g., its use
    * in ResampleImageFilter.
@@ -156,7 +165,7 @@ public:
   virtual OutputPointType TransformPoint(const InputPointType  &) const = 0;
 
   /**  Method to transform a vector. */
-  virtual OutputVectorType    TransformVector(const InputVectorType &) const = 0;
+  virtual OutputVectorType  TransformVector(const InputVectorType &) const = 0;
 
   /** Method to transform a vector at a given location*/
   virtual OutputVectorType    TransformVector(
@@ -341,13 +350,18 @@ public:
    * to perform any required operations on the update parameters, typically
    * a converion to member variables for use in TransformPoint.
    * NOTE: currently this is a simple method to add the update to the
-   * existing parameter values, with the optinal factor. This will
+   * existing parameter values, with the optional factor. This will
    * be modified to call a functor instead of performing any operations
    * itself. The functor will be user-assignable to perform
    * specialized operations, including any desired threading.
    */
   virtual void UpdateTransformParameters( DerivativeType & update,
                                           TScalarType factor = 1.0 );
+
+  /** Set/Get the function for updating parameters, which is used
+   * in \c UpdateTransformParameters. */
+  itkSetObjectMacro( UpdateTransformFunction, UpdateTransformFunctionType );
+  itkGetObjectMacro( UpdateTransformFunction, UpdateTransformFunctionType );
 
   /** Return the number of local parameters that completely defines the Transform
    *  at an individual voxel.  For transforms with local support, this will
@@ -421,6 +435,8 @@ protected:
 
   /* Store an identity jacobian for convenience */
   JacobianType m_IdentityJacobian;
+
+  UpdateTransformFunctionPointer    m_UpdateTransformFunction;
 
 private:
   Transform(const Self &);      //purposely not implemented
