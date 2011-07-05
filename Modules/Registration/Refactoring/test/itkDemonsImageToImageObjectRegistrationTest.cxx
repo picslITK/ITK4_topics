@@ -242,7 +242,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
             << std::endl;
   ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
   /* print out a few deformation field vectors */
-  std::cout
+  /*std::cout
       << "First few elements of first few rows of final deformation field:"
       << std::endl;
   for(unsigned int i=0; i< 5; i++ )
@@ -257,7 +257,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
       }
     std::cout << std::endl;
     }
-
+  */
 
   //
   // results

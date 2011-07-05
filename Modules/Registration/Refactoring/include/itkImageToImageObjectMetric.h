@@ -36,6 +36,8 @@ namespace itk
  * VirtualImage type to define the virtual domain. The VirtualImage type
  * defaults to TFixedImage.
  *
+ * Both transforms are initialized to Identity.
+ *
  * Image gradient calculation is performed in one of three ways:
  * 1) The BSplineInterpolator is used if it has been set by user as the
  * interpolator.

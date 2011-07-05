@@ -21,8 +21,6 @@
 #include "itkDeformationFieldTransform.h"
 
 #include "itkVectorLinearInterpolateImageFunction.h"
-#include "itkVectorNeighborhoodOperatorImageFilter.h"
-#include "itkGaussianOperator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
 
@@ -54,10 +52,13 @@ DeformationFieldTransform() : Superclass( NDimensions, 0 )
   this->m_Parameters.SetHelper( helper );
 
   m_GaussianSmoothSigma = 3;
-  /** This is init'ed the first time it's used in SmoothDeformatFieldGauss */
-  m_SmoothGaussTempField = NULL;
   m_DeformationFieldSetTime = 0;
   m_SmoothGaussTempFieldModifiedTime = 0;
+  /** These are init'ed when SmoothDeformatFieldGauss is called, either for
+   * the first time, or after a new deformation field has been assigned. */
+  m_SmoothGaussTempField = NULL;
+  m_SmoothGaussSmoother = NULL;
+
 }
 
 /**
@@ -588,85 +589,75 @@ void DeformationFieldTransform<TScalar, NDimensions>
     m_SmoothGaussTempField->SetRequestedRegion( field->GetRequestedRegion() );
     m_SmoothGaussTempField->SetBufferedRegion( field->GetBufferedRegion() );
     m_SmoothGaussTempField->Allocate();
+
+    //This should only be allocated once as well, for efficiency.
+    m_SmoothGaussSmoother = SmoothGaussSmootherType::New();
+    }
+
+  if( m_SmoothGaussTempField.IsNull() )
+    {
+    itkExceptionMacro("Expected m_SmoothGaussTempField to be allocated.");
     }
 
   typedef typename DeformationFieldType::PixelType    VectorType;
   typedef typename VectorType::ValueType              ScalarType;
-  typedef GaussianOperator<ScalarType,Dimension>      OperatorType;
-  typedef VectorNeighborhoodOperatorImageFilter< DeformationFieldType,
-                                                 DeformationFieldType >
-                                                            SmootherType;
-
-  OperatorType * oper = new OperatorType;
-  typename SmootherType::Pointer smoother = SmootherType::New();
 
   typedef typename DeformationFieldType::PixelContainerPointer
                                                         PixelContainerPointer;
+  // I think we need to keep this as SmartPointer type, to preserve the
+  // reference counting so we can assign the swapPtr to the main field and
+  // not have to do a memory copy - this happens when image dimensions are odd.
   PixelContainerPointer swapPtr;
-  PixelContainerPointer fieldOriginalPixelContainer =
-                                                    field->GetPixelContainer();
+
   // graft the output field onto the mini-pipeline
-  smoother->GraftOutput( m_SmoothGaussTempField );
-  bool fieldPixelContainerNeedsUpdate = false;
+  m_SmoothGaussSmoother->GraftOutput( m_SmoothGaussTempField );
 
   for( unsigned int j = 0; j < Dimension; j++ )
     {
     // smooth along this dimension
-    oper->SetDirection( j );
-    oper->SetVariance( m_GaussianSmoothSigma );
-    oper->SetMaximumError(0.001 );
-    oper->SetMaximumKernelWidth( 256 );
-    oper->CreateDirectional();
+    m_SmoothGaussOperator.SetDirection( j );
+    m_SmoothGaussOperator.SetVariance( m_GaussianSmoothSigma );
+    m_SmoothGaussOperator.SetMaximumError(0.001 );
+    m_SmoothGaussOperator.SetMaximumKernelWidth( 256 );
+    m_SmoothGaussOperator.CreateDirectional();
 
     // todo: make sure we only smooth within the buffered region
-    smoother->SetOperator( *oper );
-    smoother->SetInput( field );
+    m_SmoothGaussSmoother->SetOperator( m_SmoothGaussOperator );
+    m_SmoothGaussSmoother->SetInput( field );
     try
       {
-      smoother->Update();
+      m_SmoothGaussSmoother->Update();
       }
     catch( ExceptionObject & exc )
       {
-      delete oper;
       std::string msg("Caught exception: ");
       msg += exc.what();
       itkExceptionMacro( << msg );
       }
 
-    if ( j < Dimension - 1 )
+    if( j < Dimension - 1 )
       {
       // swap the containers
-      swapPtr = smoother->GetOutput()->GetPixelContainer();
-      smoother->GraftOutput( field );
+      swapPtr = m_SmoothGaussSmoother->GetOutput()->GetPixelContainer();
+      m_SmoothGaussSmoother->GraftOutput( field );
+      // SetPixelContainer does a smartpointer assignment, so the pixel
+      // container won't be deleted if field  points to the
+      // temporary field upon exiting this method.
       field->SetPixelContainer( swapPtr );
-      fieldPixelContainerNeedsUpdate = ! fieldPixelContainerNeedsUpdate;
-      smoother->Modified();
+      m_SmoothGaussSmoother->Modified();
       }
     }
 
-  if( Dimension % 2 == 1)
+  if( Dimension % 2 == 0 )
     {
-    itkExceptionMacro("Needs fix for non-even dims for getting results "
-                      " into member def field.");
-    }
-  if( fieldPixelContainerNeedsUpdate )
-    {
-    //For even number of dimensions, the final pass writes the output
+    // For even number of dimensions, the final pass writes the output
     // into field's original pixel container, so we just point back to that.
-    field->SetPixelContainer( fieldOriginalPixelContainer );
+    // And point the temporary field back to its original container for next
+    // time through.
+    m_SmoothGaussTempField->SetPixelContainer( field->GetPixelContainer() );
+    field->SetPixelContainer(
+                    m_SmoothGaussSmoother->GetOutput()->GetPixelContainer() );
     }
-  else
-    {
-    //I think we'll have to copy final results from m_SmoothGaussTempField's pixel container
-    // into field's. But find out about ownership of container when it's
-    // assigned via SetPixelContainer, might just be able to do that.
-    // ** NOTE ** If can safely point to m_SmoothGaussTempField's container, we then also
-    // have to update TransformParameters obj to point to it.
-    }
-
-  // graft the output back to this filter
-  // Do we need this here?
-  m_SmoothGaussTempField->SetPixelContainer( field->GetPixelContainer() );
 
   //make sure boundary does not move
   ScalarType weight = 1.0;
@@ -698,12 +689,11 @@ void DeformationFieldTransform<TScalar, NDimensions>
       }
     else
       {
-      VectorType svec = smoother->GetOutput()->GetPixel( index );
+      VectorType svec = m_SmoothGaussSmoother->GetOutput()->GetPixel( index );
       outIter.Set( svec * weight + outIter.Get() * weight2);
       }
   }
 
-  delete oper;
   itkDebugMacro("done gauss smooth ");
 }
 

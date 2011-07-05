@@ -24,6 +24,8 @@
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkImageVectorTransformParametersHelper.h"
+#include "itkVectorNeighborhoodOperatorImageFilter.h"
+#include "itkGaussianOperator.h"
 
 namespace itk
 {
@@ -329,7 +331,20 @@ private:
   /** Used to holder temporary deformation field during smoothing.
    * Use member variable to avoid allocation on stack. */
   typename DeformationFieldType::Pointer    m_SmoothGaussTempField;
+
+  /** Track when the temporary deformation field used during smoothing
+   * was last modified/initialized. We only want to change it if the
+   * main deformation field is also changed, i.e. assigned to a new object */
   unsigned long                             m_SmoothGaussTempFieldModifiedTime;
+
+  /** Type of Gaussian Operator used during smoothing. Define here
+   * so we can use a member var during the operation. */
+  typedef GaussianOperator<ScalarType,Dimension>      SmoothGaussOperatorType;
+  typedef VectorNeighborhoodOperatorImageFilter< DeformationFieldType,
+                                                 DeformationFieldType >
+                                                      SmoothGaussSmootherType;
+  SmoothGaussOperatorType                     m_SmoothGaussOperator;
+  typename SmoothGaussSmootherType::Pointer   m_SmoothGaussSmoother;
 };
 
 } // end namespace itk
