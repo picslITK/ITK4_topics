@@ -105,8 +105,8 @@ int itkDemonsImageToImageObjectMetricTest(int argc, char * argv[])
    * the metric will use the fixed image for the virtual domain. */
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  metric->SetFixedImageTransform( fixedTransform );
-  metric->SetMovingImageTransform( movingTransform );
+  metric->SetFixedTransform( fixedTransform );
+  metric->SetMovingTransform( movingTransform );
 
   /* Initialize. */
   try

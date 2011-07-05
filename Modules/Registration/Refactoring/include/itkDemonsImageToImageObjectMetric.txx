@@ -78,12 +78,12 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   //localDerivativeReturn.Fill(0); //see direct assignment below of sum
 
   /** Only the voxelwise contribution given the point pairs. */
-  FixedImagePixelType diff = fixedImageValue - movingImageValue ;
+  FixedImagePixelType diff = fixedImageValue - movingImageValue;
   metricValueReturn =
     vcl_fabs( diff  ) / (double) this->FixedImageDimension;
 
   /** For dense transforms, this returns identity */
-  this->m_MovingImageTransform->GetJacobianWithRespectToParameters(
+  this->m_MovingTransform->GetJacobianWithRespectToParameters(
                                               mappedMovingPoint, m_Jacobian);
 
   for ( unsigned int par = 0;

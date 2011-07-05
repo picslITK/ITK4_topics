@@ -249,8 +249,8 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   // the metric will use the fixed image for the virtual domain.
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  metric->SetFixedImageTransform( identityTransform );
-  metric->SetMovingImageTransform( deformationTransform );
+  metric->SetFixedTransform( identityTransform );
+  metric->SetMovingTransform( deformationTransform );
 
   // Optimizer
   typedef itk::GradientDescentObjectOptimizer  OptimizerType;

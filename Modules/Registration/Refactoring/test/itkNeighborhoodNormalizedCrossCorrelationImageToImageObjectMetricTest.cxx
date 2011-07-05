@@ -275,14 +275,14 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest(
 
     metric->SetFixedImage(fixedImage);
     metric->SetMovingImage(movingImage);
-//  metric->SetFixedImageTransform(transformFComp);
-//  metric->SetMovingImageTransform(transformMComp);
+//  metric->SetFixedTransform(transformFComp);
+//  metric->SetMovingTransform(transformMComp);
 
 //  transformMtranslation
 
-    metric->SetFixedImageTransform(transformFId);
-    metric->SetMovingImageTransform(transformMdeformation);
-//  metric->SetMovingImageTransform(transformMtranslation2);
+    metric->SetFixedTransform(transformFId);
+    metric->SetMovingTransform(transformMdeformation);
+//  metric->SetMovingTransform(transformMtranslation2);
 
     std::cout << "fixedImage:" << std::endl;
     PrintImage(fixedImage);
@@ -296,7 +296,7 @@ int itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest(
 //    std::cout << "moving transform field:" << std::endl;
 //    PrintImage(field);
 
-    // metric->SetMovingImageTransform( movingTransform );
+    // metric->SetMovingTransform( movingTransform );
 
     /* Initialize. */
     try {

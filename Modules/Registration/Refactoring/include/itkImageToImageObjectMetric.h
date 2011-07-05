@@ -27,6 +27,7 @@
 #include "itkImageToData.h"
 #include "itkDeformationFieldTransform.h"
 #include "itkCompositeTransform.h"
+#include "itkIdentityTransform.h"
 
 namespace itk
 {
@@ -36,7 +37,13 @@ namespace itk
  * VirtualImage type to define the virtual domain. The VirtualImage type
  * defaults to TFixedImage.
  *
- * Both transforms are initialized to Identity.
+ * The user can define a virtual domain by calling either
+ * \c CreateVirtualDomainImage or \c SetVirtualDomainImage. The virtual
+ * domain region can be changed via \c SetVirtualDomainRegion. See these
+ * methods for details.
+ * TODO: Maybe put the details up here?
+ *
+ * Both transforms are initialized to an IdentityTransform.
  *
  * Image gradient calculation is performed in one of three ways:
  * 1) The BSplineInterpolator is used if it has been set by user as the
@@ -124,14 +131,22 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
-  /** Typedef's for convenience */
+  /** Deformation field typedef for convenience */
   typedef DeformationFieldTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
                                           MovingDeformationFieldTransformType;
+  /** CompositeTransform typedef for convenience */
   typedef CompositeTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
                                           MovingCompositeTransformType;
 
+  /** Identity transform typedef's for convenience */
+  typedef IdentityTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingIdentityTransformType;
+  typedef IdentityTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          FixedIdentityTransformType;
 
   typedef typename FixedTransformType::Pointer         FixedTransformPointer;
   typedef typename FixedTransformType::InputPointType  FixedInputPointType;
@@ -282,63 +297,50 @@ public:
   const VirtualSpacingType GetVirtualDomainSpacing( void );
   const VirtualOriginType GetVirtualDomainOrigin( void );
   const VirtualDirectionType GetVirtualDomainDirection( void );
-  /* It gets messy to have individual set accessors for the domain
-   * settings. Have to track if each has been set before initializing.
-  itkSetMacro(VirtualDomainSpacing, VirtualSpacingType);
-  itkGetMacro(VirtualDomainSpacing, VirtualSpacingType);
-  itkSetMacro(VirtualDomainOrigin, VirtualOriginType);
-  itkGetMacro(VirtualDomainOrigin, VirtualOriginType);
-  itkSetMacro(VirtualDomainDirection, VirtualDirectionType);
-  itkGetMacro(VirtualDomainDirection, VirtualDirectionType);
-  */
-  /** Set the size of the virtual domain region over which to compute
-   * the metric. Any subsequent call to SetVirtualRegion will override
-   * these values. */
-  //void SetVirtualDomainSize( VirtualSizeType& index );
-  //const VirtualSizeType GetVirtualDomainSize( void );
-
-  /** Set/Get the index of the virtual domain region over which to compute
-   * the metric. Any subsequent call to SetVirtualRegion will override
-   * these values. */
-  //void SetVirtualDomainIndex( VirtualDomainIndex& index );
-  //const VirtualIndexType GetVirtualDomainIndex( void );
 
   /** Set/Get the region of the virtual domain over which to compute
    * the metric. If not set by user either here or by
    * CreateVirtualDomainImage, or by SetVirtualDomainImage, it will be set
-   * from m_FixedImage.GetRequestedRegion() in Intitialize.
+   * from m_FixedImage.GetBufferedRegion() in Intitialize.
    * The region passed here will be replaced by
    * any subsequent calls to CreateVirtualDomainImage. */
-  // FIXME: handle const-ness properly
   void SetVirtualDomainRegion( VirtualRegionType & region )
-    { SetVirtualDomainImage( static_cast<const VirtualRegionType& >(region) ); }
+  // FIXME: handle const-ness properly
+  { SetVirtualDomainRegion( static_cast<const VirtualRegionType& >(region) ); }
+
   void SetVirtualDomainRegion( const VirtualRegionType & region )
+  {
+  if( region != m_VirtualDomainRegion || ! m_VirtualDomainRegionHasBeenSet )
     {
-    if( region != m_VirtualDomainRegion || ! m_VirtualDomainRegionHasBeenSet )
-      {
-      m_VirtualDomainRegionHasBeenSet = true;
-      m_VirtualDomainRegion = region;
-      this->Modified();
-      }
+    m_VirtualDomainRegionHasBeenSet = true;
+    m_VirtualDomainRegion = region;
+    this->Modified();
     }
+  }
   itkGetMacro(VirtualDomainRegion, VirtualRegionType);
 
   /** Set all virtual domain setings at once via an image.
    * The image is expected to have already been allocated.
-   * The image's requested region will be used for VirtualDomainRegion,
+   * The image's buffered region will be used for VirtualDomainRegion,
    * which can be then changed by calling SetVirtualDomainRegion. */
   virtual void SetVirtualDomainImage(VirtualImageType* image);
   /** Get the virtual domain image */
   itkGetConstObjectMacro(VirtualDomainImage, VirtualImageType);
 
   /** Connect the fixed transform. */
-  itkSetObjectMacro(FixedImageTransform, FixedTransformType);
+  itkSetObjectMacro(FixedTransform, FixedTransformType);
   /** Get a pointer to the fixed transform.  */
-  itkGetConstObjectMacro(FixedImageTransform, FixedTransformType);
+  itkGetConstObjectMacro(FixedTransform, FixedTransformType);
   /** Connect the moving transform. */
-  itkSetObjectMacro(MovingImageTransform, MovingTransformType);
+  itkSetObjectMacro(MovingTransform, MovingTransformType);
   /** Get a pointer to the moving transform.  */
-  itkGetConstObjectMacro(MovingImageTransform, MovingTransformType);
+  itkGetConstObjectMacro(MovingTransform, MovingTransformType);
+  /** Connect the moving transform using a backwards-compatible name */
+  void SetTransform( MovingTransformType* transform )
+  { SetMovingTransform( transform ); }
+  /** Get the moving transform using a backwards-compatible name */
+  const MovingTransformType * GetTransform()
+  { return GetMovingTransform(); }
 
   /** Connect the fixed interpolator. */
   itkSetObjectMacro(FixedInterpolator, FixedInterpolatorType);
@@ -405,7 +407,7 @@ public:
   /* NOTE: could this go into ObjectToObjectMetric, along with a base
    * pointer to transform? Or are transforms only every used for images? */
   virtual unsigned int GetNumberOfParameters() const
-    { return this->m_MovingImageTransform->GetNumberOfParameters(); }
+    { return this->m_MovingTransform->GetNumberOfParameters(); }
 
   /** Update the metric's transform parameters.
    * \c derivative must be the proper size, as retrieved
@@ -414,11 +416,11 @@ public:
 
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual unsigned int GetNumberOfLocalParameters() const
-    { return this->m_MovingImageTransform->GetNumberOfLocalParameters(); }
+    { return this->m_MovingTransform->GetNumberOfLocalParameters(); }
 
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual bool HasLocalSupport() const
-    { return this->m_MovingImageTransform->HasLocalSupport(); }
+    { return this->m_MovingTransform->HasLocalSupport(); }
 
   /** Return the size of derivative result, taking DerivativeSource
    * into account. */
@@ -532,9 +534,9 @@ protected:
   virtual void CollectNumberOfValidPoints(void);
 
   FixedImageConstPointer  m_FixedImage;
-  FixedTransformPointer   m_FixedImageTransform;
+  FixedTransformPointer   m_FixedTransform;
   MovingImageConstPointer m_MovingImage;
-  MovingTransformPointer  m_MovingImageTransform;
+  MovingTransformPointer  m_MovingTransform;
   VirtualImagePointer     m_VirtualDomainImage;
 
   VirtualRegionType       m_VirtualDomainRegion;

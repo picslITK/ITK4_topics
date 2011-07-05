@@ -382,8 +382,8 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
   // the metric will use the fixed image for the virtual domain.
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  metric->SetFixedImageTransform( fixedTransform );
-  metric->SetMovingImageTransform( movingTransform );
+  metric->SetFixedTransform( fixedTransform );
+  metric->SetMovingTransform( movingTransform );
 
   //Evaluate the metric
   //metric->SetNumberOfThreads(1);
@@ -422,7 +422,7 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
   deformationTransform->SetDeformationField( field );
 
   // Assign it to the metric
-  metric->SetMovingImageTransform( deformationTransform );
+  metric->SetMovingTransform( deformationTransform );
   //Evaluate the metric
   std::cout
     << "==Testing with identity DeformationFieldTransform for moving image..."

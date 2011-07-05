@@ -196,9 +196,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetVirtualDomainImage( fixedImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  metric->SetFixedImageTransform( identityTransform );
-  metric->SetMovingImageTransform( deformationTransform );
-  //  metric->SetMovingImageTransform( translationTransform );
+  metric->SetFixedTransform( identityTransform );
+  metric->SetMovingTransform( deformationTransform );
+  //  metric->SetMovingTransform( translationTransform );
 
   //Initialize the metric to prepare for use
   metric->Initialize();

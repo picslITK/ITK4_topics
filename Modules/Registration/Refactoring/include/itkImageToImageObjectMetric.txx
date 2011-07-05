@@ -43,11 +43,13 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_ThreadingMemoryHasBeenInitialized = false;
 
   m_FixedImage = NULL;
-  m_FixedImageTransform = NULL;
   m_MovingImage = NULL;
-  m_MovingImageTransform = NULL;
   m_VirtualDomainImage = NULL;
   m_VirtualDomainRegionHasBeenSet = false;
+
+  /* Both transforms default to an identity transform */
+  m_FixedTransform = FixedIdentityTransformType::New();
+  m_MovingTransform = MovingIdentityTransformType::New();
 
   /* Interpolators. Default to linear. */
   m_FixedInterpolator = FixedLinearInterpolatorType::New();
@@ -89,13 +91,13 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     itkExceptionMacro(<< "MovingImage is not present");
     }
-  if ( !m_FixedImageTransform )
+  if ( !m_FixedTransform )
     {
-    itkExceptionMacro(<< "FixedImageTransform is not present");
+    itkExceptionMacro(<< "FixedTransform is not present");
     }
-  if ( !m_MovingImageTransform )
+  if ( !m_MovingTransform )
     {
-    itkExceptionMacro(<< "MovingImageTransform is not present");
+    itkExceptionMacro(<< "MovingTransform is not present");
     }
 
   // If the image is provided by a source, update the source.
@@ -119,7 +121,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     m_VirtualDomainImage = FixedImageType::New();
     /* Graft the virtual image onto the fixed, to conserve memory. */
     m_VirtualDomainImage->Graft( m_FixedImage );
-    /* If user hasn't already provided a region, get the requested region
+    /* If user hasn't already provided a region, get the buffered region
      * from fixed image. */
     if( ! m_VirtualDomainRegionHasBeenSet )
       {
@@ -128,7 +130,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       }
     }
 
-  if( m_MovingImageTransform->HasLocalSupport() )
+  if( m_MovingTransform->HasLocalSupport() )
     {
     /* Verify that virtual domain and deformation field are the same size.
      * Effects transformation, and calc of offset in StoreDerivativeResult.
@@ -141,7 +143,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
      * Eventually we'll want a method in Transform something like a
      * GetInputDomainSize to check this cleanly. */
     MovingTransformType* transform;
-    transform = this->m_MovingImageTransform.GetPointer();
+    transform = this->m_MovingTransform.GetPointer();
     MovingCompositeTransformType* comptx =
                  dynamic_cast< MovingCompositeTransformType * > ( transform );
     if( comptx != NULL )
@@ -152,7 +154,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
             dynamic_cast< MovingDeformationFieldTransformType * >( transform );
     if( deftx == NULL )
       {
-      itkExceptionMacro("Expected m_MovingImageTransform to be of type "
+      itkExceptionMacro("Expected m_MovingTransform to be of type "
                         "DeformationFieldTransform" );
       }
     typedef typename MovingDeformationFieldTransformType::DeformationFieldType
@@ -162,7 +164,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       fieldRegion = field->GetBufferedRegion();
     VirtualRegionType virtualRegion =
                               m_VirtualDomainImage->GetBufferedRegion();
-    if( virtualRegion.GetSize()  != fieldRegion.GetSize() ||
+    if( virtualRegion.GetSize() != fieldRegion.GetSize() ||
         virtualRegion.GetIndex() != fieldRegion.GetIndex() )
       {
       itkExceptionMacro("Virtual domain and moving transform deformation field"
@@ -346,7 +348,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_AffineTransformPerThread.resize( this->m_NumberOfThreads );
   /* This size always comes from the moving image */
   unsigned long globalDerivativeSize =
-    this->m_MovingImageTransform->GetNumberOfParameters();
+    this->m_MovingTransform->GetNumberOfParameters();
   itkDebugMacro("ImageToImageObjectMetric::Initialize: deriv size  "
                   << globalDerivativeSize << std::endl);
   /* NOTE: this does *not* get init'ed to 0 here. */
@@ -363,7 +365,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     /* For transforms with local support, e.g. deformation field,
      * use a single derivative container that's updated by region
      * in multiple threads. */
-    if ( this->m_MovingImageTransform->HasLocalSupport() )
+    if ( this->m_MovingTransform->HasLocalSupport() )
       {
       itkDebugMacro(
         "ImageToImageObjectMetric::Initialize: tx HAS local support\n");
@@ -402,7 +404,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     this->m_NumberOfValidPointsPerThread[i] = 0;
     this->m_MeasurePerThread[i] = 0;
-    if ( ! this->m_MovingImageTransform->HasLocalSupport() )
+    if ( ! this->m_MovingTransform->HasLocalSupport() )
       {
       /* Be sure to init to 0 here, because the threader may not use
        * all the threads if the region is better split into fewer
@@ -445,7 +447,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage )
 {
   /* For global transforms, sum the derivatives from each region. */
-  if ( ! this->m_MovingImageTransform->HasLocalSupport() )
+  if ( ! this->m_MovingTransform->HasLocalSupport() )
     {
     for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
       {
@@ -463,7 +465,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( doAverage )
     {
-    if ( ! this->m_MovingImageTransform->HasLocalSupport() )
+    if ( ! this->m_MovingTransform->HasLocalSupport() )
       {
       *(this->m_DerivativeResult) /= this->m_NumberOfValidPoints;
       }
@@ -605,7 +607,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                            ThreadIdType threadID )
 {
   DerivativeType & derivativeResult = this->m_DerivativesPerThread[threadID];
-  if ( ! this->m_MovingImageTransform->HasLocalSupport() )
+  if ( ! this->m_MovingTransform->HasLocalSupport() )
     {
     derivativeResult += derivative;
     }
@@ -620,9 +622,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       {
       OffsetValueType offset =
         this->m_VirtualDomainImage->ComputeOffset(virtualIndex);
-      offset*=this->m_MovingImageTransform->GetNumberOfLocalParameters();
+      offset *= this->m_MovingTransform->GetNumberOfLocalParameters();
       for (unsigned int i=0;
-            i < this->m_MovingImageTransform->GetNumberOfLocalParameters(); i++)
+            i < this->m_MovingTransform->GetNumberOfLocalParameters(); i++)
         {
         /* Be sure to *add* here and not assign. Required for proper behavior
          * with multi-variate metric. */
@@ -657,7 +659,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   fixedImageValue = 0;
 
   // map the point into fixed space
-  mappedFixedPoint = m_FixedImageTransform->TransformPoint( point );
+  mappedFixedPoint = m_FixedTransform->TransformPoint( point );
 
   // If user provided a mask over the fixed image
   if ( m_FixedImageMask )
@@ -723,7 +725,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // But, pre-warping the images would be inefficient when a mask or
     // sampling is used to compute only a subset of points.
     fixedGradient =
-      m_FixedImageTransform->TransformCovariantVector( fixedGradient,
+      m_FixedTransform->TransformCovariantVector( fixedGradient,
                                                        mappedFixedPoint,
                      this->m_AffineTransformPerThread[threadID].GetPointer() );
     }
@@ -745,7 +747,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   pointIsValid = true;
   movingImageValue = 0;
-  mappedMovingPoint = m_MovingImageTransform->TransformPoint( point );
+  mappedMovingPoint = m_MovingTransform->TransformPoint( point );
 
   // If user provided a mask over the Moving image
   if ( m_MovingImageMask )
@@ -804,7 +806,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
     movingGradient =
-      m_MovingImageTransform->TransformCovariantVector( movingGradient,
+      m_MovingTransform->TransformCovariantVector( movingGradient,
                                                         mappedMovingPoint,
                      this->m_AffineTransformPerThread[threadID].GetPointer() );
     }
@@ -900,10 +902,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     case Self::Moving:
       // For global transforms, this just returns GetNumberOfParameters.
       // For local/dense transforms, this returns number of local parameters.
-      return this->m_MovingImageTransform->GetNumberOfLocalParameters();
+      return this->m_MovingTransform->GetNumberOfLocalParameters();
       break;
     case Self::Fixed:
-      return this->m_FixedImageTransform->GetNumberOfLocalParameters();
+      return this->m_FixedTransform->GetNumberOfLocalParameters();
       break;
     case Self::Both:
       // TODO: this isn't completely settled, what to do here. Derived
@@ -988,7 +990,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     itkExceptionMacro("derivative is not the proper size");
     }
-  this->m_MovingImageTransform->UpdateTransformParameters( derivative );
+  this->m_MovingTransform->UpdateTransformParameters( derivative );
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>

@@ -171,14 +171,14 @@ protected:
     this->m_DerivativesPerThread.resize( this->m_NumberOfThreads );
     this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
     unsigned long globalDerivativeSize =
-      this->m_Metric->GetMovingImageTransform()->GetNumberOfParameters();
+      this->m_Metric->GetMovingTransform()->GetNumberOfParameters();
     std::cout << "  Initialize: deriv size  "
               << globalDerivativeSize << std::endl;
     this->m_GlobalDerivative.SetSize( globalDerivativeSize );
     /* For transforms with local support, e.g. deformation field,
      * use a single derivative container that's updated by region
      * in multiple threads. */
-    if ( this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
+    if ( this->m_Metric->GetMovingTransform()->HasLocalSupport() )
       {
       std::cout << " Initialize: tx has local support\n";
       for (int i=0; i<this->m_NumberOfThreads; i++)
@@ -213,7 +213,7 @@ protected:
   void AfterMetricThreadedGenerateData()
   {
     /* For global transforms, sum the derivatives from each region. */
-    if (  ! this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
+    if (  ! this->m_Metric->GetMovingTransform()->HasLocalSupport() )
       {
       this->m_GlobalDerivative.Fill(0);
       for (int i=0; i<this->m_NumberOfThreads; i++)
@@ -245,7 +245,7 @@ protected:
   {
     //Free some memory
     this->m_GlobalDerivative.SetSize(0);
-    if ( ! this->m_Metric->GetMovingImageTransform()->HasLocalSupport() )
+    if ( ! this->m_Metric->GetMovingTransform()->HasLocalSupport() )
       {
       for (int i=0; i<this->m_NumberOfThreads; i++)
         {
