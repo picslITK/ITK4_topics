@@ -41,6 +41,9 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
     m_IdentityJacobian[i][i] = 1.0;
     }
 
+  /* Set the default parameters update function */
+  m_UpdateTransformFunction = UpdateTransformFunctionType::New();
+
   itkWarningMacro(
     << "Using default transform constructor.  Should specify NOutputDims and NParameters as args to constructor.");
 }
@@ -63,6 +66,8 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
     {
     m_IdentityJacobian[i][i] = 1.0;
     }
+  /* Set the default parameters update function */
+  m_UpdateTransformFunction = UpdateTransformFunctionType::New();
 }
 
 /**
@@ -94,23 +99,8 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
 ::UpdateTransformParameters( DerivativeType & update,
                               TScalarType factor )
 {
-  unsigned int numberOfParameters = this->GetNumberOfParameters();
-  if( update.Size() != numberOfParameters )
-    {
-    itkExceptionMacro("Parameter update size, " << update.Size() << ", must "
-                      " be same as transform parameter size, "
-                      << numberOfParameters << std::endl);
-    }
-  if( factor == 1.0 )
-    {
-    for (unsigned int k=0; k < numberOfParameters; k++)
-      this->m_Parameters[k] += update[k];
-    }
-  else
-    {
-    for (unsigned int k=0; k < numberOfParameters; k++)
-      this->m_Parameters[k] += update[k] * factor;
-    }
+  /* The default function adds the update after scaling by factor. */
+  this->m_UpdateTransformFunction->Update( update, factor, this );
 
   /* Call SetParameters with the updated parameters.
    * SetParameters in most transforms is used to assign the input params
