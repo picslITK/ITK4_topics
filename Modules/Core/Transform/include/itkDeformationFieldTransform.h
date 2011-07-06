@@ -26,6 +26,7 @@
 #include "itkImageVectorTransformParametersHelper.h"
 #include "itkVectorNeighborhoodOperatorImageFilter.h"
 #include "itkGaussianOperator.h"
+#include "itkSmoothedGaussianDeformationFieldUpdateTransformFunction.h"
 
 namespace itk
 {
@@ -161,6 +162,19 @@ public:
   /** Get/Set the GaussianOperator variance */
   itkSetMacro( GaussianSmoothSigma, ScalarType );
   itkGetConstReferenceMacro( GaussianSmoothSigma, ScalarType );
+
+  /** Set the transform update function */
+  typedef UpdateTransformFunction< Self >
+                                DeformationFieldUpdateTransformFunctionType;
+  typedef typename Superclass::UpdateTransformFunctionType
+                                            BaseUpdateTransformFunctionType;
+  virtual void SetUpdateTransformFunction(
+                            DeformationFieldUpdateTransformFunctionType * f)
+  {
+    BaseUpdateTransformFunctionType * basef =
+      reinterpret_cast<BaseUpdateTransformFunctionType *>( f );
+    Superclass::SetUpdateTransformFunction( basef );
+  }
 
   /** Get the modification time of deformation field */
   itkGetConstReferenceMacro( DeformationFieldSetTime, unsigned long );

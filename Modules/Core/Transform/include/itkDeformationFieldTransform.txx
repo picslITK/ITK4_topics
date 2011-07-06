@@ -23,6 +23,7 @@
 #include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
+#include "itkSmoothedGaussianDeformationFieldUpdateTransformFunction.h"
 
 namespace itk
 {
@@ -59,6 +60,11 @@ DeformationFieldTransform() : Superclass( NDimensions, 0 )
   m_SmoothGaussTempField = NULL;
   m_SmoothGaussSmoother = NULL;
 
+  /* Set the parameter update function to the default one for
+   * deformation fields. */
+  typedef SmoothedGaussianDeformationFieldUpdateTransformFunction< Self >
+                                                           UpdateFunctionType;
+  this->SetUpdateTransformFunction( UpdateFunctionType::New() );
 }
 
 /**
