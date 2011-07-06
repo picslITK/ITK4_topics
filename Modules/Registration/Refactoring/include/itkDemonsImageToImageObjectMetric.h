@@ -51,14 +51,15 @@ public:
   typedef typename Superclass::FixedImagePixelType     FixedImagePixelType;
   typedef typename Superclass::FixedImageDerivativesType
                                                      FixedImageDerivativesType;
+
   typedef typename Superclass::MovingImagePointType    MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType    MovingImagePixelType;
   typedef typename Superclass::MovingImageDerivativesType
                                                     MovingImageDerivativesType;
-  typedef typename Superclass::MovingTransformType     MovingTransformType;
-  typedef typename MovingTransformType::JacobianType
-                                                    MovingTransformJacobianType;
 
+  typedef typename Superclass::MovingTransformType     MovingTransformType;
+  typedef typename Superclass::MovingTransformJacobianType
+                                                  MovingTransformJacobianType;
   /** Initialize. Must be called before first call to GetValue or
    *  GetValueAndDerivative, after metric settings are changed. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
@@ -95,8 +96,6 @@ private:
   DemonsImageToImageObjectMetric(const Self &);
   //purposely not implemented
   void operator=(const Self &);
-
-  MovingTransformJacobianType m_Jacobian;
 
 };
 

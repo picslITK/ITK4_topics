@@ -641,13 +641,17 @@ protected:
                                               m_ValueAndDerivativeThreader;
 
   /** Intermediary threaded metric value storage. */
-  std::vector<InternalComputationValueType>   m_MeasurePerThread;
-  std::vector< DerivativeType >               m_DerivativesPerThread;
-  std::vector< DerivativeType >               m_LocalDerivativesPerThread;
-  std::vector< SizeValueType >                m_NumberOfValidPointsPerThread;
+  std::vector<InternalComputationValueType>  m_MeasurePerThread;
+  std::vector< DerivativeType >              m_DerivativesPerThread;
+  std::vector< DerivativeType >              m_LocalDerivativesPerThread;
+  std::vector< SizeValueType >               m_NumberOfValidPointsPerThread;
+  /** Pre-allocated transform jacobian objects, for use as needed by dervied
+   * classes for efficiency. */
+  std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
   /** FIXME: may need separate types for fixed and moving, but ok for now. */
-  std::vector< typename MovingDeformationFieldTransformType::AffineTransformPointer >
-                                              m_AffineTransformPerThread;
+  std::vector<
+    typename MovingDeformationFieldTransformType::AffineTransformPointer >
+                                                m_AffineTransformPerThread;
 
   ImageToImageObjectMetric();
   virtual ~ImageToImageObjectMetric() {}

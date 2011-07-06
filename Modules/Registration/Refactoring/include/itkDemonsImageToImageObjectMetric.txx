@@ -75,16 +75,19 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID)
 {
-  //localDerivativeReturn.Fill(0); //see direct assignment below of sum
-
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = fixedImageValue - movingImageValue;
   metricValueReturn =
     vcl_fabs( diff  ) / (double) this->FixedImageDimension;
 
+  /* Use a pre-allocated jacobian object for efficiency */
+  MovingTransformJacobianType & jacobian =
+                            this->m_MovingTransformJacobianPerThread[threadID];
+
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->GetJacobianWithRespectToParameters(
-                                              mappedMovingPoint, m_Jacobian);
+                                                            mappedMovingPoint,
+                                                            jacobian);
 
   for ( unsigned int par = 0;
           par < this->GetNumberOfLocalParameters(); par++ )
@@ -92,9 +95,8 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
     double sum = 0.0;
     for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
       {
-        sum += 2.0 * diff * m_Jacobian(dim, par) * movingImageDerivatives[dim];
+        sum += 2.0 * diff * jacobian(dim, par) * movingImageDerivatives[dim];
       }
-    //localDerivativeReturn[par]+=sum;
     localDerivativeReturn[par] = sum;
   }
   //  std::cout << localDerivativeReturn << std::endl;
@@ -111,7 +113,6 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
-  os << indent << "m_Jacobian size: " << m_Jacobian.size();
 }
 
 /**
@@ -123,11 +124,6 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::Initialize(void) throw ( ExceptionObject )
 {
   this->Superclass::Initialize();
-
-  //Size the jacobian matrix here so we can do it
-  // just once.
-  m_Jacobian.SetSize( this->VirtualImageDimension,
-                      this->GetNumberOfLocalParameters() );
 }
 
 } // end namespace itk
