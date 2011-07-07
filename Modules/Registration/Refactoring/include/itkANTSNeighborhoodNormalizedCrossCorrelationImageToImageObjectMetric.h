@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_h
-#define __itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_h
+#ifndef __itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_h
+#define __itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_h
 
 #include "itkImageToImageObjectMetric.h"
 #include "itkConstNeighborhoodIterator.h"
@@ -25,11 +25,30 @@
 
 namespace itk {
 
-/** \class NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric
+/** \class ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric
  * \brief Computes normalized cross correlation using a small neighborhood
- * for each voxel between two images
+ * for each voxel between two images. Use on-the-fly queues with multi-threading
+ * to compute sliding windows of the neighborhood to save memory.
  *
- * Use on-the-fly queues to compute sliding windows
+ *  Example of usage:
+ *  // initialization
+ *  metric->SetRadius(neighborhood_radius);
+ *  metric->SetFixedImage(fixedImage);
+ *  metric->SetMovingImage(movingImage);
+ *  metric->SetFixedTransform(transformFix);
+ *  metric->SetMovingTransform(transformMov);
+ *
+ *  // getting derivative and metric value
+ *  metric->GetValueAndDerivative(valueReturn, derivativeReturn);
+ *
+ *
+ * Please cite this reference for more details:
+ *
+ * Brian B. Avants, Nicholas J. Tustison, Gang Song, Philip A. Cook,
+ * Arno Klein, James C. Gee, A reproducible evaluation of ANTs similarity metric
+ * performance in brain image registration, NeuroImage, Volume 54, Issue 3,
+ * 1 February 2011, Pages 2033-2044, ISSN 1053-8119,
+ * DOI: 10.1016/j.neuroimage.2010.09.025.
  *
  * This Class is templated over the type of the two input objects.
  * This is the base class for a hierarchy of similarity metrics that may, in
@@ -41,11 +60,11 @@ namespace itk {
  */
 template<class TFixedImage, class TMovingImage,
         class TVirtualImage = TFixedImage>
-class ITK_EXPORT NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric: public ImageToImageObjectMetric<
+class ITK_EXPORT ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric: public ImageToImageObjectMetric<
         TFixedImage, TMovingImage, TVirtualImage> {
 public:
     /** Standard class typedefs. */
-    typedef NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric Self;
+    typedef ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric Self;
     typedef ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage> Superclass;
     typedef SmartPointer<Self> Pointer;
     typedef SmartPointer<const Self> ConstPointer;
@@ -200,8 +219,8 @@ private:
             MeasureType &local_cc, const ThreadIdType threadID);
 
 protected:
-    NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric();
-    virtual ~NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric();
+    ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric();
+    virtual ~ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric();
 
     virtual void PrintSelf(std::ostream & os, Indent indent) const;
 
@@ -238,7 +257,7 @@ protected:
 
 private:
     //purposely not implemented
-    NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric(
+    ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric(
             const Self &);
     //purposely not implemented
     void operator=(const Self &);
@@ -256,7 +275,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric.txx"
+#include "itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric.txx"
 #endif
 
 #endif

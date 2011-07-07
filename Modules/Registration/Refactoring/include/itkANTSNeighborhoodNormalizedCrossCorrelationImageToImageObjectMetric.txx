@@ -15,10 +15,10 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_txx
-#define __itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_txx
+#ifndef __itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_txx
+#define __itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_txx
 
-#include "itkNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric.h"
+#include "itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric.h"
 #include "itkNumericTraits.h"
 
 namespace itk {
@@ -26,8 +26,8 @@ namespace itk {
  * Constructor
  */
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric() {
+ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+        TMovingImage, TVirtualImage>::ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric() {
 
     //modify the callback function.
     this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
@@ -36,15 +36,15 @@ NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::~NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric() {
+ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+        TMovingImage, TVirtualImage>::~ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric() {
 }
 
 /**
  * Initialize
  */
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::Initialize(void) throw (ExceptionObject) {
     this->Superclass::Initialize();
 
@@ -55,7 +55,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::GetValueAndDerivative(MeasureType & value,
         DerivativeType & derivative) {
 
@@ -71,7 +71,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::PrintSelf(std::ostream & os,
         Indent indent) const {
     Superclass::PrintSelf(os, indent);
@@ -79,7 +79,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback(
         const ThreaderInputObjectType& virtualImageSubRegion,
         ThreadIdType threadID, Superclass * dataHolderA) {
@@ -182,7 +182,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::InitializeScanning(
         const ImageRegionType &scan_region, ScanningIteratorType &scan_it,
         ScanMemType &scan_mem, ScanParaType &scan_para, const ThreadIdType threadID) {
@@ -205,7 +205,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueuesAtBeginingOfLine(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
         const ScanParaType &scan_para, const ThreadIdType threadID) {
@@ -315,7 +315,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueuesToNextScanWindow(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
         const ScanParaType &scan_para, const ThreadIdType threadID) {
@@ -413,7 +413,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueues(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
         const ScanParaType &scan_para, const ThreadIdType threadID) {
@@ -427,7 +427,7 @@ void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-bool NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+bool ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ComputeInformationFromQueues(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
         const ScanParaType &scan_para, const ThreadIdType threadID) {
@@ -542,7 +542,7 @@ bool NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void NeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
+void ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ComputeMovingTransformDerivative(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
         const ScanParaType &scan_para, DerivativeType &deriv,
