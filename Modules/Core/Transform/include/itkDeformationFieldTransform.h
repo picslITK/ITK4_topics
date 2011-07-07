@@ -129,10 +129,6 @@ public:
                                                           AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
 
-  typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions>
-                                                          LocalTransformType;
-  typedef typename LocalTransformType::Pointer         LocalTransformPointer;
-
   typedef Transform< double, NDimensions, NDimensions >   TransformType;
 
   /** Define the internal parameter helper used to access the field */
@@ -166,50 +162,73 @@ public:
   itkGetConstReferenceMacro( DeformationFieldSetTime, unsigned long );
 
   /**  Method to transform a point. */
-  virtual OutputPointType TransformPoint( const InputPointType& thisPoint ) const;
+  virtual OutputPointType TransformPoint( const InputPointType& thisPoint )
+                                                                        const;
 
   /**  Method to transform a vector. */
   virtual OutputVectorType TransformVector(const InputVectorType &) const
-    { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
+  { itkExceptionMacro( "TransformVector(Vector) unimplemented, use "
+    "TransformVector(Vector,Point)" ); }
 
-  virtual OutputVectorPixelType TransformVector(const InputVectorPixelType &) const
-    { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
+  virtual OutputVectorPixelType TransformVector(const InputVectorPixelType &)
+                                                                          const
+  { itkExceptionMacro( "TransformVector(Vector) unimplemented, use "
+    "TransformVector(Vector,Point)" ); }
 
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const
-    { itkExceptionMacro( "TransformVector(Vector) unimplemented, use TransformVector(Vector,Point)" ); }
+  { itkExceptionMacro( "TransformVector(Vector) unimplemented, use "
+  "TransformVector(Vector,Point)" ); }
 
-  virtual OutputVectorType TransformVector(const InputVectorType &, const InputPointType & ) const;
+  virtual OutputVectorType TransformVector(const InputVectorType &,
+                                           const InputPointType & ) const;
 
-  virtual OutputVectorPixelType TransformVector(const InputVectorPixelType &, const InputPointType & ) const;
+  virtual OutputVectorPixelType TransformVector(const InputVectorPixelType &,
+                                                const InputPointType & ) const;
 
-  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &, const InputPointType & ) const;
+  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &,
+                                              const InputPointType & ) const;
 
   /** Method to transform a tensor */
   OutputTensorType TransformTensor(const InputTensorType & ) const
-    { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use TransformTensor(Tensor,Point)" ); }
+  { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use "
+    "TransformTensor(Tensor,Point)" ); }
 
   OutputVectorPixelType TransformTensor(const InputVectorPixelType & ) const
-    { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use TransformTensor(Tensor,Point)" ); }
+  { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use "
+    "TransformTensor(Tensor,Point)" ); }
 
-  OutputTensorType TransformTensor(const InputTensorType &, const InputPointType &) const;
+  OutputTensorType TransformTensor(const InputTensorType &,
+                                   const InputPointType &) const;
 
-  OutputVectorPixelType TransformTensor(const InputVectorPixelType &, const InputPointType &) const;
+  OutputVectorPixelType TransformTensor(const InputVectorPixelType &,
+                                        const InputPointType &) const;
 
   /**  Method to transform a CovariantVector. */
-  virtual OutputCovariantVectorType TransformCovariantVector( const InputCovariantVectorType &) const
-      { itkExceptionMacro( "TransformCovariantVector(CovariantVector) unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
+  virtual OutputCovariantVectorType TransformCovariantVector(
+                                        const InputCovariantVectorType &) const
+  { itkExceptionMacro( "TransformCovariantVector(CovariantVector) "
+    "unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
 
-  virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType &) const
-      { itkExceptionMacro( "TransformCovariantVector(CovariantVector) unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
+  virtual OutputVectorPixelType TransformCovariantVector(
+                                            const InputVectorPixelType &) const
+  { itkExceptionMacro( "TransformCovariantVector(CovariantVector) "
+    "unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
 
-  /** For \c allocatedDirection, see GetJacobianWithRespectToPosition.
+  /** Transform a CovariantVector of type InputCovariantVectorType, at point.
+   * For \c allocatedAffine, see GetJacobianWithRespectToPosition.
    * FIXME: documentation. */
   virtual OutputCovariantVectorType TransformCovariantVector(
                         const InputCovariantVectorType &,
                         const InputPointType &,
-                        TransformType *const allocatedDirection = NULL ) const;
+                        TransformType *const allocatedAffine = NULL ) const;
 
-  virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType &, const InputPointType & ) const;
+  /** Transform a CovariantVector of type InputVectorPixelType, at point.
+   * For \c allocatedAffine, see GetJacobianWithRespectToPosition.
+   * FIXME: documentation. */
+  virtual OutputVectorPixelType TransformCovariantVector(
+                        const InputVectorPixelType &,
+                        const InputPointType &,
+                        TransformType *const allocatedAffine = NULL ) const;
 
   /** Set the transformation parameters. This sets the deformation
    * field image directly. */
@@ -231,11 +250,11 @@ public:
 
   /** Set the fixed parameters and update internal transformation. */
   virtual void SetFixedParameters(const ParametersType &)
-    { itkExceptionMacro("SetFixedParameters unimplemented."); }
+  { itkExceptionMacro("SetFixedParameters unimplemented."); }
 
   /** Get the Fixed Parameters. */
   virtual const ParametersType & GetFixedParameters(void) const
-    { itkExceptionMacro("GetFixedParameters unimplemented."); }
+  { itkExceptionMacro("GetFixedParameters unimplemented."); }
 
   /**
    * Compute the jacobian with respect to the parameters.
@@ -254,8 +273,9 @@ public:
   /**
    * Compute the jacobian with respect to the position, by point.
    * \c j will be resized as needed.
-   * \c allocatedDirection is an optinal raw C-pointer to an allocated
-   * transform to be set and used in this method. The goal is efficiency
+   * \c allocatedAffine is an optinal raw C-pointer to an allocated
+   * transform of type DeformationFieldTransform::AffineTransformType,
+   * to used temporarily within this method. The goal is efficiency
    * by avoiding stack instantiation within the method. User
    * classes that are threaded will need to pass in a per-thread object
    * for thread safety. Leaving as NULL will instantiate the transform
@@ -263,16 +283,50 @@ public:
    */
   virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
                                                   JacobianType &j,
-                        TransformType *const allocatedDirection = NULL) const;
+                        TransformType *const allocatedAffine = NULL) const;
 
   /**
    * Compute the jacobian with respect to the position, by index.
    * \c j will be resized as needed.
-   * \c allocatedDirection - see other method version.
-   */
+   * \c allocatedAffine is an optinal raw C-pointer to an allocated
+   * transform of type DeformationFieldTransform::AffineTransformType,
+   * to used temporarily within this method. See
+   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
   virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
                                                   JacobianType &j,
-                        TransformType *const allocatedDirection = NULL) const;
+                        TransformType *const allocatedAffine = NULL) const;
+
+  /**
+   * Compute the inverse jacobian of the forward deformation field with
+   * respect to the position, by point. Note that this is different than
+   * the jacobian of the inverse deformation field. This takes advantage
+   * of the ability to compute the inverse jacobian of a deformation field
+   * by simply reversing the sign of the forward jacobian.
+   * \c allocatedAffine is an optinal raw C-pointer to an allocated
+   * transform of type DeformationFieldTransform::AffineTransformType,
+   * to used temporarily within this method. See
+   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+  virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
+                                      const InputPointType & point,
+                                      JacobianType & jacobian,
+                                      TransformType *const allocatedAffine )
+                                                                        const;
+
+  /**
+   * Compute the inverse jacobian of the forward deformation field with
+   * respect to the position, by index.Note that this is different than
+   * the jacobian of the inverse deformation field. This takes advantage
+   * of the ability to compute the inverse jacobian of a deformation field
+   * by simply reversing the sign of the forward jacobian.
+   * \c allocatedAffine is an optinal raw C-pointer to an allocated
+   * transform of type DeformationFieldTransform::AffineTransformType,
+   * to used temporarily within this method. See
+   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+  virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
+                                      const IndexType & index,
+                                      JacobianType & jacobian,
+                                      TransformType *const allocatedAffine )
+                                                                        const;
 
   /** Update the transform's parameters by the values in \c update.
    * We assume \c update is of the same length as Parameters. Throw
@@ -327,6 +381,23 @@ protected:
 private:
   DeformationFieldTransform( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
+
+
+  /** Internal method for calculating either forward or inverse jacobian,
+   * depending on state of \c doInverseJacobian. Used by
+   * public methods \c GetJacobianWithRespectToPosition and
+   * \c GetInverseJacobianOfForwardFieldWithRespectToPosition to
+   * perform actual work.
+   * \c allocatedAffine is an optinal raw C-pointer to an allocated
+   * transform of type DeformationFieldTransform::AffineTransformType,
+   * to used temporarily within this method. See
+   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+  virtual void GetJacobianWithRespectToPositionInternal(
+                                      const IndexType & index,
+                                      JacobianType & jacobian,
+                                      bool doInverseJacobian,
+                                      TransformType *const allocatedAffine )
+                                                                        const;
 
   /** Used to holder temporary deformation field during smoothing.
    * Use member variable to avoid allocation on stack. */
