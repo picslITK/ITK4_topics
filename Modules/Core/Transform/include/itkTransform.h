@@ -216,11 +216,15 @@ public:
   /** Method to transform a CovariantVector, using a point. Global transforms
    * can ignore the \c point parameter. Local transforms (e.g. deformation
    * field transform) must override and provide required behavior.
+   * \c localTransform allows passing of a raw transform pointer for
+   * optimization in some classes during threaded operation. In particular,
+   * see DeformationFieldTransform.
    * By default, \c point is ignored and \c TransformCovariantVector(vector) is
    * called */
   virtual OutputVectorPixelType TransformCovariantVector(
                                const InputVectorPixelType & vector,
-                               const InputPointType & itkNotUsed(point) ) const
+                               const InputPointType & itkNotUsed(point),
+                               Self *const localTransform = NULL ) const
     { return TransformCovariantVector( vector ); }
 
   /** Method to transform a diffusion tensor */
