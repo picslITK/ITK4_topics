@@ -41,6 +41,8 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
     m_IdentityJacobian[i][i] = 1.0;
     }
 
+  m_DirectionChange.SetIdentity();
+
   itkWarningMacro(
     << "Using default transform constructor.  Should specify NOutputDims and NParameters as args to constructor.");
 }
@@ -63,6 +65,7 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
     {
     m_IdentityJacobian[i][i] = 1.0;
     }
+  m_DirectionChange.SetIdentity();
 }
 
 /**
