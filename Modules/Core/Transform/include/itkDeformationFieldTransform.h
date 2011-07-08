@@ -282,7 +282,7 @@ public:
    * on the stack.
    */
   virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
-                                                  JacobianType &j,
+                                                JacobianType &j,
                         TransformType *const allocatedAffine = NULL) const;
 
   /**
@@ -293,7 +293,7 @@ public:
    * to used temporarily within this method. See
    * GetJacobianWithRespectToPosition( InputPointType, ... ) */
   virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
-                                                  JacobianType &j,
+                                                JacobianType &j,
                         TransformType *const allocatedAffine = NULL) const;
 
   /**
@@ -307,10 +307,10 @@ public:
    * to used temporarily within this method. See
    * GetJacobianWithRespectToPosition( InputPointType, ... ) */
   virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
-                                      const InputPointType & point,
-                                      JacobianType & jacobian,
-                                      TransformType *const allocatedAffine )
-                                                                        const;
+                                  const InputPointType & point,
+                                  JacobianType & jacobian,
+                                  TransformType *const allocatedAffine = NULL )
+                                                                         const;
 
   /**
    * Compute the inverse jacobian of the forward deformation field with
@@ -323,9 +323,9 @@ public:
    * to used temporarily within this method. See
    * GetJacobianWithRespectToPosition( InputPointType, ... ) */
   virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
-                                      const IndexType & index,
-                                      JacobianType & jacobian,
-                                      TransformType *const allocatedAffine )
+                                  const IndexType & index,
+                                  JacobianType & jacobian,
+                                  TransformType *const allocatedAffine = NULL)
                                                                         const;
 
   /** Update the transform's parameters by the values in \c update.
@@ -393,10 +393,10 @@ private:
    * to used temporarily within this method. See
    * GetJacobianWithRespectToPosition( InputPointType, ... ) */
   virtual void GetJacobianWithRespectToPositionInternal(
-                                      const IndexType & index,
-                                      JacobianType & jacobian,
-                                      bool doInverseJacobian,
-                                      TransformType *const allocatedAffine )
+                                  const IndexType & index,
+                                  JacobianType & jacobian,
+                                  bool doInverseJacobian,
+                                  TransformType *const allocatedAffine = NULL)
                                                                         const;
 
   /** Used to holder temporary deformation field during smoothing.
