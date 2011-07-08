@@ -97,6 +97,8 @@ public:
   /** Type of the scalar representing coordinate and vector elements. */
   typedef  TScalarType ScalarType;
 
+
+
   /** Type of the input parameters. */
   typedef  typename Superclass::ParametersType      ParametersType;
   typedef  typename Superclass::ParametersValueType ParametersValueType;
@@ -153,6 +155,17 @@ public:
                   itkGetStaticConstMacro(OutputSpaceDimension),
                   itkGetStaticConstMacro(InputSpaceDimension) >
                                                                 MatrixType;
+
+  typedef Matrix<double,
+                 itkGetStaticConstMacro(OutputSpaceDimension),
+                 itkGetStaticConstMacro(OutputSpaceDimension) > OutputImageDirectionMatrix;
+  typedef Matrix<double,
+                 itkGetStaticConstMacro(InputSpaceDimension),
+                 itkGetStaticConstMacro(InputSpaceDimension) > InputImageDirectionMatrix;
+  typedef Matrix<double,
+                 itkGetStaticConstMacro(OutputSpaceDimension),
+                 itkGetStaticConstMacro(InputSpaceDimension) > ImageDirectionChangeMatrix;
+
 
   /**  Method to transform a point.
    * \warning This method must be thread-safe. See, e.g., its use
@@ -434,6 +447,8 @@ protected:
   mutable ParametersType m_FixedParameters;
 
   mutable JacobianType m_Jacobian;
+
+  mutable ImageDirectionChangeMatrix m_DirectionChange;
 
   /* Store an identity jacobian for convenience */
   JacobianType m_IdentityJacobian;
