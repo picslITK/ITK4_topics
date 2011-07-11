@@ -291,13 +291,100 @@ DeformationFieldTransform<TScalar, NDimensions>
     itkExceptionMacro( "No interpolator is specified." );
     }
 
-  JacobianType jacobian;
-  this->GetJacobianWithRespectToPosition( point, jacobian );
+  //JacobianType jacobian;
+  //this->GetJacobianWithRespectToPosition( point, jacobian );
 
-  AffineTransformPointer localTransform = AffineTransformType::New();
-  localTransform->SetIdentity();
-  localTransform->SetMatrix( jacobian );
-  return localTransform->TransformTensor( inputTensor );
+  //Get Tensor-space version of local transform (i.e. always 3D)
+  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
+  typename  EigenVectorTransformType::MatrixType matrix;
+  typename  EigenVectorTransformType::MatrixType dMatrix;
+  matrix.Fill(0.0);
+  dMatrix.Fill(0.0);
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    matrix(i,i) = 1.0;
+    dMatrix(i,i) = 1.0;
+    }
+
+  JacobianType invJacobian;
+  this->GetInverseJacobianOfForwardFieldWithRespectToPosition( point, invJacobian );
+
+  for (unsigned int i=0; i<NDimensions; i++)
+    {
+    for (unsigned int j=0; j<NDimensions; j++)
+      {
+      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
+        {
+        matrix(i,j) = invJacobian(i,j);
+        dMatrix(i,j) = this->GetDirectionChangeMatrix()(i,j);
+        }
+      }
+    }
+
+  typename InputTensorType::EigenValuesArrayType eigenValues;
+  typename InputTensorType::EigenVectorsMatrixType eigenVectors;
+  inputTensor.ComputeEigenAnalysis( eigenValues, eigenVectors );
+
+  InputTensorEigenVectorType ev1;
+  InputTensorEigenVectorType ev2;
+  InputTensorEigenVectorType ev3;
+
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    ev1[i] = eigenVectors(2,i);
+    ev2[i] = eigenVectors(1,i);
+    }
+
+  // Account for image direction changes between moving and fixed spaces
+  ev1 = matrix * dMatrix * ev1;
+  ev1.Normalize();
+
+  // Get aspect of rotated e2 that is perpendicular to rotated e1
+  ev2 = matrix * dMatrix * ev2;
+  double dp = ev2 * ev1;
+  if ( dp < 0 )
+    {
+    ev2 = ev2*(-1.0);
+    dp = dp*(-1.0);
+    }
+  ev2 = ev2 - dp*ev1;
+  ev2.Normalize();
+
+  itk::CrossHelper<InputTensorEigenVectorType> vectorCross;
+  ev3 = vectorCross( ev1, ev2 );
+
+  // Outer product matrices
+  typename EigenVectorTransformType::MatrixType e1;
+  typename EigenVectorTransformType::MatrixType e2;
+  typename EigenVectorTransformType::MatrixType e3;
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    for (unsigned int j=0; j<InputTensorType::Dimension; j++)
+      {
+      e1(i,j) = eigenValues[2] * ev1[i]*ev1[j];
+      e2(i,j) = eigenValues[1] * ev2[i]*ev2[j];
+      e3(i,j) = eigenValues[0] * ev3[i]*ev3[j];
+      }
+    }
+
+  typename EigenVectorTransformType::MatrixType rotated = e1 + e2 + e3;
+
+  OutputTensorType result;     // Converted vector
+  result[0] = rotated(0,0);
+  result[1] = rotated(0,1);
+  result[2] = rotated(0,2);
+  result[3] = rotated(1,1);
+  result[4] = rotated(1,2);
+  result[5] = rotated(2,2);
+
+  return result;
+
+  //AffineTransformPointer localTransform = AffineTransformType::New();
+  //localTransform->SetIdentity();
+  //localTransform->SetMatrix( jacobian );
+  //localTransform->SetDirectionChangeMatrix( this->GetDirectionChangeMatrix() );
+  //return localTransform->TransformTensor( inputTensor );
+
 }
 
 template<class TScalar, unsigned int NDimensions>
@@ -314,6 +401,27 @@ DeformationFieldTransform<TScalar, NDimensions>
     itkExceptionMacro( "No interpolator is specified." );
     }
 
+  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted tensor
+  result.Fill( 0.0 );
+
+  InputTensorType dt(0.0);
+  const unsigned int tDim = inputTensor.Size();
+  for (unsigned int i=0; i<tDim; i++)
+    {
+    dt[i] = inputTensor[i];
+    }
+
+  OutputTensorType outDT = this->TransformTensor( dt, point );
+
+  for (unsigned int i=0; i<InputTensorType::InternalDimension; i++)
+    {
+    result[i] = outDT[i];
+    }
+
+  return result;
+
+
+  /*
   JacobianType jacobian;
   this->GetJacobianWithRespectToPosition( point, jacobian );
 
@@ -321,6 +429,7 @@ DeformationFieldTransform<TScalar, NDimensions>
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
   return localTransform->TransformTensor( inputTensor );
+  */
 }
 
 
