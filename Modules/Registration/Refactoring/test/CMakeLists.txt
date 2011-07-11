@@ -8,10 +8,11 @@ set(ITK-RegistrationRefactoringTests
   itkObjectToObjectOptimizerBaseTest.cxx
   itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
+#  itkPointSetToPointSetMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
   itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest
+  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
   itkDemonsImageToImageObjectRegistrationTest2.cxx
 )
 
@@ -51,9 +52,9 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest
+itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
-      itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest)
+      itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkGradientDescentObjectOptimizerTest
       COMMAND ITK-RegistrationRefactoringTestDriver
@@ -66,3 +67,12 @@ itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
 itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectRegistrationTest2)
+
+#itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
+#      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 1)
+
+#itk_add_test(NAME itkExpectationBasedPointSetMetricTest
+#      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 2)
+
+#itk_add_test(NAME itkJensenHavrdaCharvatTsallisPointSetMetricTest
+#      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 3)
