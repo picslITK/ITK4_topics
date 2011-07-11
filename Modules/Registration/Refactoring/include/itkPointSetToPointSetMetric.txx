@@ -21,7 +21,6 @@
 #include "itkPointSetToPointSetMetric.h"
 
 #include "itkIdentityTransform.h"
-#include "itkVector.h"
 
 namespace itk
 {
@@ -36,23 +35,26 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
   this->m_FixedTransformedPointSet = NULL;
   this->m_MovingTransformedPointSet = NULL;
 
-  this->m_CoordinateSystem = Fixed;
+  this->m_FixedTransformedPointsLocator = NULL;
+  this->m_MovingTransformedPointsLocator = NULL;
 
   // Set transforms to identity as default
 
-  typedef IdentityTransform<CoordinateRepresentationType, FixedDimension>
+  typedef IdentityTransform<CoordRepType, FixedPointDimension>
     FixedIdentityTransformType;
-  this->m_FixedTransform = FixedIdentityTransformType::New();
-  this->m_FixedTransform->SetIdentity();
+  typename FixedIdentityTransformType::Pointer fixedIdentityTransform =
+    FixedIdentityTransformType::New();
+  fixedIdentityTransform->SetIdentity();
 
-  this->m_FixedTransformModificationTime = this->m_FixedTransform->GetMTime();
+  this->m_FixedTransform = fixedIdentityTransform;
 
-  typedef IdentityTransform<CoordinateRepresentationType, MovingDimension>
+  typedef IdentityTransform<CoordRepType, MovingPointDimension>
     MovingIdentityTransformType;
-  this->m_MovingIdentityTransform = MovingIdentityTransformType::New();
-  this->m_MovingIdentityTransform->SetIdentity();
+  typename MovingIdentityTransformType::Pointer movingIdentityTransform =
+    MovingIdentityTransformType::New();
+  movingIdentityTransform->SetIdentity();
 
-  this->m_MovingTransformModificationTime = this->m_MovingTransform->GetMTime();
+  this->m_MovingTransform = movingIdentityTransform;
 }
 
 /** Initialize the metric */
@@ -72,44 +74,49 @@ throw ( ExceptionObject )
     itkExceptionMacro( "Moving transform is not present" );
     }
 
-  if ( !this->m_MovingPointSet )
-    {
-    itkExceptionMacro( "Moving point set is not present" );
-    }
-
   if ( !this->m_FixedPointSet )
     {
     itkExceptionMacro( "Fixed point set is not present" );
     }
 
-  // If the PointSet is provided by a source, update the source.
-  if ( this->m_MovingPointSet->GetSource() )
+  if ( !this->m_MovingPointSet )
     {
-    this->m_MovingPointSet->GetSource()->Update();
-    this->TransformMovingPointSet();
+    itkExceptionMacro( "Moving point set is not present" );
     }
 
+  // If the PointSet is provided by a source, update the source.
+  if( this->m_MovingPointSet->GetSource() )
+    {
+    this->m_MovingPointSet->GetSource()->Update();
+    }
+  this->TransformMovingPointSet();
+
   // If the point set is provided by a source, update the source.
-  if ( this->m_FixedPointSet->GetSource() )
+  if( this->m_FixedPointSet->GetSource() )
     {
     this->m_FixedPointSet->GetSource()->Update();
-    this->TransformFixedPointSet();
     }
+  this->TransformFixedPointSet();
+
+  // Initialize the point locators
+  this->InitializePointsLocators();
 }
 
 template<class TFixedPointSet, class TMovingPointSet>
 unsigned int
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
-::GetNumberOfComponents()
+::GetNumberOfComponents() const
 {
-  numberOfComponents = 0;
-  if( this->m_CoordinateSystem == Fixed || this->m_CoordinateSystem == Both )
+  unsigned long numberOfComponents = 0;
+  if( this->GetDerivativeSource() == Superclass::Fixed ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    numberOfComponents += this->m_FixedPointSet->GetNumberOfPoints();
+    numberOfComponents += this->m_FixedTransformedPointSet->GetNumberOfPoints();
     }
-  if( this->m_CoordinateSystem == Moving || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Moving ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    numberOfComponents += this->m_MovingPointSet->GetNumberOfPoints();
+    numberOfComponents += this->m_MovingTransformedPointSet->GetNumberOfPoints();
     }
   return numberOfComponents;
 }
@@ -117,29 +124,29 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 template<class TFixedPointSet, class TMovingPointSet>
 typename PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>::MeasureType
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
-::GetValue()
+::GetValue() const
 {
-  this->TransformFixedPointSet();
+  MeasureType measure = 0.0;
 
-  this->TransformMovingPointSet();
-
-  MeasuresType measure = 0.0;
-
-  if( this->m_CoordinateSystem == Fixed || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Fixed ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    MovingPointSetIteratorType It = this->m_FixedTransformedPointSet->Begin();
-    while( It != this->m_FixedTransformedPointSet->End() )
+    PointsConstIterator It =
+      this->m_FixedTransformedPointSet->GetPoints()->Begin();
+    while( It != this->m_FixedTransformedPointSet->GetPoints()->End() )
       {
-      measure += this->GetLocalMovingNeighborhoodValue( It.Value() );
+      measure += this->GetLocalNeighborhoodValue( It.Value() );
       ++It;
       }
     }
-  if( this->m_CoordinateSystem == Moving || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Moving ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    FixedPointSetIteratorType It = this->m_MovingTransformedPointSet->Begin();
-    while( It != this->m_MovingTransformedPointSet->End() )
+    PointsConstIterator It =
+      this->m_MovingTransformedPointSet->GetPoints()->Begin();
+    while( It != this->m_MovingTransformedPointSet->GetPoints()->End() )
       {
-      measure += this->GetLocalFixedNeighborhoodValue( It.Value() );
+      measure += this->GetLocalNeighborhoodValue( It.Value() );
       ++It;
       }
     }
@@ -151,48 +158,46 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 template<class TFixedPointSet, class TMovingPointSet>
 void
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
-::GetDerivative( DerivativeType &derivative )
+::GetDerivative( DerivativeType &derivative ) const
 {
-  this->TransformFixedPointSet();
-
-  this->TransformMovingPointSet();
-
-  derivative.SetSize( this->GetNumberOfComponents(), vnl_math_max(
-    FixedPointSetDimension, MovingPointSetDimension ) );
+  derivative.SetSize( this->GetNumberOfComponents() * PointDimension );
   derivative.Fill( 0 );
 
   unsigned long index = 0;
 
-  if( this->m_CoordinateSystem == Fixed || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Fixed ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    MovingPointSetIteratorType It = this->m_FixedTransformedPointSet->Begin();
-    while( It != this->m_FixedTransformedPointSet->End() )
+    PointsConstIterator It =
+      this->m_FixedTransformedPointSet->GetPoints()->Begin();
+    while( It != this->m_FixedTransformedPointSet->GetPoints()->End() )
       {
-      LocalMovingDerivativeType localDerivative =
-        this->GetLocalMovingNeighborhoodDerivative( It.Value() );
-      for( unsigned int d = 0; d < MovingPointSetDimension; d++ )
+      LocalDerivativeType localDerivative =
+        this->GetLocalNeighborhoodDerivative( It.Value() );
+      for( unsigned int d = 0; d < PointDimension; ++d )
         {
-        derivative(index, d) = localDerivative[d];
+        derivative(index) = localDerivative[d];
+        ++index;
         }
-      ++index;
 
       ++It;
       }
     }
 
-  if( this->m_CoordinateSystem == Moving || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Moving ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    FixedPointSetIteratorType It = this->m_MovingTransformedPointSet->Begin();
-    while( It != this->m_MovingTransformedPointSet->End() )
+    PointsConstIterator It =
+      this->m_MovingTransformedPointSet->GetPoints()->Begin();
+    while( It != this->m_MovingTransformedPointSet->GetPoints()->End() )
       {
-      LocaFixedDerivativeType localDerivative =
-        this->GetLocalFixedNeighborhoodDerivative( It.Value() );
-      for( unsigned int d = 0; d < FixedPointSetDimension; d++ )
+      LocalDerivativeType localDerivative =
+        this->GetLocalNeighborhoodDerivative( It.Value() );
+      for( unsigned int d = 0; d < PointDimension; ++d )
         {
-        derivative(index, d) = localDerivative[d];
+        derivative(index) = localDerivative[d];
+        ++index;
         }
-      ++index
-
       ++It;
       }
     }
@@ -201,34 +206,31 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 template<class TFixedPointSet, class TMovingPointSet>
 void
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
-::GetValueAndDerivative( MeasureType &value, DerivativeType &derivative )
+::GetValueAndDerivative( MeasureType &value, DerivativeType &derivative ) const
 {
-  this->TransformFixedPointSet();
-
-  this->TransformMovingPointSet();
-
-  derivative.SetSize( this->GetNumberOfComponents(), vnl_math_max(
-    FixedPointSetDimension, MovingPointSetDimension ) );
+  derivative.SetSize( this->GetNumberOfComponents() * PointDimension );
   derivative.Fill( 0 );
 
   value = 0.0;
 
   unsigned long index = 0;
 
-  if( this->m_CoordinateSystem == Fixed || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Fixed ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    MovingPointSetIteratorType It = this->m_FixedTransformedPointSet->Begin();
-    while( It != this->m_FixedTransformedPointSet->End() )
+    PointsConstIterator It =
+      this->m_FixedTransformedPointSet->GetPoints()->Begin();
+    while( It != this->m_FixedTransformedPointSet->GetPoints()->End() )
       {
       MeasureType localValue = 0.0;
-      LocalMovingDerivativeType localDerivative;
-      this->GetLocalMovingNeighborhoodValueAndDerivative( It.Value(), localValue,
+      LocalDerivativeType localDerivative;
+      this->GetLocalNeighborhoodValueAndDerivative( It.Value(), localValue,
         localDerivative );
-      for( unsigned int d = 0; d < MovingPointSetDimension; d++ )
+      for( unsigned int d = 0; d < PointDimension; ++d )
         {
-        derivative(index, d) = localDerivative[d];
+        derivative(index) = localDerivative[d];
+        ++index;
         }
-      ++index;
 
       value += localValue;
 
@@ -236,20 +238,22 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
       }
     }
 
-  if( this->m_CoordinateSystem == Moving || this->m_CoordinateSystem == Both )
+  if( this->GetDerivativeSource() == Superclass::Moving ||
+    this->GetDerivativeSource() == Superclass::Both )
     {
-    FixedPointSetIteratorType It = this->m_MovingTransformedPointSet->Begin();
-    while( It != this->m_MovingTransformedPointSet->End() )
+    PointsConstIterator It =
+      this->m_MovingTransformedPointSet->GetPoints()->Begin();
+    while( It != this->m_MovingTransformedPointSet->GetPoints()->End() )
       {
       MeasureType localValue = 0.0;
-      LocalFixedDerivativeType localDerivative;
-      this->GetLocalFixedNeighborhoodValueAndDerivative( It.Value(), localValue,
+      LocalDerivativeType localDerivative;
+      this->GetLocalNeighborhoodValueAndDerivative( It.Value(), localValue,
         localDerivative );
-      for( unsigned int d = 0; d < FixedPointSetDimension; d++ )
+      for( unsigned int d = 0; d < PointDimension; ++d )
         {
-        derivative(index, d) = localDerivative[d];
+        derivative(index) = localDerivative[d];
+        ++index;
         }
-      ++index;
 
       value += localValue;
 
@@ -257,7 +261,21 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
       }
     }
 
-  value /= static_cast<RealType>( index );
+  value /= static_cast<MeasureType>( this->GetNumberOfComponents() );
+}
+
+
+template<class TFixedPointSet, class TMovingPointSet>
+typename PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
+::LocalDerivativeType
+PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
+::GetLocalNeighborhoodDerivative( const PointType point ) const
+{
+  MeasureType measure;
+  LocalDerivativeType localDerivative;
+  this->GetLocalNeighborhoodValueAndDerivative( point, measure,
+    localDerivative );
+  return localDerivative;
 }
 
 template<class TFixedPointSet, class TMovingPointSet>
@@ -265,30 +283,20 @@ void
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 ::TransformMovingPointSet()
 {
-  if( this->m_MovingTransform == NULL )
+  if( ( this->m_MovingTransform->GetMTime() > this->GetMTime() ) ||
+    !this->m_MovingTransformedPointSet )
     {
-    itkExceptionMacro( "No moving transform set to transform points." );
-    }
-
-  if( this->m_MovingTransform->GetMTime() >
-    this->GetMTime() ||
-    this->m_MovingTransformedPointSet == NULL )
-    {
-    this->m_MovingTransformedPointSet = MovingPointSetType::New();
+    this->m_MovingTransformedPointSet = MovingTransformedPointSetType::New();
     this->m_MovingTransformedPointSet->Initialize();
 
-    MovingPointSetIteratorType It = this->m_MovingPointSet->Begin();
-    while( It != this->m_MovingPointSet->End() )
+    typename MovingPointsContainer::ConstIterator It =
+      this->m_MovingPointSet->GetPoints()->Begin();
+    while( It != this->m_MovingPointSet->GetPoints()->End() )
       {
-      FixedPointType point =
-        this->m_MovingTransform->TransformPoint( It.Value() );
-
-      this->m_MovingTransformedPointSet->InsertElement( point, It.Value() );
-
+      PointType point = this->m_MovingTransform->TransformPoint( It.Value() );
+      this->m_MovingTransformedPointSet->SetPoint( It.Index(), point );
       ++It;
       }
-    this->m_MovingTransformedPointSet->SetPointData(
-      this->m_MovingPointSet->GetPointData() );
     }
 }
 
@@ -297,31 +305,47 @@ void
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 ::TransformFixedPointSet()
 {
-  if( this->m_FixedTransform == NULL )
+  if( ( this->m_FixedTransform->GetMTime() > this->GetMTime() ) ||
+    !this->m_FixedTransformedPointSet )
     {
-    itkExceptionMacro( "No fixed transform set to transform points." );
-    }
-
-  if( this->m_FixedTransform->GetMTime() >
-    this->GetMTime() ||
-    this->m_FixedTransformedPointSet == NULL )
-    {
-    this->m_FixedTransformedPointSet = FixedPointSetType::New();
+    this->m_FixedTransformedPointSet = FixedTransformedPointSetType::New();
     this->m_FixedTransformedPointSet->Initialize();
 
-    FixedPointSetIteratorType It = this->m_FixedPointSet->Begin();
-    while( It != this->m_FixedPointSet->End() )
+    typename FixedPointsContainer::ConstIterator It =
+      this->m_FixedPointSet->GetPoints()->Begin();
+    while( It != this->m_FixedPointSet->GetPoints()->End() )
       {
-      MovingPointType point =
-        this->m_FixedTransform->TransformPoint( It.Value() );
-
-      this->m_FixedTransformedPointSet->InsertElement( point, It.Value() );
-
+      PointType point = this->m_FixedTransform->TransformPoint( It.Value() );
+      this->m_FixedTransformedPointSet->SetPoint( It.Index(), point );
       ++It;
       }
-    this->m_FixedTransformedPointSet->SetPointData(
-      this->m_FixedPointSet->GetPointData() );
     }
+}
+
+/** PrintSelf */
+template<class TFixedPointSet, class TMovingPointSet>
+void
+PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
+::InitializePointsLocators()
+{
+  if( !this->m_FixedTransformedPointSet )
+    {
+    itkExceptionMacro( "The fixed transformed point set does not exist." );
+    }
+  if( !this->m_MovingTransformedPointSet )
+    {
+    itkExceptionMacro( "The moving transformed point set does not exist." );
+    }
+
+  this->m_FixedTransformedPointsLocator = PointsLocatorType::New();
+  this->m_FixedTransformedPointsLocator->SetPoints(
+    this->m_FixedTransformedPointSet->GetPoints() );
+  this->m_FixedTransformedPointsLocator->Initialize();
+
+  this->m_MovingTransformedPointsLocator = PointsLocatorType::New();
+  this->m_MovingTransformedPointsLocator->SetPoints(
+    this->m_MovingTransformedPointSet->GetPoints() );
+  this->m_MovingTransformedPointsLocator->Initialize();
 }
 
 /** PrintSelf */
@@ -330,7 +354,7 @@ void
 PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 ::PrintSelf( std::ostream & os, Indent indent ) const
 {
-  Superclass::PrintSelf(os, indent);
+  Superclass::PrintSelf( os, indent );
   os << indent << "Fixed PointSet: " << this->m_FixedPointSet.GetPointer()
     << std::endl;
   os << indent << "Fixed Transform: " << this->m_FixedTransform.GetPointer()

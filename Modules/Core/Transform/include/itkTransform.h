@@ -97,6 +97,8 @@ public:
   /** Type of the scalar representing coordinate and vector elements. */
   typedef  TScalarType ScalarType;
 
+
+
   /** Type of the input parameters. */
   typedef  typename Superclass::ParametersType      ParametersType;
   typedef  typename Superclass::ParametersValueType ParametersValueType;
@@ -118,19 +120,24 @@ public:
   typedef DiffusionTensor3D< TScalarType >         InputTensorType;
   typedef DiffusionTensor3D< TScalarType >         OutputTensorType;
 
-  typedef SymmetricSecondRankTensor< TScalarType, 3 >      InputTensorMatrixType;
-  typedef SymmetricSecondRankTensor< TScalarType, 3 >      OutputTensorMatrixType;
+  typedef SymmetricSecondRankTensor< TScalarType, 3 >   InputTensorMatrixType;
+  typedef SymmetricSecondRankTensor< TScalarType, 3 >   OutputTensorMatrixType;
 
-  typedef CovariantVector<TScalarType, InputTensorType::Dimension> InputTensorEigenVectorType;
-  typedef CovariantVector<TScalarType, OutputTensorType::Dimension> OutputTensorEigenVectorType;
+  typedef CovariantVector<TScalarType, InputTensorType::Dimension>
+                                                    InputTensorEigenVectorType;
+  typedef CovariantVector<TScalarType, OutputTensorType::Dimension>
+                                                    OutputTensorEigenVectorType;
 
   /** Standard covariant vector type for this class */
-  typedef CovariantVector< TScalarType, NInputDimensions >  InputCovariantVectorType;
-  typedef CovariantVector< TScalarType, NOutputDimensions > OutputCovariantVectorType;
+  typedef CovariantVector< TScalarType, NInputDimensions >
+                                                    InputCovariantVectorType;
+  typedef CovariantVector< TScalarType, NOutputDimensions >
+                                                    OutputCovariantVectorType;
 
   /** Standard vnl_vector type for this class. */
-  typedef vnl_vector_fixed< TScalarType, NInputDimensions >  InputVnlVectorType;
-  typedef vnl_vector_fixed< TScalarType, NOutputDimensions > OutputVnlVectorType;
+  typedef vnl_vector_fixed< TScalarType, NInputDimensions > InputVnlVectorType;
+  typedef vnl_vector_fixed< TScalarType, NOutputDimensions >
+                                                            OutputVnlVectorType;
 
   /** Standard coordinate point type for this class */
   typedef Point< TScalarType, NInputDimensions >  InputPointType;
@@ -141,12 +148,24 @@ public:
   typedef Transform<
     TScalarType, NOutputDimensions, NInputDimensions > InverseTransformBaseType;
 
-  typedef typename InverseTransformBaseType::Pointer InverseTransformBasePointer;
+  typedef typename InverseTransformBaseType::Pointer
+                                                    InverseTransformBasePointer;
 
   typedef Matrix< TScalarType,
                   itkGetStaticConstMacro(OutputSpaceDimension),
                   itkGetStaticConstMacro(InputSpaceDimension) >
                                                                 MatrixType;
+
+  typedef Matrix<double,
+                 itkGetStaticConstMacro(OutputSpaceDimension),
+                 itkGetStaticConstMacro(OutputSpaceDimension) > OutputImageDirectionMatrix;
+  typedef Matrix<double,
+                 itkGetStaticConstMacro(InputSpaceDimension),
+                 itkGetStaticConstMacro(InputSpaceDimension) > InputImageDirectionMatrix;
+  typedef Matrix<double,
+                 itkGetStaticConstMacro(OutputSpaceDimension),
+                 itkGetStaticConstMacro(InputSpaceDimension) > ImageDirectionChangeMatrix;
+
 
   /**  Method to transform a point.
    * \warning This method must be thread-safe. See, e.g., its use
@@ -164,7 +183,8 @@ public:
     { return TransformVector( vector ); }
 
   /**  Method to transform a vnl_vector. */
-  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const = 0;
+  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &)
+                                                                     const = 0;
 
   virtual OutputVnlVectorType    TransformVector(
                               const InputVnlVectorType & vector,
@@ -172,17 +192,19 @@ public:
     { return TransformVector( vector ); }
 
   /** Method to transform a vector stored in a VectorImage.  */
-  virtual OutputVectorPixelType TransformVector( const InputVectorPixelType & vector ) const
-    { return vector; }
+  virtual OutputVectorPixelType TransformVector(
+                                    const InputVectorPixelType & vector ) const
+  { return vector; }
 
   /** Method to transform a vector stored in a VectorImage.  */
   virtual OutputVectorPixelType TransformVector(
                               const InputVectorPixelType & vector,
                               const InputPointType & itkNotUsed(point) ) const
-    { return TransformVector( vector ); }
+  { return TransformVector( vector ); }
 
   /**  Method to transform a CovariantVector. */
-  virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const = 0;
+  virtual OutputCovariantVectorType TransformCovariantVector(
+                                   const InputCovariantVectorType &) const = 0;
 
   /** Method to transform a CovariantVector, using a point. Global transforms
    * can ignore the \c point parameter. Local transforms (e.g. deformation
@@ -193,15 +215,15 @@ public:
    * By default, \c point and \c localTransform are ignored and
    * \c TransformCovariantVector(vector) is called */
   virtual OutputCovariantVectorType TransformCovariantVector(
-                                   const InputCovariantVectorType & vector,
-                                   const InputPointType & itkNotUsed(point),
-                                   Self *const localTransform = NULL ) const
-    { return TransformCovariantVector( vector ); }
-
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & itkNotUsed(point),
+                                     Self *const localTransform = NULL ) const
+  { return TransformCovariantVector( vector ); }
 
   /**  Method to transform a CovariantVector stored in a VectorImage. */
-  virtual OutputVectorPixelType TransformCovariantVector( const InputVectorPixelType & vector) const
-    { return vector; }
+  virtual OutputVectorPixelType TransformCovariantVector(
+                                     const InputVectorPixelType & vector) const
+  { return vector; }
 
   /** Method to transform a CovariantVector, using a point. Global transforms
    * can ignore the \c point parameter. Local transforms (e.g. deformation
@@ -212,30 +234,32 @@ public:
    * By default, \c point is ignored and \c TransformCovariantVector(vector) is
    * called */
   virtual OutputVectorPixelType TransformCovariantVector(
-                               const InputVectorPixelType & vector,
-                               const InputPointType & itkNotUsed(point),
-                               Self *const localTransform = NULL ) const
-    { return TransformCovariantVector( vector ); }
+                                     const InputVectorPixelType & vector,
+                                     const InputPointType & itkNotUsed(point),
+                                     Self *const localTransform = NULL ) const
+  { return TransformCovariantVector( vector ); }
 
   /** Method to transform a diffusion tensor */
-  virtual OutputTensorType TransformTensor( const InputTensorType & tensor ) const
-    { return tensor; }
+  virtual OutputTensorType TransformTensor( const InputTensorType & tensor )
+                                                                          const
+  { return tensor; }
 
   /** Method to transform a diffusion tensor  */
   virtual OutputTensorType TransformTensor(
                                const InputTensorType & tensor,
                                const InputPointType & itkNotUsed(point) ) const
-    { return tensor; }
+  { return tensor; }
 
   /** Method to transform a diffusion tensor stored in a VectorImage */
-  virtual OutputVectorPixelType TransformTensor( const InputVectorPixelType & tensor ) const
-    { return tensor; }
+  virtual OutputVectorPixelType TransformTensor(
+                                    const InputVectorPixelType & tensor ) const
+  { return tensor; }
 
   /** Method to transform a diffusion tensor stored in a VectorImage */
   virtual OutputVectorPixelType TransformTensor(
                                const InputVectorPixelType & tensor,
                                const InputPointType & itkNotUsed(point) ) const
-    { return tensor; }
+  { return tensor; }
 
   /** Set the transformation parameters and update internal transformation.
    * SetParameters gives the transform the option to set it's
@@ -254,7 +278,9 @@ public:
    * \sa SetParameters
    */
   virtual void SetParametersByValue(const ParametersType & p)
-  { this->SetParameters (p); }
+  {
+    this->SetParameters (p);
+  }
 
   /** Get the Transformation Parameters. */
   virtual const ParametersType & GetParameters(void) const
@@ -318,7 +344,7 @@ public:
    *  To avoid repeatitive memory allocation, pass in 'j' with its size
    *  already set. */
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
-                                                    JacobianType &j) const = 0;
+                                                  JacobianType &j) const = 0;
 
   /** This provides the ability to get a local jacobian value
    *  in a dense deformation field as in this case it would
@@ -330,9 +356,10 @@ public:
    *  By default this returns identity in \c j, and should be overridden in
    *  dervied classes as needed. */
   inline virtual void GetJacobianWithRespectToPosition(
-                                      const InputPointType & x,
-                                      JacobianType &j,
-                                Transform *const localTransform = NULL ) const
+                                       const InputPointType & x,
+                                       JacobianType &j,
+                                       Transform *const localTransform = NULL )
+                                                                          const
   { j = m_IdentityJacobian; }
 
 
@@ -349,10 +376,10 @@ public:
   virtual void UpdateTransformParameters( DerivativeType & update,
                                           TScalarType factor = 1.0 );
 
-  /** Return the number of local parameters that completely defines the Transform
-   *  at an individual voxel.  For transforms with local support, this will
-   *  enable downstream computation of the jacobian wrt only the local support
-   *  region.
+  /** Return the number of local parameters that completely defines the
+   *  Transform at an individual voxel.
+   *  For transforms with local support, this will enable downstream
+   *  computation of the jacobian wrt only the local support region.
    *  For instance, in the case of a deformation field, this will be equal to
    *  the number of image dimensions. If it is an affine transform, this will
    *  be the same as the GetNumberOfParameters().
@@ -402,12 +429,14 @@ public:
    * \warning This method must be thread-safe. See, e.g., its use
    * in ResampleImageFilter.
    */
-  virtual bool IsLinear() const { return false; }
+  virtual bool IsLinear() const
+  { return false; }
 
   /** Indicates if this transform is a "global" transform
    *  e.g. an affine transform or a local one, e.g. a deformation field.
    */
-  virtual bool HasLocalSupport() const { return false; }
+  virtual bool HasLocalSupport() const
+  { return false; }
 
 protected:
   Transform();
@@ -418,6 +447,8 @@ protected:
   mutable ParametersType m_FixedParameters;
 
   mutable JacobianType m_Jacobian;
+
+  mutable ImageDirectionChangeMatrix m_DirectionChange;
 
   /* Store an identity jacobian for convenience */
   JacobianType m_IdentityJacobian;
