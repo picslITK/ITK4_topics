@@ -85,7 +85,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                             this->m_MovingTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */
-  this->m_MovingTransform->GetJacobianWithRespectToParameters(
+/*  this->m_MovingTransform->GetJacobianWithRespectToParameters(
                                                             mappedMovingPoint,
                                                             jacobian);
 
@@ -99,6 +99,24 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
       }
     localDerivativeReturn[par] = sum;
   }
+*/
+
+  //typename MovingTransformType::OutputVectorPixelType
+  //              transformedDerivatives( this->GetNumberOfLocalParameters() );
+  MovingVectorPixelImageDerivativesType & transformedDerivatives =
+                  this->m_MovingVectorPixelImageDerivativesPerThread[threadID];
+  this->m_MovingTransform->TransformCovariantVectorByJacobian(
+                                                    movingImageDerivatives,
+                                                    mappedMovingPoint,
+                                                    transformedDerivatives,
+                                                    &jacobian );
+  for ( unsigned int par = 0;
+            par < this->GetNumberOfLocalParameters(); par++ )
+    {
+    localDerivativeReturn[par] = 2.0 * diff * transformedDerivatives[par];
+    //localDerivativeReturn[par] = 2.0 * diff * movingImageDerivatives[par];
+    }
+
   //  std::cout << localDerivativeReturn << std::endl;
   // Return true if the point was used in evaluation
   return true;

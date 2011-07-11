@@ -194,6 +194,55 @@ DeformationFieldTransform<TScalar, NDimensions>
   return result;
 }
 
+/**
+ * TransformCovariantVectorByJacobian
+ */
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian ) const
+{
+  OutputVectorPixelType result( this->GetNumberOfLocalParameters() );
+  for( unsigned int i=0; i < this->GetNumberOfLocalParameters(); i++ )
+    {
+    result[i] = vector[i];
+    }
+  return result;
+}
+
+template<class TScalar, unsigned int NDimensions>
+void
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     OutputVectorPixelType & result,
+                                     JacobianType * allocatedJacobian ) const
+{
+  for( unsigned int i=0; i < this->GetNumberOfLocalParameters(); i++ )
+    {
+    result[i] = vector[i];
+    }
+}
+
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformCovariantVectorByJacobian(
+                                     const InputVectorPixelType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian ) const
+{
+  OutputVectorPixelType result( this->GetNumberOfLocalParameters() );
+  for( unsigned int i=0; i < this->GetNumberOfLocalParameters(); i++ )
+    {
+    result[i] = vector[i];
+    }
+  return result;
+}
 
 /**
  * Transform vector

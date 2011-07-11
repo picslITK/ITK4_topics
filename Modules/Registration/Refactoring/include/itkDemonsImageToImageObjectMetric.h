@@ -56,7 +56,8 @@ public:
   typedef typename Superclass::MovingImagePixelType    MovingImagePixelType;
   typedef typename Superclass::MovingImageDerivativesType
                                                     MovingImageDerivativesType;
-
+  typedef typename Superclass::MovingVectorPixelImageDerivativesType
+                                         MovingVectorPixelImageDerivativesType;
   typedef typename Superclass::MovingTransformType     MovingTransformType;
   typedef typename Superclass::MovingTransformJacobianType
                                                   MovingTransformJacobianType;

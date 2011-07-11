@@ -1,3 +1,4 @@
+
 /*=========================================================================
  *
  *  Copyright Insight Software Consortium
@@ -57,25 +58,26 @@ public:
   typedef typename Superclass::OutputCovariantVectorType   OutputCovariantVectorType;
 
   virtual OutputPointType TransformPoint(const InputPointType  & inputPoint ) const
-    { return inputPoint; }
+  { return inputPoint; }
 
   virtual OutputVectorType TransformVector(const InputVectorType  & inputVector ) const
-    { return inputVector; }
+  { return inputVector; }
 
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType  & inputVector ) const
-    { return inputVector; }
+  { return inputVector; }
 
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType  & inputVector ) const
-    { return inputVector; }
+  { return inputVector; }
 
   virtual const JacobianType & GetJacobian(const InputPointType  & ) const
-    { return this->m_Jacobian; }
+  { return this->m_Jacobian; }
 
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                   JacobianType &j) const
-    { j.SetSize(3,6); j.Fill(1); }
+  { j.SetSize( NInputDimensions, this->GetNumberOfParameters() ); j.Fill(1); }
 
-  virtual void SetParameters(const ParametersType &) {}
+  virtual void SetParameters(const ParametersType & params)
+  { this->m_Parameters = params; }
   virtual void SetFixedParameters(const ParametersType &) {}
 };
 
@@ -85,8 +87,14 @@ public:
 
 int itkTransformTest(int, char* [] )
 {
+  int result = EXIT_SUCCESS;
 
-  typedef  itk::itkTransformTestHelpers::TransformTestHelper<double,3,3>      TransformType;
+  const unsigned int InputDimension = 3;
+  const unsigned int OutputDimension = 3;
+  typedef  itk::itkTransformTestHelpers::TransformTestHelper< double,
+                                                              InputDimension,
+                                                              OutputDimension>
+                                                                 TransformType;
   TransformType::Pointer transform = TransformType::New();
 
   TransformType::InputPointType pnt;
@@ -109,6 +117,7 @@ int itkTransformTest(int, char* [] )
   catch( itk::ExceptionObject & e )
     {
     std::cerr << e << std::endl;
+    result = EXIT_FAILURE;
     }
 
   try
@@ -118,6 +127,7 @@ int itkTransformTest(int, char* [] )
   catch( itk::ExceptionObject & e )
     {
     std::cerr << e << std::endl;
+    result = EXIT_FAILURE;
     }
 
   try
@@ -127,6 +137,7 @@ int itkTransformTest(int, char* [] )
   catch( itk::ExceptionObject & e )
     {
     std::cerr << e << std::endl;
+    result = EXIT_FAILURE;
     }
 
   TransformType::JacobianType jacobian;
@@ -137,6 +148,7 @@ int itkTransformTest(int, char* [] )
   catch ( itk::ExceptionObject & e )
     {
     std::cerr << e << std::endl;
+    result = EXIT_FAILURE;
     }
 
   TransformType::DerivativeType update( transform->GetNumberOfParameters() );
@@ -148,13 +160,76 @@ int itkTransformTest(int, char* [] )
   catch( itk::ExceptionObject & e )
     {
     std::cerr << e << std::endl;
+    result = EXIT_FAILURE;
+    }
+
+  TransformType::InputCovariantVectorType covariantVector;
+  covariantVector.Fill( 1 );
+  try
+    {
+    transform->TransformCovariantVectorByJacobian( covariantVector, pnt );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cerr
+      << "TransformCovariantVectorByJacobian( covariantVector, pnt ): "
+      << e << std::endl;
+    result = EXIT_FAILURE;
+    }
+
+  try
+    {
+    transform->TransformCovariantVectorByJacobian( covariantVector, pnt,
+                                                                &jacobian );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cerr
+      << "TransformCovariantVectorByJacobian( covariantVector, pnt, &jacobian ): "
+      << e << std::endl;
+    result = EXIT_FAILURE;
+    }
+
+  TransformType::InputVectorPixelType pixelVector;
+  pixelVector.SetSize( InputDimension );
+  pixelVector.Fill( 1 );
+  std::cout << "pixelVector: " << pixelVector << std::endl;
+  try
+    {
+    transform->TransformCovariantVectorByJacobian( pixelVector, pnt );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cerr
+      << "TransformCovariantVectorByJacobian( pixelVector, pnt ): "
+      << e << std::endl;
+    result = EXIT_FAILURE;
+    }
+
+  try
+    {
+    transform->TransformCovariantVectorByJacobian( pixelVector, pnt,
+                                                                &jacobian );
+    }
+  catch( itk::ExceptionObject & e )
+    {
+    std::cerr
+      << "TransformCovariantVectorByJacobian( pixelVector, pnt, &jacobian ): "
+      << e << std::endl;
+    result = EXIT_FAILURE;
     }
 
   // Exercise some methods
   transform->Print( std::cout );
   std::cout <<  transform->GetNameOfClass() << std::endl;
 
-  std::cout << "[ PASSED ]" << std::endl;
-  return EXIT_SUCCESS;
-
+  if( result == EXIT_FAILURE )
+    {
+    std::cout << "[ FAILED ]" << std::endl;
+    }
+  else
+    {
+    std::cout << "[ PASSED ]" << std::endl;
+    }
+  return result;
 }

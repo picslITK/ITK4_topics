@@ -230,6 +230,32 @@ public:
                         const InputPointType &,
                         TransformType *const allocatedAffine = NULL ) const;
 
+  /** Method to transform a CovariantVector by the transform's jacobian,
+   * using a point. For DeformationFieldTransform, this allows just returns
+   * the input vector because the jacobian with respect to parameters is
+   * identity.
+   * Return type is OutputVectorPixelType (VariableLengthVector) in both
+   * cases because of limitation in Transform regarding knowing the
+   * number of parameters at compile-time. */
+  virtual OutputVectorPixelType TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian = NULL )
+                                                                        const;
+  virtual void TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     OutputVectorPixelType & result,
+                                     JacobianType * allocatedJacobian = NULL )
+                                                                        const;
+
+  virtual OutputVectorPixelType TransformCovariantVectorByJacobian(
+                                     const InputVectorPixelType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian = NULL )
+                                                                        const;
+
+
   /** Set the transformation parameters. This sets the deformation
    * field image directly. */
   virtual void SetParameters(const ParametersType & params)

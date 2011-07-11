@@ -127,6 +127,114 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
   this->Modified();
 }
 
+/**
+ * TransformCovariantVectorByJacobian
+ */
+template< class TScalarType,
+          unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::OutputVectorPixelType
+Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian) const
+{
+  OutputVectorPixelType result( this->GetNumberOfLocalParameters() );
+  TransformCovariantVectorByJacobian( vector, point,
+                                      result, allocatedJacobian );
+  return result;
+}
+
+template< class TScalarType,
+          unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     OutputVectorPixelType & result,
+                                     JacobianType * allocatedJacobian) const
+{
+
+  /* Create an automatic variable for jacobian for cleaner destruction,
+   * despite slight inefficiency */
+  JacobianType jacobianAuto;
+  JacobianType* jacobianRaw;
+  if( allocatedJacobian != NULL )
+    {
+    /* If this turns out to be wrong size, it will be resized in
+     * GetJacobianWithRespectToParameters, but with efficiency loss. */
+    jacobianRaw = allocatedJacobian;
+    }
+  else
+    {
+    jacobianAuto.SetSize( this->GetInputSpaceDimension(),
+                          this->GetNumberOfLocalParameters() );
+    jacobianRaw = &jacobianAuto;
+    }
+
+  this->GetJacobianWithRespectToParameters( point, *jacobianRaw );
+
+  for ( unsigned int par = 0;
+          par < this->GetNumberOfLocalParameters(); par++ )
+    {
+    ScalarType sum = 0.0;
+    for ( unsigned int dim = 0; dim < this->GetInputSpaceDimension(); dim++ )
+      {
+      sum += (*jacobianRaw)(dim, par) * vector[dim];
+      }
+    result[par] = sum;
+    }
+}
+
+template< class TScalarType,
+          unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+typename Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::OutputVectorPixelType
+Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::TransformCovariantVectorByJacobian(
+                                     const InputVectorPixelType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian ) const
+{
+  OutputVectorPixelType result( this->GetNumberOfLocalParameters() );
+
+  /* Create an automatic variable for jacobian for cleaner destruction,
+   * despite slight inefficiency */
+  JacobianType jacobianAuto;
+  JacobianType* jacobianRaw;
+  if( allocatedJacobian != NULL )
+    {
+    /* If this turns out to be wrong size, it will be resized in
+     * GetJacobianWithRespectToParameters, but with efficiency loss. */
+    jacobianRaw = allocatedJacobian;
+    }
+  else
+    {
+    jacobianAuto.SetSize( this->GetInputSpaceDimension(),
+                          this->GetNumberOfLocalParameters() );
+    jacobianRaw = &jacobianAuto;
+    }
+
+  this->GetJacobianWithRespectToParameters( point, *jacobianRaw );
+
+  for ( unsigned int par = 0;
+          par < this->GetNumberOfLocalParameters(); par++ )
+    {
+    ScalarType sum = 0.0;
+    for ( unsigned int dim = 0; dim < this->GetInputSpaceDimension(); dim++ )
+      {
+      sum += (*jacobianRaw)(dim, par) * vector[dim];
+      }
+    result[par] = sum;
+    }
+  return result;
+}
+
 } // end namespace itk
 
 #endif

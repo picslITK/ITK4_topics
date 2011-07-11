@@ -214,10 +214,13 @@ public:
   /** Image derivatives types */
   typedef   CovariantVector< CoordinateRepresentationType,
                              itkGetStaticConstMacro(FixedImageDimension) >
-                                                      FixedImageDerivativesType;
+                                                    FixedImageDerivativesType;
   typedef   CovariantVector< CoordinateRepresentationType,
                              itkGetStaticConstMacro(MovingImageDimension) >
-                                                      MovingImageDerivativesType;
+                                                    MovingImageDerivativesType;
+  /** Special type for workaround */
+  typedef typename MovingTransformType::OutputVectorPixelType
+                                         MovingVectorPixelImageDerivativesType;
 
   /** Gaussian filter types to compute the gradient of the images.
    * This is used by default to compute image gradients. See comments
@@ -648,6 +651,9 @@ protected:
   /** Pre-allocated transform jacobian objects, for use as needed by dervied
    * classes for efficiency. */
   std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
+  /* FIXME: Need a better name for this. */
+  std::vector< MovingVectorPixelImageDerivativesType >
+                                  m_MovingVectorPixelImageDerivativesPerThread;
   /** FIXME: may need separate types for fixed and moving, but ok for now. */
   std::vector<
     typename MovingDeformationFieldTransformType::AffineTransformPointer >

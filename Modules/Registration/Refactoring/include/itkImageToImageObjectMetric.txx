@@ -345,6 +345,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_LocalDerivativesPerThread.resize( this->m_NumberOfThreads );
   /* Per-thread pre-allocated Jacobian objects for efficiency */
   this->m_MovingTransformJacobianPerThread.resize( this->m_NumberOfThreads );
+  this->m_MovingVectorPixelImageDerivativesPerThread.resize(
+                                                   this->m_NumberOfThreads );
   /* Per-thread pre-allocated affine transform used by
    * DeformationFieldTransform for efficiency */
   this->m_AffineTransformPerThread.resize( this->m_NumberOfThreads );
@@ -359,6 +361,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     this->m_DerivativeResult->SetSize( globalDerivativeSize );
     }
+
   for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
     {
     /* Allocate intermediary per-thread storage used to get results from
@@ -367,6 +370,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                           this->GetNumberOfLocalParameters() );
     this->m_MovingTransformJacobianPerThread[i].SetSize(
                                           this->VirtualImageDimension,
+                                          this->GetNumberOfLocalParameters() );
+    this->m_MovingVectorPixelImageDerivativesPerThread[i].SetSize(
                                           this->GetNumberOfLocalParameters() );
     /* For transforms with local support, e.g. deformation field,
      * use a single derivative container that's updated by region

@@ -598,6 +598,54 @@ int itkAffineTransformTest(int, char *[])
         }
       }
 
+    /* Test GetJacobianWithRespectToParameters. Should be same result
+     * as GetJacobian. */
+    std::cout << "Test GetJacobianWithRespectToParameters." << std::endl;
+    Affine3DType::JacobianType jacobianWRTParameters;
+    jaff->GetJacobianWithRespectToParameters( jpoint, jacobianWRTParameters );
+    for( unsigned int i=0; i < 3; i++ )
+      {
+      for( unsigned int j=0; j < 12; j++ )
+        {
+        if( !testValue( expectedJacobian[i][j], jacobianWRTParameters[i][j] ) )
+          {
+          std::cout << "GetJacobianWithRespectToParameters test failed."
+                    << std::endl;
+          return EXIT_FAILURE;
+          }
+        }
+      }
+
+    /* Test TransformCovariantVectorByJacobian. */
+    std::cout << "Test TransformCovariantVectorByJacobian." << std::endl;
+    unsigned int numberOfParameters = jaff->GetNumberOfParameters();
+    Affine3DType::InputVectorPixelType resultByJacobian( numberOfParameters );
+    Affine3DType::InputVectorPixelType truthByJacobian( numberOfParameters );
+    itk::CovariantVector<double, 3> covariantVector;
+    truthByJacobian.Fill(0);
+    covariantVector.Fill(2);
+    for( unsigned int par=0; par < numberOfParameters; par++)
+      {
+      for( unsigned int dim=0; dim < 3; dim++ )
+        {
+        truthByJacobian[par] +=
+          jacobianWRTParameters(dim,par) * covariantVector[dim];
+        }
+      }
+    jaff->TransformCovariantVectorByJacobian( covariantVector,
+                                              jpoint,
+                                              resultByJacobian );
+    for( unsigned int par=0; par < numberOfParameters; par++ )
+      {
+      if( !testValue( truthByJacobian[par], resultByJacobian[par] ) )
+        {
+        std::cout << "TransformCovariantVectorByJacobian test failed."
+                  << std::endl;
+        return EXIT_FAILURE;
+        }
+      }
+
+
     /* Test GetJacobianWithRespectToPosition. Should return Matrix. */
     Affine3DType::MatrixType jaffMatrix = jaff->GetMatrix();
     jaff->GetJacobianWithRespectToPosition( jpoint, jaffJacobian );
@@ -791,7 +839,6 @@ int itkAffineTransformTest(int, char *[])
         break;
         }
       }
-
 
     // Try to invert a singular transform
     TransformType::Pointer singularTransform = TransformType::New();

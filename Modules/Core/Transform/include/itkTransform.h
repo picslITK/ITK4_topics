@@ -226,6 +226,45 @@ public:
                                      Self *const localTransform = NULL ) const
   { return TransformCovariantVector( vector ); }
 
+  /** Method to transform a CovariantVector by the transform's jacobian,
+   * using a point. This calculates the jacobian at \point using
+   * GetJacobianWithRespectToParameters and multiples it by \c vector, returning
+   * a vector of length P, where P is the number of local transform parameters.
+   * Local transforms (e.g. DeformationFieldTransofrm) must override and
+   * provide required behavior.
+   * \note Output type is OutputVectorPixelType (VariableLengthVector)
+   * because we don't know a transform's number of parameters at compile-time.
+   * The goal is optimized performance in the case of transforms that
+   * return an identity jacobian for GetJacobianWithRespectToParameters,
+   * e.g. DeformationFieldTransform. Such transforms will simply return the
+   * input vector unmodified.
+   * \c allocatedJacobian allows passing of a raw pointer to an allocated
+   * and sized jacobian object, for
+   * performance optimization. This avoids allocation of a jacobian object
+   * on the stack. By default, it is NULL, and a jacobian will be allocated
+   * and sized on the stack.*/
+  virtual OutputVectorPixelType TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian = NULL )
+                                                                        const;
+
+  virtual void TransformCovariantVectorByJacobian(
+                                     const InputCovariantVectorType & vector,
+                                     const InputPointType & point,
+                                     OutputVectorPixelType & result,
+                                     JacobianType * allocatedJacobian = NULL )
+                                                                        const;
+
+  /** Method to transform a CovariantVector of type InputVectorPixelType
+   * by the transform's jacobian, using a point.
+   * See TransformCovariantVectorByJacobian( InputCovariantVectorType& ). */
+  virtual OutputVectorPixelType TransformCovariantVectorByJacobian(
+                                     const InputVectorPixelType & vector,
+                                     const InputPointType & point,
+                                     JacobianType * allocatedJacobian = NULL )
+                                                                        const;
+
   /** Method to transform a diffusion tensor */
   virtual OutputTensorType TransformTensor( const InputTensorType & tensor )
                                                                           const

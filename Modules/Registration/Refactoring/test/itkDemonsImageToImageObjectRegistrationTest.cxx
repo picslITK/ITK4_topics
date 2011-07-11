@@ -240,9 +240,10 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   field = deformationTransform->GetDeformationField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
   /* print out a few deformation field vectors */
-  /*std::cout
+  /*
+  ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
+  std::cout
       << "First few elements of first few rows of final deformation field:"
       << std::endl;
   for(unsigned int i=0; i< 5; i++ )
@@ -292,11 +293,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   deformationwriter->Update();
 
   //write the warped image into a file
-  typedef double                           OutputPixelType;
+  typedef double                              OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
-                        OutputImageType > CastFilterType;
+                        OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();
