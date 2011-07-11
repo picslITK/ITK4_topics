@@ -22,6 +22,7 @@
 #include "itkMatrixOffsetTransformBase.h"
 #include "vnl/algo/vnl_matrix_inverse.h"
 #include "itkMath.h"
+#include "itkCrossHelper.h"
 
 namespace itk
 {
@@ -324,13 +325,33 @@ typename MatrixOffsetTransformBase< TScalarType,
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 ::TransformTensor(const InputTensorType & tensor) const
 {
-  OutputTensorType result;     // Converted vector
+  //Get Tensor-space version of local transform (i.e. always 3D)
+  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
+  typename  EigenVectorTransformType::MatrixType matrix;
+  typename  EigenVectorTransformType::MatrixType dMatrix;
+  matrix.Fill(0.0);
+  dMatrix.Fill(0.0);
+  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+    {
+    matrix(i,i) = 1.0;
+    dMatrix(i,i) = 1.0;
+    }
+
+  for (unsigned int i=0; i<NOutputDimensions; i++)
+    {
+    for (unsigned int j=0; j<NInputDimensions; j++)
+      {
+      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
+        {
+        matrix(i,j) = this->GetVarInverseMatrix()(i,j);
+        dMatrix(i,j) = this->GetDirectionChangeMatrix()(i,j);
+        }
+      }
+    }
 
   typename InputTensorType::EigenValuesArrayType eigenValues;
   typename InputTensorType::EigenVectorsMatrixType eigenVectors;
-
   tensor.ComputeEigenAnalysis( eigenValues, eigenVectors );
-
 
   InputTensorEigenVectorType ev1;
   InputTensorEigenVectorType ev2;
@@ -340,51 +361,25 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     {
     ev1[i] = eigenVectors(2,i);
     ev2[i] = eigenVectors(1,i);
-    ev3[i] = eigenVectors(0,i);
     }
 
-  //Get Tensor-space version of local transform (i.e. always 3D)
-  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
-  typename  EigenVectorTransformType::MatrixType matrix;
-  matrix.Fill(0.0);
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
-    {
-    matrix(i,i) = 1.0;
-    }
-
-  for (unsigned int i=0; i<NOutputDimensions; i++)
-    {
-    for (unsigned int j=0; j<NInputDimensions; j++)
-      {
-      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
-        {
-        matrix(i,j) = this->m_Matrix(i,j);
-        }
-      }
-    }
-
-  typename EigenVectorTransformType::Pointer tensorTransform = EigenVectorTransformType::New();
-  tensorTransform->SetIdentity();
-  tensorTransform->SetMatrix( matrix );
-
-  InputTensorEigenVectorType ev1r = tensorTransform->TransformCovariantVector( ev1 );
-  ev1r.Normalize();
+  // Account for image direction changes between moving and fixed spaces
+  ev1 = matrix * dMatrix * ev1;
+  ev1.Normalize();
 
   // Get aspect of rotated e2 that is perpendicular to rotated e1
-  InputTensorEigenVectorType ev2a = tensorTransform->TransformCovariantVector( ev2 );
-  if ( (ev2a * ev1r) < 0 )
+  ev2 = matrix * dMatrix * ev2;
+  double dp = ev2 * ev1;
+  if ( dp < 0 )
     {
-    ev2a = ev2a*(-1.0);
+    ev2 = ev2*(-1.0);
+    dp = dp*(-1.0);
     }
-  InputTensorEigenVectorType ev2r = ev2a - (ev2a*ev1r)*ev1r;
-  ev2r.Normalize();
+  ev2 = ev2 - ev1*dp;
+  ev2.Normalize();
 
-
-  InputTensorEigenVectorType ev3r; // = CrossProduct(ev1r, ev2r);
-  ev3r[0] = ev1r[1]*ev2r[2] - ev1r[2]*ev2r[1];
-  ev3r[1] = ev1r[2]*ev2r[0] - ev1r[0]*ev2r[2];
-  ev3r[2] = ev1r[0]*ev2r[1] - ev1r[1]*ev2r[0];
-  ev3r.Normalize();
+  itk::CrossHelper<InputTensorEigenVectorType> vectorCross;
+  ev3 = vectorCross( ev1, ev2 );
 
   // Outer product matrices
   typename EigenVectorTransformType::MatrixType e1;
@@ -394,14 +389,15 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     {
     for (unsigned int j=0; j<InputTensorType::Dimension; j++)
       {
-      e1(i,j) = eigenValues[2] * ev1r[i]*ev1r[j];
-      e2(i,j) = eigenValues[1] * ev2r[i]*ev2r[j];
-      e3(i,j) = eigenValues[0] * ev3r[i]*ev3r[j];
+      e1(i,j) = eigenValues[2] * ev1[i]*ev1[j];
+      e2(i,j) = eigenValues[1] * ev2[i]*ev2[j];
+      e3(i,j) = eigenValues[0] * ev3[i]*ev3[j];
       }
     }
 
   typename EigenVectorTransformType::MatrixType rotated = e1 + e2 + e3;
 
+  OutputTensorType result;     // Converted vector
   result[0] = rotated(0,0);
   result[1] = rotated(0,1);
   result[2] = rotated(0,2);
@@ -422,7 +418,7 @@ typename MatrixOffsetTransformBase< TScalarType,
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 ::TransformTensor(const InputVectorPixelType & tensor) const
 {
-  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted vector
+  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted tensor
   result.Fill( 0.0 );
 
   InputTensorType dt(0.0);
