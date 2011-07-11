@@ -126,7 +126,7 @@ VectorLinearInterpolateImageFunction< TInputImage, TCoordRep >
     if ( overlap )
       {
       const PixelType input = this->GetInputImage()->GetPixel(neighIndex);
-      for ( unsigned int k = 0; k < PixelType::GetNumberOfComponents(); k++ )
+      for ( unsigned int k = 0; k < PixelTraits<PixelType>::Dimension; k++ )
         {
         output[k] += overlap * static_cast< RealType >( input[k] );
         }
