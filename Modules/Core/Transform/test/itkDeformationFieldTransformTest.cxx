@@ -197,6 +197,16 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       return EXIT_FAILURE;
     }
 
+  /* GetJacobian with preallocated direction matrix */
+  DeformationTransformType::AffineTransformType::Pointer direction
+    = DeformationTransformType::AffineTransformType::New();
+  deformationTransform->GetJacobianWithRespectToPosition( testPoint, jacobian, direction );
+  std::cout << "Local jacobian estimated. " << std::endl << jacobian << std::endl;
+  if (!sameArray2D( jacobian, fieldJTruth, 1e-6 ) )
+    {
+      std::cout << "Failed getting local jacobian with preallocated direction tx. Should be " << std::endl << affineMatrix << std::endl;
+      return EXIT_FAILURE;
+    }
 
   /* Test GetJacobianWithRespectToParameters. Should return identity */
   DeformationTransformType::JacobianType
