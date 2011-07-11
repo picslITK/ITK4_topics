@@ -27,17 +27,15 @@
 namespace itk
 {
 /** \class VectorContainer
- * Define a front-end to the STL "vector" container that conforms to the
- * IndexedContainerInterface.  This is a full-fleged Object, so
+ *  \brief Define a front-end to the STL "vector" container that conforms to the
+ *         IndexedContainerInterface.
+ *
+ * This is a full-fleged Object, so
  * there is modification time, debug, and reference count information.
  *
- * Template parameters for VectorContainer:
+ * \tparam TElementIdentifier An INTEGRAL type for use in indexing the vector.
  *
- * TElementIdentifier =
- *     An INTEGRAL type for use in indexing the vector.
- *
- * TElement =
- *    The element type stored in the container.
+ * \tparam TElement The element type stored in the container.
  *
  * \ingroup DataRepresentation
  * \ingroup ITK-Common
