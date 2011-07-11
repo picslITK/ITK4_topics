@@ -87,6 +87,32 @@ std::string Transform< TScalarType, NInputDimensions, NOutputDimensions >
 }
 
 /**
+ * SetDirectionChange
+ */
+template< class TScalarType,
+          unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+void
+Transform< TScalarType, NInputDimensions, NOutputDimensions >
+::SetDirectionChange( const OutputDirectionMatrix fixedDir,
+                      const InputDirectionMatrix movingDir )
+{
+
+  OutputDirectionMatrix movingDir2;
+  movingDir2.SetIdentity();
+  for (unsigned int i=0; i<NOutputDimensions; i++)
+    for (unsigned int j=0; j<NOutputDimensions; j++)
+      {
+      if ( ( i < NInputDimensions ) && ( j < NInputDimensions ) )
+        {
+        movingDir2(i,j) = movingDir(i,j);
+        }
+      }
+  m_DirectionChange = movingDir2 * fixedDir;
+
+}
+
+/**
  * UpdateTransformParameters
  */
 template< class TScalarType,
