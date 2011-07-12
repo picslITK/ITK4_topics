@@ -154,6 +154,12 @@ public:
    */
   virtual JacobianType & GetJacobian( const InputPointType & ) const;
 
+  /** GetJacobianWithRespectToParameters - to be implemented */
+  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
+                                                  JacobianType &j) const
+  { itkExceptionMacro("GetJacobianWithRespectToParameters "
+                      "not yet implemented."); }
+
   /** Return an inverse of this transform. */
   bool GetInverse( Self *inverse ) const;
 
