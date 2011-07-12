@@ -638,6 +638,7 @@ DeformationFieldTransform<TScalar, NDimensions>
 
       //if (this->m_UseImageDirection)
       //{
+      // FIXME: Maybe use m_DeformationField->TransformLocalVectorToPhysicalVector( )
       rpix = directionRaw->TransformVector( rpix );
       lpix = directionRaw->TransformVector( lpix );
       rrpix = directionRaw->TransformVector( rrpix );
