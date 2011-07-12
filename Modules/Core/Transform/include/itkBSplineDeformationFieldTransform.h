@@ -27,8 +27,7 @@ namespace itk
 
 /** \class BSplineDeformationFieldTransform
  *
- * \ingroup Transforms
- *
+ * \ingroup ITK-Transform
  */
 template
   <class TScalar, unsigned int NDimensions>
