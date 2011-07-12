@@ -24,8 +24,10 @@
 namespace itk
 {
 /** \class TransformParametersHelper
- *  \brief Class to hold and manage different parameter types used by Transforms.
+ *  \brief Basic helper class to manage parameter data as an Array type,
+ *  the default type.
  *
+ * \ingroup ITK-Transform
  */
 
 template< typename TValueType >
