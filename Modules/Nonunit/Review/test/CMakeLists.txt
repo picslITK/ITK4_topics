@@ -11,7 +11,6 @@ itkBSplineControlPointImageFunctionTest.cxx
 itkBSplineScatteredDataPointSetToImageFilterTest.cxx
 itkBSplineScatteredDataPointSetToImageFilterTest2.cxx
 itkBSplineScatteredDataPointSetToImageFilterTest3.cxx
-itkCompositeTransformTest.cxx
 itkConformalFlatteningMeshFilterTest.cxx
 itkConformalFlatteningQuadEdgeMeshFilterTest.cxx
 itkContourExtractor2DImageFilterTest.cxx
@@ -194,8 +193,6 @@ itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest02
 itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest03
       COMMAND ITKReviewTestDriver itkBSplineScatteredDataPointSetToImageFilterTest3
               ${ITK_DATA_ROOT}/Input/BSplineScatteredApproximationDataPointsInput.txt ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredApproximationDataPointsTestOutput3.txt)
-itk_add_test(NAME itkCompositeTransformTest
-      COMMAND ITKReviewTestDriver itkCompositeTransformTest)
 itk_add_test(NAME itkConformalFlatteningMeshFilterTest1
       COMMAND ITKReviewTestDriver itkConformalFlatteningMeshFilterTest
               ${ITK_DATA_ROOT}/Input/genusZeroSurface01.vtk ${ITK_TEST_OUTPUT_DIR}/genusZeroMesh01ConformalFlattenedToSphere.vtk 1)
