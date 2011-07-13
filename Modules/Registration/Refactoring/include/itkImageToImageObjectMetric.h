@@ -28,6 +28,7 @@
 #include "itkDeformationFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkIdentityTransform.h"
+#include "itkResampleImageFilter.h"
 
 namespace itk
 {
@@ -256,6 +257,20 @@ public:
                                 CoordinateRepresentationType>
                                                MovingGradientCalculatorType;
 
+  /** ResampleImageFilter types for image pre-warping */
+  typedef ResampleImageFilter< MovingImageType,
+                               VirtualImageType,
+                               MovingRealType >
+                                             MovingWarpResampleImageFilterType;
+  typedef typename MovingWarpResampleImageFilterType::Pointer
+                                          MovingWarpResampleImageFilterPointer;
+  typedef ResampleImageFilter< FixedImageType,
+                               VirtualImageType,
+                               FixedRealType >
+                                             FixedWarpResampleImageFilterType;
+  typedef typename FixedWarpResampleImageFilterType::Pointer
+                                          FixedWarpResampleImageFilterPointer;
+
   /**  Type of the measure. */
   typedef typename Superclass::MeasureType    MeasureType;
 
@@ -366,6 +381,11 @@ public:
   itkSetMacro(PrecomputeImageGradient, bool);
   itkGetConstReferenceMacro(PrecomputeImageGradient, bool);
   itkBooleanMacro(PrecomputeImageGradient);
+
+  /** Set/Get pre-warping of images. */
+  itkSetMacro(PreWarpImages, bool);
+  itkGetConstReferenceMacro(PreWarpImages, bool);
+  itkBooleanMacro(PreWarpImages);
 
   /** Get number of threads to use.
    * \warning This value can change during Initialize, if the threader
@@ -566,6 +586,7 @@ protected:
   /** Flag to control use of precomputed Gaussian gradient filter or gradient
    * calculator for image gradient calculations. */
   bool                               m_PrecomputeImageGradient;
+
   /** Gradient images to store Gaussian gradient filter output. */
   typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
   typename MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
@@ -573,6 +594,17 @@ protected:
   /** Image gradient calculators */
   typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
   typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
+
+  /** Flag to control pre-warping of images. */
+  bool                               m_PreWarpImages;
+
+  /** Pre-warped images. */
+  FixedImagePointer   m_FixedWarpedImage;
+  MovingImagePointer  m_MovingWarpedImage;
+
+  /** Resample image filters for pre-warping images */
+  MovingWarpResampleImageFilterPointer    m_MovingWarpResampleImageFilter;
+  FixedWarpResampleImageFilterPointer     m_FixedWarpResampleImageFilter;
 
   /** Derivative results holder. User a raw pointer so we can point it
    * to a user-provided object. This enables
@@ -682,6 +714,9 @@ private:
                           const ThreaderInputObjectType& virtualImageSubRegion,
                           ThreadIdType threadId,
                           Self * dataHolder);
+
+  /** Pre-warp the images for efficiency and computational stability. */
+  void PreWarpImages( void );
 
   /** Flag to track if threading memory has been initialized since last
    * call to Initialize. */
