@@ -13,13 +13,11 @@ itkBSplineDeformableTransformInitializerTest2.cxx
 itkBSplineScatteredDataPointSetToImageFilterTest.cxx
 itkBSplineScatteredDataPointSetToImageFilterTest2.cxx
 itkBSplineScatteredDataPointSetToImageFilterTest3.cxx
-itkCompositeTransformTest.cxx
 itkConformalFlatteningMeshFilterTest.cxx
 itkConformalFlatteningQuadEdgeMeshFilterTest.cxx
 itkContourExtractor2DImageFilterTest.cxx
 itkConvolutionImageFilterTest.cxx
 itkConvolutionImageFilterTestInt.cxx
-itkConvolutionImageFilterDeltaFunctionTest.cxx
 itkCoxDeBoorBSplineKernelFunctionTest.cxx
 itkCoxDeBoorBSplineKernelFunctionTest2.cxx
 itkDeformationFieldTransformTest.cxx
@@ -206,8 +204,6 @@ itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest02
 itk_add_test(NAME itkBSplineScatteredDataPointSetToImageFilterTest03
       COMMAND ITKReviewTestDriver itkBSplineScatteredDataPointSetToImageFilterTest3
               ${ITK_DATA_ROOT}/Input/BSplineScatteredApproximationDataPointsInput.txt ${ITK_TEST_OUTPUT_DIR}/itkBSplineScatteredApproximationDataPointsTestOutput3.txt)
-itk_add_test(NAME itkCompositeTransformTest
-      COMMAND ITKReviewTestDriver itkCompositeTransformTest)
 itk_add_test(NAME itkConformalFlatteningMeshFilterTest1
       COMMAND ITKReviewTestDriver itkConformalFlatteningMeshFilterTest
               ${ITK_DATA_ROOT}/Input/genusZeroSurface01.vtk ${ITK_TEST_OUTPUT_DIR}/genusZeroMesh01ConformalFlattenedToSphere.vtk 1)
@@ -248,11 +244,6 @@ itk_add_test(NAME itkConvolutionImageFilterTest5x5Mean
     --compare ${ITK_DATA_ROOT}/Baseline/Review/itkConvolutionImageFilterTest5x5Mean.png
               ${ITK_TEST_OUTPUT_DIR}/itkConvolutionImageFilterTest5x5Mean.png
     itkConvolutionImageFilterTestInt ${ITK_DATA_ROOT}/Input/cthead1.png ${ITK_DATA_ROOT}/Input/5x5-constant.png ${ITK_TEST_OUTPUT_DIR}/itkConvolutionImageFilterTest5x5Mean.png 1)
-itk_add_test(NAME itkConvolutionImageFilterDeltaFunctionTest
-      COMMAND ITKReviewTestDriver
-    --compare ${ITK_DATA_ROOT}/Input/level.png
-              ${ITK_TEST_OUTPUT_DIR}/itkConvolutionImageFilterDeltaFunctionTest.png
-    itkConvolutionImageFilterDeltaFunctionTest ${ITK_DATA_ROOT}/Input/level.png ${ITK_TEST_OUTPUT_DIR}/itkConvolutionImageFilterDeltaFunctionTest.png)
 itk_add_test(NAME itkCoxDeBoorBSplineKernelFunctionTest01
       COMMAND ITKReviewTestDriver itkCoxDeBoorBSplineKernelFunctionTest)
 itk_add_test(NAME itkCoxDeBoorBSplineKernelFunctionTest02

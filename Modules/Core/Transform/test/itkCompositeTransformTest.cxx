@@ -23,7 +23,7 @@
 #include "itkAffineTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkArray2D.h"
-#include "itkDeformationFieldTransform.h"
+//#include "itkDeformationFieldTransform.h"
 
 namespace {
 
