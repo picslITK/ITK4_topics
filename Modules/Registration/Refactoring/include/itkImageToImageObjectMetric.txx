@@ -1102,6 +1102,139 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->SetVirtualDomainRegion( image->GetBufferedRegion() );
 }
 
+/**
+ * Compute the maximum shift when one transform is changed to another
+ */
+template< class TFixedImage, class TMovingImage, class TVirtualImage >
+double
+ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
+::ComputeMaximumVoxelShift(bool isMovingTransform, ParametersType deltaParameters)
+{
+  double voxelShift;
+  double distance;
+  unsigned int numSamples = 0;
+  std::vector<VirtualPointType> imageSamples;
+
+  this->GetVirtualDomainCornerPoints(imageSamples);
+  numSamples = imageSamples.size();
+
+  ParametersType oldParameters(deltaParameters.size());
+  ParametersType newParameters(deltaParameters.size());
+
+  if (isMovingTransform)
+    {
+    MovingTransformPointer newMovingTransform;
+    oldParameters = m_MovingTransform->GetParameters();
+    for (unsigned int p=0; p<oldParameters.size(); p++)
+      {
+      newParameters[p] = oldParameters[p] + deltaParameters[p];
+      }
+    newMovingTransform = MovingTransformType::New();
+    newMovingTransform->SetParameters(newParameters);
+
+    MovingPointType point, oldMappedPoint, newMappedPoint;
+    ContinuousIndex<double, MovingImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
+
+    // find max shift by checking each sample point
+    voxelShift = 0.0;
+    for (unsigned int c=0; c<numSamples; c++)
+      {
+      point = imageSamples[c];
+
+      oldMappedPoint = m_MovingTransform->TransformPoint(point);
+      newMappedPoint = newMovingTransform->TransformPoint(point);
+      this->m_MovingImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
+      this->m_MovingImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
+
+      distance = 0.0;
+      for (unsigned int d=0; d<ImageDimension; d++)
+        {
+        diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
+        distance += diffIndex[d] * diffIndex[d];
+        }
+      distance = vcl_sqrt(distance);
+
+      if ( voxelShift < distance )
+        {
+        voxelShift = distance;
+        }
+      } // end for numSamples
+    } // end of if isMovingTransform
+  else
+    {
+    MovingTransformPointer newFixedTransform;
+    oldParameters = m_FixedTransform->GetParameters();
+    for (unsigned int p=0; p<oldParameters.size(); p++)
+      {
+      newParameters[p] = oldParameters[p] + deltaParameters[p];
+      }
+    newFixedTransform = FixedTransformType::New();
+    newFixedTransform->SetParameters(newParameters);
+
+    FixedPointType point, oldMappedPoint, newMappedPoint;
+    ContinuousIndex<double, FixedImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
+
+    // find max shift by checking each sample point
+    voxelShift = 0.0;
+    for (unsigned int c=0; c<numSamples; c++)
+      {
+      point = imageSamples[c];
+
+      oldMappedPoint = m_FixedTransform->TransformPoint(point);
+      newMappedPoint = newFixedTransform->TransformPoint(point);
+      this->m_FixedImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
+      this->m_FixedImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
+
+      distance = 0.0;
+      for (unsigned int d=0; d<ImageDimension; d++)
+        {
+        diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
+        distance += diffIndex[d] * diffIndex[d];
+        }
+      distance = vcl_sqrt(distance);
+
+      if ( voxelShift < distance )
+        {
+        voxelShift = distance;
+        }
+      } // end of for numSamples
+    } // end of else isMovingTransform
+
+  return voxelShift;
+}
+
+/**
+ * Get the physical coordinates of image corners
+ */
+template< class TFixedImage, class TMovingImage, class TVirtualImage >
+void
+ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
+::GetVirtualDomainCornerPoints( std::vector<VirtualPointType> &imageSamples )
+{
+  imageSamples.clear();
+
+  VirtualRegionType region = m_VirtualDomainImage->GetLargestPossibleRegion();
+  VirtualIndexType firstCorner = region.GetIndex();
+  VirtualIndexType corner;
+  VirtualPointType point;
+
+  VirtualSizeType size = region.GetSize();
+  int cornerNumber = 1 << VirtualImageDimension; // 2^ImageDimension
+
+  for( int i=0; i<cornerNumber; i++ )
+    {
+    int bit;
+    for (int d=0; d<ImageDimension; d++)
+      {
+      bit = (int) (( i & (1 << d) ) != 0); // 0 or 1
+      corner[d] = firstCorner[d] + bit * (size[d] - 1);
+      }
+
+    m_VirtualDomainImage->TransformIndexToPhysicalPoint(corner, point);
+    imageSamples.push_back(point);
+    }
+}
+
 }//namespace itk
 
 #endif

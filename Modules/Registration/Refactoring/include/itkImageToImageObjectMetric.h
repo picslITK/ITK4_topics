@@ -439,6 +439,13 @@ public:
    * metric settings are changed before beginning a new registration. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
+  /** Compute the shift in voxels when deltaParameters is applied onto the
+   * current parameters. */
+  double ComputeMaximumVoxelShift(bool isMovingTransform, ParametersType deltaParameters);
+
+  /** Get the physical coordinates of image corners */
+  void GetVirtualDomainCornerPoints( std::vector<VirtualPointType> &imageSamples );
+
 protected:
 
   /** User worker method to calculate value and derivative
