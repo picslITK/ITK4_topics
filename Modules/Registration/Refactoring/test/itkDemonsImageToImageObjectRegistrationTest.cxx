@@ -39,6 +39,10 @@
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
 
+// #include "itkMinimumMaximumImageCalculator.h"
+
+
+
 namespace{
 // The following class is used to support callbacks
 // on the filter in the pipeline that follows later
@@ -122,6 +126,22 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   matcher->Update();
   MovingImageType::Pointer movingImage = matcher->GetOutput();
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
+
+
+//  typedef MinimumMaximumImageCalculator<FixedImageType> FCalType;
+//  FCalType::Pointer fcalculator = FCalType::New();
+//  fcalculator->SetImage(fixedImage);
+//  fcalculator->Compute();
+//  std::cout << "fixed image: " << "min: " << fcalculator->GetMinimum()
+//          << " max: " << fcalculator->GetMaximum() << std::endl;
+//
+//
+//  typedef MinimumMaximumImageCalculator<MovingImageType> MCalType;
+//  MCalType::Pointer mcalculator = MCalType::New();
+//  mcalculator->SetImage(fixedImage);
+//  mcalculator->Compute();
+//  std::cout << "moving image: " << "min: " << mcalculator->GetMinimum()
+//          << " max: " << mcalculator->GetMaximum() << std::endl;
 
   //demons registration
 /*  typedef Vector< float, Dimension >             VectorPixelType;
@@ -306,6 +326,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   caster->SetInput( warper->GetOutput() );
   writer->SetInput( caster->GetOutput() );
+
   writer->Update();
 
   return EXIT_SUCCESS;
