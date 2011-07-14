@@ -1,6 +1,7 @@
 set(ITK-RegistrationRefactoring_SRC
 itkGradientDescentObjectOptimizerBase.cxx
 itkGradientDescentObjectOptimizer.cxx
+itkQuasiNewtonObjectOptimizer.cxx
 )
 
 add_library(ITK-RegistrationRefactoring ${ITK-RegistrationRefactoring_SRC})

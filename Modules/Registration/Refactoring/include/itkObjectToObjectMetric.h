@@ -109,6 +109,9 @@ public:
   virtual unsigned int GetNumberOfParameters() const = 0;
   virtual unsigned int GetNumberOfLocalParameters() const = 0;
 
+  /** Get a const reference to the active transform's parameters */
+  virtual const ParametersType & GetParameters() const = 0;
+
   /** Return whether the metric's active transform has local support,
    * i.e. is dense. */
   virtual bool HasLocalSupport() const = 0;
@@ -117,6 +120,13 @@ public:
    * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
   virtual void UpdateTransformParameters( DerivativeType & derivative ) = 0;
+
+  /** Estimate the scales of transform parameters. */
+  virtual void EstimateScales(bool isMovingTransform, ParametersType &parameterScales) {}
+
+  /** Compute the shift in voxels when deltaParameters is applied onto the
+   * current parameters. */
+  virtual double ComputeMaximumVoxelShift(bool isMovingTransform, ParametersType deltaParameters) { return 0; }
 
 protected:
   ObjectToObjectMetric() {}
