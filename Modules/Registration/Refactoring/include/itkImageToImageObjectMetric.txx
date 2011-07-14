@@ -1154,13 +1154,12 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
 
   if (isMovingTransform)
     {
-    MovingTransformPointer newMovingTransform;
     oldParameters = m_MovingTransform->GetParameters();
     for (unsigned int p=0; p<oldParameters.size(); p++)
       {
       newParameters[p] = oldParameters[p] + deltaParameters[p];
       }
-    newMovingTransform = MovingTransformType::New();
+    MovingTransformPointer newMovingTransform;// = MovingTransformType::New();
     newMovingTransform->SetParameters(newParameters);
 
     MovingImagePointType point, oldMappedPoint, newMappedPoint;
@@ -1194,13 +1193,12 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     } // end of if isMovingTransform
   else
     {
-    MovingTransformPointer newFixedTransform;
     oldParameters = m_FixedTransform->GetParameters();
     for (unsigned int p=0; p<oldParameters.size(); p++)
       {
       newParameters[p] = oldParameters[p] + deltaParameters[p];
       }
-    newFixedTransform = FixedTransformType::New();
+    MovingTransformPointer newFixedTransform;// = FixedTransformType::New();
     newFixedTransform->SetParameters(newParameters);
 
     FixedImagePointType point, oldMappedPoint, newMappedPoint;

@@ -94,8 +94,8 @@ QuasiNewtonObjectOptimizer
 
   if (this->GetCurrentIteration() == 0)
     {
-    m_PreviousPosition = this->m_Metric->GetDerivative m_CurrentPosition;
-    m_PreviousGradient = m_Gradient;
+    m_PreviousPosition = this->m_CurrentPosition;
+    m_PreviousGradient = this->m_Gradient;
     }
 
   try
@@ -138,7 +138,7 @@ QuasiNewtonObjectOptimizer
     {
     ParametersType step = m_Gradient;
     step = direction * step;
-    learningRate = this->Superclass::EstimateLearningRate(step);
+    learningRate = this->EstimateLearningRate(step);
     if ( this->GetDebug() )
       {
       std::cout << curIt << " UseGradient " << std::endl;
@@ -159,12 +159,12 @@ QuasiNewtonObjectOptimizer
       this->StopOptimization();
       return;
       }
-    this->GradientDescentOptimizer::AdvanceOneStep();
+    this->GradientDescentObjectOptimizer::AdvanceOneStep();
     return;
     }
 
   // Now a Newton step is on the consistent direction of a gradient step
-  learningRate = this->Superclass::EstimateLearningRate(m_NewtonStep);
+  learningRate = this->EstimateLearningRate(m_NewtonStep);
   learningRate = vnl_math_min(learningRate, 1.0);
 
   if ( this->GetDebug() )
@@ -203,7 +203,7 @@ QuasiNewtonObjectOptimizer
     {
     DerivativeType curGradient = m_Gradient;
     m_Gradient = -m_NewtonStep;
-    this->GradientDescentOptimizer::AdvanceOneStep();
+    this->GradientDescentObjectOptimizer::AdvanceOneStep();
     m_Gradient = curGradient;
     }
   else
@@ -256,7 +256,7 @@ void QuasiNewtonObjectOptimizer::LineSearch()
       scaledPosition[j] = scaledCurrentPosition[j] + t * scaledStep[j];
       }
     this->ScaleBackPosition(scaledPosition, newPosition);
-    this->m_Metric->GetValueAndDerivative(newPosition, newValue, newGradient);
+    //this->m_Metric->GetValueAndDerivative(newPosition, newValue, newGradient);
 
     //Wolfe condition I
     if ((newValue - (oldValue + c1 * t * stepChange)) * direction >= 0)
@@ -275,7 +275,7 @@ void QuasiNewtonObjectOptimizer::LineSearch()
     t *= beta;
     }
 
-  this->SetCurrentPosition(newPosition);
+  //this->SetCurrentPosition(newPosition);
 
   this->InvokeEvent( IterationEvent() );
 
@@ -438,7 +438,7 @@ double QuasiNewtonObjectOptimizer
 
   double shift, learningRate;
 
-  shift = this->m_Metric->ComputeMaximumVoxelShift(parameters, deltaParameters);
+  shift = this->m_Metric->ComputeMaximumVoxelShift(true, deltaParameters);
 
   //initialize for the first time of executing EstimateLearningRate
   if (this->GetCurrentIteration() == 0 || m_MinimumVoxelShift == 0)

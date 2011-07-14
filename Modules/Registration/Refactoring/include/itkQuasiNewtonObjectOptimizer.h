@@ -74,13 +74,26 @@ public:
   /** Type for Hessian matrix in the Quasi-Newton method */
   typedef Array2D<double>            HessianType;
 
+  /** Methods to configure the cost function. */
+  itkGetConstReferenceMacro(Maximize, bool);
+  itkSetMacro(Maximize, bool);
+  itkBooleanMacro(Maximize);
+  bool GetMinimize() const
+  { return !m_Maximize; }
+  void SetMinimize(bool v)
+  { this->SetMaximize(!v); }
+  void MinimizeOn()
+  { this->MaximizeOff(); }
+  void MinimizeOff()
+  { this->MaximizeOn(); }
+
   /** Start and run the optimization */
   virtual void StartOptimization();
 
-protected:
-
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
+
+protected:
 
   /** The gradient in the previous step */
   ParametersType  m_PreviousPosition;
