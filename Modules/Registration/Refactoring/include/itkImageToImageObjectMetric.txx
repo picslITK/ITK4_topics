@@ -310,7 +310,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                this->GetVirtualDomainImage() );
     m_MovingWarpResampleImageFilter->SetNumberOfThreads( this->m_NumberOfThreads );
     m_MovingWarpResampleImageFilter->SetTransform( this->GetMovingTransform() );
-    m_MovingWarpResampleImageFilter->SetInputImage( this->GetMovingImage() );
+    m_MovingWarpResampleImageFilter->SetInput( this->GetMovingImage() );
 
     m_FixedWarpResampleImageFilter = FixedWarpResampleImageFilterType::New();
     m_FixedWarpResampleImageFilter->SetUseReferenceImage( true );
@@ -318,7 +318,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                this->GetVirtualDomainImage() );
     m_FixedWarpResampleImageFilter->SetNumberOfThreads( this->m_NumberOfThreads );
     m_FixedWarpResampleImageFilter->SetTransform( this->GetFixedTransform() );
-    m_FixedWarpResampleImageFilter->SetInputImage( this->GetFixedImage() );
+    m_FixedWarpResampleImageFilter->SetInput( this->GetFixedImage() );
     }
   else
     {
@@ -1164,7 +1164,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     newMovingTransform = MovingTransformType::New();
     newMovingTransform->SetParameters(newParameters);
 
-    MovingPointType point, oldMappedPoint, newMappedPoint;
+    MovingImagePointType point, oldMappedPoint, newMappedPoint;
     ContinuousIndex<double, MovingImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
 
     // find max shift by checking each sample point
@@ -1179,7 +1179,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       this->m_MovingImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      for (unsigned int d=0; d<ImageDimension; d++)
+      itkExceptionMacro("Verify MovingImageDimension below...");
+      for (unsigned int d=0; d<MovingImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
         distance += diffIndex[d] * diffIndex[d];
@@ -1203,7 +1204,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     newFixedTransform = FixedTransformType::New();
     newFixedTransform->SetParameters(newParameters);
 
-    FixedPointType point, oldMappedPoint, newMappedPoint;
+    FixedImagePointType point, oldMappedPoint, newMappedPoint;
     ContinuousIndex<double, FixedImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
 
     // find max shift by checking each sample point
@@ -1218,7 +1219,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       this->m_FixedImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      for (unsigned int d=0; d<ImageDimension; d++)
+      itkExceptionMacro("Verify FixedImageDimension below...");
+      for (unsigned int d=0; d<FixedImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
         distance += diffIndex[d] * diffIndex[d];
@@ -1256,7 +1258,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   for( int i=0; i<cornerNumber; i++ )
     {
     int bit;
-    for (int d=0; d<ImageDimension; d++)
+    itkExceptionMacro("Verify that VirtualImageDimension is correct below...");
+    for (int d=0; d<VirtualImageDimension; d++)
       {
       bit = (int) (( i & (1 << d) ) != 0); // 0 or 1
       corner[d] = firstCorner[d] + bit * (size[d] - 1);

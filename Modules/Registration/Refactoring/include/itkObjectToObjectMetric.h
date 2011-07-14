@@ -109,6 +109,9 @@ public:
   virtual unsigned int GetNumberOfParameters() const = 0;
   virtual unsigned int GetNumberOfLocalParameters() const = 0;
 
+  /** Get a const reference to the active transform's parameters */
+  virtual const ParametersType & GetParameters() const = 0;
+
   /** Return whether the metric's active transform has local support,
    * i.e. is dense. */
   virtual bool HasLocalSupport() const = 0;

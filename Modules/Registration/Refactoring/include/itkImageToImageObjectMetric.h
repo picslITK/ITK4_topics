@@ -57,6 +57,13 @@ namespace itk
  *
  * Derived classes must implement pure virtual methods declared in
  * ObjectToObjectMetric.
+ *
+ * \warning When using PreWarpImages flag, it is assumed that the images are
+ * already in the virtual domain, e.g. via an affine transformation in the
+ * first step of a CompositeTransform.
+ *
+ * \note Use of PreWarpImages option is not yet supported when also using
+ * image masks.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
@@ -424,10 +431,12 @@ public:
    * classes mainly.
    * We're always optimizing the moving image transform, so return
    * its number of parameters. */
-  /* NOTE: could this go into ObjectToObjectMetric, along with a base
-   * pointer to transform? Or are transforms only every used for images? */
   virtual unsigned int GetNumberOfParameters() const
     { return this->m_MovingTransform->GetNumberOfParameters(); }
+
+  /** Get a const reference to the moving transform's parameters */
+  virtual const ParametersType & GetParameters() const
+  { return this->m_MovingTransform->GetParameters(); }
 
   /** Update the metric's transform parameters.
    * \c derivative must be the proper size, as retrieved

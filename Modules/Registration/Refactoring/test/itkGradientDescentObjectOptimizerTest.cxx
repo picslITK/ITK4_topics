@@ -25,7 +25,10 @@
 
 /* Cribbed from itkGradientDescentOptimizerTest */
 
+namespace {
 /**
+ *  \class gradientMetric for test
+ *
  *  The objectif function is the quadratic form:
  *
  *  1/2 x^T A x - b^T x
@@ -44,7 +47,7 @@ class gradientMetric : public itk::ObjectToObjectMetric
 {
 public:
 
-  typedef gradientMetric            Self;
+  typedef gradientMetric                  Self;
   typedef itk::ObjectToObjectMetric       Superclass;
   typedef itk::SmartPointer<Self>         Pointer;
   typedef itk::SmartPointer<const Self>   ConstPointer;
@@ -55,7 +58,7 @@ public:
 
   typedef Superclass::ParametersType      ParametersType;
   typedef Superclass::DerivativeType      DerivativeType;
-  typedef Superclass::MeasureType         MeasureType ;
+  typedef Superclass::MeasureType         MeasureType;
 
   gradientMetric()
   {
@@ -74,7 +77,7 @@ public:
     double x = m_Parameters[0];
     double y = m_Parameters[1];
 
-    std::cout << "GetValueAndDerivative( " ;
+    std::cout << "GetValueAndDerivative( ";
     std::cout << x << " ";
     std::cout << y << ") = " << std::endl;
 
@@ -124,7 +127,7 @@ public:
     m_Parameters = parameters;
   }
 
-  ParametersType & GetParameters()
+  const ParametersType & GetParameters() const
   {
     return m_Parameters;
   }
@@ -134,7 +137,7 @@ private:
   ParametersType m_Parameters;
 };
 
-
+}//namespace
 
 int itkGradientDescentObjectOptimizerTest(int, char* [] )
 {
@@ -183,7 +186,7 @@ int itkGradientDescentObjectOptimizerTest(int, char* [] )
 
   ParametersType finalPosition = metric->GetParameters();
   std::cout << "Solution        = (";
-  std::cout << finalPosition[0] << "," ;
+  std::cout << finalPosition[0] << ",";
   std::cout << finalPosition[1] << ")" << std::endl;
 
   //
