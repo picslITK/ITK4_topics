@@ -1113,10 +1113,9 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   double voxelShift;
   double distance;
   unsigned int numSamples = 0;
-  std::vector<VirtualPointType> imageSamples;
 
-  this->GetVirtualDomainCornerPoints(imageSamples);
-  numSamples = imageSamples.size();
+  this->ComputeVirtualImageCornerPoints();
+  numSamples = m_VirtualImageCornerPoints.size();
 
   ParametersType oldParameters(deltaParameters.size());
   ParametersType newParameters(deltaParameters.size());
@@ -1139,7 +1138,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     voxelShift = 0.0;
     for (unsigned int c=0; c<numSamples; c++)
       {
-      point = imageSamples[c];
+      point = m_VirtualImageCornerPoints[c];
 
       oldMappedPoint = m_MovingTransform->TransformPoint(point);
       newMappedPoint = newMovingTransform->TransformPoint(point);
@@ -1178,7 +1177,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     voxelShift = 0.0;
     for (unsigned int c=0; c<numSamples; c++)
       {
-      point = imageSamples[c];
+      point = m_VirtualImageCornerPoints[c];
 
       oldMappedPoint = m_FixedTransform->TransformPoint(point);
       newMappedPoint = newFixedTransform->TransformPoint(point);
@@ -1209,9 +1208,11 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
 template< class TFixedImage, class TMovingImage, class TVirtualImage >
 void
 ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
-::GetVirtualDomainCornerPoints( std::vector<VirtualPointType> &imageSamples )
+::ComputeVirtualImageCornerPoints( )
 {
-  imageSamples.clear();
+  if (m_VirtualImageCornerPoints.size() > 0) return;
+
+  m_VirtualImageCornerPoints.clear();
 
   VirtualRegionType region = m_VirtualDomainImage->GetLargestPossibleRegion();
   VirtualIndexType firstCorner = region.GetIndex();
@@ -1231,8 +1232,53 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       }
 
     m_VirtualDomainImage->TransformIndexToPhysicalPoint(corner, point);
-    imageSamples.push_back(point);
+    m_VirtualImageCornerPoints.push_back(point);
     }
+}
+
+/** Compute parameter scales */
+template< class TFixedImage, class TMovingImage, class TVirtualImage >
+void
+ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
+::EstimateScales(bool isMovingTransform, ParametersType &parameterScales)
+{
+  double maxShift;
+  unsigned int numPara = parameterScales.size();
+
+  ParametersType deltaParameters(numPara);
+  for (unsigned int j=0; j<numPara; j++)
+    {
+    deltaParameters[j] = 0;
+    }
+
+  // To avoid division-by-zero, assign a small value for parameters
+  // whose impact on voxel shift is zero. This small value may be
+  // the minimum non-zero shift.
+  double minNonZeroShift = NumericTraits<double>::max();
+
+  // compute variation for each transform parameter
+  for (unsigned int i=0; i<numPara; i++)
+    {
+    deltaParameters[i] = 1;
+    maxShift = this->ComputeMaximumVoxelShift(isMovingTransform, deltaParameters);
+    deltaParameters[i] = 0;
+
+    parameterScales[i] = maxShift;
+    if ( maxShift != 0 && maxShift < minNonZeroShift )
+      {
+      minNonZeroShift = maxShift;
+      }
+    }
+
+  for (unsigned int i=0; i<numPara; i++)
+    {
+    if (parameterScales[i] == 0)
+      {
+      parameterScales[i] = minNonZeroShift / 10;
+      }
+    parameterScales[i] *= parameterScales[i];
+    }
+
 }
 
 }//namespace itk

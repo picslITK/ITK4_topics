@@ -14,6 +14,7 @@ set(ITK-RegistrationRefactoringTests
   itkDemonsImageToImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
   itkDemonsImageToImageObjectRegistrationTest2.cxx
+  itkQuasiNewtonObjectOptimizerTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")

@@ -50,6 +50,9 @@ public:
   /**  Scale type. */
   typedef TransformParameters< double >             ScalesType;
 
+  /**  Parameters type. */
+  typedef TransformParameters< double >             ParametersType;
+
   /** Metric function type */
   typedef ObjectToObjectMetric                      MetricType;
   typedef MetricType::Pointer                       MetricTypePointer;

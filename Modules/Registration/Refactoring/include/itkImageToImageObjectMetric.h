@@ -439,12 +439,15 @@ public:
    * metric settings are changed before beginning a new registration. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
+  /** Estimate the scales of transform parameters. */
+  void EstimateScales(bool isMovingTransform, ParametersType &parameterScales);
+
   /** Compute the shift in voxels when deltaParameters is applied onto the
    * current parameters. */
   double ComputeMaximumVoxelShift(bool isMovingTransform, ParametersType deltaParameters);
 
-  /** Get the physical coordinates of image corners */
-  void GetVirtualDomainCornerPoints( std::vector<VirtualPointType> &imageSamples );
+  /** Get the physical coordinates of image corners. */
+  void ComputeVirtualImageCornerPoints( );
 
 protected:
 
@@ -697,6 +700,8 @@ private:
   //purposely not implemented
   void operator=(const Self &);
 
+  //Sample point coordinates from the virtual image domain
+  std::vector<VirtualPointType> m_VirtualImageCornerPoints;
 };
 }//namespace itk
 
