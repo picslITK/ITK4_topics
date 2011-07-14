@@ -179,17 +179,30 @@ DeformationFieldTransform<TScalar, NDimensions>
    * to compute an SVD inverse. */
   this->GetInverseJacobianOfForwardFieldWithRespectToPosition( point, jacobian );
 
-  OutputVectorPixelType result;     // Converted vector
-  result.SetSize( NDimensions );
+  const unsigned int numberOfComponents = NumericTraits< InputVectorPixelType >::GetLength( vector );
 
-  for ( unsigned int i = 0; i < NDimensions; i++ )
+  OutputVectorPixelType result;     // Converted vector
+  result.SetSize( numberOfComponents );
+
+  JacobianType dataJacobian;
+  dataJacobian.SetSize( numberOfComponents, numberOfComponents );
+
+  for ( unsigned int i = 0; i < numberOfComponents; i++ )
     {
-    result[i] = NumericTraits< ScalarType >::Zero;
-    for ( unsigned int j = 0; j < NDimensions; j++ )
+    if ( i < NDimensions )
       {
-      result[i] += jacobian[j][i] * vector[j];
+      result[i] = NumericTraits< ScalarType >::Zero;
+      for ( unsigned int j = 0; j < NDimensions; j++ )
+        {
+        result[i] += jacobian[j][i] * vector[j];
+        }
+      }
+    else
+      {
+      result[i] = vector[i];
       }
     }
+
   return result;
 }
 
