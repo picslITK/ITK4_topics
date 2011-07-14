@@ -38,6 +38,7 @@ itkSplineKernelTransformTest.cxx
 itkDeformationFieldTransformTest.cxx
 itkTransformParametersTest.cxx
 itkImageVectorTransformParametersHelperTest.cxx
+itkCompositeTransformTest.cxx
 )
 
 CreateTestDriver(ITK-Transform  "${ITK-Transform-Test_LIBRARIES}" "${ITK-TransformTests}")
@@ -159,3 +160,5 @@ itk_add_test(NAME itkTransformParametersTest
 itk_add_test(NAME itkImageVectorTransformParametersHelperTest
          COMMAND ITK-TransformTestDriver
           itkImageVectorTransformParametersHelperTest)
+itk_add_test(NAME itkCompositeTransformTest
+      COMMAND ITK-TransformTestDriver itkCompositeTransformTest)

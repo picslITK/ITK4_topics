@@ -66,6 +66,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   m_MovingGradientCalculator = NULL;
   m_FixedGradientCalculator = NULL;
 
+  m_PreWarpImages = false;
+  m_FixedWarpedImage = NULL;
+  m_MovingWarpedImage = NULL;
+
   m_FixedImageMask = NULL;
   m_MovingImageMask = NULL;
 
@@ -287,10 +291,45 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // and not the other.
     ComputeGaussianGradient();
     }
+
+  /* Initialize resample image filters for pre-warping images if
+   * option is set. */
+  if( this->m_PreWarpImages )
+    {
+    /*
+    m_MovingWarpedImage = MovingImageType::New();
+    m_MovingWarpedImage->CopyInformation( this->m_VirtualDomainImage );
+    m_MovingWarpedImage->Allocate();
+    m_FixedWarpedImage = FixedImageType::New();
+    m_FixedWarpedImage->CopyInformation( this->m_VirtualDomainImage );
+    m_FixedWarpedImage->Allocate();
+    */
+    m_MovingWarpResampleImageFilter = MovingWarpResampleImageFilterType::New();
+    m_MovingWarpResampleImageFilter->SetUseReferenceImage( true );
+    m_MovingWarpResampleImageFilter->SetReferenceImage(
+                                               this->GetVirtualDomainImage() );
+    m_MovingWarpResampleImageFilter->SetNumberOfThreads( this->m_NumberOfThreads );
+    m_MovingWarpResampleImageFilter->SetTransform( this->GetMovingTransform() );
+    m_MovingWarpResampleImageFilter->SetInput( this->GetMovingImage() );
+
+    m_FixedWarpResampleImageFilter = FixedWarpResampleImageFilterType::New();
+    m_FixedWarpResampleImageFilter->SetUseReferenceImage( true );
+    m_FixedWarpResampleImageFilter->SetReferenceImage(
+                                               this->GetVirtualDomainImage() );
+    m_FixedWarpResampleImageFilter->SetNumberOfThreads( this->m_NumberOfThreads );
+    m_FixedWarpResampleImageFilter->SetTransform( this->GetFixedTransform() );
+    m_FixedWarpResampleImageFilter->SetInput( this->GetFixedImage() );
+    }
+  else
+    {
+    /* Free memory if allocated from a previous run */
+    m_MovingWarpedImage = NULL;
+    m_FixedWarpedImage = NULL;
+    }
 }
 
 /*
- * Initiate thread evaluation.
+ * Initiate threaded evaluation.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
@@ -404,8 +443,8 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::InitializeForIteration()
 {
-  // Initialize some threading values that require per-iteration
-  // initialization.
+  /* Initialize some threading values that require per-iteration
+   * initialization. */
   for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
     {
     this->m_NumberOfValidPointsPerThread[i] = 0;
@@ -418,9 +457,16 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       this->m_DerivativesPerThread[i].Fill( 0 );
       }
     }
+
   /* Clear derivative final result. This will
    * require an option to skip for use with multivariate metric. */
   this->m_DerivativeResult->Fill( 0 );
+
+  /* Pre-warp the images if set to do so. */
+  if( this->m_PreWarpImages )
+    {
+    this->PreWarpImages();
+    }
 }
 
 /*
@@ -893,39 +939,25 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /*
- * Get the size of derivative result
+ * Pre-warp images.
  */
-
-/* See .h comments...
-
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
-SizeValueType
+void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetLocalDerivativeSize() const
+::PreWarpImages()
 {
-  switch( this->m_DerivativeSource )
-    {
-    case Self::Moving:
-      // For global transforms, this just returns GetNumberOfParameters.
-      // For local/dense transforms, this returns number of local parameters.
-      return this->m_MovingTransform->GetNumberOfLocalParameters();
-      break;
-    case Self::Fixed:
-      return this->m_FixedTransform->GetNumberOfLocalParameters();
-      break;
-    case Self::Both:
-      // TODO: this isn't completely settled, what to do here. Derived
-      // classes may need to override to provide different behavior.
-      return VirtualImageDimension;
-      break;
-    default:
-      itkExceptionMacro("Invalid DerivativeSource enum: "
-                         << this->m_DerivativeSource );
-    }
-  return 0;
+  /* Call Modified to make sure the filter recalculates the output. We haven't
+   * changed any setting, but we assume the transform parameters have changed,
+   * e.g. while used during registration. */
+  m_MovingWarpResampleImageFilter->Modified();
+  m_MovingWarpResampleImageFilter->Update();
+  m_MovingWarpedImage = m_MovingWarpResampleImageFilter->GetOutput();
+
+  m_FixedWarpResampleImageFilter->Modified();
+  m_FixedWarpResampleImageFilter->Update();
+  m_FixedWarpedImage = m_FixedWarpResampleImageFilter->GetOutput();
 }
 
-*/
 /*
  * ComputeGaussianGradient
  */
@@ -1131,7 +1163,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     newMovingTransform = MovingTransformType::New();
     newMovingTransform->SetParameters(newParameters);
 
-    MovingPointType point, oldMappedPoint, newMappedPoint;
+    MovingImagePointType point, oldMappedPoint, newMappedPoint;
     ContinuousIndex<double, MovingImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
 
     // find max shift by checking each sample point
@@ -1146,7 +1178,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       this->m_MovingImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      for (unsigned int d=0; d<ImageDimension; d++)
+      itkExceptionMacro("Verify MovingImageDimension below...");
+      for (unsigned int d=0; d<MovingImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
         distance += diffIndex[d] * diffIndex[d];
@@ -1170,7 +1203,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     newFixedTransform = FixedTransformType::New();
     newFixedTransform->SetParameters(newParameters);
 
-    FixedPointType point, oldMappedPoint, newMappedPoint;
+    FixedImagePointType point, oldMappedPoint, newMappedPoint;
     ContinuousIndex<double, FixedImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
 
     // find max shift by checking each sample point
@@ -1185,7 +1218,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       this->m_FixedImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      for (unsigned int d=0; d<ImageDimension; d++)
+      itkExceptionMacro("Verify FixedImageDimension below...");
+      for (unsigned int d=0; d<FixedImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
         distance += diffIndex[d] * diffIndex[d];
@@ -1225,7 +1259,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   for( int i=0; i<cornerNumber; i++ )
     {
     int bit;
-    for (int d=0; d<ImageDimension; d++)
+    itkExceptionMacro("Verify that VirtualImageDimension is correct below...");
+    for (int d=0; d<VirtualImageDimension; d++)
       {
       bit = (int) (( i & (1 << d) ) != 0); // 0 or 1
       corner[d] = firstCorner[d] + bit * (size[d] - 1);
