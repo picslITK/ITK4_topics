@@ -23,6 +23,7 @@
 #include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
+#include "vnl/algo/vnl_matrix_inverse.h"
 
 namespace itk
 {
@@ -127,8 +128,7 @@ template<class TScalar, unsigned int NDimensions>
 typename DeformationFieldTransform<TScalar, NDimensions>::OutputCovariantVectorType
 DeformationFieldTransform<TScalar, NDimensions>
 ::TransformCovariantVector( const InputCovariantVectorType& vector,
-                            const InputPointType & point,
-                            TransformType *const allocatedAffine ) const
+                            const InputPointType & point) const
 {
   if( !this->m_DeformationField )
     {
@@ -142,10 +142,9 @@ DeformationFieldTransform<TScalar, NDimensions>
   JacobianType jacobian;
   /* Get the inverse Jacobian directly for efficiency. It means we don't have
    * to compute an SVD inverse. */
-  this->GetInverseJacobianOfForwardFieldWithRespectToPosition
-                                        ( point, jacobian, allocatedAffine );
+  this->GetInverseJacobianOfForwardFieldWithRespectToPosition( point, jacobian );
 
-  OutputCovariantVectorType result;     // Converted vector
+  OutputCovariantVectorType result;
 
   for ( unsigned int i = 0; i < NDimensions; i++ )
     {
@@ -153,9 +152,10 @@ DeformationFieldTransform<TScalar, NDimensions>
     for ( unsigned int j = 0; j < NDimensions; j++ )
       {
       result[i] += jacobian[j][i] * vector[j]; // Inverse
-                                                            // transposed
+                                               // transposed
       }
     }
+
   return result;
 }
 
@@ -163,8 +163,7 @@ template<class TScalar, unsigned int NDimensions>
 typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
 DeformationFieldTransform<TScalar, NDimensions>
 ::TransformCovariantVector( const InputVectorPixelType& vector,
-                            const InputPointType & point,
-                            TransformType *const allocatedAffine ) const
+                            const InputPointType & point) const
 {
   if( !this->m_DeformationField )
     {
@@ -178,10 +177,10 @@ DeformationFieldTransform<TScalar, NDimensions>
   JacobianType jacobian;
   /* Get the inverse Jacobian directly for efficiency. It means we don't have
    * to compute an SVD inverse. */
-  this->GetInverseJacobianOfForwardFieldWithRespectToPosition
-                                        ( point, jacobian, allocatedAffine );
+  this->GetInverseJacobianOfForwardFieldWithRespectToPosition( point, jacobian );
 
   OutputVectorPixelType result;     // Converted vector
+  result.SetSize( NDimensions );
 
   for ( unsigned int i = 0; i < NDimensions; i++ )
     {
@@ -487,25 +486,22 @@ template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToPosition( const InputPointType & point,
-                                      JacobianType & jacobian,
-                                      TransformType *const allocatedAffine )
+                                      JacobianType & jacobian )
                                                                           const
 {
   IndexType idx;
   this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetJacobianWithRespectToPosition( idx, jacobian, allocatedAffine );
+  this->GetJacobianWithRespectToPosition( idx, jacobian );
 }
 
 template<class TScalar, unsigned int NDimensions>
 void
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToPosition( const IndexType & index,
-                                      JacobianType & jacobian,
-                                      TransformType *const allocatedAffine )
+                                      JacobianType & jacobian )
                                                                           const
 {
-this->GetJacobianWithRespectToPositionInternal( index, jacobian,
-                                                false, allocatedAffine );
+  this->GetJacobianWithRespectToPositionInternal( index, jacobian, false );
 }
 
 template<class TScalar, unsigned int NDimensions>
@@ -514,13 +510,13 @@ DeformationFieldTransform<TScalar, NDimensions>
 ::GetInverseJacobianOfForwardFieldWithRespectToPosition(
                                       const InputPointType & point,
                                       JacobianType & jacobian,
-                                      TransformType *const allocatedAffine )
+                                      bool useSVD )
                                                                           const
 {
   IndexType idx;
   this->m_DeformationField->TransformPhysicalPointToIndex( point, idx );
-  this->GetInverseJacobianOfForwardFieldWithRespectToPosition(
-                                          idx, jacobian, allocatedAffine );
+  this->GetInverseJacobianOfForwardFieldWithRespectToPosition( idx, jacobian,
+                                                               useSVD );
 }
 
 template<class TScalar, unsigned int NDimensions>
@@ -529,11 +525,27 @@ DeformationFieldTransform<TScalar, NDimensions>
 ::GetInverseJacobianOfForwardFieldWithRespectToPosition(
                                       const IndexType & index,
                                       JacobianType & jacobian,
-                                      TransformType *const allocatedAffine )
+                                      bool useSVD )
                                                                           const
 {
-this->GetJacobianWithRespectToPositionInternal( index, jacobian,
-                                                true, allocatedAffine );
+  if (useSVD)
+    {
+    this->GetJacobianWithRespectToPositionInternal( index, jacobian, false );
+    AffineTransformPointer localTransform = AffineTransformType::New();
+    localTransform->SetIdentity();
+    localTransform->SetMatrix( jacobian );
+    typename TransformType::Pointer invJacobian
+      = localTransform->GetInverseTransform();
+
+    for (unsigned int i=0; i<jacobian.rows(); i++)
+      for (unsigned int j=0; j<jacobian.cols(); j++)
+        jacobian(i,j) = invJacobian->GetParameters()[ j + i*jacobian.rows() ];
+
+    }
+  else
+    {
+    this->GetJacobianWithRespectToPositionInternal( index, jacobian, true );
+    }
 }
 
 /*
@@ -544,34 +556,13 @@ void
 DeformationFieldTransform<TScalar, NDimensions>
 ::GetJacobianWithRespectToPositionInternal( const IndexType & index,
                                       JacobianType & jacobian,
-                                      bool doInverseJacobian,
-                                      TransformType *const allocatedAffine )
+                                      bool doInverseJacobian )
                                                                           const
 {
   jacobian.SetSize(NDimensions,NDimensions);
   //This may not be necessary. Double-check below.
-  jacobian.Fill(0.0);
+  // jacobian.Fill(0.0);
 
-  /* declare directionPointer here so it stays in scope. */
-  AffineTransformPointer directionPointer;
-  AffineTransformType *directionRaw;
-  if( allocatedAffine != NULL )
-    {
-    //directionRaw = static_cast<AffineTransformType*>(allocatedAffine);
-    //Would be nice to avoid this dynamic cast
-    directionRaw = dynamic_cast<AffineTransformType*>(allocatedAffine);
-    if( directionRaw == NULL )
-      {
-      itkExceptionMacro("Expected AffineTranformType for allocatedAffine*");
-      }
-    }
-  else
-    {
-    directionPointer = AffineTransformType::New();
-    directionRaw = directionPointer.GetPointer();
-    }
-  directionRaw->SetIdentity(); //can we skip this?
-  directionRaw->SetMatrix( this->m_DeformationField->GetDirection() );
   typename DeformationFieldType::SizeType size =
                 this->m_DeformationField->GetLargestPossibleRegion().GetSize();
   typename DeformationFieldType::SpacingType spacing =
@@ -607,7 +598,8 @@ DeformationFieldTransform<TScalar, NDimensions>
   if ( oktosample )
     {
     OutputVectorType cpix = this->m_DeformationField->GetPixel(index);
-    cpix = directionRaw->TransformVector( cpix );
+    m_DeformationField->TransformLocalVectorToPhysicalVector( cpix, cpix );
+    //cpix = directionRaw->TransformVector( cpix );
 
     // itkCentralDifferenceImageFunction does not support vector images
     // so do this manually here
@@ -636,19 +628,15 @@ DeformationFieldTransform<TScalar, NDimensions>
       OutputVectorType rrpix = m_DeformationField->GetPixel( ddrindex );
       OutputVectorType llpix = m_DeformationField->GetPixel( ddlindex );
 
-      //if (this->m_UseImageDirection)
-      //{
-      // FIXME: Maybe use m_DeformationField->TransformLocalVectorToPhysicalVector( )
-      rpix = directionRaw->TransformVector( rpix );
-      lpix = directionRaw->TransformVector( lpix );
-      rrpix = directionRaw->TransformVector( rrpix );
-      llpix = directionRaw->TransformVector( llpix );
-      //}
+      m_DeformationField->TransformLocalVectorToPhysicalVector( rpix, rpix );
+      m_DeformationField->TransformLocalVectorToPhysicalVector( rrpix, rrpix );
+      m_DeformationField->TransformLocalVectorToPhysicalVector( lpix, lpix );
+      m_DeformationField->TransformLocalVectorToPhysicalVector( llpix, llpix );
 
-      rpix =  rpix*h+cpix*(1.-h);
-      lpix =  lpix*h+cpix*(1.-h);
-      rrpix = rrpix*h+rpix*(1.-h);
-      llpix = llpix*h+lpix*(1.-h);
+      rpix =  rpix*h  + cpix*(1.-h);
+      lpix =  lpix*h  + cpix*(1.-h);
+      rrpix = rrpix*h + rpix*(1.-h);
+      llpix = llpix*h + lpix*(1.-h);
 
       //4th order centered difference
       OutputVectorType dPix =
