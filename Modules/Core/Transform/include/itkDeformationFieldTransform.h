@@ -219,16 +219,14 @@ public:
    * FIXME: documentation. */
   virtual OutputCovariantVectorType TransformCovariantVector(
                         const InputCovariantVectorType &,
-                        const InputPointType &,
-                        TransformType *const allocatedAffine = NULL ) const;
+                        const InputPointType &) const;
 
   /** Transform a CovariantVector of type InputVectorPixelType, at point.
    * For \c allocatedAffine, see GetJacobianWithRespectToPosition.
    * FIXME: documentation. */
   virtual OutputVectorPixelType TransformCovariantVector(
                         const InputVectorPixelType &,
-                        const InputPointType &,
-                        TransformType *const allocatedAffine = NULL ) const;
+                        const InputPointType & ) const;
 
   /** Set the transformation parameters. This sets the deformation
    * field image directly. */
@@ -282,8 +280,7 @@ public:
    * on the stack.
    */
   virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
-                                                JacobianType &j,
-                        TransformType *const allocatedAffine = NULL) const;
+                                                JacobianType &j ) const;
 
   /**
    * Compute the jacobian with respect to the position, by index.
@@ -293,8 +290,7 @@ public:
    * to used temporarily within this method. See
    * GetJacobianWithRespectToPosition( InputPointType, ... ) */
   virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
-                                                JacobianType &j,
-                        TransformType *const allocatedAffine = NULL) const;
+                                                JacobianType &j ) const;
 
   /**
    * Compute the inverse jacobian of the forward deformation field with
@@ -309,7 +305,7 @@ public:
   virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
                                   const InputPointType & point,
                                   JacobianType & jacobian,
-                                  TransformType *const allocatedAffine = NULL )
+                                  bool useSVD = false )
                                                                          const;
 
   /**
@@ -325,7 +321,7 @@ public:
   virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
                                   const IndexType & index,
                                   JacobianType & jacobian,
-                                  TransformType *const allocatedAffine = NULL)
+                                  bool useSVD = false )
                                                                         const;
 
   /** Update the transform's parameters by the values in \c update.
@@ -395,8 +391,7 @@ private:
   virtual void GetJacobianWithRespectToPositionInternal(
                                   const IndexType & index,
                                   JacobianType & jacobian,
-                                  bool doInverseJacobian,
-                                  TransformType *const allocatedAffine = NULL)
+                                  bool doInverseJacobian)
                                                                         const;
 
   /** Used to holder temporary deformation field during smoothing.
