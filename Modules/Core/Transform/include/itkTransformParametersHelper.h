@@ -26,6 +26,7 @@ namespace itk
 /** \class TransformParametersHelper
  *  \brief Class to hold and manage different parameter types used by Transforms.
  *
+ * \ingroup ITK-Transform
  */
 
 template< typename TValueType >

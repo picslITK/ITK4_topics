@@ -27,6 +27,7 @@ namespace itk
  *  \brief Class to hold and manage parameters of type
  *          Image<Vector<...>,...>, used in Transforms.
  *
+ *  \ingroup ITK-Transform
  *  \sa TransformParametersHelper
  */
 

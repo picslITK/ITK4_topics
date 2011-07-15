@@ -133,7 +133,7 @@ public:
   /**  Type of the Transform Base classes */
   typedef Transform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ),
-    itkGetStaticConstMacro( VirtualImageDimension )>  MovingTransformType;
+    itkGetStaticConstMacro( VirtualImageDimension )> MovingTransformType;
 
   typedef Transform<CoordinateRepresentationType,
     itkGetStaticConstMacro( FixedImageDimension ),
