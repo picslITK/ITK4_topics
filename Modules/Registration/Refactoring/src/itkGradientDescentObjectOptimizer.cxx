@@ -66,6 +66,8 @@ GradientDescentObjectOptimizer
     /* Compute value/derivative, using threader. */
     try
       {
+      if (m_CurrentIteration == 7)
+        int jj = 1;
       /* m_Gradient will be sized as needed by metric. If it's already
        * proper size, no new allocation is done. */
       this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );

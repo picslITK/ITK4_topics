@@ -125,6 +125,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
          * returned as \c true.
          * Do this in a try block to catch exceptions and print more useful info
          * then we otherwise get when exceptions are caught in MultiThreader. */
+        if (0) {
         try {
             dataHolder->TransformAndEvaluateFixedPoint(virtualPoint,
                     mappedFixedPoint, pointIsValid, fixedImageValue,
@@ -143,10 +144,11 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             ExceptionObject err(__FILE__, __LINE__, msg);
             throw err;
         }
-
+          }
         /* Call the user method in derived classes to do the specific
          * calculations for value and derivative. */
         try {
+          pointIsValid = true;
             if (pointIsValid) {
 
                 dataHolder->UpdateQueues(scan_it, scan_mem, scan_para,

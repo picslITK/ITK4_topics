@@ -26,6 +26,7 @@
 #include "itkIntTypes.h"
 #include "itkGradientDescentObjectOptimizer.h"
 #include "itkImageToImageObjectMetric.h"
+#include "itkOptimizerHelper.h"
 #include <string>
 
 namespace itk
@@ -138,7 +139,8 @@ protected:
   virtual ~QuasiNewtonObjectOptimizer() {}
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  double  m_LearningRate;
+  /** helper object to estimate scales and compute maximum voxel shift. */
+  //OptimizerHelper::Pointer    m_OptimizerHelper;
 
 private:
   QuasiNewtonObjectOptimizer(const Self &);     //purposely not implemented
