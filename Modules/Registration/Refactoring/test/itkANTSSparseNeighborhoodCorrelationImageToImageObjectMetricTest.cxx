@@ -28,7 +28,7 @@
 
 #include "itkImageRegionConstIterator.h"
 
-#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
+#include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.h"
 
 using namespace itk;
 
@@ -122,7 +122,7 @@ void PrintImage(const ImagePointerType &image) {
     return;
 }
 
-int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
+int itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest(
         int argc, char * argv[]) {
 
 
@@ -262,7 +262,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 //  transformMComp->AddTransform(transformMdeformation);
     transformFComp->AddTransform(transformFId);
 
-    typedef itk::ANTSNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
+    typedef itk::ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
 //   typedef DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType > MetricType;
 
     typedef MetricType::Pointer MetricTypePointer;
@@ -273,6 +273,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 
     metric->SetRadius(neighborhood_radius);
 
+    metric->SetNumberOfSampling(1000);
+
+
     metric->SetFixedImage(fixedImage);
     metric->SetMovingImage(movingImage);
 //  metric->SetFixedTransform(transformFComp);
@@ -281,10 +284,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 //  transformMtranslation
 
     metric->SetFixedTransform(transformFId);
-
-    //    metric->SetMovingTransform(transformMComp);
-  metric->SetMovingTransform(transformMdeformation);
-//  metric->SetMovingTransform(transformMtranslation2);
+//    metric->SetMovingTransform(transformMdeformation);
+  metric->SetMovingTransform(transformMtranslation2);
 
     std::cout << "fixedImage:" << std::endl;
     PrintImage(fixedImage);

@@ -94,7 +94,8 @@ public:
     typedef typename Superclass::MovingImagePixelType MovingImagePixelType;
     typedef typename Superclass::MovingImageDerivativesType MovingImageDerivativesType;
     typedef typename Superclass::MovingTransformType MovingTransformType;
-    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
+//    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
+    typedef typename Superclass::MovingTransformJacobianType    MovingTransformJacobianType;
 
     typedef typename Superclass::FixedImageType FixedImageType;
     typedef typename Superclass::MovingImageType MovingImageType;
@@ -111,7 +112,6 @@ public:
     // virtual void Initialize(void) throw ( ExceptionObject ) = 0;
 
     /** specifics for sliding window based image to image metric **/
-
     typedef typename VirtualImageType::RegionType ImageRegionType;
     typedef typename VirtualImageType::SizeType RadiusType;
     typedef typename VirtualImageType::IndexType IndexType;
@@ -149,7 +149,7 @@ public:
     itkGetMacro(Radius, RadiusType);
 
 
-private:
+protected:
 
     // interested values here updated during scanning
     typedef InternalComputationValueType QUEUEREALTYPE;
@@ -174,6 +174,8 @@ private:
         FixedImageDerivativesType gradI;
         MovingImageDerivativesType gradJ;
 
+        MovingImagePointType mappedMovingPoint;
+
     } ScanMemType;
 
     typedef struct ScanParaType {
@@ -185,19 +187,20 @@ private:
 
         typename FixedImageType::ConstPointer I;
         typename MovingImageType::ConstPointer J;
+        typename VirtualImageType::ConstPointer V;
         RadiusType r;
 
     } ScanParaType;
 
 // computation routines for normalized cross correlation
-private:
+protected:
 
-    virtual inline void InitializeScanning(const ImageRegionType &scan_region,
+      void InitializeScanning(const ImageRegionType &scan_region,
             ScanningIteratorType &scan_it, ScanMemType &scan_mem,
             ScanParaType &scan_para,
             const ThreadIdType threadID);
 
-    virtual inline void UpdateQueuesAtBeginingOfLine(
+      void UpdateQueuesAtBeginingOfLine(
             const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
             const ScanParaType &scan_para,
             const ThreadIdType threadID);
@@ -205,21 +208,21 @@ private:
     // Increment the iterator and check to see if we're at the end of the
     // line.  If so, go to the next line.  Otherwise, add the
     // the values for the next hyperplane.
-    virtual inline void UpdateQueuesToNextScanWindow(
+      void UpdateQueuesToNextScanWindow(
             const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
             const ScanParaType &scan_para,
             const ThreadIdType threadID);
 
-    virtual inline void UpdateQueues(const ScanningIteratorType &scan_it,
+      void UpdateQueues(const ScanningIteratorType &scan_it,
             ScanMemType &scan_mem, const ScanParaType &scan_para,
             ThreadIdType threadID);
 
-    virtual inline bool ComputeInformationFromQueues(
+      bool ComputeInformationFromQueues(
             const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
             const ScanParaType &scan_para,
             const ThreadIdType threadID);
 
-    virtual void ComputeMovingTransformDerivative(
+     void ComputeMovingTransformDerivative(
             const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
             const ScanParaType &scan_para, DerivativeType &deriv,
             MeasureType &local_cc, const ThreadIdType threadID);
@@ -274,7 +277,7 @@ private:
 
     RadiusType m_Radius;
 
-    MovingImageJacobianType m_Jacobian;
+//    MovingImageJacobianType m_Jacobian;
 
 };
 

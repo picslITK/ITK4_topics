@@ -22,8 +22,7 @@
  *
  */
 
-//#include "itkDemonsImageToImageObjectMetric.h"
-#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
+#include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
 
 #include "itkIdentityTransform.h"
@@ -39,6 +38,10 @@
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+
+// #include "itkMinimumMaximumImageCalculator.h"
+
+
 
 namespace{
 // The following class is used to support callbacks
@@ -64,30 +67,34 @@ public:
 }
 
 using namespace itk;
-
-int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, char *argv[])
+int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc < 4 || argc > 7)
+  if( argc < 4 || argc > 8)
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
-    std::cerr << " [numberOfIterations=10] ";
-    std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
+    std::cerr << " [numberOfIterations] ";
+    std::cerr << " [scalarScale] [learningRate] ";
+    std::cerr << " [numberOfSampling=(0:full sample, or N>0)]"<< std::endl;
     return EXIT_FAILURE;
     }
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
   double scalarScale = 1.0;
-  double learningRate = 100;
+  double learningRate = 0.1;
+  unsigned int numberOfSampling = 0;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
   if( argc >= 6)
     scalarScale = atof( argv[5] );
-  if( argc == 7 )
+  if( argc >= 7 )
     learningRate = atof( argv[6] );
+  if( argc >= 8 )
+      numberOfSampling = atoi( argv[7] );
+
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -123,6 +130,22 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   matcher->Update();
   MovingImageType::Pointer movingImage = matcher->GetOutput();
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
+
+
+//  typedef MinimumMaximumImageCalculator<FixedImageType> FCalType;
+//  FCalType::Pointer fcalculator = FCalType::New();
+//  fcalculator->SetImage(fixedImage);
+//  fcalculator->Compute();
+//  std::cout << "fixed image: " << "min: " << fcalculator->GetMinimum()
+//          << " max: " << fcalculator->GetMaximum() << std::endl;
+//
+//
+//  typedef MinimumMaximumImageCalculator<MovingImageType> MCalType;
+//  MCalType::Pointer mcalculator = MCalType::New();
+//  mcalculator->SetImage(fixedImage);
+//  mcalculator->Compute();
+//  std::cout << "moving image: " << "min: " << mcalculator->GetMinimum()
+//          << " max: " << mcalculator->GetMaximum() << std::endl;
 
   //demons registration
 /*  typedef Vector< float, Dimension >             VectorPixelType;
@@ -167,10 +190,10 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
   field->SetRegions( fixedImage->GetLargestPossibleRegion() );
-//  std::cout << "fixedImage->GetLargestPossibleRegion(): "
-//            << fixedImage->GetLargestPossibleRegion() << std::endl
-//            << "fixedImage->GetBufferedRegion(): "
-//            << fixedImage->GetBufferedRegion() << std::endl;
+  std::cout << "fixedImage->GetLargestPossibleRegion(): "
+            << fixedImage->GetLargestPossibleRegion() << std::endl
+            << "fixedImage->GetBufferedRegion(): "
+            << fixedImage->GetBufferedRegion() << std::endl;
   field->Allocate();
   // Fill it with 0's
   DeformationTransformType::OutputVectorType zeroVector;
@@ -187,12 +210,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   identityTransform->SetIdentity();
 
   // The metric
-//  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
-//                                                                  MetricType;
-
-  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
-      MetricType;
-
+  typedef ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType >
+                                                                  MetricType;
   MetricType::Pointer metric = MetricType::New();
 
   // Assign images and transforms.
@@ -205,9 +224,14 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   metric->SetMovingTransform( deformationTransform );
   //  metric->SetMovingTransform( translationTransform );
 
+
+
   Size<Dimension> radSize;
   radSize.Fill(2);
   metric->SetRadius(radSize);
+
+  metric->SetNumberOfSampling(numberOfSampling);
+
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -315,6 +339,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
 
   caster->SetInput( warper->GetOutput() );
   writer->SetInput( caster->GetOutput() );
+
   writer->Update();
 
   return EXIT_SUCCESS;

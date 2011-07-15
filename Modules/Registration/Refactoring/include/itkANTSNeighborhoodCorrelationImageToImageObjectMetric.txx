@@ -26,8 +26,8 @@ namespace itk {
  * Constructor
  */
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::ANTSNeighborhoodCorrelationImageToImageObjectMetric() {
+ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage, TMovingImage,
+        TVirtualImage>::ANTSNeighborhoodCorrelationImageToImageObjectMetric() {
 
     //modify the callback function.
     this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
@@ -36,8 +36,8 @@ ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::~ANTSNeighborhoodCorrelationImageToImageObjectMetric() {
+ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage, TMovingImage,
+        TVirtualImage>::~ANTSNeighborhoodCorrelationImageToImageObjectMetric() {
 }
 
 /**
@@ -48,10 +48,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::Initialize(void) throw (ExceptionObject) {
     this->Superclass::Initialize();
 
-    //Size the jacobian matrix here so we can do it
-    // just once.
-    m_Jacobian.SetSize(this->VirtualImageDimension,
-            this->GetNumberOfLocalParameters());
+//    //Size the jacobian matrix here so we can do it
+//    // just once.
+//    m_Jacobian.SetSize(this->VirtualImageDimension,
+//            this->GetNumberOfLocalParameters());
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
@@ -126,8 +126,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
          * Do this in a try block to catch exceptions and print more useful info
          * then we otherwise get when exceptions are caught in MultiThreader. */
         try {
-            dataHolder->TransformAndEvaluateFixedPoint(virtualPoint, mappedFixedPoint,
-                    pointIsValid, fixedImageValue, false/*compute gradient*/, // true /*compute gradient*/,
+            dataHolder->TransformAndEvaluateFixedPoint(virtualPoint,
+                    mappedFixedPoint, pointIsValid, fixedImageValue,
+                    false/*compute gradient*/, // true /*compute gradient*/,
                     fixedImageDerivatives, threadID);
             if (pointIsValid) {
                 dataHolder->TransformAndEvaluateMovingPoint(virtualPoint,
@@ -148,11 +149,13 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         try {
             if (pointIsValid) {
 
-                dataHolder->UpdateQueues(scan_it, scan_mem, scan_para, threadID);
+                dataHolder->UpdateQueues(scan_it, scan_mem, scan_para,
+                        threadID);
                 pointIsValid = dataHolder->ComputeInformationFromQueues(scan_it,
                         scan_mem, scan_para, threadID);
                 dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
-                        scan_para, localDerivativeResult, metricValueResult, threadID);
+                        scan_para, localDerivativeResult, metricValueResult,
+                        threadID);
             }
         } catch (ExceptionObject & exc) {
             //NOTE: there must be a cleaner way to do this:
@@ -168,8 +171,8 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             metricValueSum += metricValueResult;
             /* Store the result. This depends on what type of
              * transform is being used. */
-            dataHolder->StoreDerivativeResult(localDerivativeResult, scan_it.GetIndex(),
-                    threadID);
+            dataHolder->StoreDerivativeResult(localDerivativeResult,
+                    scan_it.GetIndex(), threadID);
         }
 
         //next index
@@ -185,14 +188,16 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::InitializeScanning(
         const ImageRegionType &scan_region, ScanningIteratorType &scan_it,
-        ScanMemType &scan_mem, ScanParaType &scan_para, const ThreadIdType threadID) {
+        ScanMemType &scan_mem, ScanParaType &scan_para,
+        const ThreadIdType threadID) {
 
     scan_para.scan_region = scan_region;
     scan_para.I = this->m_FixedImage;
     scan_para.J = this->m_MovingImage;
+    scan_para.V = this->m_VirtualDomainImage;
     scan_para.r = this->GetRadius();
 
-    int nb_fill_zero = scan_para.I->GetBufferedRegion().GetIndex(0)
+    int nb_fill_zero = scan_para.V->GetBufferedRegion().GetIndex(0)
             - (scan_region.GetIndex(0) - scan_para.r[0]);
     if (nb_fill_zero < 0)
         nb_fill_zero = 0;
@@ -300,7 +305,6 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                 throw err;
             }
 
-
         }
 
         scan_mem.Qsuma2.push_back(suma2);
@@ -392,7 +396,6 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             ExceptionObject err(__FILE__, __LINE__, msg);
             throw err;
         }
-
 
     }
 
@@ -527,6 +530,8 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             scan_mem.gradI = fixedImageDerivatives;
             scan_mem.gradJ = movingImageDerivatives;
 
+            scan_mem.mappedMovingPoint = mappedMovingPoint;
+
         }
     } catch (ExceptionObject & exc) {
         //NOTE: there must be a cleaner way to do this:
@@ -535,7 +540,6 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         ExceptionObject err(__FILE__, __LINE__, msg);
         throw err;
     }
-
 
     return true;
 
@@ -548,6 +552,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         const ScanParaType &scan_para, DerivativeType &deriv,
         MeasureType &local_cc, const ThreadIdType threadID) {
 
+    DerivativeType deriv_wrt_image(VirtualImageDimension);
+    deriv_wrt_image.Fill(0.0);
+
     deriv.Fill(0.0);
 //    derivInv.Fill(0.0);
     local_cc = 1.0;
@@ -556,45 +563,47 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
     IndexType index = scan_it.GetIndex();
 
-    //    if (this->m_FixedImageMask) if (this->m_FixedImageMask->GetPixel( index ) < 0.25 )
-    //        return;
-
     LocalRealType sff = scan_mem.sff;
     LocalRealType smm = scan_mem.smm;
     LocalRealType sfm = scan_mem.sfm;
-    LocalRealType Ji = scan_mem.Ja; //finitediffimages[1]->GetPixel(index);
-    LocalRealType Ii = scan_mem.Ia; //finitediffimages[0]->GetPixel(index);
+    LocalRealType Ji = scan_mem.Ja;
+    LocalRealType Ii = scan_mem.Ia;
 
     FixedImageDerivativesType gradI = scan_mem.gradI;
     MovingImageDerivativesType gradJ = scan_mem.gradJ;
 
-//    CovariantVectorType gradI, gradJ;
-
     if (sff == 0.0 || smm == 0.0)
         return;
 
-//    gradI = m_FixedImageGradientCalculator->EvaluateAtIndex(index);
-//    gradJ = m_MovingImageGradientCalculator->EvaluateAtIndex(index);
-
     for (unsigned int qq = 0; qq < VirtualImageDimension; qq++) {
-        deriv[qq] -= 2.0 * sfm / (sff * smm) * (Ji - sfm / sff * Ii)
-                * gradI[qq];
-//        derivInv[qq] -= 2.0 * sfm / (sff * smm) * (Ii - sfm / smm * Ji)
-//                * gradJ[qq];
+//        deriv_wrt_image[qq] -= 2.0 * sfm / (sff * smm) * (Ji - sfm / sff * Ii)
+//        *gradI[qq];
+        deriv_wrt_image[qq] = 2.0 * sfm / (sff * smm) * (Ii - sfm / smm * Ji)
+                * gradJ[qq];
     }
 
     if (fabs(sff * smm) > 0)
         local_cc = sfm * sfm / (sff * smm);
 
-//    if (deriv.GetNorm() > 1e20 || derivInv.GetNorm() > 1e20) {
-//        std::cout << " ------------- DEBUG-----------------------------"
-//                << std::endl << "deriv.GetNorm() = " << deriv.GetNorm()
-//                << std::endl << " derivInv.GetNorm() = " << derivInv.GetNorm()
-//                << std::endl << "sff=" << sff << std::endl << "smm=" << smm
-//                << std::endl << "sfm=" << sfm << std::endl;
-//
-//        exit(-1);
-//    }
+
+    /* Use a pre-allocated jacobian object for efficiency */
+    MovingTransformJacobianType & jacobian =
+                              this->m_MovingTransformJacobianPerThread[threadID];
+
+    /** For dense transforms, this returns identity */
+    this->m_MovingTransform->GetJacobianWithRespectToParameters(
+            scan_mem.mappedMovingPoint, jacobian);
+
+    for (unsigned int par = 0; par < this->GetNumberOfLocalParameters();
+            par++) {
+
+        double sum = 0.0;
+        for (unsigned int dim = 0; dim < this->MovingImageDimension; dim++) {
+            sum += deriv_wrt_image[dim] * jacobian(dim, par);
+        }
+
+        deriv[par] = sum;
+    }
 
     return;
 

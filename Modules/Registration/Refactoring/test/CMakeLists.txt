@@ -15,6 +15,8 @@ set(ITK-RegistrationRefactoringTests
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
+  itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
+  itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -72,6 +74,14 @@ itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest)
+
+itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest)
+
+itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest)
 
 
 #itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
