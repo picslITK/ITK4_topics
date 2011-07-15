@@ -103,22 +103,29 @@ protected:
    */
   HessianType     m_Hessian;
   HessianType     m_HessianInverse;
-  DerivativeType  m_NewtonStep;
-  DerivativeType  m_ScaledNewtonStep;
-  DerivativeType  m_PreviousNewtonStep;
 
-  bool            m_LineSearchEnabled;
+  ParametersType  m_LocalHessian;
+  ParametersType  m_NewtonStep;
+  ParametersType  m_ScaledNewtonStep;
+
+  //bool            m_LineSearchEnabled;
 
   /** Do line search on the direction of the Newton step */
-  void LineSearch();
+  //void LineSearch();
 
   /** Estimate the Newton step that minimizes the local 2nd
    * order approximation */
   void EstimateNewtonStep();
 
   /** Estimate the Hessian with BFGS method */
-  void EstimateHessian(ParametersType x1, ParametersType x2,
-                       DerivativeType g1, DerivativeType g2);
+  void EstimateHessian();
+
+  /** Estimate the Newton step that minimizes the local 2nd
+   * order approximation with local support. */
+  void EstimateLocalNewtonStep();
+
+  /** Estimate the Hessian with BFGS method with local support. */
+  void EstimateLocalHessian();
 
   /** Translate the parameters into the scaled space */
   void ScalePosition(ParametersType p1, ParametersType &p2);
@@ -150,8 +157,8 @@ protected:
   virtual ~QuasiNewtonObjectOptimizer() {}
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  bool m_Maximize;
-  double m_LearningRate;
+  bool    m_Maximize;
+  double  m_LearningRate;
 
 private:
   QuasiNewtonObjectOptimizer(const Self &);     //purposely not implemented
