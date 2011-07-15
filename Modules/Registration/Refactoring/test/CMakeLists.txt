@@ -65,13 +65,14 @@ itk_add_test(NAME itkGradientDescentObjectOptimizerTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkGradientDescentObjectOptimizerTest)
 
-itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      --compare ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz
-                DATA{Baseline/itkDemonsImageToImageObjectRegistrationTest_r62r85_Out.nii.gz}
-      itkDemonsImageToImageObjectRegistrationTest
-      DATA{Input/r62slice.nii} DATA{Input/r85slice.nii}
-      ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz)
+# NOTE - this is waiting for new testing data images to be added
+#itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      --compare ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz
+#                DATA{Baseline/#itkDemonsImageToImageObjectRegistrationTest_r62r85_Out.nii.gz}
+#      itkDemonsImageToImageObjectRegistrationTest
+#      DATA{Input/r62slice.nii} DATA{Input/r85slice.nii}
+#      ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz)
 
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
 #      COMMAND ITK-RegistrationRefactoringTestDriver
