@@ -40,6 +40,7 @@
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
 
+
 namespace{
 // The following class is used to support callbacks
 // on the filter in the pipeline that follows later

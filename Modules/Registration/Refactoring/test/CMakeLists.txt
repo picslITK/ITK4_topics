@@ -18,6 +18,7 @@ set(ITK-RegistrationRefactoringTests
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -88,6 +89,11 @@ itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
       ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2Deformed.png
       ${ITK_BINARY_DIR}/Testing/BrainT1Slice2Output.nii
       )
+
+
+itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2)
 
 #itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
 #      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 1)
