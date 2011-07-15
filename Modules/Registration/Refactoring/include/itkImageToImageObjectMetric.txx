@@ -430,6 +430,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       }
     /* Allocate affine transforms for use in DeformationFieldTransform::
      * TransformCovariantVector, to avoid repeated stack allocation */
+    /* TODO: remove this, not needed anymore */
     typedef typename MovingDeformationFieldTransformType::AffineTransformType
                                                          AffineTransformType;
     this->m_AffineTransformPerThread[i] = AffineTransformType::New();
@@ -778,8 +779,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // sampling is used to compute only a subset of points.
     fixedGradient =
       m_FixedTransform->TransformCovariantVector( fixedGradient,
-                                                       mappedFixedPoint,
-                     this->m_AffineTransformPerThread[threadID].GetPointer() );
+                                                       mappedFixedPoint );
     }
 }
 
@@ -859,8 +859,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
     movingGradient =
       m_MovingTransform->TransformCovariantVector( movingGradient,
-                                                        mappedMovingPoint,
-                     this->m_AffineTransformPerThread[threadID].GetPointer() );
+                                                        mappedMovingPoint );
     }
 }
 

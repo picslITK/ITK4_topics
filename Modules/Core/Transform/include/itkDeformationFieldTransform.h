@@ -214,16 +214,12 @@ public:
   { itkExceptionMacro( "TransformCovariantVector(CovariantVector) "
     "unimplemented, use TransformCovariantVector(CovariantVector,Point)" ); }
 
-  /** Transform a CovariantVector of type InputCovariantVectorType, at point.
-   * For \c allocatedAffine, see GetJacobianWithRespectToPosition.
-   * FIXME: documentation. */
+  /** Transform a CovariantVector of type InputCovariantVectorType, at point. */
   virtual OutputCovariantVectorType TransformCovariantVector(
                         const InputCovariantVectorType &,
                         const InputPointType &) const;
 
-  /** Transform a CovariantVector of type InputVectorPixelType, at point.
-   * For \c allocatedAffine, see GetJacobianWithRespectToPosition.
-   * FIXME: documentation. */
+  /** Transform a CovariantVector of type InputVectorPixelType, at point. */
   virtual OutputVectorPixelType TransformCovariantVector(
                         const InputVectorPixelType &,
                         const InputPointType & ) const;
@@ -271,24 +267,13 @@ public:
   /**
    * Compute the jacobian with respect to the position, by point.
    * \c j will be resized as needed.
-   * \c allocatedAffine is an optinal raw C-pointer to an allocated
-   * transform of type DeformationFieldTransform::AffineTransformType,
-   * to used temporarily within this method. The goal is efficiency
-   * by avoiding stack instantiation within the method. User
-   * classes that are threaded will need to pass in a per-thread object
-   * for thread safety. Leaving as NULL will instantiate the transform
-   * on the stack.
    */
   virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
                                                 JacobianType &j ) const;
 
   /**
    * Compute the jacobian with respect to the position, by index.
-   * \c j will be resized as needed.
-   * \c allocatedAffine is an optinal raw C-pointer to an allocated
-   * transform of type DeformationFieldTransform::AffineTransformType,
-   * to used temporarily within this method. See
-   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+   * \c j will be resized as needed. */
   virtual void GetJacobianWithRespectToPosition(const IndexType  &x,
                                                 JacobianType &j ) const;
 
@@ -297,11 +282,7 @@ public:
    * respect to the position, by point. Note that this is different than
    * the jacobian of the inverse deformation field. This takes advantage
    * of the ability to compute the inverse jacobian of a deformation field
-   * by simply reversing the sign of the forward jacobian.
-   * \c allocatedAffine is an optinal raw C-pointer to an allocated
-   * transform of type DeformationFieldTransform::AffineTransformType,
-   * to used temporarily within this method. See
-   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+   * by simply reversing the sign of the forward jacobian. */
   virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
                                   const InputPointType & point,
                                   JacobianType & jacobian,
@@ -313,11 +294,7 @@ public:
    * respect to the position, by index.Note that this is different than
    * the jacobian of the inverse deformation field. This takes advantage
    * of the ability to compute the inverse jacobian of a deformation field
-   * by simply reversing the sign of the forward jacobian.
-   * \c allocatedAffine is an optinal raw C-pointer to an allocated
-   * transform of type DeformationFieldTransform::AffineTransformType,
-   * to used temporarily within this method. See
-   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+   * by simply reversing the sign of the forward jacobian. */
   virtual void GetInverseJacobianOfForwardFieldWithRespectToPosition(
                                   const IndexType & index,
                                   JacobianType & jacobian,
@@ -383,11 +360,7 @@ private:
    * depending on state of \c doInverseJacobian. Used by
    * public methods \c GetJacobianWithRespectToPosition and
    * \c GetInverseJacobianOfForwardFieldWithRespectToPosition to
-   * perform actual work.
-   * \c allocatedAffine is an optinal raw C-pointer to an allocated
-   * transform of type DeformationFieldTransform::AffineTransformType,
-   * to used temporarily within this method. See
-   * GetJacobianWithRespectToPosition( InputPointType, ... ) */
+   * perform actual work. */
   virtual void GetJacobianWithRespectToPositionInternal(
                                   const IndexType & index,
                                   JacobianType & jacobian,
