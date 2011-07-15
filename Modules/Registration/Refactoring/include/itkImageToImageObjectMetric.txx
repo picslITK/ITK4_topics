@@ -1151,7 +1151,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   ParametersType oldParameters(deltaParameters.size());
   ParametersType newParameters(deltaParameters.size());
 
-  itkExceptionMacro("Verify that MovingTransformType and FixedTransformType is correct below...");
+  //itkExceptionMacro("Verify that MovingTransformType and FixedTransformType are correct below...");
 
   if (isMovingTransform)
     {
@@ -1160,8 +1160,6 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       {
       newParameters[p] = oldParameters[p] + deltaParameters[p];
       }
-    MovingTransformPointer newMovingTransform = NULL;//MovingTransformType::New();
-    newMovingTransform->SetParameters(newParameters);
 
     MovingImagePointType point, oldMappedPoint, newMappedPoint;
     ContinuousIndex<double, MovingImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
@@ -1173,12 +1171,16 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       point = m_VirtualImageCornerPoints[c];
 
       oldMappedPoint = m_MovingTransform->TransformPoint(point);
-      newMappedPoint = newMovingTransform->TransformPoint(point);
+
+      m_MovingTransform->SetParameters(newParameters);
+      newMappedPoint = m_MovingTransform->TransformPoint(point);
+      m_MovingTransform->SetParameters(oldParameters); //restore parameters
+
       this->m_MovingImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
       this->m_MovingImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      itkExceptionMacro("Verify MovingImageDimension below...");
+      //itkExceptionMacro("Verify MovingImageDimension below...");
       for (unsigned int d=0; d<MovingImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
@@ -1212,12 +1214,16 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       point = m_VirtualImageCornerPoints[c];
 
       oldMappedPoint = m_FixedTransform->TransformPoint(point);
-      newMappedPoint = newFixedTransform->TransformPoint(point);
+
+      m_FixedTransform->SetParameters(newParameters);
+      newMappedPoint = m_FixedTransform->TransformPoint(point);
+      m_FixedTransform->SetParameters(oldParameters); //restore parameters
+
       this->m_FixedImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
       this->m_FixedImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      itkExceptionMacro("Verify FixedImageDimension below...");
+      //itkExceptionMacro("Verify FixedImageDimension below...");
       for (unsigned int d=0; d<FixedImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];

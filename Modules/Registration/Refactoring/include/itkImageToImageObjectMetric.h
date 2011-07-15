@@ -64,6 +64,10 @@ namespace itk
  *
  * \note Use of PreWarpImages option is not yet supported when also using
  * image masks.
+ *
+ * \note: EstimateScales and ComputeMaximumVoxelShift might be put into a
+ * separate class. Now it has a problem to get the transform type.
+ *
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
