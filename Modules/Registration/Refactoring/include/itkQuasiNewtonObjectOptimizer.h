@@ -124,8 +124,8 @@ protected:
   double                        m_MaximumVoxelShift;
   double                        m_MinimumVoxelShift;
 
-  StopConditionType             m_StopCondition;
-  std::ostringstream            m_StopConditionDescription;
+  //StopConditionType             m_StopCondition;
+  //std::ostringstream            m_StopConditionDescription;
 
   /** Function to compute the learning rate. */
   virtual double EstimateLearningRate(ParametersType step);

@@ -157,7 +157,7 @@ QuasiNewtonObjectOptimizer
       m_StopConditionDescription << "Learning rate is zero after "
                                  << this->GetCurrentIteration()
                                  << " iterations. This may be due to that"
-                                 << " the new step yields zero voxel shift.";
+                                 << " the new step yields little voxel shift.";
       this->StopOptimization();
       return;
       }

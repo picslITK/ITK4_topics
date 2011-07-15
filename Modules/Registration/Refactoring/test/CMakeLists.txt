@@ -89,9 +89,17 @@ itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTe
 itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkQuasiNewtonDemonsRegistrationTest
-      ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2.png
-      ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2Deformed.png
-      ${ITK_BINARY_DIR}/Testing/BrainT1Slice2Output.nii
+      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+      ${TEMP}/QNDemonsOutput.nii
+      )
+
+itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkQuasiNewtonObjectOptimizerTest
+      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+      ${TEMP}/QNOptOutput.nii
       )
 
 #itk_add_test(NAME itkEuclideanDistancePointSetMetricTest

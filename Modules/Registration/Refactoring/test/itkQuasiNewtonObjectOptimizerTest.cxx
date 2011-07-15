@@ -274,7 +274,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   //
   // results
   //
-  //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
+  std::cout << " Results: Transform = " << translationTransform->GetParameters() << std::endl;
   //warp the image with the deformation field
   /*
   typedef WarpImageFilter<

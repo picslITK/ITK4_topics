@@ -66,8 +66,6 @@ GradientDescentObjectOptimizer
     /* Compute value/derivative, using threader. */
     try
       {
-      if (m_CurrentIteration == 7)
-        int jj = 1;
       /* m_Gradient will be sized as needed by metric. If it's already
        * proper size, no new allocation is done. */
       this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
@@ -76,7 +74,7 @@ GradientDescentObjectOptimizer
       {
       m_StopCondition = MetricError;
       m_StopConditionDescription << "Metric error";
-      StopOptimization();
+      this->StopOptimization();
 
       // Pass exception to caller
       throw err;
@@ -102,7 +100,7 @@ GradientDescentObjectOptimizer
                                  << m_NumberOfIterations
                                  << ") exceeded.";
       m_StopCondition = MaximumNumberOfIterations;
-      StopOptimization();
+      this->StopOptimization();
       break;
       }
     } //while (!m_Stop)
@@ -130,7 +128,7 @@ GradientDescentObjectOptimizer
     {
     m_StopCondition = UpdateTransformParametersError;
     m_StopConditionDescription << "UpdateTransformParameters error";
-    StopOptimization();
+    this->StopOptimization();
 
     // Pass exception to caller
     throw err;
