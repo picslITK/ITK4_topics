@@ -24,18 +24,41 @@ namespace itk
 
 /** \class ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric
  * \brief Computes normalized cross correlation using a small neighborhood
- * on random sampled voxels between two images. Inherited from
- * ANTSNeighborhoodCorrelationImageToImageObjectMetric. Unlike using a
- * sliding window over all the image region, voxels are randomly sampled.
+ * on random sampled voxels between two images.
+ *
+ *
+ * Inherited from
+ * ANTSNeighborhoodCorrelationImageToImageObjectMetric.
+ *
+ * Voxels are randomly sampled, instead of using a sliding window
+ * over all the image region. Use multi-threading to do sampling.
+ *
+ * If the number of sampling is given to zero, it will use all voxels to
+ * compute metric. This should gives same result as
+ * ANTSNeighborhoodCorrelationImageToImageObjectMetric, only much slower.
+ *
+ * Please cite this reference for more details:
+ *
+ * Brian B. Avants, Nicholas J. Tustison, Gang Song, Philip A. Cook,
+ * Arno Klein, James C. Gee, A reproducible evaluation of ANTs similarity metric
+ * performance in brain image registration, NeuroImage, Volume 54, Issue 3,
+ * 1 February 2011, Pages 2033-2044, ISSN 1053-8119,
+ * DOI: 10.1016/j.neuroimage.2010.09.025.
+ *
+ * Around each voxel, the neighborhood is defined as a N-Dimensional
+ * rectangle centered at the voxel. The size of the rectangle is 2*radius+1.
+ * The normalized correlation between neighborhoods of fixed image and moving
+ * image are averaged over sampled pixels as the final metric.
+ *
  *
  *
  *  Example of usage:
  *
- *  typedef itk::ANTSNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
+ *  typedef itk::ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
  *  typedef MetricType::Pointer MetricTypePointer;
  *  MetricTypePointer metric = MetricType::New();
  *
- *  // initialization
+ *  // set all parameters
  *  metric->SetNumberOfSampling(1000);
  *  Size<Dimension> neighborhoodRadius;
  *  neighborhoodRadius.Fill(2);
@@ -45,17 +68,13 @@ namespace itk
  *  metric->SetFixedTransform(transformFix);
  *  metric->SetMovingTransform(transformMov);
  *
+ *  // initialization after parameters are set.
+ *  metric->Initialize();
+ *
  *  // getting derivative and metric value
  *  metric->GetValueAndDerivative(valueReturn, derivativeReturn);
  *
  *
- * Please cite this reference for more details:
- *
- * Brian B. Avants, Nicholas J. Tustison, Gang Song, Philip A. Cook,
- * Arno Klein, James C. Gee, A reproducible evaluation of ANTs similarity metric
- * performance in brain image registration, NeuroImage, Volume 54, Issue 3,
- * 1 February 2011, Pages 2033-2044, ISSN 1053-8119,
- * DOI: 10.1016/j.neuroimage.2010.09.025.
  *
  * This Class is templated over the type of the two input objects.
  * This is the base class for a hierarchy of similarity metrics that may, in
@@ -86,7 +105,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric, ImageToImageObjectMetric);
+  itkTypeMacro(Self, MetricBaseclass);
 
   /** superclass types */
   typedef typename Superclass::MeasureType             MeasureType;
@@ -115,16 +134,14 @@ public:
   typedef typename Superclass::FixedOutputPointType FixedOutputPointType;
   typedef typename Superclass::MovingOutputPointType MovingOutputPointType;
 
-
-  /** specifics for sliding window based image to image metric **/
   typedef typename VirtualImageType::RegionType VirtualImageRegionType;
-//  typedef typename VirtualImageType::IndexType VirtualIndexType;
   typedef typename VirtualImageType::SizeType RadiusType;
 
 
   itkStaticConstMacro(VirtualImageDimension, unsigned int,
               ::itk::GetImageDimension<VirtualImageType>::ImageDimension);
 
+public:
 
   /** Initialize. Must be called before first call to GetValue or
    *  GetValueAndDerivative, after metric settings are changed. */
@@ -137,12 +154,13 @@ public:
   MeasureType GetValue()
   { itkExceptionMacro("GetValue not yet implemented."); }
 
-
+  // Set number of samples used in computing metric. If it is zero, use all pixels
+  // in the image.
   itkSetMacro(NumberOfSampling, unsigned int);
+
+  // Get number of samples used in computing metric.
   itkGetMacro(NumberOfSampling, unsigned int);
 
-  itkSetMacro(Radius, RadiusType);
-  itkGetMacro(Radius, RadiusType);
 
 protected:
 
@@ -195,13 +213,8 @@ private:
                           ThreadIdType threadID,
                           MetricBaseclass * self);
 
-
+  // Number of samples used in computing metric.
   unsigned int m_NumberOfSampling;
-
-
-
-  RadiusType m_Radius;
-
 
   typedef typename Superclass::ScanningIteratorType ScanningIteratorType;
   typedef typename Superclass::ScanMemType ScanMemType;
@@ -220,11 +233,12 @@ private:
 protected:
   //sampling routine
   typedef std::vector< VirtualIndexType > VirtualImageSampleContainer;
-  /** Uniformly select a sample set from the fixed image domain. */
+  // Uniformly select a sample set from the fixed image domain.
   void SampleVirtualImageRegion(
           const VirtualImageRegionType &scan_region,
           VirtualImageSampleContainer & samples);
 
+  // Sample all voxels in the region
   void FullSampleVirtualImageRegion(
           const VirtualImageRegionType &scan_region,
           VirtualImageSampleContainer & samples);

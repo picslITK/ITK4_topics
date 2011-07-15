@@ -47,11 +47,6 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::Initialize(void) throw (ExceptionObject) {
     this->Superclass::Initialize();
-
-//    //Size the jacobian matrix here so we can do it
-//    // just once.
-//    m_Jacobian.SetSize(this->VirtualImageDimension,
-//            this->GetNumberOfLocalParameters());
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
@@ -75,7 +70,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::PrintSelf(std::ostream & os,
         Indent indent) const {
     Superclass::PrintSelf(os, indent);
-    os << indent << "correlation window radius: " << m_Radius << std::endl;
+    os << indent << "Correlation window radius: " << m_Radius << std::endl;
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
@@ -88,10 +83,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
     VirtualPointType virtualPoint;
     FixedOutputPointType mappedFixedPoint;
-    FixedImagePixelType fixedImageValue;
+    // FixedImagePixelType fixedImageValue;
     FixedImageDerivativesType fixedImageDerivatives;
     MovingOutputPointType mappedMovingPoint;
-    MovingImagePixelType movingImageValue;
+    // MovingImagePixelType movingImageValue;
     MovingImageDerivativesType movingImageDerivatives;
     bool pointIsValid;
     MeasureType metricValueResult;
@@ -117,48 +112,16 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         dataHolder->m_VirtualDomainImage->TransformIndexToPhysicalPoint(
                 scan_it.GetIndex(), virtualPoint);
 
-        /* Transform the point into fixed and moving spaces, and evaluate.
-         * These methods will check that the point lies within the mask if
-         * one has been set, and then verify they lie in the fixed or moving
-         * space as appropriate.
-         * If both tests pass, the point is evaluated and pointIsValid is
-         * returned as \c true.
-         * Do this in a try block to catch exceptions and print more useful info
-         * then we otherwise get when exceptions are caught in MultiThreader. */
-        if (0) {
-        try {
-            dataHolder->TransformAndEvaluateFixedPoint(virtualPoint,
-                    mappedFixedPoint, pointIsValid, fixedImageValue,
-                    false/*compute gradient*/, // true /*compute gradient*/,
-                    fixedImageDerivatives, threadID);
-            if (pointIsValid) {
-                dataHolder->TransformAndEvaluateMovingPoint(virtualPoint,
-                        mappedMovingPoint, pointIsValid, movingImageValue,
-                        false/*compute gradient*/, // true /*compute gradient*/,
-                        movingImageDerivatives, threadID);
-            }
-        } catch (ExceptionObject & exc) {
-            //NOTE: there must be a cleaner way to do this:
-            std::string msg("Caught exception: \n");
-            msg += exc.what();
-            ExceptionObject err(__FILE__, __LINE__, msg);
-            throw err;
-        }
-          }
         /* Call the user method in derived classes to do the specific
          * calculations for value and derivative. */
         try {
-          pointIsValid = true;
-            if (pointIsValid) {
+            dataHolder->UpdateQueues(scan_it, scan_mem, scan_para, threadID);
+            pointIsValid = dataHolder->ComputeInformationFromQueues(scan_it,
+                    scan_mem, scan_para, threadID);
+            dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
+                    scan_para, localDerivativeResult, metricValueResult,
+                    threadID);
 
-                dataHolder->UpdateQueues(scan_it, scan_mem, scan_para,
-                        threadID);
-                pointIsValid = dataHolder->ComputeInformationFromQueues(scan_it,
-                        scan_mem, scan_para, threadID);
-                dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
-                        scan_para, localDerivativeResult, metricValueResult,
-                        threadID);
-            }
         } catch (ExceptionObject & exc) {
             //NOTE: there must be a cleaner way to do this:
             std::string msg("Caught exception: \n");
@@ -243,15 +206,15 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         for (unsigned int indct = i; indct < hoodlen;
                 indct += (2 * scan_para.r[0] + 1)) {
 
-            // bool isInBounds = true;
-            // isInBounds should always be true
-            //   already checked in
-            //  NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback
-            // scan_it.GetPixel(indct, isInBounds);
+//             bool isInBounds = true;
+//             isInBounds should always be true
+//               already checked in
+//              NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback
+//             scan_it.GetPixel(indct, isInBounds);
 
             typename FixedImageType::IndexType index = scan_it.GetIndex(indct);
 
-            // if ( !isInBounds || ( this->m_FixedImageMask && this->m_FixedImageMask->GetPixel( index ) < 0.25 ) )
+//            if ( !isInBounds || ( this->m_FixedImageMask && this->m_FixedImageMask->GetPixel( index ) < 0.25 ) )
 //            if (!isInBounds) {
 //                // std::cout << "DEBUG: error" << std::endl;
 //                continue;
@@ -587,10 +550,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     if (fabs(sff * smm) > 0)
         local_cc = sfm * sfm / (sff * smm);
 
-
     /* Use a pre-allocated jacobian object for efficiency */
     MovingTransformJacobianType & jacobian =
-                              this->m_MovingTransformJacobianPerThread[threadID];
+            this->m_MovingTransformJacobianPerThread[threadID];
 
     /** For dense transforms, this returns identity */
     this->m_MovingTransform->GetJacobianWithRespectToParameters(
