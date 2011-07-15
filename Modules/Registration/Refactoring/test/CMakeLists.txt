@@ -20,6 +20,11 @@ set(ITK-RegistrationRefactoringTests
   itkQuasiNewtonDemonsRegistrationTest.cxx
 )
 
+set(BASELINE ${ITK_DATA_ROOT}/Baseline/Review)
+set(INPUTDATA ${ITK_DATA_ROOT}/Input)
+set(BASELINE_ROOT ${ITK_DATA_ROOT}/Baseline)
+set(TEMP ${ITK_TEST_OUTPUT_DIR})
+
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
 
 itk_add_test(NAME itkNewClassExampleTest
