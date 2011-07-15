@@ -75,7 +75,7 @@ itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
 #      COMMAND ITK-RegistrationRefactoringTestDriver
 #      itkDemonsImageToImageObjectRegistrationTest2)
 
-itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
+ itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest)
 
@@ -96,9 +96,12 @@ itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
       )
 
 
-itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2)
+#TODO
+# itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2)
+
+
 
 #itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
 #      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 1)

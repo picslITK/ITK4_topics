@@ -27,7 +27,22 @@ namespace itk {
 
 /** \class ANTSNeighborhoodCorrelationImageToImageObjectMetric
  * \brief Computes normalized cross correlation using a small neighborhood
- * for each voxel between two images. Use on-the-fly queues with multi-threading
+ * for each voxel between two images.
+ *
+ * Please cite this reference for more details:
+ *
+ * Brian B. Avants, Nicholas J. Tustison, Gang Song, Philip A. Cook,
+ * Arno Klein, James C. Gee, A reproducible evaluation of ANTs similarity metric
+ * performance in brain image registration, NeuroImage, Volume 54, Issue 3,
+ * 1 February 2011, Pages 2033-2044, ISSN 1053-8119,
+ * DOI: 10.1016/j.neuroimage.2010.09.025.
+ *
+ * Around each voxel, the neighborhood is defined as a N-Dimensional
+ * rectangle centered at the voxel. The size of the rectangle is 2*radius+1.
+ * The normalized correlation between neighborhoods of fixed image and moving
+ * image are averaged over the whole image as the final metric.
+ *
+ * Use on-the-fly queues with multi-threading
  * to compute sliding windows of the neighborhood to save memory.
  *
  *
@@ -37,24 +52,21 @@ namespace itk {
  *  typedef MetricType::Pointer MetricTypePointer;
  *  MetricTypePointer metric = MetricType::New();
  *
- *  // initialization
+ *  // set all parameters
+ *  Size<Dimension> neighborhoodRadius;
+ *  neighborhoodRadius.Fill(2);
  *  metric->SetRadius(neighborhood_radius);
  *  metric->SetFixedImage(fixedImage);
  *  metric->SetMovingImage(movingImage);
  *  metric->SetFixedTransform(transformFix);
  *  metric->SetMovingTransform(transformMov);
  *
+ *  // initialization after parameters are set.
+ *  metric->Initialize();
+ *
  *  // getting derivative and metric value
  *  metric->GetValueAndDerivative(valueReturn, derivativeReturn);
  *
- *
- * Please cite this reference for more details:
- *
- * Brian B. Avants, Nicholas J. Tustison, Gang Song, Philip A. Cook,
- * Arno Klein, James C. Gee, A reproducible evaluation of ANTs similarity metric
- * performance in brain image registration, NeuroImage, Volume 54, Issue 3,
- * 1 February 2011, Pages 2033-2044, ISSN 1053-8119,
- * DOI: 10.1016/j.neuroimage.2010.09.025.
  *
  * This Class is templated over the type of the two input objects.
  * This is the base class for a hierarchy of similarity metrics that may, in
@@ -76,12 +88,12 @@ public:
     typedef SmartPointer<const Self> ConstPointer;
 
     /** Method for creation through the object factory. */
-    itkNewMacro(Self)
-    ;
+    itkNewMacro(Self);
+
 
     /** Run-time type information (and related methods). */
-    itkTypeMacro(Self, Superclass)
-    ;
+    itkTypeMacro(Self, Superclass);
+
 
     /** superclass types */
     typedef typename Superclass::MeasureType MeasureType;
@@ -94,8 +106,7 @@ public:
     typedef typename Superclass::MovingImagePixelType MovingImagePixelType;
     typedef typename Superclass::MovingImageDerivativesType MovingImageDerivativesType;
     typedef typename Superclass::MovingTransformType MovingTransformType;
-//    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
-    typedef typename Superclass::MovingTransformJacobianType    MovingTransformJacobianType;
+    typedef typename Superclass::MovingTransformJacobianType MovingTransformJacobianType;
 
     typedef typename Superclass::FixedImageType FixedImageType;
     typedef typename Superclass::MovingImageType MovingImageType;
@@ -107,11 +118,7 @@ public:
 
     typedef double InternalComputationValueType;
 
-    /** Initialize the Metric by making sure that all the components
-     *  are present and plugged together correctly     */
-    // virtual void Initialize(void) throw ( ExceptionObject ) = 0;
 
-    /** specifics for sliding window based image to image metric **/
     typedef typename VirtualImageType::RegionType ImageRegionType;
     typedef typename VirtualImageType::SizeType RadiusType;
     typedef typename VirtualImageType::IndexType IndexType;
@@ -126,10 +133,6 @@ public:
     itkStaticConstMacro(VirtualImageDimension, unsigned int,
                 ::itk::GetImageDimension<VirtualImageType>::ImageDimension);
 
-//  typedef CovariantVector<InternalComputationValueType,ImageDimension> CovariantVectorType;
-//  typedef Vector<InternalComputationValueType, ImageDimension> VectorType;
-
-// main member
 public:
 
     /** Initialize. Must be called before first call to GetValue or
@@ -145,7 +148,10 @@ public:
         itkExceptionMacro("GetValue not yet implemented.");
     }
 
+    // Set the radius of the neighborhood window centered at each pixel
     itkSetMacro(Radius, RadiusType);
+
+    // Get the Radius of the neighborhood window centered at each pixel
     itkGetMacro(Radius, RadiusType);
 
 
@@ -157,7 +163,7 @@ protected:
     typedef ConstNeighborhoodIterator<VirtualImageType> ScanningIteratorType;
     // one ScanMemType for each thread
     typedef struct ScanMemType {
-        // queus used in the scanning
+        // queues used in the scanning
         SumQueueType Qsuma2;
         SumQueueType Qsumb2;
         SumQueueType Qsuma;
@@ -233,37 +239,6 @@ protected:
 
     virtual void PrintSelf(std::ostream & os, Indent indent) const;
 
-//    /* Worker routine to process each point */
-//    bool GetValueAndDerivativeProcessPoint(
-//            const VirtualPointType & virtualPoint,
-//            const FixedImagePointType & mappedFixedPoint,
-//            const FixedImagePixelType & fixedImageValue,
-//            const FixedImageDerivativesType & fixedImageDerivatives,
-//            const MovingImagePointType & mappedMovingPoint,
-//            const MovingImagePixelType & movingImageValue,
-//            const MovingImageDerivativesType & movingImageDerivatives,
-//            MeasureType & metricValueResult,
-//            DerivativeType & localDerivativeReturn, ThreadIdType threadID);
-
-//  /** Initialize memory for threading.
-//   * \c derivativeReturn will be used to store the derivative results.
-//   * Typically this will be the user-supplied object from a call to
-//   * GetValueAndDerivative.
-//   * Inherited from ImageToImageObjectMetric, add threading memory
-//   * for scanning windows used in cross correlation
-//   */ //NOTE: make this private, or will a derived class want to override?
-//  virtual void InitializeThreadingMemory( DerivativeType & derivativeReturn );
-//
-//  /** Perform any initialization required before each evaluation of
-//   * value and derivative. This is distinct from Initialize, which
-//   * is called only once before a number of iterations, e.g. before
-//   * a registration loop.
-//   * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
-//   * threading starts.
-//   * Inherited from ImageToImageObjectMetric, zero the queues
-//   * */
-//  virtual void InitializeForIteration(void);
-
 private:
     //purposely not implemented
     ANTSNeighborhoodCorrelationImageToImageObjectMetric(
@@ -275,10 +250,8 @@ private:
             const ThreaderInputObjectType& virtualImageSubRegion,
             ThreadIdType threadID, Superclass * dataHolder);
 
+    // Radius of the neighborhood window centered at each pixel
     RadiusType m_Radius;
-
-//    MovingImageJacobianType m_Jacobian;
-
 };
 
 } // end namespace itk

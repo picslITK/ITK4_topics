@@ -27,16 +27,20 @@
 #include "itkTranslationTransform.h"
 
 #include "itkImageRegionConstIterator.h"
-
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
+
+/**
+ * Test program for ANTSNeighborhoodCorrelationImageToImageObjectMetric,
+ * using a synthectic image and initial deformation.
+ *
+ */
+
 
 using namespace itk;
 
 template<class ImagePointerType, class DerivativeType>
 void PrintDerivativeAsVectorImage(ImagePointerType image, DerivativeType &derivative, unsigned int vecdim){
 
-    // typedef typename ImageType::ConstPointer ImageConstPointerType;
-    // ImageConstPointerType image = imageP;
 
     typedef typename ImagePointerType::ObjectType ImageType;
     typename ImageType::RegionType imageRegion = image->GetBufferedRegion();
@@ -85,7 +89,7 @@ void PrintImage(ImageType *imageP) {
     typedef ImageRegionConstIterator<ImageType> IteratorType;
     IteratorType it(image, imageRegion);
     it.Begin();
-//    unsigned int cnt = 0;
+
     for (unsigned ycnt = 0; ycnt < dim1; ycnt++) {
         for (unsigned xcnt = 0; xcnt < dim0; xcnt++) {
             std::cout << it.Get() << "\t";
@@ -110,7 +114,7 @@ void PrintImage(const ImagePointerType &image) {
     typedef ImageRegionConstIterator<ImageType> IteratorType;
     IteratorType it(image, imageRegion);
     it.Begin();
-//    unsigned int cnt = 0;
+
     for (unsigned ycnt = 0; ycnt < dim1; ycnt++) {
         for (unsigned xcnt = 0; xcnt < dim0; xcnt++) {
             std::cout << it.Get() << "\t";
@@ -126,16 +130,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
         int argc, char * argv[]) {
 
 
-    MultiThreader::SetGlobalMaximumNumberOfThreads(1);
-
-//  if (argc <= 3) {
-//    std::cout << "Args: 2D_fixed_image 2D_moving_image number_of_threads" << std::endl;
-//    exit(-1);
-//  }
-
-//  const char * filename1 = argv[1];
-//  const char * filename2 = argv[2];
-//  int number_of_threads = atoi(argv[3]);
+//    MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
     const int ImageDimension = 2;
 
@@ -167,19 +162,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
     CompositeTransformType::Pointer transformFComp =
             CompositeTransformType::New();
 
-//  typedef itk::ImageFileReader<ImageType> ReaderType;
-//  ReaderType::Pointer reader = ReaderType::New();
-//  reader->SetFileName(filename1);
-//  reader->Update();
-//  ImagePointerType fixedImage = reader->GetOutput();
-//
-//  ReaderType::Pointer reader2 = ReaderType::New();
-//  reader2->SetFileName(filename2);
-//  reader2->Update();
-//  ImagePointerType movingImage = reader2->GetOutput();
 
     const unsigned int imageSize = 6;
-//  const unsigned int imageDimensionality = 2;
 
     ImageType::SizeType size;
     size.Fill(imageSize);
@@ -230,6 +214,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 
     VectorType zero;
     float def_value = 2.5;
+
     def_value = -0.5;
     zero.Fill(def_value);
     FieldType::Pointer field = FieldType::New();
@@ -241,7 +226,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
     field->FillBuffer(zero);
 
     FieldType::Pointer fieldInv = FieldType::New();
-//  def_value = 0;
+
     zero.Fill(def_value * (-1.0));
     fieldInv->SetRegions(fixedImage->GetLargestPossibleRegion());
     fieldInv->SetSpacing(fixedImage->GetSpacing());
@@ -263,7 +248,6 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
     transformFComp->AddTransform(transformFId);
 
     typedef itk::ANTSNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
-//   typedef DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType > MetricType;
 
     typedef MetricType::Pointer MetricTypePointer;
     MetricTypePointer metric = MetricType::New();
@@ -275,16 +259,13 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 
     metric->SetFixedImage(fixedImage);
     metric->SetMovingImage(movingImage);
+//TODO: not ready yet for composition transform
 //  metric->SetFixedTransform(transformFComp);
 //  metric->SetMovingTransform(transformMComp);
 
-//  transformMtranslation
-
     metric->SetFixedTransform(transformFId);
+    metric->SetMovingTransform(transformMdeformation);
 
-    //    metric->SetMovingTransform(transformMComp);
-  metric->SetMovingTransform(transformMdeformation);
-//  metric->SetMovingTransform(transformMtranslation2);
 
     std::cout << "fixedImage:" << std::endl;
     PrintImage(fixedImage);
@@ -298,7 +279,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 //    std::cout << "moving transform field:" << std::endl;
 //    PrintImage(field);
 
-    // metric->SetMovingTransform( movingTransform );
+
 
     /* Initialize. */
     try {
@@ -306,7 +287,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
         metric->Initialize();
     } catch (ExceptionObject & exc) {
         std::cout << "Caught unexpected exception during Initialize: " << exc;
+        std::cout << "Test FAILED." << std::endl;
         return EXIT_FAILURE;
+
     }
 
     // Evaluate
@@ -319,6 +302,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
         std::cout
                 << "Caught unexpected exception during GetValueAndDerivative: "
                 << exc;
+
+        std::cout << "Test FAILED." << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -340,104 +325,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 
 //  PrintImage(fieldInv);
 
-//  objectMetric->SetVirtualDomainSize(fixed_image->GetRequestedRegion().GetSize());
-//  objectMetric->SetVirtualDomainIndex(fixed_image->GetRequestedRegion().GetIndex());
-//  objectMetric->SetVirtualDomainSpacing(fixed_image->GetSpacing());
-//  objectMetric->SetVirtualDomainOrigin(fixed_image->GetOrigin());
-//  objectMetric->SetVirtualDomainDirection(fixed_image->GetDirection());
-//
-//
 
 
+    std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
 
 }
-
-//
-//
-//int main(int argc, char * argv[])
-//{
-//
-//  if (argc <= 3) {
-//    std::cout << "Args: 2D_fixed_image 2D_moving_image radius_in_one_dim number_of_threads" << std::endl;
-//    exit(-1);
-//  }
-//
-//  const char * filename1 = argv[1];
-//  const char * filename2 = argv[2];
-//  int radius_in_one_dim = atoi(argv[3]);
-//  int number_of_threads = atoi(argv[4]);
-//
-//
-//
-//
-//
-//  const int ImageDimension = 2;
-//  typedef itk::Image< unsigned char, ImageDimension > ImageType;
-//  typedef ImageType::Pointer ImagePointerType;
-//  typedef ImageType::RegionType RegionType;
-//
-//  typedef itk::Vector<float, ImageDimension> VectorType;
-//  typedef itk::Image<VectorType, ImageDimension> VectorImageType;
-//
-//
-//  typedef itk::ImageFileReader<ImageType> ReaderType;
-//  ReaderType::Pointer reader = ReaderType::New();
-//  reader->SetFileName(filename1);
-//  reader->Update();
-//  ImagePointerType fixed_image = reader->GetOutput();
-//
-//  ReaderType::Pointer reader2 = ReaderType::New();
-//  reader2->SetFileName(filename2);
-//  reader2->Update();
-//  ImagePointerType moving_image = reader2->GetOutput();
-//
-//  VectorImageType::Pointer field = VectorImageType::New();
-//  field->SetRegions(fixed_image->GetLargestPossibleRegion());
-//  field->Allocate();
-//
-//  VectorImageType::Pointer fieldInv = VectorImageType::New();
-//  fieldInv->SetRegions(fixed_image->GetLargestPossibleRegion());
-//  fieldInv->Allocate();
-//
-//  typedef itk::NeighborhoodNormalizedCrossCorrelationImageToImageMetric<ImageType, ImageType> ObjectMetricType;
-//  typedef itk::MetricThreadedHolder<ObjectMetricType, VectorImageType> MetricThreadedHolderType;
-//  typedef itk::ImageToData<ImageDimension, MetricThreadedHolderType> MetricThreaderType;
-//
-//
-//  itk::Size<ImageDimension> neighborhood_radius;
-//  neighborhood_radius.Fill(radius_in_one_dim);
-//
-//  // pseudo code
-//  ObjectMetricType::Pointer objectMetric = ObjectMetricType::New();
-//  MetricThreadedHolderType metricHolder;
-//  MetricThreaderType::Pointer metricThreader = MetricThreaderType::New();
-//
-//
-//  objectMetric->SetFixedImage(fixed_image);
-//  objectMetric->SetMovingImage(moving_image);
-//  objectMetric->SetRadius(neighborhood_radius);
-//  objectMetric->InitializeGradientCalculator();
-//
-////  metricHolder.SetMetricFunction(objectMetric);
-//  metricHolder.metric = objectMetric;
-//  metricHolder.updateField = field;
-//  metricHolder.updateFieldInv = fieldInv;
-//  metricHolder.measure_per_thread.resize(number_of_threads);
-//
-//  ImageType::RegionType inboundary_region = fixed_image->GetLargestPossibleRegion();
-//
-//  metricThreader->SetNumberOfThreads(number_of_threads);
-//  metricThreader->m_OverallRegion = inboundary_region ;
-//  metricThreader->m_Holder = &metricHolder;
-//  metricThreader->ThreadedGenerateData = MetricThreadedHolderType::ComputeMetricValueInRegionOnTheFlyThreaded;
-//
-//  metricThreader->GenerateData();
-//
-//  float energy = static_cast<float> (metricHolder.AccumulateMeasuresFromAllThreads());
-//
-//  std::cout << "cross correlation = " << energy << std::endl;
-//
-//  return 1;
-//
-//}

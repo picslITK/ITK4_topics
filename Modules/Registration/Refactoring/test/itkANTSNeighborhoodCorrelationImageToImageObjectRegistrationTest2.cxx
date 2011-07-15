@@ -17,12 +17,11 @@
 *=========================================================================*/
 
 /**
- * Test program for DemonImageToImageObjectMetric and
- * GradientDescentObjectOptimizer classes.
+ * Test program for ANTSNeighborhoodCorrelationImageToImageObjectMetric and
+ * GradientDescentObjectOptimizer classes, using Gaussian image source.
  *
  */
 
-//#include "itkDemonsImageToImageObjectMetric.h"
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
 
@@ -125,20 +124,6 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
   affineTransform->SetIdentity();
 
 
-
-
-//  //get the images
-//  fixedImageReader->Update();
-//  FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
-//  movingImageReader->Update();
-//  matcher->Update();
-//  MovingImageType::Pointer movingImage = matcher->GetOutput();
-  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
-
-
-
-
-
   //create a deformation field transform
     typedef TranslationTransform<double, Dimension> TranslationTransformType;
     TranslationTransformType::Pointer translationTransform =
@@ -217,6 +202,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
         std::cout << e.GetDescription() << std::endl;
         std::cout << e.what() << std::endl;
         pass = false;
+
+        std::cout << "Test PASSED." << std::endl;
         return EXIT_FAILURE;
     }
 
