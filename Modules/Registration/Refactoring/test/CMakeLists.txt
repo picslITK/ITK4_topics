@@ -12,7 +12,7 @@ set(ITK-RegistrationRefactoringTests
   itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-  itkDemonsImageToImageObjectRegistrationTest2.cxx
+#  itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
@@ -70,9 +70,9 @@ itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectRegistrationTest)
 
-itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      itkDemonsImageToImageObjectRegistrationTest2)
+#itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkDemonsImageToImageObjectRegistrationTest2)
 
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
