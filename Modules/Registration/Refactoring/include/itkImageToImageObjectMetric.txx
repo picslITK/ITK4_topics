@@ -1246,6 +1246,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
 
   m_VirtualImageCornerPoints.clear();
 
+  //itkExceptionMacro("Verify that VirtualImageDimension is correct below...");
+
   VirtualRegionType region = m_VirtualDomainImage->GetLargestPossibleRegion();
   VirtualIndexType firstCorner = region.GetIndex();
   VirtualIndexType corner;
@@ -1306,9 +1308,14 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     {
     if (parameterScales[i] == 0)
       {
-      parameterScales[i] = minNonZeroShift / 10;
+      parameterScales[i] = minNonZeroShift * minNonZeroShift;
+      //use NumericTraits<double>::max() if we don't want to
+      //optimize this parameter at all?
       }
-    parameterScales[i] *= parameterScales[i];
+    else
+      {
+      parameterScales[i] *= parameterScales[i];
+      }
     }
 
 }

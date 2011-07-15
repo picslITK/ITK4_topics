@@ -43,10 +43,9 @@ namespace itk
  * search is implemented but disabled by default. Instead, the voxel shift
  * is used in restricting step sizes.
  *
- * Currently the Hessian is estimated in the scaled parameter space. Since 2nd
- * order step is robust against scales, we will change it to the original
- * parameter space later. In addition, Sherman-Morrison formula may be used
- * for faster computation of the inverse Hessian.
+ * For metric classes using a deformation field, we have "local support" to
+ * compute the local update of the deformation field. In this case, we compute
+ * the local Quasi-Newton step at a specific index of the field.
  *
  * \ingroup Numerics Optimizers
  * \ingroup ITK-Optimizers
@@ -73,19 +72,6 @@ public:
 
   /** Type for Hessian matrix in the Quasi-Newton method */
   typedef Array2D<double>            HessianType;
-
-  /** Methods to configure the cost function. */
-  itkGetConstReferenceMacro(Maximize, bool);
-  itkSetMacro(Maximize, bool);
-  itkBooleanMacro(Maximize);
-  bool GetMinimize() const
-  { return !m_Maximize; }
-  void SetMinimize(bool v)
-  { this->SetMaximize(!v); }
-  void MinimizeOn()
-  { this->MaximizeOff(); }
-  void MinimizeOff()
-  { this->MaximizeOn(); }
 
   /** Start and run the optimization */
   virtual void StartOptimization();
@@ -114,7 +100,6 @@ protected:
 
   ParametersType  m_LocalHessian;
   ParametersType  m_NewtonStep;
-  ParametersType  m_ScaledNewtonStep;
 
   //bool            m_LineSearchEnabled;
 
@@ -135,18 +120,6 @@ protected:
   /** Estimate the Hessian with BFGS method with local support. */
   void EstimateLocalHessian();
 
-  /** Translate the parameters into the scaled space */
-  void ScalePosition(ParametersType p1, ParametersType &p2);
-
-  /** Translate the parameters into the original space */
-  void ScaleBackPosition(ParametersType p1, ParametersType &p2);
-
-  /** Translate the derivative into the scaled space */
-  void ScaleDerivative(DerivativeType g1, DerivativeType &p2);
-
-  /** Translate the derivative into the original space */
-  void ScaleBackDerivative(DerivativeType g1, DerivativeType &p2);
-
   double                        m_MaximumVoxelShift;
   double                        m_MinimumVoxelShift;
 
@@ -165,9 +138,7 @@ protected:
   virtual ~QuasiNewtonObjectOptimizer() {}
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  bool    m_Maximize;
   double  m_LearningRate;
-  bool    m_HasLocalSupport;
 
 private:
   QuasiNewtonObjectOptimizer(const Self &);     //purposely not implemented

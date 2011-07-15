@@ -159,7 +159,7 @@ int itkQuasiNewtonObjectOptimizerTest_Func( int argc,
   iterationCommand->SetOptimizer(  optimizer.GetPointer() );
 
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetMaximize(false);
+  //optimizer->SetMaximize(false);
 
   // Start from an Identity transform (in a normal case, the user
   // can probably provide a better guess than the identity...
