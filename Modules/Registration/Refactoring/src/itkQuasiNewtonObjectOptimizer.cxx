@@ -68,7 +68,9 @@ QuasiNewtonObjectOptimizer
 }
 
 /**
- * Advance one Step following the gradient direction
+ * Advance one Step: if the Quasi-Newton direction is consistent
+ * with the gradient direction, follow the Quasi-Newton direction,
+ * otherwise, follow the gradient direction.
  */
 void
 QuasiNewtonObjectOptimizer
@@ -76,14 +78,14 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("AdvanceOneStep");
 
-  double direction;
-  if ( this->m_Maximize )
+  bool hasLocalSupport = true;
+  //to be fixed
+  //hasLocalSupport = this->m_Metric->GetMovingTransform()->HasLocalSupport();
+
+  if ( hasLocalSupport )
     {
-    direction = 1.0;
-    }
-  else
-    {
-    direction = -1.0;
+    AdvanceOneLocalStep();
+    return;
     }
 
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
@@ -91,6 +93,8 @@ QuasiNewtonObjectOptimizer
   ScalesType scales = this->GetScales();
 
   double learningRate;
+
+  this->m_CurrentPosition = this->m_Metric->GetParameters();
 
   if (this->GetCurrentIteration() == 0)
     {
@@ -122,13 +126,12 @@ QuasiNewtonObjectOptimizer
    * approximation produces a convex instead of an expected concave, or
    * vice versa.
    */
-  if ( (!this->m_Maximize && inner_product(m_Gradient, m_ScaledNewtonStep) >= 0) ||
-       ( this->m_Maximize && inner_product(m_Gradient, m_ScaledNewtonStep) <= 0) )
+  if ( inner_product(m_Gradient, m_ScaledNewtonStep) <= 0 )
     {
     ParametersType step = m_Gradient;
     for (int i=0; i<spaceDimension; i++)
       {
-        step[i] = direction * step[i] / scales[i];
+        step[i] = step[i] / scales[i];
       }
     learningRate = this->EstimateLearningRate(step);
 
@@ -168,9 +171,9 @@ QuasiNewtonObjectOptimizer
     DerivativeType step(spaceDimension);
     for ( unsigned int j = 0; j < spaceDimension; j++ )
       {
-      step[j] = -direction * this->m_LearningRate * this->m_NewtonStep[j];
+      step[j] = this->m_LearningRate * this->m_NewtonStep[j];
       }
-    this->m_Metric->UpdateTransformParameters( step ); //how about direction?
+    this->m_Metric->UpdateTransformParameters( step );
 
     this->InvokeEvent( IterationEvent() );
 
@@ -178,11 +181,88 @@ QuasiNewtonObjectOptimizer
     }
 }
 
+/**
+ * Advance one Step: if the Quasi-Newton direction is consistent
+ * with the gradient direction, follow the Quasi-Newton direction,
+ * otherwise, follow the gradient direction.
+ */
+void
+QuasiNewtonObjectOptimizer
+::AdvanceOneLocalStep(void)
+{
+  const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
+  unsigned int curIt = this->GetCurrentIteration();
+  ScalesType scales = this->GetScales();
+
+  // Use reference to save memory copy
+  const ParametersType & currentPositionRef = this->m_Metric->GetParameters();
+
+  if (this->GetCurrentIteration() == 0)
+    {
+    m_PreviousPosition = currentPositionRef;
+    m_PreviousGradient = this->m_Gradient;
+    }
+
+  try
+    {
+    this->EstimateLocalNewtonStep();
+    }
+  catch ( ExceptionObject & excp )
+    {
+    m_StopCondition = QuasiNewtonStepError;
+    m_StopConditionDescription << "QuasiNewton step error after "
+                               << this->GetCurrentIteration()
+                               << " iterations. "
+                               << excp.GetDescription();
+    this->StopOptimization();
+    return;
+    }
+
+  /** Save for the next iteration */
+  m_PreviousPosition = currentPositionRef;
+  m_PreviousGradient = this->GetGradient();
+
+  double maxGradient = 0, maxNewtonStep = 0;
+  for ( unsigned int p=0; p<spaceDimension; p++ )
+    {
+    if (maxGradient < vcl_abs(m_Gradient[p]))
+      {
+      maxGradient = vcl_abs(m_Gradient[p]);
+      }
+    if (maxNewtonStep < vcl_abs(m_NewtonStep[p]))
+      {
+      maxNewtonStep = vcl_abs(m_NewtonStep[p]);
+      }
+    }
+
+  for ( unsigned int p=0; p<spaceDimension; p++ )
+    {
+    /** If a Newton step is on the opposite direction of a gradient step, we'd
+     * better use the gradient step. This happens when the second order
+     * approximation produces a convex instead of an expected concave, or
+     * vice versa.
+     */
+    if ( (m_Gradient[p] * m_NewtonStep[p]) <= 0 )
+      {
+      m_NewtonStep[p] = m_Gradient[p] / maxGradient;
+      }
+    else
+      {
+      m_NewtonStep[p] = m_NewtonStep[p] / maxNewtonStep;
+      }
+
+    } //end of for
+
+  this->m_Metric->UpdateTransformParameters( this->m_NewtonStep );
+
+  this->InvokeEvent( IterationEvent() );
+}
+
 /** Estimate Hessian step */
 void QuasiNewtonObjectOptimizer
 ::EstimateNewtonStep()
 {
-  int numPara = this->m_CurrentPosition.size();
+  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
 
   // Estimate Hessian
   EstimateHessian();
@@ -200,31 +280,11 @@ void QuasiNewtonObjectOptimizer
 
 }
 
-/** Estimate Hessian step */
-void QuasiNewtonObjectOptimizer
-::EstimateLocalNewtonStep()
-{
-  unsigned int numPara = m_CurrentPosition.size();
-
-  // Estimate Hessian
-  EstimateLocalHessian();
-
-  // Compute the Newton step
-  for (unsigned int i=0; i<numPara; i++)
-    {
-    m_NewtonStep[i] = - m_Gradient[i] / m_LocalHessian[i];
-    }
-
-  // Translate the step back into the original space
-  this->ScaleBackDerivative(m_NewtonStep, m_ScaledNewtonStep);
-
-}
-
 /** Estimate Hessian matrix */
 void QuasiNewtonObjectOptimizer
 ::EstimateHessian()
 {
-  int numPara = this->m_CurrentPosition.size();
+  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
 
   // Initialize Hessian to identity matrix
   if ( this->GetCurrentIteration() == 0 )
@@ -268,11 +328,30 @@ void QuasiNewtonObjectOptimizer
 
 }
 
+/** Estimate Hessian step */
+void QuasiNewtonObjectOptimizer
+::EstimateLocalNewtonStep()
+{
+  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
+
+  // Estimate Hessian
+  EstimateLocalHessian();
+
+  // Compute the Newton step
+  for (unsigned int i=0; i<numPara; i++)
+    {
+    m_NewtonStep[i] = - m_Gradient[i] / m_LocalHessian[i];
+    }
+
+}
+
 /** Estimate Hessian matrix */
 void QuasiNewtonObjectOptimizer
 ::EstimateLocalHessian()
 {
-  int numPara = this->m_CurrentPosition.size();
+  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
+  // Use reference to save memory copy
+  const ParametersType & currentPositionRef = this->m_Metric->GetParameters();
 
   // Initialize Hessian to identity matrix
   if ( this->GetCurrentIteration() == 0 )
@@ -291,7 +370,7 @@ void QuasiNewtonObjectOptimizer
 
   for (unsigned int i=0; i<numPara; i++)
     {
-    dx = this->m_CurrentPosition[i] - this->m_PreviousPosition[i];
+    dx = currentPositionRef[i] - this->m_PreviousPosition[i];
     dg = this->m_Gradient[i] - this->m_PreviousGradient[i];
     edg = m_LocalHessian[i] * dx;
 

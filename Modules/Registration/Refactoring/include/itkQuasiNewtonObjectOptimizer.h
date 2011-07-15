@@ -93,11 +93,19 @@ public:
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
 
+  /** Advance one step following the Quasi-Newton direction
+   * if the transform has local support. */
+  void AdvanceOneLocalStep(void);
+
 protected:
 
   /** The gradient in the previous step */
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
+
+  // Reference to current position
+  // Use reference to save memory copy
+  //ParametersType& m_CurrentPositionRef;
 
   /** The hessian estimated by a Quasi-Newton method
    */

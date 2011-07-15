@@ -309,11 +309,10 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::string defout=outfilename + std::string("_def") + ext;
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
-  //deformationwriter->Update();
+  deformationwriter->Update();
 
   //write the warped image into a file
-  //typedef double                           OutputPixelType;
-  typedef unsigned char                       OutputPixelType;
+  typedef double                              OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
