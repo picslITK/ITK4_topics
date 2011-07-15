@@ -117,9 +117,13 @@ public:
   virtual bool HasLocalSupport() const = 0;
 
   /** Update the parameters of the metric's active transform.
+   * Typically this call is passed through directly to the transform.
+   * \c factor is a scalar multiplier for each value in update, and
+   * defaults to 1.0 .
    * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
-  virtual void UpdateTransformParameters( DerivativeType & derivative ) = 0;
+  virtual void UpdateTransformParameters( DerivativeType & derivative,
+                                          ParametersValueType factor = 1.0) = 0;
 
   /** Estimate the scales of transform parameters. */
   virtual void EstimateScales(bool isMovingTransform, ParametersType &parameterScales) {}

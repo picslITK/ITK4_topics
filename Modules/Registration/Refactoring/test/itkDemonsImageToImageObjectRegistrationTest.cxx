@@ -220,6 +220,10 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetMovingTransform( deformationTransform );
   //  metric->SetMovingTransform( translationTransform );
 
+  metric->SetPreWarpImages( true );
+  //metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
+  metric->SetPrecomputeImageGradient( false );
+
   //Initialize the metric to prepare for use
   metric->Initialize();
 
@@ -235,7 +239,8 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl;
+            << "Learning rate: " << learningRate << std::endl
+            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
     {
     optimizer->StartOptimization();
@@ -316,7 +321,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
-                        OutputImageType > CastFilterType;
+                        OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();
@@ -329,5 +334,31 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   writer->Update();
 
+  //dbg: write out the pre-warped images
+  /*
+  if( metric->GetPreWarpImages() )
+    {
+    {
+    typedef ImageFileWriter< MovingImageType >  WriterType;
+    WriterType::Pointer  writer = WriterType::New();
+    std::string outfilename( argv[3] );
+    std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
+    std::string defout=outfilename + std::string("_MovingWarped") + ext;
+    writer->SetFileName( defout.c_str() );
+    writer->SetInput( metric->GetMovingWarpedImage() );
+    writer->Update();
+    }
+    {
+    typedef ImageFileWriter< FixedImageType >  WriterType;
+    WriterType::Pointer  writer = WriterType::New();
+    std::string outfilename( argv[3] );
+    std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
+    std::string defout=outfilename + std::string("_FixedWarped") + ext;
+    writer->SetFileName( defout.c_str() );
+    writer->SetInput( metric->GetFixedWarpedImage() );
+    writer->Update();
+    }
+    }
+  */
   return EXIT_SUCCESS;
 }
