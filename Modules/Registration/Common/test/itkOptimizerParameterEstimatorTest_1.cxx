@@ -15,6 +15,9 @@
  *  limitations under the License.
  *
  *=========================================================================*/
+
+//This test requires real images as parameters. It is skiped for the time being.
+
 #if defined(_MSC_VER)
 #pragma warning ( disable : 4786 )
 #endif

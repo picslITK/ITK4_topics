@@ -65,16 +65,11 @@ public:
 
   /** Estimate parameter scales and learning rate*/
   virtual void EstimateScales(ParametersType parameters,
-    ScalesType &scales)
-    {
-    }
+    ScalesType &scales) = 0;
 
   /** Compute the maximum voxel shift from the parameter change */
   virtual double ComputeMaximumVoxelShift(ParametersType parameters,
-    ParametersType deltaParameters)
-    {
-    return 0;
-    }
+    ParametersType deltaParameters) = 0;
 
 protected:
   OptimizerHelper(){};

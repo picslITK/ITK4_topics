@@ -70,7 +70,6 @@ public:
   /** Type of the transform to initialize */
   typedef TTransform                                TransformType;
   typedef typename TransformType::Pointer           TransformPointer;
-  typedef typename TransformType::ParametersType    ParametersType;
 
   /** The stratigies to decide scales */
   typedef enum { ScalesFromShift, ScalesFromJacobian } ScaleStrategyType;
