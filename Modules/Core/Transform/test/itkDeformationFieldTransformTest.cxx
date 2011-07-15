@@ -149,6 +149,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
 
   /* Initialize Affine transform and use to create deformation field */
   typedef itk::CenteredAffineTransform<double,2> AffineTransformType;
+  typedef AffineTransformType::Pointer AffineTransformPointer;
   typedef AffineTransformType::MatrixType AffineMatrixType;
   AffineMatrixType affineMatrix;
   affineMatrix(0,0) = 1.0;
@@ -197,14 +198,25 @@ int itkDeformationFieldTransformTest(int ,char *[] )
       return EXIT_FAILURE;
     }
 
-  /* GetJacobian with preallocated direction matrix */
-  DeformationTransformType::AffineTransformType::Pointer direction
-    = DeformationTransformType::AffineTransformType::New();
-  deformationTransform->GetJacobianWithRespectToPosition( testPoint, jacobian, direction );
-  std::cout << "Local jacobian estimated. " << std::endl << jacobian << std::endl;
-  if (!sameArray2D( jacobian, fieldJTruth, 1e-6 ) )
+  DeformationTransformType::JacobianType invfieldJTruth;
+  invfieldJTruth.SetSize(2,2);
+  invfieldJTruth(0,0) = affineTransform->GetInverseTransform()->GetParameters()[0];
+  invfieldJTruth(1,0) = affineTransform->GetInverseTransform()->GetParameters()[1];
+  invfieldJTruth(0,1) = affineTransform->GetInverseTransform()->GetParameters()[2];
+  invfieldJTruth(1,1) = affineTransform->GetInverseTransform()->GetParameters()[3];
+  deformationTransform->GetInverseJacobianOfForwardFieldWithRespectToPosition( testPoint, jacobian );
+  std::cout << "Local inverse jacobian estimated. " << std::endl << jacobian << std::endl;
+  if (!sameArray2D( jacobian, invfieldJTruth, 1e-1 ) )
     {
-      std::cout << "Failed getting local jacobian with preallocated direction tx. Should be " << std::endl << affineMatrix << std::endl;
+      std::cout << "Failed getting local inverse jacobian. Should be " << std::endl << invfieldJTruth << std::endl;
+      return EXIT_FAILURE;
+    }
+
+  deformationTransform->GetInverseJacobianOfForwardFieldWithRespectToPosition( testPoint, jacobian, true );
+  std::cout << "Local inverse jacobian estimated with SVD. " << std::endl << jacobian << std::endl;
+  if (!sameArray2D( jacobian, invfieldJTruth, 1e-1 ) )
+    {
+      std::cout << "Failed getting local inverse jacobian. Should be " << std::endl << invfieldJTruth << std::endl;
       return EXIT_FAILURE;
     }
 
@@ -330,7 +342,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   deformcVectorTruth = affineTransform->TransformCovariantVector( testcVector );
   deformcVector = deformationTransform->TransformCovariantVector( testcVector, testPoint );
   std::cout << "covariant vector 1 transformed: " << deformcVector << std::endl;
-  if( !sameVector( deformcVector, deformcVectorTruth, 0.0001 ) )
+  if( !sameVector( deformcVector, deformcVectorTruth, 0.1 ) )
       {
       std::cout << "Failed transforming vector 1. Should be "
                 << deformcVectorTruth << std::endl;
@@ -366,7 +378,7 @@ int itkDeformationFieldTransformTest(int ,char *[] )
   deformcVVector = deformationTransform->TransformCovariantVector( testcVVector, testPoint );
   std::cout << "variable length covariant vector 1 transformed: "
             << deformcVVector << std::endl;
-  if( !sameVariableVector( deformcVVector, deformcVVectorTruth, 0.0001 ) )
+  if( !sameVariableVector( deformcVVector, deformcVVectorTruth, 0.1 ) )
       {
       std::cout
         << "Failed transforming variable length covariant vector 1. Should be "

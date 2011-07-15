@@ -50,6 +50,9 @@ public:
   /**  Scale type. */
   typedef TransformParameters< double >             ScalesType;
 
+  /**  Parameters type. */
+  typedef TransformParameters< double >             ParametersType;
+
   /** Metric function type */
   typedef ObjectToObjectMetric                      MetricType;
   typedef MetricType::Pointer                       MetricTypePointer;
@@ -105,6 +108,9 @@ public:
       this->Modified();
       }
   }
+
+  /** Get current position of the optimization. */
+  itkGetConstReferenceMacro(CurrentPosition, ParametersType);
 
   /** Run the optimization.
    * \note Derived classes must override and call this supercall method, then
@@ -168,6 +174,11 @@ protected:
   /** Flag to indicate if a scalar scale value is being used instead
    * of a scales array. Defaults to false. */
   bool                          m_UseScalarScale;
+
+  // Keep m_CurrentPosition as a protected var so that subclasses can
+  // have fast access.  This is important when optimizing high-dimensional
+  // spaces, e.g. bspline transforms.
+  ParametersType                m_CurrentPosition;
 
 private:
 

@@ -36,8 +36,10 @@ itkVersorRigid3DTransformTest.cxx
 itkVersorTransformTest.cxx
 itkSplineKernelTransformTest.cxx
 itkDeformationFieldTransformTest.cxx
+itkTimeVaryingVelocityFieldTransformTest.cxx
 itkTransformParametersTest.cxx
 itkImageVectorTransformParametersHelperTest.cxx
+itkCompositeTransformTest.cxx
 )
 
 CreateTestDriver(ITK-Transform  "${ITK-Transform-Test_LIBRARIES}" "${ITK-TransformTests}")
@@ -153,9 +155,13 @@ itk_add_test(NAME itkSplineKernelTransformTest
       COMMAND ITK-TransformTestDriver itkSplineKernelTransformTest)
 itk_add_test(NAME itkDeformationFieldTransformTest
       COMMAND ITK-TransformTestDriver itkDeformationFieldTransformTest)
+itk_add_test(NAME itkTimeVaryingVelocityFieldTransformTest
+      COMMAND ITK-TransformTestDriver itkTimeVaryingVelocityFieldTransformTest )
 itk_add_test(NAME itkTransformParametersTest
          COMMAND ITK-TransformTestDriver
           itkTransformParametersTest)
 itk_add_test(NAME itkImageVectorTransformParametersHelperTest
          COMMAND ITK-TransformTestDriver
           itkImageVectorTransformParametersHelperTest)
+itk_add_test(NAME itkCompositeTransformTest
+      COMMAND ITK-TransformTestDriver itkCompositeTransformTest)

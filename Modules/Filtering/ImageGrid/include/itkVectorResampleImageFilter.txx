@@ -117,7 +117,8 @@ VectorResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType
 
   if (m_DefaultPixelValue.Size() == 0)
     {
-    NumericTraits<PixelType>::SetLength( m_DefaultPixelValue, this->GetInput()->GetNumberOfComponentsPerPixel() );
+    NumericTraits<PixelType>::SetLength( m_DefaultPixelValue,
+      this->GetInput()->GetNumberOfComponentsPerPixel() );
     m_DefaultPixelValue.Fill(0);
     }
 }
@@ -165,7 +166,8 @@ VectorResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType
   typedef ContinuousIndex< TInterpolatorPrecisionType, ImageDimension > ContinuousIndexType;
   ContinuousIndexType inputIndex;
 
-  //const unsigned int numberOfComponents = PixelType::GetNumberOfComponents();
+  // Doc says this only works for VectorImage, but Image implementation says otherwise...
+  const unsigned int numberOfComponents = this->GetInput()->GetNumberOfComponentsPerPixel();
 
   // Support for progress methods/callbacks
   ProgressReporter progress( this, threadId, outputRegionForThread.GetNumberOfPixels() );
@@ -188,14 +190,15 @@ VectorResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType
     if ( m_Interpolator->IsInsideBuffer(inputIndex) )
       {
       PixelType        pixval;
-      NumericTraits< PixelType >::SetLength( pixval, this->GetInput()->GetNumberOfComponentsPerPixel() );
+      NumericTraits< PixelType >::SetLength( pixval, numberOfComponents );
 
       const OutputType value =
         m_Interpolator->EvaluateAtContinuousIndex(inputIndex);
-      for ( unsigned int i = 0; i < this->GetInput()->GetNumberOfComponentsPerPixel(); i++ )
+      for ( unsigned int i = 0; i < numberOfComponents; i++ )
         {
         pixval[i] = static_cast< PixelComponentType >( value[i] );
         }
+
       outIt.Set(pixval);
       }
     else

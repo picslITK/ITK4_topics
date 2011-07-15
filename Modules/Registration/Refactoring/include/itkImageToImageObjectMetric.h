@@ -28,6 +28,7 @@
 #include "itkDeformationFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkIdentityTransform.h"
+#include "itkResampleImageFilter.h"
 
 namespace itk
 {
@@ -56,6 +57,13 @@ namespace itk
  *
  * Derived classes must implement pure virtual methods declared in
  * ObjectToObjectMetric.
+ *
+ * \warning When using PreWarpImages flag, it is assumed that the images are
+ * already in the virtual domain, e.g. via an affine transformation in the
+ * first step of a CompositeTransform.
+ *
+ * \note Use of PreWarpImages option is not yet supported when also using
+ * image masks.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
@@ -256,6 +264,20 @@ public:
                                 CoordinateRepresentationType>
                                                MovingGradientCalculatorType;
 
+  /** ResampleImageFilter types for image pre-warping */
+  typedef ResampleImageFilter< MovingImageType,
+                               VirtualImageType,
+                               MovingRealType >
+                                             MovingWarpResampleImageFilterType;
+  typedef typename MovingWarpResampleImageFilterType::Pointer
+                                          MovingWarpResampleImageFilterPointer;
+  typedef ResampleImageFilter< FixedImageType,
+                               VirtualImageType,
+                               FixedRealType >
+                                             FixedWarpResampleImageFilterType;
+  typedef typename FixedWarpResampleImageFilterType::Pointer
+                                          FixedWarpResampleImageFilterPointer;
+
   /**  Type of the measure. */
   typedef typename Superclass::MeasureType    MeasureType;
 
@@ -367,6 +389,11 @@ public:
   itkGetConstReferenceMacro(PrecomputeImageGradient, bool);
   itkBooleanMacro(PrecomputeImageGradient);
 
+  /** Set/Get pre-warping of images. */
+  itkSetMacro(PreWarpImages, bool);
+  itkGetConstReferenceMacro(PreWarpImages, bool);
+  itkBooleanMacro(PreWarpImages);
+
   /** Get number of threads to use.
    * \warning This value can change during Initialize, if the threader
    * determines that fewer threads would be more efficient. The value is
@@ -404,10 +431,12 @@ public:
    * classes mainly.
    * We're always optimizing the moving image transform, so return
    * its number of parameters. */
-  /* NOTE: could this go into ObjectToObjectMetric, along with a base
-   * pointer to transform? Or are transforms only every used for images? */
   virtual unsigned int GetNumberOfParameters() const
     { return this->m_MovingTransform->GetNumberOfParameters(); }
+
+  /** Get a const reference to the moving transform's parameters */
+  virtual const ParametersType & GetParameters() const
+  { return this->m_MovingTransform->GetParameters(); }
 
   /** Update the metric's transform parameters.
    * \c derivative must be the proper size, as retrieved
@@ -438,6 +467,16 @@ public:
    * GetDerivative will be called repeatedly. It must be called again if
    * metric settings are changed before beginning a new registration. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
+
+  /** Estimate the scales of transform parameters. */
+  void EstimateScales(bool isMovingTransform, ParametersType &parameterScales);
+
+  /** Compute the shift in voxels when deltaParameters is applied onto the
+   * current parameters. */
+  double ComputeMaximumVoxelShift(bool isMovingTransform, ParametersType deltaParameters);
+
+  /** Get the physical coordinates of image corners. */
+  void ComputeVirtualImageCornerPoints( );
 
 protected:
 
@@ -559,6 +598,7 @@ protected:
   /** Flag to control use of precomputed Gaussian gradient filter or gradient
    * calculator for image gradient calculations. */
   bool                               m_PrecomputeImageGradient;
+
   /** Gradient images to store Gaussian gradient filter output. */
   typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
   typename MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
@@ -566,6 +606,17 @@ protected:
   /** Image gradient calculators */
   typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
   typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
+
+  /** Flag to control pre-warping of images. */
+  bool                               m_PreWarpImages;
+
+  /** Pre-warped images. */
+  FixedImagePointer   m_FixedWarpedImage;
+  MovingImagePointer  m_MovingWarpedImage;
+
+  /** Resample image filters for pre-warping images */
+  MovingWarpResampleImageFilterPointer    m_MovingWarpResampleImageFilter;
+  FixedWarpResampleImageFilterPointer     m_FixedWarpResampleImageFilter;
 
   /** Derivative results holder. User a raw pointer so we can point it
    * to a user-provided object. This enables
@@ -676,6 +727,9 @@ private:
                           ThreadIdType threadId,
                           Self * dataHolder);
 
+  /** Pre-warp the images for efficiency and computational stability. */
+  void PreWarpImages( void );
+
   /** Flag to track if threading memory has been initialized since last
    * call to Initialize. */
   bool                    m_ThreadingMemoryHasBeenInitialized;
@@ -690,6 +744,8 @@ private:
   //purposely not implemented
   void operator=(const Self &);
 
+  //Sample point coordinates from the virtual image domain
+  std::vector<VirtualPointType> m_VirtualImageCornerPoints;
 };
 }//namespace itk
 
