@@ -156,7 +156,13 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
                                                     TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
-  translationTransform->SetIdentity();
+//  translationTransform->SetIdentity();
+  TranslationTransformType::ParametersType initial_translation;
+  initial_translation.SetSize(translationTransform->GetNumberOfParameters());
+  initial_translation[0] = 3;
+  initial_translation[1] = -5;
+
+  translationTransform->SetParameters(initial_translation);
 
   typedef DeformationFieldTransform<double, Dimension>
                                                     DeformationTransformType;
@@ -204,7 +210,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
   metric->SetMovingTransform( deformationTransform );
-  //  metric->SetMovingTransform( translationTransform );
+  // metric->SetMovingTransform( translationTransform );
+
+
 
   Size<Dimension> radSize;
   radSize.Fill(2);
@@ -226,6 +234,11 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl;
+
+
+//  std::cout << "initial para: " << translationTransform->GetParameters() << std::endl;
+
+
   try
     {
     optimizer->StartOptimization();
@@ -246,6 +259,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
             << "Metric: NumberOfValidPoints: "
             << metric->GetNumberOfValidPoints()
             << std::endl;
+
+//  std::cout << "final para: " << translationTransform->GetParameters() << std::endl;
 
   field = deformationTransform->GetDeformationField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()

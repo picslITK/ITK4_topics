@@ -607,6 +607,12 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         deriv[par] = sum;
     }
 
+//    for (unsigned int par = 0; par < this->GetNumberOfLocalParameters();
+//                par++) {
+//        std::cout << "deriv[" << par << "]=" << deriv[par];
+//    }
+//    std::cout << std::endl;
+
     return;
 
 }

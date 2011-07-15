@@ -183,10 +183,12 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( affineTransform );
+  // metric->SetMovingTransform( affineTransform );
 
   // metric->SetMovingTransform( deformationTransform );
-  //  metric->SetMovingTransform( translationTransform );
+  metric->SetMovingTransform( translationTransform );
+
+
   metric->SetRadius(radSize);
 
   //Initialize the metric to prepare for use
@@ -228,7 +230,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
 
 
   ParametersType actualParameters = imageSource->GetActualParameters();
-  ParametersType finalParameters  = affineTransform->GetParameters();
+  // ParametersType finalParameters  = affineTransform->GetParameters();
+  ParametersType finalParameters  = translationTransform->GetParameters();
 
   const unsigned int numbeOfParameters = actualParameters.Size();
 

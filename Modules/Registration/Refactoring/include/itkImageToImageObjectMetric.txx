@@ -879,6 +879,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   pointIsValid = true;
   movingImageValue = 0;
+
   mappedMovingPoint = m_MovingTransform->TransformPoint( point );
 
   // If user provided a mask over the Moving image
