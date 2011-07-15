@@ -71,38 +71,42 @@ class ITK_EXPORT ANTSNeighborhoodCorrelationImageToImageObjectMetric: public Ima
 public:
     /** Standard class typedefs. */
     typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric Self;
-    typedef ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage> Superclass;
-    typedef SmartPointer<Self> Pointer;
-    typedef SmartPointer<const Self> ConstPointer;
+    typedef ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+                                                                Superclass;
+    typedef SmartPointer<Self>                                  Pointer;
+    typedef SmartPointer<const Self>                            ConstPointer;
 
     /** Method for creation through the object factory. */
-    itkNewMacro(Self)
-    ;
+    itkNewMacro(Self);
 
     /** Run-time type information (and related methods). */
-    itkTypeMacro(Self, Superclass)
-    ;
+    itkTypeMacro(Self, Superclass);
 
     /** superclass types */
-    typedef typename Superclass::MeasureType MeasureType;
-    typedef typename Superclass::DerivativeType DerivativeType;
-    typedef typename Superclass::VirtualPointType VirtualPointType;
+    typedef typename Superclass::MeasureType         MeasureType;
+    typedef typename Superclass::DerivativeType      DerivativeType;
+    typedef typename Superclass::VirtualPointType    VirtualPointType;
     typedef typename Superclass::FixedImagePointType FixedImagePointType;
     typedef typename Superclass::FixedImagePixelType FixedImagePixelType;
-    typedef typename Superclass::FixedImageDerivativesType FixedImageDerivativesType;
+    typedef typename Superclass::FixedImageDerivativesType
+                                                FixedImageDerivativesType;
+
     typedef typename Superclass::MovingImagePointType MovingImagePointType;
     typedef typename Superclass::MovingImagePixelType MovingImagePixelType;
-    typedef typename Superclass::MovingImageDerivativesType MovingImageDerivativesType;
+    typedef typename Superclass::MovingImageDerivativesType
+                                                     MovingImageDerivativesType;
     typedef typename Superclass::MovingTransformType MovingTransformType;
 //    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
-    typedef typename Superclass::MovingTransformJacobianType    MovingTransformJacobianType;
+    typedef typename Superclass::MovingTransformJacobianType
+                                                    MovingTransformJacobianType;
 
-    typedef typename Superclass::FixedImageType FixedImageType;
-    typedef typename Superclass::MovingImageType MovingImageType;
-    typedef typename Superclass::VirtualImageType VirtualImageType;
-    typedef typename Superclass::ThreaderInputObjectType ThreaderInputObjectType;
-    typedef typename Superclass::FixedOutputPointType FixedOutputPointType;
-    typedef typename Superclass::MovingOutputPointType MovingOutputPointType;
+    typedef typename Superclass::FixedImageType           FixedImageType;
+    typedef typename Superclass::MovingImageType          MovingImageType;
+    typedef typename Superclass::VirtualImageType         VirtualImageType;
+    typedef typename Superclass::ThreaderInputObjectType
+                                                        ThreaderInputObjectType;
+    typedef typename Superclass::FixedOutputPointType   FixedOutputPointType;
+    typedef typename Superclass::MovingOutputPointType  MovingOutputPointType;
 
 
     typedef double InternalComputationValueType;
@@ -113,8 +117,8 @@ public:
 
     /** specifics for sliding window based image to image metric **/
     typedef typename VirtualImageType::RegionType ImageRegionType;
-    typedef typename VirtualImageType::SizeType RadiusType;
-    typedef typename VirtualImageType::IndexType IndexType;
+    typedef typename VirtualImageType::SizeType   RadiusType;
+    typedef typename VirtualImageType::IndexType  IndexType;
 
     /* Image dimension accessors */
     itkStaticConstMacro(FixedImageDimension, unsigned int,
@@ -152,8 +156,8 @@ public:
 protected:
 
     // interested values here updated during scanning
-    typedef InternalComputationValueType QUEUEREALTYPE;
-    typedef std::deque<QUEUEREALTYPE> SumQueueType;
+    typedef InternalComputationValueType                QUEUEREALTYPE;
+    typedef std::deque<QUEUEREALTYPE>                   SumQueueType;
     typedef ConstNeighborhoodIterator<VirtualImageType> ScanningIteratorType;
     // one ScanMemType for each thread
     typedef struct ScanMemType {

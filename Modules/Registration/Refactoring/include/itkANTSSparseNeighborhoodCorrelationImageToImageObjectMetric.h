@@ -109,11 +109,11 @@ public:
 
 
   typedef typename Superclass::ThreaderInputObjectType ThreaderInputObjectType;
-  typedef typename Superclass::FixedImageType FixedImageType;
-  typedef typename Superclass::MovingImageType MovingImageType;
-  typedef typename Superclass::VirtualImageType VirtualImageType;
-  typedef typename Superclass::FixedOutputPointType FixedOutputPointType;
-  typedef typename Superclass::MovingOutputPointType MovingOutputPointType;
+  typedef typename Superclass::FixedImageType          FixedImageType;
+  typedef typename Superclass::MovingImageType         MovingImageType;
+  typedef typename Superclass::VirtualImageType        VirtualImageType;
+  typedef typename Superclass::FixedOutputPointType    FixedOutputPointType;
+  typedef typename Superclass::MovingOutputPointType   MovingOutputPointType;
 
 
   /** specifics for sliding window based image to image metric **/
@@ -195,18 +195,14 @@ private:
                           ThreadIdType threadID,
                           MetricBaseclass * self);
 
-
   unsigned int m_NumberOfSampling;
-
-
 
   RadiusType m_Radius;
 
-
   typedef typename Superclass::ScanningIteratorType ScanningIteratorType;
-  typedef typename Superclass::ScanMemType ScanMemType;
-  typedef typename Superclass::ScanParaType ScanParaType;
-  typedef typename Superclass::SumQueueType SumQueueType;
+  typedef typename Superclass::ScanMemType          ScanMemType;
+  typedef typename Superclass::ScanParaType         ScanParaType;
+  typedef typename Superclass::SumQueueType         SumQueueType;
 
   // overload this function for arbitrary starting index
   inline void InitializeScanning(
