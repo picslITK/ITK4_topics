@@ -46,6 +46,8 @@ public:
     MaximumNumberOfIterations,
     MetricError,
     UpdateTransformParametersError,
+    StepTooSmall,
+    QuasiNewtonStepError,
     OtherError
     } StopConditionType;
 

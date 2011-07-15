@@ -28,7 +28,7 @@
 
 #include "itkImageRegionConstIterator.h"
 
-#include "itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric.h"
+#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 
 using namespace itk;
 
@@ -122,7 +122,7 @@ void PrintImage(const ImagePointerType &image) {
     return;
 }
 
-int itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest(
+int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
         int argc, char * argv[]) {
 
 
@@ -262,7 +262,7 @@ int itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest(
 //  transformMComp->AddTransform(transformMdeformation);
     transformFComp->AddTransform(transformFId);
 
-    typedef itk::ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
+    typedef itk::ANTSNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
 //   typedef DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType > MetricType;
 
     typedef MetricType::Pointer MetricTypePointer;

@@ -6,14 +6,15 @@ set(ITK-RegistrationRefactoringTests
   itkDeformationFieldTransformRegistrationTest.cxx
   itkArray1DToDataTest.cxx
   itkObjectToObjectOptimizerBaseTest.cxx
-  itkCompositeTransformTest.cxx
   itkObjectToObjectMetricTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
   itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest
+  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
   itkDemonsImageToImageObjectRegistrationTest2.cxx
+  itkQuasiNewtonObjectOptimizerTest.cxx
+  itkQuasiNewtonDemonsRegistrationTest.cxx
 )
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
@@ -42,9 +43,6 @@ itk_add_test(NAME itkObjectToObjectOptimizerBaseTest
          COMMAND ITK-RegistrationRefactoringTestDriver
          itkObjectToObjectOptimizerBaseTest)
 
-itk_add_test(NAME itkCompositeTransformTest
-      COMMAND ITK-RegistrationRefactoringTestDriver itkCompositeTransformTest)
-
 itk_add_test(NAME itkObjectToObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver itkObjectToObjectMetricTest)
 
@@ -52,9 +50,9 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest
+itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
-      itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetricTest)
+      itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkGradientDescentObjectOptimizerTest
       COMMAND ITK-RegistrationRefactoringTestDriver
@@ -67,6 +65,14 @@ itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
 itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectRegistrationTest2)
+
+itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkQuasiNewtonDemonsRegistrationTest
+      ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2.png
+      ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2Deformed.png
+      ${ITK_BINARY_DIR}/Testing/BrainT1Slice2Output.nii
+      )
 
 #itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
 #      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 1)

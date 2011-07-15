@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_h
-#define __itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric_h
+#ifndef __itkANTSNeighborhoodCorrelationImageToImageObjectMetric_h
+#define __itkANTSNeighborhoodCorrelationImageToImageObjectMetric_h
 
 #include "itkImageToImageObjectMetric.h"
 #include "itkConstNeighborhoodIterator.h"
@@ -25,12 +25,18 @@
 
 namespace itk {
 
-/** \class ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric
+/** \class ANTSNeighborhoodCorrelationImageToImageObjectMetric
  * \brief Computes normalized cross correlation using a small neighborhood
  * for each voxel between two images. Use on-the-fly queues with multi-threading
  * to compute sliding windows of the neighborhood to save memory.
  *
+ *
  *  Example of usage:
+ *
+ *  typedef itk::ANTSNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
+ *  typedef MetricType::Pointer MetricTypePointer;
+ *  MetricTypePointer metric = MetricType::New();
+ *
  *  // initialization
  *  metric->SetRadius(neighborhood_radius);
  *  metric->SetFixedImage(fixedImage);
@@ -60,11 +66,11 @@ namespace itk {
  */
 template<class TFixedImage, class TMovingImage,
         class TVirtualImage = TFixedImage>
-class ITK_EXPORT ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric: public ImageToImageObjectMetric<
+class ITK_EXPORT ANTSNeighborhoodCorrelationImageToImageObjectMetric: public ImageToImageObjectMetric<
         TFixedImage, TMovingImage, TVirtualImage> {
 public:
     /** Standard class typedefs. */
-    typedef ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric Self;
+    typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric Self;
     typedef ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage> Superclass;
     typedef SmartPointer<Self> Pointer;
     typedef SmartPointer<const Self> ConstPointer;
@@ -219,8 +225,8 @@ private:
             MeasureType &local_cc, const ThreadIdType threadID);
 
 protected:
-    ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric();
-    virtual ~ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric();
+    ANTSNeighborhoodCorrelationImageToImageObjectMetric();
+    virtual ~ANTSNeighborhoodCorrelationImageToImageObjectMetric();
 
     virtual void PrintSelf(std::ostream & os, Indent indent) const;
 
@@ -257,7 +263,7 @@ protected:
 
 private:
     //purposely not implemented
-    ANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric(
+    ANTSNeighborhoodCorrelationImageToImageObjectMetric(
             const Self &);
     //purposely not implemented
     void operator=(const Self &);
@@ -275,7 +281,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkANTSNeighborhoodNormalizedCrossCorrelationImageToImageObjectMetric.txx"
+#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.txx"
 #endif
 
 #endif

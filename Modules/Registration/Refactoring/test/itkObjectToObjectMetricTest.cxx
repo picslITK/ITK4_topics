@@ -53,17 +53,24 @@ public:
     {
     value = 1.0; derivative.Fill(0.0);
     }
+
   unsigned int GetNumberOfLocalParameters() const
   { return 0; }
+
   bool HasLocalSupport() const
   { return false; }
+
   void UpdateTransformParameters( DerivativeType & ) {}
 
+  const ParametersType & GetParameters() const
+  { return m_Parameters; }
+
   void Initialize(void) throw ( itk::ExceptionObject ) {}
+
   void PrintSelf(std::ostream& os, itk::Indent indent) const
-  {
-    Superclass::PrintSelf( os, indent );
-  }
+  { Superclass::PrintSelf( os, indent ); }
+
+  ParametersType  m_Parameters;
 
 private:
   ObjectToObjectMetricSurrogate() {}

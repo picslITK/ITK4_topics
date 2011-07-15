@@ -18,12 +18,12 @@
 
 /**
  * Test program for DemonImageToImageObjectMetric and
- * GradientDescentObjectOptimizer classes.
+ * QuasiNewtonObjectOptimizer classes.
  *
  */
 
 #include "itkDemonsImageToImageObjectMetric.h"
-#include "itkGradientDescentObjectOptimizer.h"
+#include "itkQuasiNewtonObjectOptimizer.h"
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
@@ -64,7 +64,7 @@ public:
 
 using namespace itk;
 
-int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
+int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 {
 
   if( argc < 4 || argc > 7)
@@ -204,7 +204,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->Initialize();
 
   // Optimizer
-  typedef GradientDescentObjectOptimizer  OptimizerType;
+  typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
@@ -282,15 +282,15 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
   //write out the deformation field
-  typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
+  /*typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
   std::string defout=outfilename + std::string("_def") + ext;
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
-  //deformationwriter->Update();
-
+  deformationwriter->Update();
+  */
   //write the warped image into a file
   //typedef double                           OutputPixelType;
   typedef unsigned char                       OutputPixelType;
