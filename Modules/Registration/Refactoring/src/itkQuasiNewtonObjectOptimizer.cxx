@@ -57,11 +57,18 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("StartOptimization");
 
-  // initialize scales
-  ScalesType scales(this->m_Metric->GetNumberOfParameters());
-  this->m_Metric->EstimateScales(true, scales);
-  this->SetScales(scales);
-  std::cout << " Estimated scales = " << scales << std::endl;
+  m_HasLocalSupport = true;
+  //to be fixed
+  //m_HasLocalSupport = this->m_Metric->GetMovingTransform()->HasLocalSupport();
+
+  if (!m_HasLocalSupport)
+    {
+    // initialize scales
+    ScalesType scales(this->m_Metric->GetNumberOfParameters());
+    this->m_Metric->EstimateScales(true, scales);
+    this->SetScales(scales);
+    std::cout << " Estimated scales = " << scales << std::endl;
+    }
 
   this->Superclass::StartOptimization();
 
@@ -78,11 +85,7 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("AdvanceOneStep");
 
-  bool hasLocalSupport = true;
-  //to be fixed
-  //hasLocalSupport = this->m_Metric->GetMovingTransform()->HasLocalSupport();
-
-  if ( hasLocalSupport )
+  if ( m_HasLocalSupport )
     {
     AdvanceOneLocalStep();
     return;

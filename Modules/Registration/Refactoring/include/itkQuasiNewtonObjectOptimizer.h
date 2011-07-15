@@ -167,6 +167,7 @@ protected:
 
   bool    m_Maximize;
   double  m_LearningRate;
+  bool    m_HasLocalSupport;
 
 private:
   QuasiNewtonObjectOptimizer(const Self &);     //purposely not implemented

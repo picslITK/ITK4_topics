@@ -1257,7 +1257,6 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   for( int i=0; i<cornerNumber; i++ )
     {
     int bit;
-    itkExceptionMacro("Verify that VirtualImageDimension is correct below...");
     for (int d=0; d<VirtualImageDimension; d++)
       {
       bit = (int) (( i & (1 << d) ) != 0); // 0 or 1
