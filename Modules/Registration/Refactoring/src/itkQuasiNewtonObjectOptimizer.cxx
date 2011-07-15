@@ -57,11 +57,7 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("StartOptimization");
 
-  m_HasLocalSupport = true;
-  //to be fixed
-  //m_HasLocalSupport = this->m_Metric->GetMovingTransform()->HasLocalSupport();
-
-  if (!m_HasLocalSupport)
+  if (!this->m_Metric->HasLocalSupport())
     {
     // initialize scales
     ScalesType scales(this->m_Metric->GetNumberOfParameters());
@@ -85,7 +81,7 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("AdvanceOneStep");
 
-  if ( m_HasLocalSupport )
+  if ( this->m_Metric->HasLocalSupport() )
     {
     AdvanceOneLocalStep();
     return;
@@ -124,21 +120,22 @@ QuasiNewtonObjectOptimizer
   m_PreviousPosition = this->GetCurrentPosition();
   m_PreviousGradient = this->GetGradient();
 
+  DerivativeType gradientStep = m_Gradient;
+  for (int i=0; i<spaceDimension; i++)
+    {
+    gradientStep[i] = gradientStep[i] / scales[i];
+    }
+
   /** If a Newton step is on the opposite direction of a gradient step, we'd
    * better use the gradient step. This happens when the second order
    * approximation produces a convex instead of an expected concave, or
    * vice versa.
    */
-  if ( inner_product(m_Gradient, m_ScaledNewtonStep) <= 0 )
+  if ( inner_product(gradientStep, m_NewtonStep) <= 0 )
     {
-    ParametersType step = m_Gradient;
-    for (int i=0; i<spaceDimension; i++)
-      {
-        step[i] = step[i] / scales[i];
-      }
-    learningRate = this->EstimateLearningRate(step);
-
+    learningRate = this->EstimateLearningRate(gradientStep);
     this->SetLearningRate( learningRate );
+
     if ( learningRate == 0)
       {
       m_StopCondition = StepTooSmall;
@@ -150,14 +147,12 @@ QuasiNewtonObjectOptimizer
       return;
       }
     this->GradientDescentObjectOptimizer::AdvanceOneStep();
-    return;
     }
   else
     {
     // Now a Newton step is on the consistent direction of a gradient step
     learningRate = this->EstimateLearningRate(m_NewtonStep);
     learningRate = vnl_math_min(learningRate, 1.0);
-
     this->SetLearningRate( learningRate );
 
     if ( learningRate == 0)
@@ -179,8 +174,6 @@ QuasiNewtonObjectOptimizer
     this->m_Metric->UpdateTransformParameters( step );
 
     this->InvokeEvent( IterationEvent() );
-
-    return;
     }
 }
 
@@ -238,6 +231,9 @@ QuasiNewtonObjectOptimizer
       }
     }
 
+  double scaleGradient = maxGradient / m_MaximumVoxelShift;
+  double scaleNewtonStep = maxNewtonStep / m_MaximumVoxelShift;
+
   for ( unsigned int p=0; p<spaceDimension; p++ )
     {
     /** If a Newton step is on the opposite direction of a gradient step, we'd
@@ -247,11 +243,11 @@ QuasiNewtonObjectOptimizer
      */
     if ( (m_Gradient[p] * m_NewtonStep[p]) <= 0 )
       {
-      m_NewtonStep[p] = m_Gradient[p] / maxGradient;
+      m_NewtonStep[p] = m_Gradient[p] / scaleGradient;
       }
     else
       {
-      m_NewtonStep[p] = m_NewtonStep[p] / maxNewtonStep;
+      m_NewtonStep[p] = m_NewtonStep[p] / scaleNewtonStep;
       }
 
     } //end of for
@@ -273,13 +269,8 @@ void QuasiNewtonObjectOptimizer
   // Compute the Newton step
   ParametersType sdx(numPara);
   sdx = m_HessianInverse * m_Gradient;
-  sdx = -1.0 * sdx;
-  m_NewtonStep = sdx;
 
-  // Translate the step back into the original space
-  ParametersType dx(numPara);
-  this->ScaleBackDerivative(sdx, dx);
-  m_ScaledNewtonStep = dx;
+  this->m_NewtonStep = -1.0 * sdx;
 
 }
 
@@ -340,6 +331,11 @@ void QuasiNewtonObjectOptimizer
   // Estimate Hessian
   EstimateLocalHessian();
 
+  if ( this->GetCurrentIteration() == 0 )
+    {
+    m_NewtonStep.SetSize(numPara);
+    }
+
   // Compute the Newton step
   for (unsigned int i=0; i<numPara; i++)
     {
@@ -392,51 +388,6 @@ void QuasiNewtonObjectOptimizer
       m_LocalHessian[i] = m_LocalHessian[i] + plus - minus;
       //m_LocalHessianInverse[i] = 1/newHessian;
       }
-    }
-}
-
-/** Translate the parameters into the scaled space */
-void QuasiNewtonObjectOptimizer::ScalePosition(ParametersType p1, ParametersType &p2)
-{
-  double scale = 1.0;
-  for (unsigned int i=0; i<p1.size(); i++)
-    {
-      scale = vcl_sqrt(this->GetScales()[i]);
-      p2[i] = p1[i] * scale;
-    }
-}
-
-/** Translate the parameters into the original space */
-void QuasiNewtonObjectOptimizer::ScaleBackPosition(ParametersType p1, ParametersType &p2)
-{
-  double scale = 1.0;
-  for (unsigned int i=0; i<p1.size(); i++)
-    {
-      scale = vcl_sqrt(this->GetScales()[i]);
-      p2[i] = p1[i] / scale;
-    }
-}
-
-/** Translate the derivative into the scaled space */
-void QuasiNewtonObjectOptimizer::ScaleDerivative(DerivativeType g1, DerivativeType &g2)
-{
-  double scale = 1.0;
-  for (unsigned int i=0; i<g1.size(); i++)
-    {
-      scale = vcl_sqrt(this->GetScales()[i]);
-      g2[i] = g1[i] / scale;
-    }
-}
-
-
-/** Translate the derivative into the original space */
-void QuasiNewtonObjectOptimizer::ScaleBackDerivative(DerivativeType g1, DerivativeType &g2)
-{
-  double scale = 1.0;
-  for (unsigned int i=0; i<g1.size(); i++)
-    {
-      scale = vcl_sqrt(this->GetScales()[i]);
-      g2[i] = g1[i] * scale;
     }
 }
 
