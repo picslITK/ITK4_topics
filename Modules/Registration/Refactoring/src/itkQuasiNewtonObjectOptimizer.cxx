@@ -134,8 +134,8 @@ QuasiNewtonObjectOptimizer
   if ( inner_product(gradientStep, m_NewtonStep) <= 0 )
     {
     learningRate = this->EstimateLearningRate(gradientStep);
-
     this->SetLearningRate( learningRate );
+
     if ( learningRate == 0)
       {
       m_StopCondition = StepTooSmall;
@@ -153,7 +153,6 @@ QuasiNewtonObjectOptimizer
     // Now a Newton step is on the consistent direction of a gradient step
     learningRate = this->EstimateLearningRate(m_NewtonStep);
     learningRate = vnl_math_min(learningRate, 1.0);
-
     this->SetLearningRate( learningRate );
 
     if ( learningRate == 0)
@@ -232,6 +231,9 @@ QuasiNewtonObjectOptimizer
       }
     }
 
+  double scaleGradient = maxGradient / m_MaximumVoxelShift;
+  double scaleNewtonStep = maxNewtonStep / m_MaximumVoxelShift;
+
   for ( unsigned int p=0; p<spaceDimension; p++ )
     {
     /** If a Newton step is on the opposite direction of a gradient step, we'd
@@ -241,11 +243,11 @@ QuasiNewtonObjectOptimizer
      */
     if ( (m_Gradient[p] * m_NewtonStep[p]) <= 0 )
       {
-      m_NewtonStep[p] = m_Gradient[p] / maxGradient;
+      m_NewtonStep[p] = m_Gradient[p] / scaleGradient;
       }
     else
       {
-      m_NewtonStep[p] = m_NewtonStep[p] / maxNewtonStep;
+      m_NewtonStep[p] = m_NewtonStep[p] / scaleNewtonStep;
       }
 
     } //end of for
@@ -328,6 +330,11 @@ void QuasiNewtonObjectOptimizer
 
   // Estimate Hessian
   EstimateLocalHessian();
+
+  if ( this->GetCurrentIteration() == 0 )
+    {
+    m_NewtonStep.SetSize(numPara);
+    }
 
   // Compute the Newton step
   for (unsigned int i=0; i<numPara; i++)

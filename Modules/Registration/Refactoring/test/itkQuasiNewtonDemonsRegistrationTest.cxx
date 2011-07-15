@@ -282,7 +282,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
   //write out the deformation field
-  /*typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
+  typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
@@ -290,10 +290,10 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
   deformationwriter->Update();
-  */
+
   //write the warped image into a file
-  //typedef double                           OutputPixelType;
-  typedef unsigned char                       OutputPixelType;
+  typedef double                              OutputPixelType;
+  //typedef unsigned char                       OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,

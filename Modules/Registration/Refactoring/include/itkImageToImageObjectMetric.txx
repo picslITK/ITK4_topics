@@ -1151,6 +1151,8 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   ParametersType oldParameters(deltaParameters.size());
   ParametersType newParameters(deltaParameters.size());
 
+  itkExceptionMacro("Verify that MovingTransformType and FixedTransformType is correct below...");
+
   if (isMovingTransform)
     {
     oldParameters = m_MovingTransform->GetParameters();
@@ -1158,7 +1160,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       {
       newParameters[p] = oldParameters[p] + deltaParameters[p];
       }
-    MovingTransformPointer newMovingTransform;// = MovingTransformType::New();
+    MovingTransformPointer newMovingTransform = NULL;//MovingTransformType::New();
     newMovingTransform->SetParameters(newParameters);
 
     MovingImagePointType point, oldMappedPoint, newMappedPoint;
@@ -1197,7 +1199,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       {
       newParameters[p] = oldParameters[p] + deltaParameters[p];
       }
-    MovingTransformPointer newFixedTransform;// = FixedTransformType::New();
+    MovingTransformPointer newFixedTransform = NULL; //FixedTransformType::New();
     newFixedTransform->SetParameters(newParameters);
 
     FixedImagePointType point, oldMappedPoint, newMappedPoint;
