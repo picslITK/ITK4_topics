@@ -221,7 +221,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * proper value in m_NumberOfThreads.
    */
 
-  /* Inititialize interpolators */
+  /* Inititialize interpolators.
+   * Note that if image pre-warping is enabled, interpolators will be
+   * updated as needed after pre-warped images are created. */
   m_FixedInterpolator->SetInputImage( m_FixedImage );
   m_MovingInterpolator->SetInputImage( m_MovingImage );
 
@@ -237,6 +239,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
           ( this->m_FixedInterpolator.GetPointer() );
   if ( !fixedTestPtr )
     {
+    /* It's a BSpline interpolator */
     m_FixedInterpolatorIsBSpline = false;
     m_FixedBSplineInterpolator = NULL;
     if( !m_PrecomputeImageGradient )
@@ -249,6 +252,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
+    /* It's not a BSpline interpolator */
     m_FixedInterpolatorIsBSpline = true;
     m_FixedBSplineInterpolator = fixedTestPtr;
     m_FixedBSplineInterpolator->SetNumberOfThreads(m_NumberOfThreads);
@@ -281,8 +285,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     m_MovingGradientCalculator = NULL;
     itkDebugMacro("Moving Interpolator is BSpline");
     }
-  /* If user set to use pre-calculated gradient image, and both interpolators
-   * aren't bspline, then we need to calculate the gradient images. */
+  /* If user set to use pre-calculated gradient image, and either interpolator
+   * isn't bspline, then we need to calculate the gradient images. */
   if ( m_PrecomputeImageGradient &&
        !( m_FixedInterpolatorIsBSpline && m_MovingInterpolatorIsBSpline ) )
     {
@@ -296,14 +300,24 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * option is set. */
   if( this->m_PreWarpImages )
     {
-    /*
-    m_MovingWarpedImage = MovingImageType::New();
-    m_MovingWarpedImage->CopyInformation( this->m_VirtualDomainImage );
-    m_MovingWarpedImage->Allocate();
-    m_FixedWarpedImage = FixedImageType::New();
-    m_FixedWarpedImage->CopyInformation( this->m_VirtualDomainImage );
-    m_FixedWarpedImage->Allocate();
-    */
+    if( this->m_FixedImageMask || this->m_MovingImageMask )
+      {
+      itkExceptionMacro("Use of m_PreWarpImages with image masks is not "
+                        "yet supported." );
+      }
+    if( this->m_PrecomputeImageGradient )
+      {
+      itkExceptionMacro("Use of m_PreWarpImages with m_PrecomputeImageGradient "
+                        "is not supported (currently, at least). ");
+      }
+    if( this->m_MovingInterpolatorIsBSpline || m_FixedInterpolatorIsBSpline )
+      {
+      /* Using BSpline with pre-warp option requires handling the two different
+       * ways bspline interpolators are used: 1) image gradient calcs; 2)
+       * interpolation. */
+      itkExceptionMacro("Use of BSpline interpolators is not currently "
+                        " with m_PreWarpImages option." );
+      }
     m_MovingWarpResampleImageFilter = MovingWarpResampleImageFilterType::New();
     m_MovingWarpResampleImageFilter->SetUseReferenceImage( true );
     m_MovingWarpResampleImageFilter->SetReferenceImage(
@@ -549,11 +563,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   MovingOutputPointType       mappedMovingPoint;
   MovingImagePixelType        movingImageValue;
   MovingImageDerivativesType  movingImageDerivatives;
-  bool                        pointIsValid;
+  bool                        pointIsValid = false;
   MeasureType                 metricValueResult;
   MeasureType                 metricValueSum = 0;
-
-  //DerivativeType   localDerivativeResult( self->GetNumberOfLocalParameters() );
 
   /* Get pre-allocated local results object. This actually provides very
    * little benefit, since this only gets called once for each thread. However
@@ -569,42 +581,76 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     self->m_VirtualDomainImage->TransformIndexToPhysicalPoint(
                                               ItV.GetIndex(), virtualPoint);
 
-    /* Transform the point into fixed and moving spaces, and evaluate.
-     * These methods will check that the point lies within the mask if
-     * one has been set, and then verify they lie in the fixed or moving
-     * space as appropriate.
-     * If both tests pass, the point is evaluated and pointIsValid is
-     * returned as \c true.
-     * Do this in a try block to catch exceptions and print more useful info
-     * then we otherwise get when exceptions are caught in MultiThreader. */
-    try
+    if( self->m_PreWarpImages )
       {
-      self->TransformAndEvaluateFixedPoint( virtualPoint,
-                                            mappedFixedPoint,
-                                            pointIsValid,
-                                            fixedImageValue,
-                                            true /*compute gradient*/,
-                                            fixedImageDerivatives,
-                                            threadID );
-      if( pointIsValid )
+      try
         {
-        self->TransformAndEvaluateMovingPoint( virtualPoint,
-                                              mappedMovingPoint,
-                                              pointIsValid,
-                                              movingImageValue,
-                                              true /*compute gradient*/,
-                                              movingImageDerivatives,
-                                              threadID );
+        self->EvaluatePreWarpedImagesAtIndex( ItV.GetIndex(),
+                                        virtualPoint,
+                                        true, /* compute gradient */
+                                        fixedImageValue,
+                                        movingImageValue,
+                                        fixedImageDerivatives,
+                                        movingImageDerivatives,
+                                        pointIsValid,
+                                        threadID );
+        /* Get the point in moving and fixed space for use below */
+        mappedFixedPoint =
+                      self->m_FixedTransform->TransformPoint( virtualPoint );
+        mappedMovingPoint =
+                      self->m_MovingTransform->TransformPoint( virtualPoint );
+        }
+      catch( ExceptionObject & exc )
+        {
+        //NOTE: there must be a cleaner way to do this. We want to add
+        // the this filename and line number to give user more useful
+        // information about where the exception was generated.
+        std::string msg("Caught exception: \n");
+        msg += exc.what();
+        ExceptionObject err(__FILE__, __LINE__, msg);
+        throw err;
         }
       }
-    catch( ExceptionObject & exc )
+    else
       {
-      //NOTE: there must be a cleaner way to do this:
-      std::string msg("Caught exception: \n");
-      msg += exc.what();
-      ExceptionObject err(__FILE__, __LINE__, msg);
-      throw err;
+      /* Transform the point into fixed and moving spaces, and evaluate.
+       * These methods will check that the point lies within the mask if
+       * one has been set, and then verify they lie in the fixed or moving
+       * space as appropriate.
+       * If both tests pass, the point is evaluated and pointIsValid is
+       * returned as \c true.
+       * Do this in a try block to catch exceptions and print more useful info
+       * then we otherwise get when exceptions are caught in MultiThreader. */
+      try
+        {
+        self->TransformAndEvaluateFixedPoint( virtualPoint,
+                                              mappedFixedPoint,
+                                              pointIsValid,
+                                              fixedImageValue,
+                                              true /*compute gradient*/,
+                                              fixedImageDerivatives,
+                                              threadID );
+        if( pointIsValid )
+          {
+          self->TransformAndEvaluateMovingPoint( virtualPoint,
+                                                mappedMovingPoint,
+                                                pointIsValid,
+                                                movingImageValue,
+                                                true /*compute gradient*/,
+                                                movingImageDerivatives,
+                                                threadID );
+          }
+        }
+      catch( ExceptionObject & exc )
+        {
+        //NOTE: there must be a cleaner way to do this:
+        std::string msg("Caught exception: \n");
+        msg += exc.what();
+        ExceptionObject err(__FILE__, __LINE__, msg);
+        throw err;
+        }
       }
+
 
     /* Call the user method in derived classes to do the specific
      * calculations for value and derivative. */
@@ -693,6 +739,40 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       }
     }
 }
+
+/*
+ * Evaluate at an index within pre-warped images.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::EvaluatePreWarpedImagesAtIndex( const VirtualIndexType & index,
+                                 const VirtualPointType & virtualPoint,
+                                 const bool computeImageGradient,
+                                 FixedImagePixelType & fixedImageValue,
+                                 MovingImagePixelType & movingImageValue,
+                                 FixedImageDerivativesType & fixedGradient,
+                                 MovingImageDerivativesType & movingGradient,
+                                 bool & pointIsValid,
+                                 const ThreadIdType threadID ) const
+{
+  /* For now, this is always true. When we enable mask usage with pre-warping,
+   * we'll check the mask here. */
+  pointIsValid = true;
+
+  /* TODO check mask */
+
+  /* Get the pixel values at this index */
+  fixedImageValue = m_FixedWarpedImage->GetPixel( index );
+  movingImageValue = m_MovingWarpedImage->GetPixel( index );
+
+  if( computeImageGradient )
+    {
+    ComputeFixedImageDerivatives( virtualPoint, fixedGradient, threadID );
+    ComputeMovingImageDerivatives( virtualPoint, movingGradient, threadID );
+    }
+}
+
 
 /*
  * Transform a point from VirtualImage domain to FixedImage domain.
@@ -946,7 +1026,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::PreWarpImages()
 {
   /* Call Modified to make sure the filter recalculates the output. We haven't
-   * changed any setting, but we assume the transform parameters have changed,
+   * changed any settings, but we assume the transform parameters have changed,
    * e.g. while used during registration. */
   m_MovingWarpResampleImageFilter->Modified();
   m_MovingWarpResampleImageFilter->Update();
@@ -955,6 +1035,22 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   m_FixedWarpResampleImageFilter->Modified();
   m_FixedWarpResampleImageFilter->Update();
   m_FixedWarpedImage = m_FixedWarpResampleImageFilter->GetOutput();
+
+  /* Point the interpolators to the warped images.
+   * We should try to skip this for efficiency. Will be possible if
+   * ResampleImageFilter always returns the same image pointer after
+   * its first update, or if it can be set to allocate output during init. */
+  if( m_FixedInterpolatorIsBSpline )
+    {
+    itkExceptionMacro(
+                "BSpline interpolators with pre-warping is not yet supported.");
+    }
+  else
+    {
+    /* No need to call Modified here on the calculators */
+    m_FixedGradientCalculator->SetInputImage( m_FixedWarpedImage );
+    m_MovingGradientCalculator->SetInputImage( m_MovingWarpedImage );
+    }
 }
 
 /*
@@ -1021,13 +1117,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::UpdateTransformParameters( DerivativeType & derivative )
+::UpdateTransformParameters( DerivativeType & derivative,
+                             ParametersValueType factor )
 {
   if( derivative.GetSize() != this->GetNumberOfParameters() )
     {
     itkExceptionMacro("derivative is not the proper size");
     }
-  this->m_MovingTransform->UpdateTransformParameters( derivative );
+  this->m_MovingTransform->UpdateTransformParameters( derivative, factor );
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
@@ -1151,7 +1248,7 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
   ParametersType oldParameters(deltaParameters.size());
   ParametersType newParameters(deltaParameters.size());
 
-  itkExceptionMacro("Verify that MovingTransformType and FixedTransformType is correct below...");
+  //itkExceptionMacro("Verify that MovingTransformType and FixedTransformType are correct below...");
 
   if (isMovingTransform)
     {
@@ -1160,8 +1257,6 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       {
       newParameters[p] = oldParameters[p] + deltaParameters[p];
       }
-    MovingTransformPointer newMovingTransform = NULL;//MovingTransformType::New();
-    newMovingTransform->SetParameters(newParameters);
 
     MovingImagePointType point, oldMappedPoint, newMappedPoint;
     ContinuousIndex<double, MovingImageDimension> oldMappedIndex, newMappedIndex, diffIndex;
@@ -1173,12 +1268,16 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       point = m_VirtualImageCornerPoints[c];
 
       oldMappedPoint = m_MovingTransform->TransformPoint(point);
-      newMappedPoint = newMovingTransform->TransformPoint(point);
+
+      m_MovingTransform->SetParameters(newParameters);
+      newMappedPoint = m_MovingTransform->TransformPoint(point);
+      m_MovingTransform->SetParameters(oldParameters); //restore parameters
+
       this->m_MovingImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
       this->m_MovingImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      itkExceptionMacro("Verify MovingImageDimension below...");
+      //itkExceptionMacro("Verify MovingImageDimension below...");
       for (unsigned int d=0; d<MovingImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
@@ -1212,12 +1311,16 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
       point = m_VirtualImageCornerPoints[c];
 
       oldMappedPoint = m_FixedTransform->TransformPoint(point);
-      newMappedPoint = newFixedTransform->TransformPoint(point);
+
+      m_FixedTransform->SetParameters(newParameters);
+      newMappedPoint = m_FixedTransform->TransformPoint(point);
+      m_FixedTransform->SetParameters(oldParameters); //restore parameters
+
       this->m_FixedImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
       this->m_FixedImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
 
       distance = 0.0;
-      itkExceptionMacro("Verify FixedImageDimension below...");
+      //itkExceptionMacro("Verify FixedImageDimension below...");
       for (unsigned int d=0; d<FixedImageDimension; d++)
         {
         diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];

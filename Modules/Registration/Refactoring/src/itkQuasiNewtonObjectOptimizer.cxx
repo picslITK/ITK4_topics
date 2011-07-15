@@ -62,6 +62,7 @@ QuasiNewtonObjectOptimizer
     // initialize scales
     ScalesType scales(this->m_Metric->GetNumberOfParameters());
     this->m_Metric->EstimateScales(true, scales);
+    //m_OptimizerHelper->EstimateScales(this->m_Metric->GetParameters(), scales);
     this->SetScales(scales);
     std::cout << " Estimated scales = " << scales << std::endl;
     }
@@ -88,10 +89,10 @@ QuasiNewtonObjectOptimizer
     }
 
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
-  unsigned int curIt = this->GetCurrentIteration();
   ScalesType scales = this->GetScales();
 
   double learningRate;
+  bool   newtonStepException = false;
 
   this->m_CurrentPosition = this->m_Metric->GetParameters();
 
@@ -105,15 +106,10 @@ QuasiNewtonObjectOptimizer
     {
     this->EstimateNewtonStep();
     }
-  catch ( ExceptionObject & excp )
+  catch ( ExceptionObject & )
     {
-    m_StopCondition = QuasiNewtonStepError;
-    m_StopConditionDescription << "QuasiNewton step error after "
-                               << this->GetCurrentIteration()
-                               << " iterations. "
-                               << excp.GetDescription();
-    this->StopOptimization();
-    return;
+    //This may happen with a singular hessian matrix
+    newtonStepException = true;
     }
 
   /** Save for the next iteration */
@@ -121,7 +117,7 @@ QuasiNewtonObjectOptimizer
   m_PreviousGradient = this->GetGradient();
 
   DerivativeType gradientStep = m_Gradient;
-  for (int i=0; i<spaceDimension; i++)
+  for (unsigned int i=0; i<spaceDimension; i++)
     {
     gradientStep[i] = gradientStep[i] / scales[i];
     }
@@ -131,7 +127,7 @@ QuasiNewtonObjectOptimizer
    * approximation produces a convex instead of an expected concave, or
    * vice versa.
    */
-  if ( inner_product(gradientStep, m_NewtonStep) <= 0 )
+  if ( newtonStepException || inner_product(gradientStep, m_NewtonStep) <= 0 )
     {
     learningRate = this->EstimateLearningRate(gradientStep);
     this->SetLearningRate( learningRate );
@@ -187,7 +183,6 @@ QuasiNewtonObjectOptimizer
 ::AdvanceOneLocalStep(void)
 {
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
-  unsigned int curIt = this->GetCurrentIteration();
   ScalesType scales = this->GetScales();
 
   // Use reference to save memory copy
@@ -288,7 +283,7 @@ void QuasiNewtonObjectOptimizer
     m_HessianInverse.SetSize(numPara, numPara);
     m_HessianInverse.Fill(0.0f);
 
-    for (int i=0; i<numPara; i++)
+    for (unsigned int i=0; i<numPara; i++)
       {
       m_Hessian[i][i] = 1.0; //identity matrix
       m_HessianInverse[i][i] = 1.0; //identity matrix
@@ -396,13 +391,13 @@ double QuasiNewtonObjectOptimizer
 ::EstimateLearningRate(ParametersType step)
 {
   ParametersType parameters = this->GetCurrentPosition();
-  int            numPara    = parameters.size();
 
   ScalesType     scales = this->GetScales();
 
   double shift, learningRate;
 
   shift = this->m_Metric->ComputeMaximumVoxelShift(true, step);
+  //shift = m_OptimizerHelper->ComputeMaximumVoxelShift(parameters, step);
 
   //initialize for the first time of executing EstimateLearningRate
   if (this->GetCurrentIteration() == 0 || m_MinimumVoxelShift == 0)

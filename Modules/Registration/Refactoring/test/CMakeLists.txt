@@ -12,7 +12,7 @@ set(ITK-RegistrationRefactoringTests
   itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-  itkDemonsImageToImageObjectRegistrationTest2.cxx
+#  itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
@@ -21,16 +21,21 @@ set(ITK-RegistrationRefactoringTests
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
 )
 
+set(BASELINE ${ITK_DATA_ROOT}/Baseline/Review)
+set(INPUTDATA ${ITK_DATA_ROOT}/Input)
+set(BASELINE_ROOT ${ITK_DATA_ROOT}/Baseline)
+set(TEMP ${ITK_TEST_OUTPUT_DIR})
+
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
 
 itk_add_test(NAME itkNewClassExampleTest
       COMMAND ITK-RegistrationRefactoringTestDriver itkNewClassExampleTest)
 
-itk_add_test(NAME itkTransformVirtualDomainCalculatorTest2D
-      COMMAND ITK-RegistrationRefactoringTestDriver itkTransformVirtualDomainCalculatorTest 2 ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm)
+#itk_add_test(NAME itkTransformVirtualDomainCalculatorTest2D
+#      COMMAND ITK-RegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 2 ${ITK_DATA_ROOT}/Input/#itkGDCMImageIOTest3.dcm ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm)
 
-itk_add_test(NAME itkTransformVirtualDomainCalculatorTest3D
-      COMMAND ITK-RegistrationRefactoringTestDriver itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/HeadMRVolumeWithDirection002.mhd)
+#itk_add_test(NAME itkTransformVirtualDomainCalculatorTest3D
+#      COMMAND ITK-RegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd)
 
 itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
@@ -66,9 +71,9 @@ itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectRegistrationTest)
 
-itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      itkDemonsImageToImageObjectRegistrationTest2)
+#itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkDemonsImageToImageObjectRegistrationTest2)
 
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver

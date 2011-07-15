@@ -56,9 +56,10 @@ public:
 
   enum { SpaceDimension=2 };
 
-  typedef Superclass::ParametersType      ParametersType;
-  typedef Superclass::DerivativeType      DerivativeType;
-  typedef Superclass::MeasureType         MeasureType;
+  typedef Superclass::ParametersType        ParametersType;
+  typedef Superclass::ParametersValueType   ParametersValueType;
+  typedef Superclass::DerivativeType        DerivativeType;
+  typedef Superclass::MeasureType           MeasureType;
 
   gradientMetric()
   {
@@ -100,7 +101,7 @@ public:
     return 0.0;
   }
 
-  void UpdateTransformParameters( DerivativeType & update )
+  void UpdateTransformParameters( DerivativeType & update, ParametersValueType )
   {
     m_Parameters += update;
   }
