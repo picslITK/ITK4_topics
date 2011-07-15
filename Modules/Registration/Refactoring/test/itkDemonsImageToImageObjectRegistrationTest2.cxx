@@ -32,7 +32,10 @@
 #include "itkVectorCastImageFilter.h"
 
 /* This test uses simple test images with circles created at runtime.
-   Modified from itkDemonsRegistrationFilterTest */
+ *  Modified from itkDemonsRegistrationFilterTest.
+ *
+ * IN PROGRESS Not currently working.
+ */
 
 namespace{
 // The following class is used to support callbacks
@@ -74,7 +77,7 @@ typename TImage::PixelType backgnd )
   typename TImage::IndexType index;
   double r2 = vnl_math_sqr( radius );
 
-  for( ; !it.IsAtEnd(); ++it )
+  for(; !it.IsAtEnd(); ++it )
     {
     index = it.GetIndex();
     double distance = 0;
@@ -96,10 +99,10 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   //typedef unsigned char PixelType;
   typedef double PixelType;
   enum {ImageDimension = 2};
-  typedef itk::Image<PixelType,ImageDimension> ImageType;
-  typedef ImageType::IndexType  IndexType;
-  typedef ImageType::SizeType   SizeType;
-  typedef ImageType::RegionType RegionType;
+  typedef itk::Image<PixelType,ImageDimension>  ImageType;
+  typedef ImageType::IndexType                  IndexType;
+  typedef ImageType::SizeType                   SizeType;
+  typedef ImageType::RegionType                 RegionType;
 
 
   unsigned int numberOfIterations = 200;
@@ -182,53 +185,6 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   identityTransform->SetIdentity();
 
   /*
-  typedef itk::VectorCastImageFilter<FieldType,FieldType> CasterType;
-  CasterType::Pointer caster = CasterType::New();
-  caster->SetInput( initField );
-  caster->InPlaceOff();
-
-  //-------------------------------------------------------------
-  std::cout << "Run registration and warp moving" << std::endl;
-
-  typedef itk::DemonsRegistrationFilter<ImageType,ImageType,FieldType>
-    RegistrationType;
-  RegistrationType::Pointer registrator = RegistrationType::New();
-
-  registrator->SetInitialDeformationField( caster->GetOutput() );
-  registrator->SetMovingImage( movingImage );
-  registrator->SetFixedImage( fixedImage );
-  registrator->SetNumberOfIterations( 200 );
-  registrator->SetStandardDeviations( 1.0 );
-  registrator->SetMaximumError( 0.08 );
-  registrator->SetMaximumKernelWidth( 10 );
-  registrator->SetIntensityDifferenceThreshold( 0.001 );
-
-  // turn on inplace execution
-  registrator->InPlaceOn();
-
-  // turn on/off use moving image gradient
-  registrator->UseMovingImageGradientOff();
-
-  typedef RegistrationType::DemonsRegistrationFunctionType FunctionType;
-  FunctionType * fptr;
-  fptr = dynamic_cast<FunctionType *>(
-    registrator->GetDifferenceFunction().GetPointer() );
-  fptr->Print( std::cout );
-
-  // exercise other member variables
-  std::cout << "No. Iterations: " << registrator->GetNumberOfIterations() << std::endl;
-  std::cout << "Max. kernel error: " << registrator->GetMaximumError() << std::endl;
-  std::cout << "Max. kernel width: " << registrator->GetMaximumKernelWidth() << std::endl;
-
-  double v[ImageDimension];
-  for ( unsigned int j = 0; j < ImageDimension; j++ )
-    {
-    v[j] = registrator->GetStandardDeviations()[j];
-    }
-  registrator->SetStandardDeviations( v );
-  */
-
-  /*
   typedef ShowProgressObject<RegistrationType> ProgressType;
   ProgressType progressWatch(registrator);
   itk::SimpleMemberCommand<ProgressType>::Pointer command;
@@ -237,7 +193,6 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
                                &ProgressType::ShowProgress);
   registrator->AddObserver( itk::ProgressEvent(), command);
   */
-
 
   // The metric
   typedef itk::DemonsImageToImageObjectMetric< ImageType, ImageType >

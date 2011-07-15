@@ -152,7 +152,6 @@
 #include "itkNeuralNetworkFileReader.txx"
 #include "itkNeuralNetworkFileWriter.txx"
 #include "itkObjectByObjectLabelMapFilter.txx"
-#include "itkObjectToObjectMetric.txx"
 #include "itkOverUnderColormapFunction.txx"
 #include "itkPadLabelMapFilter.txx"
 #include "itkPhilipsPAR.h"

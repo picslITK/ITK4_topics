@@ -46,6 +46,7 @@ namespace itk
  *
  * Both transforms are initialized to an IdentityTransform.
  *
+ * TODO: Update this for PreWarpImages option changes:
  * Image gradient calculation is performed in one of three ways:
  * 1) The BSplineInterpolator is used if it has been set by user as the
  * interpolator.
@@ -59,8 +60,8 @@ namespace itk
  * ObjectToObjectMetric.
  *
  * \warning When using PreWarpImages flag, it is assumed that the images are
- * already in the virtual domain, e.g. via an affine transformation in the
- * first step of a CompositeTransform.
+ * already in the virtual domain, for example via an initial affine
+ * transformation in the first step of a CompositeTransform.
  *
  * \note Use of PreWarpImages option is not yet supported when also using
  * image masks.
@@ -393,10 +394,14 @@ public:
   itkGetConstReferenceMacro(PrecomputeImageGradient, bool);
   itkBooleanMacro(PrecomputeImageGradient);
 
-  /** Set/Get pre-warping of images. */
+  /** Set/Get pre-warping of images option. */
   itkSetMacro(PreWarpImages, bool);
   itkGetConstReferenceMacro(PreWarpImages, bool);
   itkBooleanMacro(PreWarpImages);
+
+  /** Get pre-warmed images */
+  itkGetConstObjectMacro( MovingWarpedImage, MovingImageType );
+  itkGetConstObjectMacro( FixedWarpedImage, FixedImageType );
 
   /** Get number of threads to use.
    * \warning This value can change during Initialize, if the threader
@@ -443,9 +448,13 @@ public:
   { return this->m_MovingTransform->GetParameters(); }
 
   /** Update the metric's transform parameters.
+   * This call is passed through directly to the transform.
+   * \c factor is a scalar multiplier for each value in update, and
+   * defaults to 1.0 .
    * \c derivative must be the proper size, as retrieved
    * from GetNumberOfParameters. */
-  virtual void UpdateTransformParameters( DerivativeType & derivative );
+  virtual void UpdateTransformParameters( DerivativeType & derivative,
+                                          ParametersValueType factor = 1.0);
 
   /** FIXME: documentation. See GetNumberOfParameters */
   virtual unsigned int GetNumberOfLocalParameters() const
@@ -552,6 +561,27 @@ protected:
                               bool computeImageGradient,
                               MovingImageDerivativesType & movingGradient,
                               ThreadIdType threadID) const;
+
+  /** When using pre-warped images, this routine will return pixel value
+   * and optionally the image gradient at a given \c index.
+   * Used internally.
+   * \c virtualPoint is passed in for efficiency because it's already computed
+   * before calling this method.
+   * \c fixedImageValue and \c movingImageValue are returned.
+   * \c fixedGradient and \c movingGradient are returned if
+   * \c computeImageGradient is true.
+   * \c pointIsValid is returned true if the index is valid within a mask if
+   * one is supplied.
+   * \warning Use of masks with pre-warped images is not yet implemented. */
+  virtual void EvaluatePreWarpedImagesAtIndex( const VirtualIndexType & index,
+                                 const VirtualPointType & virtualPoint,
+                                 const bool computeImageGradient,
+                                 FixedImagePixelType & fixedImageValue,
+                                 MovingImagePixelType & movingImageValue,
+                                 FixedImageDerivativesType & fixedGradient,
+                                 MovingImageDerivativesType & movingGradient,
+                                 bool & pointIsValid,
+                                 const ThreadIdType threadID ) const;
 
   /** Compute image derivatives at a point. */
   virtual void ComputeFixedImageDerivatives(

@@ -35,9 +35,10 @@ public:
   typedef itk::SmartPointer< Self >                               Pointer;
   typedef itk::SmartPointer< const Self >                         ConstPointer;
 
-  typedef typename Superclass::MeasureType    MeasureType;
-  typedef typename Superclass::DerivativeType DerivativeType;
-  typedef typename Superclass::ParametersType ParametersType;
+  typedef typename Superclass::MeasureType          MeasureType;
+  typedef typename Superclass::DerivativeType       DerivativeType;
+  typedef typename Superclass::ParametersType       ParametersType;
+  typedef typename Superclass::ParametersValueType  ParametersValueType;
 
   itkTypeMacro(ObjectToObjectMetricSurrogate, ObjectToObjectMetric);
 
@@ -60,7 +61,7 @@ public:
   bool HasLocalSupport() const
   { return false; }
 
-  void UpdateTransformParameters( DerivativeType & ) {}
+  void UpdateTransformParameters( DerivativeType &, ParametersValueType ) {}
 
   const ParametersType & GetParameters() const
   { return m_Parameters; }

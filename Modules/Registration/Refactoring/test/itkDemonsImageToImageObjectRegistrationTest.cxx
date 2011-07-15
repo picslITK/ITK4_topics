@@ -220,6 +220,10 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetMovingTransform( deformationTransform );
   //  metric->SetMovingTransform( translationTransform );
 
+  metric->SetPreWarpImages( true );
+  metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
+  //metric->SetPrecomputeImageGradient( false );
+
   //Initialize the metric to prepare for use
   metric->Initialize();
 
@@ -235,7 +239,8 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl;
+            << "Learning rate: " << learningRate << std::endl
+            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
     {
     optimizer->StartOptimization();
@@ -316,7 +321,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
-                        OutputImageType > CastFilterType;
+                        OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();
