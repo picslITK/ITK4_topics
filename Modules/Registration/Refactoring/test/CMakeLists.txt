@@ -20,7 +20,6 @@ set(ITK-RegistrationRefactoringTests
   itkQuasiNewtonDemonsRegistrationTest.cxx
 )
 
-set(BASELINE ${ITK_DATA_ROOT}/Baseline/Review)
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
 set(BASELINE_ROOT ${ITK_DATA_ROOT}/Baseline)
 set(TEMP ${ITK_TEST_OUTPUT_DIR})
@@ -68,7 +67,11 @@ itk_add_test(NAME itkGradientDescentObjectOptimizerTest
 
 itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
-      itkDemonsImageToImageObjectRegistrationTest)
+      --compare ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz
+                DATA{Baseline/itkDemonsImageToImageObjectRegistrationTest_r62r85_Out.nii.gz}
+      itkDemonsImageToImageObjectRegistrationTest
+      DATA{Input/r62slice.nii} DATA{Input/r85slice.nii}
+      ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz)
 
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
 #      COMMAND ITK-RegistrationRefactoringTestDriver
