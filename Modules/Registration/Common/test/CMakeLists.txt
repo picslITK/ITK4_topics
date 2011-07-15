@@ -175,5 +175,6 @@ itk_add_test(NAME itkSpatialObjectToImageRegistrationTest
       COMMAND ITK-RegistrationCommonTestDriver itkSpatialObjectToImageRegistrationTest)
 itk_add_test(NAME itkOptimizerParameterEstimatorTest
       COMMAND ITK-RegistrationCommonTestDriver itkOptimizerParameterEstimatorTest)
-itk_add_test(NAME itkOptimizerParameterEstimatorTest_1
-      COMMAND ITK-RegistrationCommonTestDriver itkOptimizerParameterEstimatorTest_1)
+#itkOptimizerParameterEstimatorTest_1 requires some image parameters, skip now
+#itk_add_test(NAME itkOptimizerParameterEstimatorTest_1
+#      COMMAND ITK-RegistrationCommonTestDriver itkOptimizerParameterEstimatorTest_1)

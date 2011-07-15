@@ -21,7 +21,6 @@ set(ITK-RegistrationRefactoringTests
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
 )
 
-set(BASELINE ${ITK_DATA_ROOT}/Baseline/Review)
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
 set(BASELINE_ROOT ${ITK_DATA_ROOT}/Baseline)
 set(TEMP ${ITK_TEST_OUTPUT_DIR})
@@ -69,7 +68,11 @@ itk_add_test(NAME itkGradientDescentObjectOptimizerTest
 
 itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
-      itkDemonsImageToImageObjectRegistrationTest)
+      --compare ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz
+                DATA{Baseline/itkDemonsImageToImageObjectRegistrationTest_r62r85_Out.nii.gz}
+      itkDemonsImageToImageObjectRegistrationTest
+      DATA{Input/r62slice.nii} DATA{Input/r85slice.nii}
+      ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz)
 
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
 #      COMMAND ITK-RegistrationRefactoringTestDriver
@@ -87,13 +90,22 @@ itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTe
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      itkQuasiNewtonDemonsRegistrationTest
-      ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2.png
-      ${ITK_SOURCE_DIR}/Examples/Data/BrainT1Slice2Deformed.png
-      ${ITK_BINARY_DIR}/Testing/BrainT1Slice2Output.nii
-      )
+# Tests are disabled since it requires some image files as input
+#itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkQuasiNewtonDemonsRegistrationTest
+#      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+#      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+#      ${TEMP}/QNDemonsOutput.nii
+#      )
+
+#itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkQuasiNewtonObjectOptimizerTest
+#      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+#      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+#      ${TEMP}/QNOptOutput.nii
+#      )
 
 
 #TODO

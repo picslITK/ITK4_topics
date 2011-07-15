@@ -66,8 +66,14 @@ namespace itk
  * \note Use of PreWarpImages option is not yet supported when also using
  * image masks.
  *
+ * This class also implements EstimateScales and ComputeMaximumVoxelShift.
+ * These methods depends on the fixed image, moving image, virtual image and
+ * the transform objects. Therefore, it is natural to put them here.
+ *
  * \note: EstimateScales and ComputeMaximumVoxelShift might be put into a
- * separate class. Now it has a problem to get the transform type.
+ * separate class for two reasons: 1) Users might want to provide different
+ * strategies; 2) There is more flexibility to manipulate transform objects
+ * if the information about specific tranform classes is available.
  *
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>

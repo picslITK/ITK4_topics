@@ -1232,7 +1232,12 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /**
- * Compute the maximum shift when one transform is changed to another
+ * Compute the maximum voxel shift when a change of deltaParameters is applied to
+ * the current transform.
+ *
+ * isMovingTransform specifies whether it is about the transform from VirtualImage
+ * to MovingImage or to FixedImage.
+ *
  */
 template< class TFixedImage, class TMovingImage, class TVirtualImage >
 double
@@ -1375,7 +1380,39 @@ ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
     }
 }
 
-/** Compute parameter scales */
+/** Compute parameter scales
+ *
+ * Define a transform as Y = T(P,X) where X, Y are coordinates, and P are
+ * parameters. Let p be one of the parameters. Introduce an intermediate
+ * variable q = s * p where s is the scaling factor. The p column of the
+ * transform Jacobian is written as d_Y/d_p.
+ *
+ * The scales are estimated in a way such that a unit change of each
+ * parameter would yield roughly similar voxel shifts. That is, d_Y/d_q
+ * is roughly same for all scaled parameters.
+ *
+ * After applying scale s, d_Y/d_q = d_Y/d_p * (1/s). Therefore we may
+ * choose s = d_Y/d_p.
+
+ * And we have the metric derivative d_metric/d_q = d_metric/d_p * (1/s).
+ *
+ * Let us consider the impact of s to the scales in ITK optimizers. In the
+ * ITK class GradientDescentOptimizer, the step of parameter p is
+ *   step_p = (d_metric/d_p) / old_opt_scale * learningRate .
+ *
+ * With q = s * p, the step for parameter q will be
+ *   step_q = (d_metric/d_q) / old_opt_scale * learningRate
+ *          = (d_metric/d_p) / s / old_opt_scale * learningRate .
+ *
+ * Since step_p = step_q / s, we have
+ *   step_p = (d_metric/d_p) / s / s / old_opt_scale * learningRate .
+ *
+ * With parameter scale s, the optimizer scale for p is changed to
+ *   new_opt_scale = s * s * old_opt_scale .
+ * where s = d_Y/d_p.
+ *
+ * Here we use s = 1/MaximumVoxelShift for each parameter p.
+ */
 template< class TFixedImage, class TMovingImage, class TVirtualImage >
 void
 ImageToImageObjectMetric< TFixedImage, TMovingImage, TVirtualImage >
