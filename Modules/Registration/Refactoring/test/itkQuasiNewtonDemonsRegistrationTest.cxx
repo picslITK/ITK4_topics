@@ -15,11 +15,11 @@
 *  limitations under the License.
 *
 *=========================================================================*/
-
 /**
  * Test program for DemonImageToImageObjectMetric and
  * QuasiNewtonObjectOptimizer classes.
  *
+ * Tests are disabled since it requires some image files as input.
  */
 
 #include "itkDemonsImageToImageObjectMetric.h"

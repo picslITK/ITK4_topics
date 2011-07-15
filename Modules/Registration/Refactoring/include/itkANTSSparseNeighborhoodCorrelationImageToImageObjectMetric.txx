@@ -111,6 +111,7 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::PrintSelf(std::ostream& os,
         Indent indent) const {
     Superclass::PrintSelf(os, indent);
+    os << indent << "Number of sampling: " << m_NumberOfSampling << std::endl;
 }
 
 /**

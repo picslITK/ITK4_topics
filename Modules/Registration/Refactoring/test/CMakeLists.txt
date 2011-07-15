@@ -18,6 +18,7 @@ set(ITK-RegistrationRefactoringTests
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -65,19 +66,20 @@ itk_add_test(NAME itkGradientDescentObjectOptimizerTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkGradientDescentObjectOptimizerTest)
 
-itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      --compare ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz
-                DATA{Baseline/itkDemonsImageToImageObjectRegistrationTest_r62r85_Out.nii.gz}
-      itkDemonsImageToImageObjectRegistrationTest
-      DATA{Input/r62slice.nii} DATA{Input/r85slice.nii}
-      ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz)
+# NOTE - this is waiting for new testing data images to be added
+#itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      --compare ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz
+#                DATA{Baseline/#itkDemonsImageToImageObjectRegistrationTest_r62r85_Out.nii.gz}
+#      itkDemonsImageToImageObjectRegistrationTest
+#      DATA{Input/r62slice.nii} DATA{Input/r85slice.nii}
+#      ${TEMP}/itkDemonsImageToImageObjectRegistrationTest_out.nii.gz)
 
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
 #      COMMAND ITK-RegistrationRefactoringTestDriver
 #      itkDemonsImageToImageObjectRegistrationTest2)
 
-itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
+ itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest)
 
@@ -89,21 +91,30 @@ itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTe
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      itkQuasiNewtonDemonsRegistrationTest
-      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
-      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
-      ${TEMP}/QNDemonsOutput.nii
-      )
+# Tests are disabled since it requires some image files as input
+#itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkQuasiNewtonDemonsRegistrationTest
+#      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+#      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+#      ${TEMP}/QNDemonsOutput.nii
+#      )
 
-itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
-      COMMAND ITK-RegistrationRefactoringTestDriver
-      itkQuasiNewtonObjectOptimizerTest
-      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
-      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
-      ${TEMP}/QNOptOutput.nii
-      )
+#itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkQuasiNewtonObjectOptimizerTest
+#      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+#      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+#      ${TEMP}/QNOptOutput.nii
+#      )
+
+
+#TODO
+# itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
+#      COMMAND ITK-RegistrationRefactoringTestDriver
+#      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2)
+
+
 
 #itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
 #      COMMAND ITK-ReviewTestDriver itkPointSetToPointSetMetricTest 1)

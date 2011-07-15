@@ -265,7 +265,8 @@ void QuasiNewtonObjectOptimizer
   ParametersType sdx(numPara);
   sdx = m_HessianInverse * m_Gradient;
 
-  this->m_NewtonStep = -1.0 * sdx;
+  //this->m_NewtonStep = -1.0 * sdx; //minimize
+  this->m_NewtonStep = sdx; //maximize
 
 }
 
@@ -296,7 +297,8 @@ void QuasiNewtonObjectOptimizer
   ParametersType edg(numPara); //estimated delta of gradient: hessian_k * dx
 
   dx = this->m_CurrentPosition - this->m_PreviousPosition;
-  dg = this->m_Gradient - this->m_PreviousGradient;
+  //dg = this->m_Gradient - this->m_PreviousGradient; //minimize
+  dg = this->m_PreviousGradient - this->m_Gradient; //maximize
   edg = m_Hessian * dx;
 
   double dot_dg_dx = inner_product(dg, dx);
@@ -334,7 +336,7 @@ void QuasiNewtonObjectOptimizer
   // Compute the Newton step
   for (unsigned int i=0; i<numPara; i++)
     {
-    m_NewtonStep[i] = - m_Gradient[i] / m_LocalHessian[i];
+    m_NewtonStep[i] = m_Gradient[i] / m_LocalHessian[i];
     }
 
 }
