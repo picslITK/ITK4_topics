@@ -43,7 +43,7 @@ class ITK_EXPORT BSplineDeformableTransformInitializer
 public:
 
   /** Standard class typedefs. */
-  typedef BSplineDeformableTransformInitializer Self;
+  typedef BSplineDeformableTransformInitializer   Self;
   typedef Object                                  Superclass;
   typedef SmartPointer<Self>                      Pointer;
   typedef SmartPointer<const Self>                ConstPointer;
