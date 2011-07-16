@@ -24,6 +24,7 @@ namespace itk
 {
 /** \class NewClassExample
  * \brief Example only for testing compilation in a new module
+ * \ingroup ITK-RegistrationRefactoring
  */
 template< class TFixedImage, class TMovingImage >
 class ITK_EXPORT NewClassExample:

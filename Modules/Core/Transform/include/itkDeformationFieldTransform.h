@@ -33,9 +33,7 @@ namespace itk
 /** \class DeformationFieldTransform
  * \brief TODO
  *
- * \ingroup Transforms
- *
- * \ingroup ITK-Review
+ * \ingroup ITK-Transform
  */
 template
   <class TScalar, unsigned int NDimensions>

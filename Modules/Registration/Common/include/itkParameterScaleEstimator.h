@@ -62,7 +62,7 @@ namespace itk
  *   new_opt_scale = s * s * old_opt_scale .
  * where s = d_Y/d_p.
  *
- * \ingroup ITK-Registration
+ * \ingroup ITK-RegistrationCommon
  */
 template < class TFixedImage,
            class TMovingImage,
