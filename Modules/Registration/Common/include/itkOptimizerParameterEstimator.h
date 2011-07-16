@@ -47,7 +47,7 @@ namespace itk
  * parameter. The averaging is done over a uniformly random sampling of the
  * image domain.
  *
- * \ingroup ITK-Registration
+ * \ingroup ITK-RegistrationCommon
  */
 template < class TFixedImage,
            class TMovingImage,

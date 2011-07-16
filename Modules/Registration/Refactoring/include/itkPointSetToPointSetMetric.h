@@ -37,9 +37,8 @@ namespace itk
  * This class computes a value that measures the similarity between the fixed
  * point-set and the transformed moving point-set.
  *
- * \ingroup RegistrationMetrics
  *
- * \ingroup ITK-RegistrationCommon
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 template<class TFixedPointSet,  class TMovingPointSet>

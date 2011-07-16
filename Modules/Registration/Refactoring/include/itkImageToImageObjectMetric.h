@@ -100,8 +100,7 @@ namespace itk
  * strategies; 2) There is more flexibility to manipulate transform objects
  * if the information about specific tranform classes is available.
  *
- *
- * \ingroup ITK-RegistrationRefactoring.
+ * \ingroup ITK-RegistrationRefactoring
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :

@@ -33,6 +33,8 @@ namespace itk
 
 /** \class ManifoldParzenWindowsPointSetFunction.h
  * \brief point set filter.
+ * \ingroup ITK-RegistrationRefactoring
+ *
  */
 
 template <class TPointSet, class TOutput = double, class TCoordRep = double>

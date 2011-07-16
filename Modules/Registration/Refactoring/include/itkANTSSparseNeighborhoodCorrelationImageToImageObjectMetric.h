@@ -81,7 +81,7 @@ namespace itk
  * derived classes, operate on meshes, images, etc.  This class computes a
  * value that measures the similarity between the two objects.
  *
- * \ingroup RegistrationMetrics
+ * \ingroup ITK-RegistrationRefactoring
  *
  */
 
@@ -105,7 +105,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(Self, MetricBaseclass);
+  itkTypeMacro(ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric, ImageToImageObjectMetric);
 
   /** superclass types */
   typedef typename Superclass::MeasureType             MeasureType;
@@ -128,11 +128,11 @@ public:
 
 
   typedef typename Superclass::ThreaderInputObjectType ThreaderInputObjectType;
-  typedef typename Superclass::FixedImageType FixedImageType;
-  typedef typename Superclass::MovingImageType MovingImageType;
-  typedef typename Superclass::VirtualImageType VirtualImageType;
-  typedef typename Superclass::FixedOutputPointType FixedOutputPointType;
-  typedef typename Superclass::MovingOutputPointType MovingOutputPointType;
+  typedef typename Superclass::FixedImageType          FixedImageType;
+  typedef typename Superclass::MovingImageType         MovingImageType;
+  typedef typename Superclass::VirtualImageType        VirtualImageType;
+  typedef typename Superclass::FixedOutputPointType    FixedOutputPointType;
+  typedef typename Superclass::MovingOutputPointType   MovingOutputPointType;
 
   typedef typename VirtualImageType::RegionType VirtualImageRegionType;
   typedef typename VirtualImageType::SizeType RadiusType;
@@ -217,9 +217,9 @@ private:
   unsigned int m_NumberOfSampling;
 
   typedef typename Superclass::ScanningIteratorType ScanningIteratorType;
-  typedef typename Superclass::ScanMemType ScanMemType;
-  typedef typename Superclass::ScanParaType ScanParaType;
-  typedef typename Superclass::SumQueueType SumQueueType;
+  typedef typename Superclass::ScanMemType          ScanMemType;
+  typedef typename Superclass::ScanParaType         ScanParaType;
+  typedef typename Superclass::SumQueueType         SumQueueType;
 
   // overload this function for arbitrary starting index
   inline void InitializeScanning(

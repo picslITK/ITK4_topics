@@ -125,14 +125,14 @@ public:
                            itkGetStaticConstMacro(OutputSpaceDimension) >
   OutputCovariantVectorType;
 
-  typedef typename Superclass::InputVectorPixelType InputVectorPixelType;
+  typedef typename Superclass::InputVectorPixelType  InputVectorPixelType;
   typedef typename Superclass::OutputVectorPixelType OutputVectorPixelType;
 
   /** Standard tensor type for this class */
-  typedef typename Superclass::InputTensorType InputTensorType;
+  typedef typename Superclass::InputTensorType  InputTensorType;
   typedef typename Superclass::OutputTensorType OutputTensorType;
 
-  typedef typename Superclass::InputTensorEigenVectorType InputTensorEigenVectorType;
+  typedef typename Superclass::InputTensorEigenVectorType  InputTensorEigenVectorType;
   typedef typename Superclass::OutputTensorEigenVectorType OutputTensorEigenVectorType;
 
   /** Standard vnl_vector type for this class   */

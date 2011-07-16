@@ -45,7 +45,7 @@ namespace itk
  * \author Nick Tustison
  * \author Brian Avants
  *
- * \ingroup Transforms
+ * \ingroup ITK-Transform
  *
  * \wiki
  * \wikiexample{}

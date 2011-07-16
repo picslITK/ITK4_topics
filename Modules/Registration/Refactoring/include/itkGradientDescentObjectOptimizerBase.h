@@ -30,6 +30,7 @@ namespace itk
  *  Gradient modification is threaded in \c ModifyGradient.
  *  Derived classes must override \c ModifyGradientOverSubRange.
  *
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 class ITK_EXPORT GradientDescentObjectOptimizerBase

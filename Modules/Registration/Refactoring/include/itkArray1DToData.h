@@ -51,8 +51,7 @@
  *
  * \sa ImageToData
  * \sa ObjectToDataBase
- *
- * \ingroup DataSources
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 namespace

@@ -51,7 +51,7 @@ namespace itk
  * \sa Index
  * \sa ContinuousIndex
  *
- * \ingroup PointSetFunctions
+ * \ingroup ITK-RegistrationRefactoring
  */
 template <
 class TInputPointSet,
