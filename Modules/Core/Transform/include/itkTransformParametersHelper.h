@@ -76,7 +76,7 @@ public:
       "Not implemented for base class.");
     }
 
-  ~TransformParametersHelper(){}
+  virtual ~TransformParametersHelper(){}
 
 };
 
