@@ -20,6 +20,7 @@
 
 #include "itkHistogramImageToImageMetric.h"
 
+
 namespace itk
 {
 /** \class NewClassExample
