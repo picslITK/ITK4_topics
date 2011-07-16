@@ -1,6 +1,5 @@
 itk_module_test()
 set(ITK-RegistrationRefactoringTests
-  itkNewClassExampleTest.cxx
 # itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDeformationFieldTransformRegistrationTest.cxx
@@ -26,9 +25,6 @@ set(BASELINE_ROOT ${ITK_DATA_ROOT}/Baseline)
 set(TEMP ${ITK_TEST_OUTPUT_DIR})
 
 CreateTestDriver(ITK-RegistrationRefactoring  "${ITK-RegistrationRefactoring-Test_LIBRARIES}" "${ITK-RegistrationRefactoringTests}")
-
-itk_add_test(NAME itkNewClassExampleTest
-      COMMAND ITK-RegistrationRefactoringTestDriver itkNewClassExampleTest)
 
 #itk_add_test(NAME itkTransformVirtualDomainCalculatorTest2D
 #      COMMAND ITK-RegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 2 ${ITK_DATA_ROOT}/Input/#itkGDCMImageIOTest3.dcm ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm)
