@@ -31,9 +31,23 @@ namespace itk
  * derived classes, operate on meshes, images, etc.  This class computes a
  * value that measures the similarity between the two objects.
  *
- * \ingroup RegistrationMetrics
+ * Transform Optimization
+ * This hierarchy currently assumes only the moving transform is 'active',
+ * i.e. begin optimized when used in an optimizer. The goal however is
+ * to allow for either moving, fixed or both transforms to be optimized
+ * within a single metric.
  *
- * \ingroup ITK-Review
+ * Derived classes must provide implementations for:
+ *  GetValue
+ *  GetValueAndDerivative
+ *  Initialize
+ *  GetNumberOfParameters
+ *  GetNumberOfLocalParameters
+ *  GetParameters
+ *  HasLocalSupport
+ *  UpdateTransformParameters
+ *
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 class ITK_EXPORT ObjectToObjectMetric:

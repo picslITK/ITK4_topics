@@ -20,6 +20,9 @@
  * Test program for DemonImageToImageObjectMetric and
  * GradientDescentObjectOptimizer classes.
  *
+ * Perform a registration using user-supplied images.
+ * No numerical verification is performed. Test passes as long
+ * as no exception occurs.
  */
 
 #include "itkDemonsImageToImageObjectMetric.h"
@@ -40,7 +43,6 @@
 #include "itksys/SystemTools.hxx"
 
 // #include "itkMinimumMaximumImageCalculator.h"
-
 
 
 namespace{
@@ -129,48 +131,6 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   matcher->Update();
   MovingImageType::Pointer movingImage = matcher->GetOutput();
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
-
-
-//  typedef MinimumMaximumImageCalculator<FixedImageType> FCalType;
-//  FCalType::Pointer fcalculator = FCalType::New();
-//  fcalculator->SetImage(fixedImage);
-//  fcalculator->Compute();
-//  std::cout << "fixed image: " << "min: " << fcalculator->GetMinimum()
-//          << " max: " << fcalculator->GetMaximum() << std::endl;
-//
-//
-//  typedef MinimumMaximumImageCalculator<MovingImageType> MCalType;
-//  MCalType::Pointer mcalculator = MCalType::New();
-//  mcalculator->SetImage(fixedImage);
-//  mcalculator->Compute();
-//  std::cout << "moving image: " << "min: " << mcalculator->GetMinimum()
-//          << " max: " << mcalculator->GetMaximum() << std::endl;
-
-  //demons registration
-/*  typedef Vector< float, Dimension >             VectorPixelType;
-  typedef GPUImage<  VectorPixelType, Dimension >   DeformationFieldType;
-  typedef GPUDemonsRegistrationFilter<
-                                InternalImageType,
-                                InternalImageType,
-                                DeformationFieldType> RegistrationFilterType;
-
-  RegistrationFilterType::Pointer filter = RegistrationFilterType::New();
-
-  typedef ShowProgressObject<RegistrationFilterType> ProgressType;
-  ProgressType progressWatch(filter);
-  SimpleMemberCommand<ProgressType>::Pointer command;
-  command = SimpleMemberCommand<ProgressType>::New();
-  command->SetCallbackFunction(&progressWatch,
-                               &ProgressType::ShowProgress);
-  filter->AddObserver( ProgressEvent(), command);
-
-  filter->SetFixedImage( fixedImageCaster->GetOutput() );
-  filter->SetMovingImage( matcher->GetOutput() );
-
-  filter->SetNumberOfIterations( 100 );
-  filter->SetStandardDeviations( 1.0 );
-  filter->Update();
-*/
 
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>

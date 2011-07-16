@@ -29,18 +29,33 @@ namespace itk
 /** \class ImageToData
  *  \brief Class for custom threading setup and dispatch of Image data.
  *
- * This class provides threading over an ImageRegion.
- * The SplitRequestedObject method splits the provided ImageRegion into
- * subregions, along the z-axis (?) ... details on motivation?
+ * This class provides threading over an ImageRegion. It provides a
+ * \c SplitRequestedObject method that splits the provided ImageRegion into
+ * subregions, along the z-axis. Additionally it makes setting up a threaded
+ * operation easier.
  *
  * Call SetOverallRegion to define the ImageRegion over which to thread.
  * Call SetThreadedGenerateData to define the worker callback function,
  *  which is called from each thread with a unique region to process.
  *\warning This callback function must be \c static if it is a class method.
- * Call SetHolder to provide a class instance...
  *
- * This class is templated over image dimension. The second template
- * parameter should always be left as default.
+ * Call \c SetHolder to provide a pointer to DataHolder object to
+ * store arbitrary user data for use in the threader callback
+ * (typically a class instance).
+ *
+ * Call GenerateData to begin threaded processing.
+ *
+ * This class is templated over image dimension and DataHolder type.
+ * The third template parameter \c TInputObject should always be
+ * left as default.
+ *
+ * \warning The actual number of threads used may be less than the
+ * requested number of threads. Either because the requested number is
+ * greater than the number available, or the SplitRequestedObject method
+ * decides that fewer threads would be more efficient. After the threader
+ * has run, m_NumberOfThreadsUsed holds the actual number used.
+ * See \c DetermineNumberOfThreadsToUse to get the number of threads
+ * before running.
  *
  * \sa ObjectToDataBase
  * \ingroup DataSources

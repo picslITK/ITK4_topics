@@ -31,14 +31,27 @@
  * IndexRange is treated as an inclusive range, and need
  * not start at 0.
  *
+ * This class is templated over the type of data object that holds
+ * user data for use in the threaded callback.
+ *
  * Call SetOverallIndexRange to define the IndexRange over which to thread.
  * Call SetThreadedGenerateData to define the worker callback function,
  *  which during threading is called from each thread with a unique range
  *  to process.
- * Call SetHolder to provide a class instance...
+ * Call SetHolder to provide a pointer to user data.
+ * Call GenerateData to begin processing.
+ *
+ * \warning The actual number of threads used may be less than the
+ * requested number of threads. Either because the requested number is
+ * greater than the number available, or the SplitRequestedObject method
+ * decides that fewer threads would be more efficient. After the threader
+ * has run, m_NumberOfThreadsUsed holds the actual number used.
+ * See \c DetermineNumberOfThreadsToUse to get the number of threads
+ * before running.
  *
  * \sa ImageToData
  * \sa ObjectToDataBase
+ *
  * \ingroup DataSources
  */
 

@@ -34,30 +34,31 @@ namespace itk
 {
 /** \class ImageToImageObjectMetric
  *
+ * Computes similarity between regions of two images, using two
+ * user-supplied transforms.
+ *
+ * \note Currently support for using only \c GetValueAndDerivative is
+ * implemented. \c GetValue
+ * will follow after final implementation details are worked out.
+ *
  * Templated over the fixed and moving image types, as well as an optional
  * VirtualImage type to define the virtual domain. The VirtualImage type
  * defaults to TFixedImage.
  *
+ * This class uses a virtual reference space. This space defines the resolution,
+ *  at which the registration is performed as well as the physical coordinate
+ *  system.  Useful for unbiased registration.  If the user does not set this
+ *  explicitly then it is taken from the fixed image in \c Initialize method.
  * The user can define a virtual domain by calling either
  * \c CreateVirtualDomainImage or \c SetVirtualDomainImage. The virtual
  * domain region can be changed via \c SetVirtualDomainRegion. See these
  * methods for details.
- * TODO: Maybe put the details up here?
  *
  * Both transforms are initialized to an IdentityTransform.
  *
- * TODO: Update this for PreWarpImages option changes:
- * Image gradient calculation is performed in one of three ways:
- * 1) The BSplineInterpolator is used if it has been set by user as the
- * interpolator.
- * 2) otherwise, GradientRecursiveGaussianImageFilter is used by default to
- * precompute the gradient for each image. This requires memory to hold the
- * fully computed gradient image.
- * 3) lastly, CentralDifferenceImageFunction is used if
- * m_PrecomputeImageGradient option has been set to false.
- *
- * Derived classes must implement pure virtual methods declared in
- * ObjectToObjectMetric.
+ * The PreWarpImages option can be set for computational efficiency. This
+ * creates a warped version for each image at the begin of each iteration.
+ * However the cost is more memory usage (2x VirtualDomain size).
  *
  * \warning When using PreWarpImages flag, it is assumed that the images are
  * already in the virtual domain, for example via an initial affine
@@ -65,6 +66,30 @@ namespace itk
  *
  * \note Use of PreWarpImages option is not yet supported when also using
  * image masks.
+ *
+ * Image gradient calculation is performed in one of these ways:
+ * If \c PreWarpImages is enabled:
+ *  CentralDifferenceImageFunction.
+ *  Other options will be supported in the future.
+ * If \c PreWarpImages is disabled:
+ *  1) The BSplineInterpolator is used if it has been set by user as the
+ *  interpolator.
+ *  2) otherwise, GradientRecursiveGaussianImageFilter is used by default to
+ *  precompute the gradient for each image. This requires memory to hold the
+ *  fully computed gradient image.
+ *  3) lastly, CentralDifferenceImageFunction is used if
+ *  m_PrecomputeImageGradient option has been set to false.
+ *
+ * Image masks are supported using SetMovingImageMask or SetFixedImageMask.
+ * Random sampling or user-supplied point lists are not supported except
+ * via a user-supplied mask.
+ *
+ * Derived classes need to override at least:
+ *  GetValueAndDerivativeProcessPoint
+ *  Pure virtual methods declared in the base class.
+ *
+ * See ImageToImageObjectMetricTest for a clear example of what a
+ * derived class must implement and do.
  *
  * This class also implements EstimateScales and ComputeMaximumVoxelShift.
  * These methods depends on the fixed image, moving image, virtual image and
@@ -75,6 +100,8 @@ namespace itk
  * strategies; 2) There is more flexibility to manipulate transform objects
  * if the information about specific tranform classes is available.
  *
+ *
+ * \ingroup ITK-RegistrationRefactoring.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :

@@ -27,6 +27,10 @@
 
 #include <fstream>
 
+/*
+ * NOTE: Not yet working
+ */
+
 int itkPointSetToPointSetMetricTest( int, char* [] )
 {
   const unsigned int Dimension = 2;

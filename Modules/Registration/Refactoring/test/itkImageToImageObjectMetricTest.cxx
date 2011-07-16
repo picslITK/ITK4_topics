@@ -21,6 +21,21 @@
 #include "itkTranslationTransform.h"
 #include "vnl/vnl_math.h"
 
+/*
+ * This test creates synthetic images and verifies numerical results
+ * of metric evaluation.
+ *
+ * TODO
+ * Test assigning deformation field of wrong size, expect exception.
+ * Test with deformation field for fixed image transform.
+ * Test evaluating over sub-region, maybe with non-identity tx's.
+ * Test assigning different virtual image.
+ * Test various options for image gradient calculation
+ * Test image pre-warping
+ * Test mask
+ * Exercise other methods
+ */
+
 using namespace itk;
 
 namespace {
@@ -431,19 +446,6 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
     {
     result = EXIT_FAILURE;
     }
-
-
-  /////////////// TODO
-
-  // Test assigning deformation field of wrong size, expect exception
-
-  // Test with deformation field for fixed image tx
-
-  // Test evaluating over sub-region, maybe with non-identity tx's
-
-  // Test assigning different virtual image
-
-  // Exercise other methods
 
   return result;
 }

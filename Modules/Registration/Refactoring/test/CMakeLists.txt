@@ -3,7 +3,6 @@ set(ITK-RegistrationRefactoringTests
   itkNewClassExampleTest.cxx
 # itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
-  itkDeformationFieldTransformRegistrationTest.cxx
   itkArray1DToDataTest.cxx
   itkObjectToObjectOptimizerBaseTest.cxx
   itkObjectToObjectMetricTest.cxx
@@ -39,10 +38,6 @@ itk_add_test(NAME itkNewClassExampleTest
 itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectMetricTest)
-
-itk_add_test(NAME itkDeformationFieldTransformRegistrationTest
-          COMMAND ITK-RegistrationRefactoringTestDriver
-            itkDeformationFieldTransformRegistrationTest)
 
 itk_add_test(NAME itkArray1DToDataTest
          COMMAND ITK-RegistrationRefactoringTestDriver itkArray1DToDataTest)

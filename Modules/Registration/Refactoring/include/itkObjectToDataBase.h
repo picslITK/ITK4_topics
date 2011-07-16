@@ -32,22 +32,35 @@ namespace itk
  * The class is templated over the type of object over which threading
  * is performed, e.g. an image region. And it is templated over the
  * type of the data holder. The data holder is supplied to the threading
- * callback for the user.
+ * callback for the user, i.e. user data.
  *
  * SplitRequestedObject is a method to split the object into
  * non-overlapping pieces for threading. Must be overridden by derived
  * classes to provide the particular funcationality required for
  * TInputObject type.
  *
- * Call SetHolder...
+ * Call SetHolder to assign a user data object.
  *
- * Call SetThreadedGenerateData...
+ * Call SetOverallObject to assign the object to split into per-thread
+ * regions.
+ *
+ * Call SetThreadedGenerateData to define the worker callback function,
+ *  which is called from each thread with a unique region to process.
+ * \warning This callback function must be \c static if it is a class method.
+ *
+ * Call GenerateData to begin threaded processing.
  *
  * \warning The actual number of threads used may be less than the
  * requested number of threads. Either because the requested number is
  * greater than the number available, or the SplitRequestedObject method
  * decides that fewer threads would be more efficient. After the threader
- * has run, m_numberOfThreadsUsed holds the actual number used.
+ * has run, m_NumberOfThreadsUsed holds the actual number used.
+ * See \c DetermineNumberOfThreadsToUse to get the number of threads
+ * before running.
+ *
+ * \note There is no test for this class yet. See Array1DToDataTest.
+ * \note The name of this and derived classes should possibly be
+ * changed for more clarity.
  *
  * \sa ImageToData
  * \ingroup DataSources

@@ -21,11 +21,15 @@
 #include "itkIndex.h"
 #include "itkGradientDescentObjectOptimizerBase.h"
 
+/*
+ * NOTE: Not working or uptodate.
+ *
+ * See GradientDescentObjectOptimizer.
+ */
+
 namespace itk
 {
 
-// functor for threading using the metric function class
-// assuming function has output allocated already
 template<class TMetricFunction>
 class ITK_EXPORT RegularStepGradientDescentObjectOptimizer
   : public GradientDescentObjectOptimizerBase<TMetricFunction>

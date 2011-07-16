@@ -27,7 +27,10 @@
 
 /* Simple test to verify that class builds and runs.
  * Results are not verified. See ImageToImageObjectMetricTest
- * for verification of basic metric functionality. */
+ * for verification of basic metric functionality.
+ *
+ * TODO Numerical verification.
+ */
 
 using namespace itk;
 

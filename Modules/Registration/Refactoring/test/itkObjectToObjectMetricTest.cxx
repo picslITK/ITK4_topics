@@ -21,8 +21,14 @@
 
 #include "itkObjectToObjectMetric.h"
 
+/* Test basic operation of ObjectToObjectMetric.
+ *
+ * TODO Finsish exercising all methods.
+ */
+
 namespace itkObjectToObjectMetricTestHelpers
 {
+
 
 template< class TFixedObject,  class TMovingObject >
 class ITK_EXPORT ObjectToObjectMetricSurrogate:

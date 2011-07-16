@@ -24,12 +24,13 @@
 namespace itk
 {
 /** \class GradientDescentObjectOptimizer
+ *  \brief Gradient descent optimizer.
  *
- * Unlike the previous version of GradientDescentOptimizer, this version does
- * not have a "maximize/minimize" option to modify the effect of the metric
+ * \note Unlike the previous version of GradientDescentOptimizer, this version
+ * does not have a "maximize/minimize" option to modify the effect of the metric
  * derivative.
  * The assigned metric is assumed to return a parameter derivative result that
- * "improves" the optimization when added to the current parameters via the
+ * "improves" the optimization when *added* to the current parameters via the
  * metric::UpateTransformParameters method, after the optimizer applies scales
  * and a learning rate.
  */

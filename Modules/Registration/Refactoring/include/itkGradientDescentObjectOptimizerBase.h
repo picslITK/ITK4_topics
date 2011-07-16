@@ -25,6 +25,10 @@
 namespace itk
 {
 /** \class GradientDescentObjectOptimizerBase
+ *  \brief Base class for gradient descent optimizers.
+ *
+ *  Gradient modification is threaded in \c ModifyGradient.
+ *  Derived classes must override \c ModifyGradientOverSubRange.
  *
  */
 

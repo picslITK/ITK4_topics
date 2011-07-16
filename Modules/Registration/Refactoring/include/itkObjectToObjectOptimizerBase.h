@@ -26,13 +26,29 @@ namespace itk
 /** \class ObjectToObjectOptimizerBase
  * \brief Abstract base for object-to-object metric optimizers.
  *
+ * The goal of this optimizer hierarchy is to work with metrics
+ * of any type, i.e. working with any kind of object, such as
+ * image or point-set.
+ *
+ * Transform parameters are not manipulated directly. Instead,
+ * the optimizer retrieves the metric derivative from the metric,
+ * modifies the derivative as required, then passes it back to
+ * the metric as an update. The metric then processes it as
+ * appropriate, typically by passing it to its transform that is
+ * being optimized.
+ *
+ * A \c ScalarScale value can be set instead of an array of parameter
+ * scales. A single scalar scale value is useful for
+ *
  * Threading of some optimizer operations may be handled within
  * derived classes, for example in GradientDescentOptimizer.
  *
  * Derived classes must override StartOptimization, which is called
  * to initialize and run the optimization.
  *
- * \ingroup ITK-Optimizers
+ * TODO: Remove implementation code out of header file.
+ *
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 class ITK_EXPORT ObjectToObjectOptimizerBase : public Object

@@ -22,6 +22,12 @@
 namespace itk
 {
 
+/** \class DemonsImageToImageObjectMetric
+ *
+ *  \brief Class implementing rudimentary demons metric.
+ *
+ *  See \c GetValueAndDerivativeProcessPoint for algorithm implementation.
+ */
 template <class TFixedImage,
           class TMovingImage,
           class TVirtualImage = TFixedImage >
