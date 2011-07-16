@@ -50,7 +50,7 @@ namespace itk
  * has run, m_numberOfThreadsUsed holds the actual number used.
  *
  * \sa ImageToData
- * \ingroup DataSources
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 template <class TInputObject, class TDataHolder>

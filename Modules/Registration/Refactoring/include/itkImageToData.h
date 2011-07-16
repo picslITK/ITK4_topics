@@ -43,7 +43,7 @@ namespace itk
  * parameter should always be left as default.
  *
  * \sa ObjectToDataBase
- * \ingroup DataSources
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 

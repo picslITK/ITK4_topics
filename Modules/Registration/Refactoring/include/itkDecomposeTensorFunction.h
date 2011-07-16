@@ -29,6 +29,7 @@ namespace itk
 {
 /** \class DecomposeTensorFunction
  *
+ * \ingroup ITK-RegistrationRefactoring
  */
 template <typename TInput,
           typename TRealType = float,

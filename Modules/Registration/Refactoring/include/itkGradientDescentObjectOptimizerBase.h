@@ -26,6 +26,7 @@ namespace itk
 {
 /** \class GradientDescentObjectOptimizerBase
  *
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 class ITK_EXPORT GradientDescentObjectOptimizerBase

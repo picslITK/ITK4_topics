@@ -29,6 +29,8 @@ namespace itk {
  * \brief Computes normalized cross correlation using a small neighborhood
  * for each voxel between two images.
  *
+ * \ingroup ITK-RegistrationRefactoring
+ *
  * Please cite this reference for more details:
  *
  * Brian B. Avants, Nicholas J. Tustison, Gang Song, Philip A. Cook,
@@ -73,7 +75,6 @@ namespace itk {
  * derived classes, operate on meshes, images, etc.  This class computes a
  * value that measures the similarity between the two objects.
  *
- * \ingroup ITK-RegistrationRefactoring
  *
  */
 template<class TFixedImage, class TMovingImage,

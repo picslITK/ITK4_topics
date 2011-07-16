@@ -32,6 +32,8 @@ namespace itk
  * "improves" the optimization when added to the current parameters via the
  * metric::UpateTransformParameters method, after the optimizer applies scales
  * and a learning rate.
+ *
+ * \ingroup ITK-RegistrationRefactoring
  */
 class ITK_EXPORT GradientDescentObjectOptimizer
   : public GradientDescentObjectOptimizerBase

@@ -32,7 +32,7 @@ namespace itk
  * Derived classes must override StartOptimization, which is called
  * to initialize and run the optimization.
  *
- * \ingroup ITK-Optimizers
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 class ITK_EXPORT ObjectToObjectOptimizerBase : public Object

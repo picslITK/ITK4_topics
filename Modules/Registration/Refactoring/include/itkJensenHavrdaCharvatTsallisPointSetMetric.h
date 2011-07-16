@@ -55,7 +55,8 @@ namespace itk {
  * N.J. Tustison, S. P. Awate, G. Song, T. S. Cook, and J. C. Gee.
  * "Point set registration using Havrda-Charvat-Tsallis entropy measures"
  * IEEE Transactions on Medical Imaging, 30(2):451-60, 2011.
- * \ingroup ITK-Registration
+ *
+ * \ingroup ITK-RegistrationRefactoring
  */
 
 template<class TPointSet>
