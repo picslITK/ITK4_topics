@@ -27,6 +27,8 @@ namespace itk
  *  \brief Class implementing rudimentary demons metric.
  *
  *  See \c GetValueAndDerivativeProcessPoint for algorithm implementation.
+ *
+ * \ingroup ITK-RegistrationRefactoring
  */
 template <class TFixedImage,
           class TMovingImage,
