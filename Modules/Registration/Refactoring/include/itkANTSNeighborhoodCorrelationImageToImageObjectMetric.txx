@@ -251,15 +251,18 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             movingImageDerivatives, //
                             threadID);
 
-                    LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
-                    LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
+                    if (pointIsValid) {
 
-                    suma2 += a * a;
-                    sumb2 += b * b;
-                    suma += a;
-                    sumb += b;
-                    sumab += a * b;
-                    count += 1.0;
+                        LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
+                        LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
+
+                        suma2 += a * a;
+                        sumb2 += b * b;
+                        suma += a;
+                        sumb += b;
+                        sumab += a * b;
+                        count += 1.0;
+                    }
 
                 }
             } catch (ExceptionObject & exc) {
@@ -343,16 +346,18 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         false/*compute gradient*/, // true /*compute gradient*/,
                         movingImageDerivatives, //
                         threadID);
+                if (pointIsValid) {
 
-                LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
-                LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
+                    LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
+                    LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
 
-                suma2 += a * a;
-                sumb2 += b * b;
-                suma += a;
-                sumb += b;
-                sumab += a * b;
-                count += 1.0;
+                    suma2 += a * a;
+                    sumb2 += b * b;
+                    suma += a;
+                    sumb += b;
+                    sumab += a * b;
+                    count += 1.0;
+                }
             }
         } catch (ExceptionObject & exc) {
             //NOTE: there must be a cleaner way to do this:
@@ -482,21 +487,21 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                     movingImageValue, //
                     true/*compute gradient*/, // true /*compute gradient*/,
                     movingImageDerivatives, threadID);
+            if (pointIsValid) {
+                float val = fixedImageValue - fixedMean; // scan_para.I->GetPixel(oindex) - fixedMean;
+                float val1 = movingImageValue - movingMean; // scan_para.J->GetPixel(oindex) - movingMean;
 
-            float val = fixedImageValue - fixedMean; // scan_para.I->GetPixel(oindex) - fixedMean;
-            float val1 = movingImageValue - movingMean; // scan_para.J->GetPixel(oindex) - movingMean;
+                scan_mem.Ia = val;
+                scan_mem.Ja = val1;
+                scan_mem.sfm = sfm;
+                scan_mem.sff = sff;
+                scan_mem.smm = smm;
 
-            scan_mem.Ia = val;
-            scan_mem.Ja = val1;
-            scan_mem.sfm = sfm;
-            scan_mem.sff = sff;
-            scan_mem.smm = smm;
+                scan_mem.gradI = fixedImageDerivatives;
+                scan_mem.gradJ = movingImageDerivatives;
 
-            scan_mem.gradI = fixedImageDerivatives;
-            scan_mem.gradJ = movingImageDerivatives;
-
-            scan_mem.mappedMovingPoint = mappedMovingPoint;
-
+                scan_mem.mappedMovingPoint = mappedMovingPoint;
+            }
         }
     } catch (ExceptionObject & exc) {
         //NOTE: there must be a cleaner way to do this:
