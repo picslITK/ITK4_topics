@@ -265,8 +265,6 @@ protected:
   { m_Angle = angle; }
 
 
-
-
 private:
   Rigid2DTransform(const Self &); //purposely not implemented
   void operator=(const Self &);   //purposely not implemented
