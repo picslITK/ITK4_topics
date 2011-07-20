@@ -229,9 +229,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
                     virtualPoint);
 
-            if (this->m_PreWarpImages) {
+//            if (0) {
+             if (this->m_PreWarpImages) {
                 try {
-//                    std::cout << "---------------------index="<<index << std::endl;
                     this->EvaluatePreWarpedImagesAtIndex(index, virtualPoint,
                             false, /* compute gradient */
                             fixedImageValue, movingImageValue,
@@ -350,6 +350,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
                 virtualPoint);
 
+//        if (0) {
         if (this->m_PreWarpImages) {
             try {
                 this->EvaluatePreWarpedImagesAtIndex(index, virtualPoint, false, /* compute gradient */
@@ -518,6 +519,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(oindex,
             virtualPoint);
 
+//    if (0) {
     if (this->m_PreWarpImages) {
         try {
             this->EvaluatePreWarpedImagesAtIndex(oindex, virtualPoint, true, /* compute gradient */

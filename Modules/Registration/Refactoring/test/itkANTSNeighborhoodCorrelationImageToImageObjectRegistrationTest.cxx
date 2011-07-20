@@ -68,7 +68,7 @@ public:
 int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc < 4 || argc > 8)
+  if( argc < 4 )
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
@@ -76,12 +76,12 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations=100] ";
     std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
-    std::cerr << " [usePreWarp=1]" << std::endl;
+    std::cerr << " [usePreWarp=1 | 0]" << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
     }
-  std::cout << argc << std::endl;
+//  std::cout << argc << std::endl;
   unsigned int numberOfIterations = 100;
   double scalarScale = 1.0;
   double learningRate = 100;
@@ -90,10 +90,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
     numberOfIterations = atoi( argv[4] );
   if( argc >= 6)
     scalarScale = atof( argv[5] );
-  if( argc == 7 )
+  if( argc >= 7 )
     learningRate = atof( argv[6] );
-
-  if ( argc == 8 )
+  if ( argc >= 8 )
     preWarp = (atoi(argv[7]) != 0);
 
   const unsigned int Dimension = 2;
@@ -211,7 +210,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "CC radis: " << metric->GetRadius() << std::endl;
+            << "CC radius: " << metric->GetRadius() << std::endl
+            << "CC prewarp: " << metric->GetPreWarpImages() << std::endl
+            << "CC number of threads: " << metric->GetNumberOfThreads() << std::endl;
 
 
 //  std::cout << "initial para: " << translationTransform->GetParameters() << std::endl;
