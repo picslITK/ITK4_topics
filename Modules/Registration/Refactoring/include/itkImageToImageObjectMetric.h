@@ -576,7 +576,9 @@ protected:
    * that could work for either fixed or moving domains. However setting
    * that up is complicated because dimensionality and pixel type may
    * be different between the two. */
-  virtual void TransformAndEvaluateFixedPoint(const VirtualPointType & point,
+  virtual void TransformAndEvaluateFixedPoint(
+                              const VirtualIndexType & index,
+                              const VirtualPointType & point,
                               FixedImagePointType & mappedFixedPoint,
                               bool & pointIsValid,
                               FixedImagePixelType & fixedImageValue,
@@ -586,7 +588,9 @@ protected:
 
   /** Transform a point from VirtualImage domain to MovingImage domain,
    * as is done in \c TransformAndEvaluateMovingPoint. */
-  virtual void TransformAndEvaluateMovingPoint(const VirtualPointType & point,
+  virtual void TransformAndEvaluateMovingPoint(
+                              const VirtualIndexType & index,
+                              const VirtualPointType & point,
                               MovingImagePointType & mappedMovingPoint,
                               bool & pointIsValid,
                               MovingImagePixelType & movingImageValue,
@@ -778,6 +782,11 @@ protected:
     Superclass::PrintSelf(os, indent);
     os << indent << "ImageToImageObjectMetric: TODO..." << std::endl;
     }
+
+
+  /* Verify that virtual domain and deformation field are the same size
+   * and in the same physical space. */
+  virtual void VerifyDeformationFieldSizeAndPhysicalSpace();
 
 private:
 

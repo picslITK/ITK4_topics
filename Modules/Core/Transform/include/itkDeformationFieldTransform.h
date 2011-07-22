@@ -79,6 +79,9 @@ public:
   typedef typename Superclass::InputPointType   InputPointType;
   typedef typename Superclass::OutputPointType  OutputPointType;
 
+  /** Input index type for this class */
+  typedef typename Superclass::InputIndexType   InputIndexType;
+
   /** Standard vector type for this class. */
   typedef typename Superclass::InputVectorType      InputVectorType;
   typedef typename Superclass::OutputVectorType     OutputVectorType;
@@ -163,6 +166,11 @@ public:
   /**  Method to transform a point. */
   virtual OutputPointType TransformPoint( const InputPointType& thisPoint )
                                                                         const;
+
+  /** Method to transform a point given its index.
+   * This is only viable when the deformation field domain is aligned
+   * with the input domain. */
+  virtual OutputPointType TransformIndex(const InputIndexType &) const;
 
   /**  Method to transform a vector. */
   virtual OutputVectorType TransformVector(const InputVectorType &) const

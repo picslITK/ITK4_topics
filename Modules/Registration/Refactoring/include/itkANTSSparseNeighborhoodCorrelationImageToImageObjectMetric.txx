@@ -186,12 +186,14 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
          * Do this in a try block to catch exceptions and print more useful info
          * then we otherwise get when exceptions are caught in MultiThreader. */
         try {
-            dataHolder->TransformAndEvaluateFixedPoint(virtualPoint,
+            dataHolder->TransformAndEvaluateFixedPoint(
+                    virtualIndex, virtualPoint,
                     mappedFixedPoint, pointIsValid, fixedImageValue,
                     false /*compute gradient*/, fixedImageDerivatives,
                     threadID);
             if (pointIsValid) {
-                dataHolder->TransformAndEvaluateMovingPoint(virtualPoint,
+                dataHolder->TransformAndEvaluateMovingPoint(
+                        virtualIndex, virtualPoint,
                         mappedMovingPoint, pointIsValid, movingImageValue,
                         false /*compute gradient*/, movingImageDerivatives,
                         threadID);
