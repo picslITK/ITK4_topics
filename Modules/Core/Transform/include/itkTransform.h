@@ -25,6 +25,7 @@
 #include "itkVariableLengthVector.h"
 #include "vnl/vnl_vector_fixed.h"
 #include "itkMatrix.h"
+#include "itkIndex.h"
 
 namespace itk
 {
@@ -141,6 +142,9 @@ public:
   typedef Point< TScalarType, NInputDimensions >  InputPointType;
   typedef Point< TScalarType, NOutputDimensions > OutputPointType;
 
+  /** Input index type for this class */
+  typedef Index< NInputDimensions > InputIndexType;
+
   /** Base inverse transform type. This type should not be changed to the
    * concrete inverse transform type or inheritance would be lost. */
   typedef Transform<
@@ -179,6 +183,17 @@ public:
    * in ResampleImageFilter.
    */
   virtual OutputPointType TransformPoint(const InputPointType  &) const = 0;
+
+  /** Method to transform a point given its index, returning a point.
+   * Useful only for certain transforms, e.g. DeformationFieldTransform.
+   * This method is provided for speed optimization, to avoid cost of
+   * interpolation when a dense transform's domain is aligned with
+   * the input domain.
+   * This method throws an exception unless overridden by a dervied class.
+   */
+  virtual OutputPointType TransformIndex(const InputIndexType &) const
+  { itkExceptionMacro("TransformAtIndex not implemented for class "
+                      << this->GetNameOfClass() ); }
 
   /**  Method to transform a vector. */
   virtual OutputVectorType  TransformVector(const InputVectorType &) const = 0;

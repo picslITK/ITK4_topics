@@ -209,7 +209,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             bool isInBounds = true;
             scan_it.GetPixel(indct, isInBounds);
 
-            typename FixedImageType::IndexType index = scan_it.GetIndex(indct);
+            typename VirtualImageType::IndexType index = scan_it.GetIndex(indct);
 
 //            if ( !isInBounds || ( this->m_FixedImageMask && this->m_FixedImageMask->GetPixel( index ) < 0.25 ) )
             if (!isInBounds) {
@@ -255,6 +255,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
                 try {
                     this->TransformAndEvaluateFixedPoint( //
+                            index,
                             virtualPoint, //
                             mappedFixedPoint, //
                             pointIsValid, //
@@ -264,6 +265,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             threadID);
                     if (pointIsValid) {
                         this->TransformAndEvaluateMovingPoint( //
+                                index,
                                 virtualPoint, //
                                 mappedMovingPoint, //
                                 pointIsValid, //
@@ -373,6 +375,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         } else {
             try {
                 this->TransformAndEvaluateFixedPoint( //
+                        index,
                         virtualPoint, //
                         mappedFixedPoint, //
                         pointIsValid, //
@@ -382,6 +385,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         threadID);
                 if (pointIsValid) {
                     this->TransformAndEvaluateMovingPoint( //
+                            index,
                             virtualPoint, //
                             mappedMovingPoint, //
                             pointIsValid, //
@@ -505,7 +509,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     LocalRealType sfm = sumab - movingMean * suma - fixedMean * sumb
             + count * movingMean * fixedMean;
 
-    typename FixedImageType::IndexType oindex = scan_it.GetIndex();
+    typename VirtualImageType::IndexType oindex = scan_it.GetIndex();
 
     VirtualPointType virtualPoint;
     FixedOutputPointType mappedFixedPoint;
@@ -541,14 +545,18 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         }
     } else {
         try {
-            this->TransformAndEvaluateFixedPoint(virtualPoint, //
+            this->TransformAndEvaluateFixedPoint(
+                    oindex,
+                    virtualPoint, //
                     mappedFixedPoint, //
                     pointIsValid, //
                     fixedImageValue, //
                     true/*compute gradient*/, // true /*compute gradient*/,
                     fixedImageDerivatives, threadID);
             if (pointIsValid) {
-                this->TransformAndEvaluateMovingPoint(virtualPoint, //
+                this->TransformAndEvaluateMovingPoint(
+                        oindex,
+                        virtualPoint, //
                         mappedMovingPoint, //
                         pointIsValid, //
                         movingImageValue, //

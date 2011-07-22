@@ -25,6 +25,8 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkSpecialCoordinatesImage.h"
+#include "itkCompositeTransform.h"
+#include "itkDeformationFieldTransform.h"
 
 namespace itk
 {
@@ -58,6 +60,8 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
   m_Extrapolator = NULL;
 
   m_DefaultPixelValue = 0;
+
+  m_TransformCanUseTransformIndex = false;
 }
 
 /**
@@ -180,6 +184,10 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     {
     m_InterpolatorIsBSpline = false;
     }
+
+  // Check if we can use Transform::TransformIndex for speed optimization.
+  // Call this here because outputs must be allocated.
+  m_TransformCanUseTransformIndex = this->CanUseTransformIndex();
 }
 
 /**
@@ -290,11 +298,18 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 
   while ( !outIt.IsAtEnd() )
     {
-    // Determine the index of the current output pixel
-    outputPtr->TransformIndexToPhysicalPoint(outIt.GetIndex(), outputPoint);
 
     // Compute corresponding input pixel position
-    inputPoint = this->m_Transform->TransformPoint(outputPoint);
+    if( this->m_TransformCanUseTransformIndex )
+      {
+      inputPoint = this->m_Transform->TransformIndex( outIt.GetIndex() );
+      }
+    else
+      {
+      // Determine the index of the current output pixel
+      outputPtr->TransformIndexToPhysicalPoint(outIt.GetIndex(), outputPoint);
+      inputPoint = this->m_Transform->TransformPoint(outputPoint);
+      }
     inputPtr->TransformPhysicalPointToContinuousIndex(inputPoint, inputIndex);
 
     PixelType        pixval;
@@ -453,13 +468,20 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     // scanline when mapped to the input coordinate frame.
     //
 
-    // First get the position of the pixel in the output coordinate frame
     index = outIt.GetIndex();
-    outputPtr->TransformIndexToPhysicalPoint(index, outputPoint);
 
     // Compute corresponding input pixel continuous index, this index
     // will incremented in the scanline loop
-    inputPoint = this->m_Transform->TransformPoint(outputPoint);
+    if( this->m_TransformCanUseTransformIndex )
+      {
+      inputPoint = this->m_Transform->TransformIndex( index );
+      }
+    else
+      {
+      // First get the position of the pixel in the output coordinate frame
+      outputPtr->TransformIndexToPhysicalPoint(index, outputPoint);
+      inputPoint = this->m_Transform->TransformPoint(outputPoint);
+      }
     inputPtr->TransformPhysicalPointToContinuousIndex(inputPoint, inputIndex);
 
     while ( !outIt.IsAtEndOfLine() )
@@ -684,6 +706,109 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     }
 
   return latestTime;
+}
+
+/**
+ * Check if the transform supports TransformIndex
+ */
+template< class TInputImage,
+          class TOutputImage,
+          class TInterpolatorPrecisionType >
+bool
+ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
+::CanUseTransformIndex()
+{
+  /* NOTE This will likely be moved to a method within Transform itself. */
+
+  if( ! this->m_Transform->HasLocalSupport() )
+    {
+    return false;
+    }
+
+  bool result = true;
+  /* For DeformationFieldTransform and derived classes with local support.
+   * Verify that the filter's requested region is within the deformation field's
+   * BufferedRegion, and are in the same physical space.
+   * If so, we can use Transform::TransformIndex
+   * instead of Transform::TransformPoint, for speed optimization.
+   * If it's a composite transform and the deformation field is the first
+   * to be applied (i.e. the most recently added), then it has to be
+   * of the same size, otherwise not. But actually at this point, if
+   * a CompositeTransform has local support, it means all its sub-transforms
+   * have local support. So they should all be deformation fields, so just
+   * verify that the first one is at least.
+   * Eventually we'll want a method in Transform something like a
+   * GetInputDomainSize to check this cleanly. */
+  TransformType* transform;
+  transform = const_cast<TransformType*>( this->m_Transform.GetPointer() );
+  /* If it's a CompositeTransform, get the last transform (1st applied). */
+  typedef CompositeTransform< TInterpolatorPrecisionType,
+                     itkGetStaticConstMacro(ImageDimension) >
+                                                        CompositeTransformType;
+  CompositeTransformType* comptx =
+                        dynamic_cast< CompositeTransformType * > ( transform );
+  if( comptx != NULL )
+    {
+    transform = comptx->GetBackTransform().GetPointer();
+    }
+  /* Check that it's a DeformationField type, the only type we expect
+   * at this point */
+  typedef DeformationFieldTransform< TInterpolatorPrecisionType,
+                                     itkGetStaticConstMacro(ImageDimension) >
+                                                  DeformationFieldTransformType;
+  DeformationFieldTransformType* deftx =
+          dynamic_cast< DeformationFieldTransformType * >( transform );
+  if( deftx == NULL )
+    {
+    itkExceptionMacro("Expected m_Transform to be of type "
+                      "DeformationFieldTransform" );
+    }
+  typedef typename DeformationFieldTransformType::DeformationFieldType
+                                                                    FieldType;
+  typename FieldType::Pointer field = deftx->GetDeformationField();
+  typename FieldType::RegionType
+    fieldRegion = field->GetBufferedRegion();
+
+
+  /* Check each possible output. For simplicity, return false if any one of
+   * them do not match. */
+  for ( unsigned int i = 0; i < this->GetNumberOfOutputs(); i++ )
+    {
+    OutputImagePointer outputPtr = this->GetOutput(i);
+    if ( outputPtr )
+      {
+      OutputImageRegionType outputRegion = outputPtr->GetRequestedRegion();
+
+      if( outputRegion.GetSize() != fieldRegion.GetSize() ||
+          outputRegion.GetIndex() != fieldRegion.GetIndex() )
+        {
+        result = false;
+        break;
+        }
+
+      /* check that the image occupy the same physical space, and that
+       * each index is at the same physical location.
+       * this code is from ImageToImageFilter */
+
+      /* tolerance for origin and spacing depends on the size of pixel
+       * tolerance for directions a fraction of the unit cube. */
+      const double coordinateTol = 1.0e-6 * outputPtr->GetSpacing()[0];
+          // use first dimension spacing
+      const double directionTol = 1.0e-6;
+
+      if ( ! outputPtr->GetOrigin().GetVnlVector().
+                 is_equal( field->GetOrigin().GetVnlVector(), coordinateTol ) ||
+           ! outputPtr->GetSpacing().GetVnlVector().
+                 is_equal( field->GetSpacing().GetVnlVector(), coordinateTol ) ||
+           ! outputPtr->GetDirection().GetVnlMatrix().as_ref().
+                 is_equal( field->GetDirection().GetVnlMatrix(), directionTol ) )
+        {
+        result = false;
+        break;
+        }
+      }
+    }
+  return result;
 }
 } // end namespace itk
 

@@ -315,6 +315,12 @@ protected:
                                   outputRegionForThread,
                                   ThreadIdType threadId);
 
+  /** Determine if the assigned transform is capable of using its
+   * TransformIndex method instead of TransformPoint. For speed efficiency.
+   * Must be run after outputs have been allocated, so in
+   * BeforeThreadedGeneateData */
+  virtual bool CanUseTransformIndex();
+
 private:
   ResampleImageFilter(const Self &); //purposely not implemented
   void operator=(const Self &);      //purposely not implemented
@@ -336,6 +342,11 @@ private:
 
   bool                           m_InterpolatorIsBSpline;
   BSplineInterpolatorPointerType m_BSplineInterpolator;
+
+  /** This flag tracks whether the transform supports the use of
+   * TransformIndex rather than TransformPoint, given the settings
+   * of the output. TransformIndex is faster than TransformPoint. */
+  bool                           m_TransformCanUseTransformIndex;
 };
 } // end namespace itk
 

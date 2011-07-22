@@ -136,51 +136,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( m_MovingTransform->HasLocalSupport() )
     {
-    /* Verify that virtual domain and deformation field are the same size.
-     * Effects transformation, and calc of offset in StoreDerivativeResult.
-     * If it's a composite transform and the deformation field is the first
-     * to be applied (i.e. the most recently added), then it has to be
-     * of the same size, otherwise not. But actually at this point, if
-     * a CompositeTransform has local support, it means all its sub-transforms
-     * have local support. So they should all be deformation fields, so just
-     * verify that the first one is at least.
-     * Eventually we'll want a method in Transform something like a
-     * GetInputDomainSize to check this cleanly. */
-    MovingTransformType* transform;
-    transform = this->m_MovingTransform.GetPointer();
-    MovingCompositeTransformType* comptx =
-                 dynamic_cast< MovingCompositeTransformType * > ( transform );
-    if( comptx != NULL )
-      {
-      transform = comptx->GetBackTransform().GetPointer();
-      }
-    MovingDeformationFieldTransformType* deftx =
-            dynamic_cast< MovingDeformationFieldTransformType * >( transform );
-    if( deftx == NULL )
-      {
-      itkExceptionMacro("Expected m_MovingTransform to be of type "
-                        "DeformationFieldTransform" );
-      }
-    typedef typename MovingDeformationFieldTransformType::DeformationFieldType
-                                                                      FieldType;
-    typename FieldType::Pointer field = deftx->GetDeformationField();
-    typename FieldType::RegionType
-      fieldRegion = field->GetBufferedRegion();
-    VirtualRegionType virtualRegion =
-                              m_VirtualDomainImage->GetBufferedRegion();
-    if( virtualRegion.GetSize() != fieldRegion.GetSize() ||
-        virtualRegion.GetIndex() != fieldRegion.GetIndex() )
-      {
-      itkExceptionMacro("Virtual domain and moving transform deformation field"
-                        " must have the same size and index for "
-                        " LargestPossibleRegion."
-                        << std::endl << "Virtual size/index: "
-                        << virtualRegion.GetSize() << " / "
-                        << virtualRegion.GetIndex() << std::endl
-                        << "Deformation field size/index: "
-                        << fieldRegion.GetSize() << " / "
-                        << fieldRegion.GetIndex() << std::endl );
-      }
+    /* Verify that virtual domain and deformation field are the same size
+    * and in the same physical space. Handles CompositeTransform by checking
+    * if first applied transform is DeformationFieldTransform */
+    this->VerifyDeformationFieldSizeAndPhysicalSpace();
+
     /* Verify virtual image pixel type is scalar. Effects calc of offset
     in StoreDerivativeResult.
     NOTE:  Can this be checked at compile time? ConceptChecking has a
@@ -595,10 +555,26 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                         pointIsValid,
                                         threadID );
         /* Get the point in moving and fixed space for use below */
-        mappedFixedPoint =
-                      self->m_FixedTransform->TransformPoint( virtualPoint );
-        mappedMovingPoint =
-                      self->m_MovingTransform->TransformPoint( virtualPoint );
+        if( self->m_FixedTransform->HasLocalSupport() )
+          {
+          mappedFixedPoint =
+                    self->m_FixedTransform->TransformIndex( ItV.GetIndex() );
+          }
+        else
+          {
+          mappedFixedPoint =
+                        self->m_FixedTransform->TransformPoint( virtualPoint );
+          }
+        if( self->m_MovingTransform->HasLocalSupport() )
+          {
+          mappedMovingPoint =
+                   self->m_MovingTransform->TransformIndex( ItV.GetIndex() );
+          }
+        else
+          {
+          mappedMovingPoint =
+                        self->m_MovingTransform->TransformPoint( virtualPoint );
+          }
         }
       catch( ExceptionObject & exc )
         {
@@ -623,7 +599,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
        * then we otherwise get when exceptions are caught in MultiThreader. */
       try
         {
-        self->TransformAndEvaluateFixedPoint( virtualPoint,
+        self->TransformAndEvaluateFixedPoint( ItV.GetIndex(),
+                                              virtualPoint,
                                               mappedFixedPoint,
                                               pointIsValid,
                                               fixedImageValue,
@@ -632,7 +609,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                               threadID );
         if( pointIsValid )
           {
-          self->TransformAndEvaluateMovingPoint( virtualPoint,
+          self->TransformAndEvaluateMovingPoint( ItV.GetIndex(),
+                                                virtualPoint,
                                                 mappedMovingPoint,
                                                 pointIsValid,
                                                 movingImageValue,
@@ -780,7 +758,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::TransformAndEvaluateFixedPoint(const VirtualPointType & point,
+::TransformAndEvaluateFixedPoint(
+                      const VirtualIndexType & index,
+                      const VirtualPointType & point,
                       FixedImagePointType & mappedFixedPoint,
                       bool & pointIsValid,
                       FixedImagePixelType & fixedImageValue,
@@ -792,7 +772,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   fixedImageValue = 0;
 
   // map the point into fixed space
-  mappedFixedPoint = m_FixedTransform->TransformPoint( point );
+  if( this->m_FixedTransform->HasLocalSupport() )
+    {
+    mappedFixedPoint = m_FixedTransform->TransformIndex( index );
+    }
+  else
+    {
+    mappedFixedPoint = m_FixedTransform->TransformPoint( point );
+    }
 
   // If user provided a mask over the fixed image
   if ( m_FixedImageMask )
@@ -869,7 +856,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::TransformAndEvaluateMovingPoint(const VirtualPointType & point,
+::TransformAndEvaluateMovingPoint(
+                      const VirtualIndexType & index,
+                      const VirtualPointType & point,
                       MovingImagePointType & mappedMovingPoint,
                       bool & pointIsValid,
                       MovingImagePixelType & movingImageValue,
@@ -880,7 +869,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   pointIsValid = true;
   movingImageValue = 0;
 
-  mappedMovingPoint = m_MovingTransform->TransformPoint( point );
+  if( this->m_MovingTransform->HasLocalSupport() )
+    {
+    mappedMovingPoint = m_MovingTransform->TransformIndex( index );
+    }
+  else
+    {
+    mappedMovingPoint = m_MovingTransform->TransformPoint( point );
+    }
 
   // If user provided a mask over the Moving image
   if ( m_MovingImageMask )
@@ -1229,6 +1225,102 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   this->m_VirtualDomainImage = image;
   this->SetVirtualDomainRegion( image->GetBufferedRegion() );
+}
+
+/*
+ * Verify a deformation field and virtual image are in the same space.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::VerifyDeformationFieldSizeAndPhysicalSpace()
+{
+  /* Verify that virtual domain and deformation field are the same size
+   * and in the same physical space.
+   * Effects transformation, and calc of offset in StoreDerivativeResult.
+   * If it's a composite transform and the deformation field is the first
+   * to be applied (i.e. the most recently added), then it has to be
+   * of the same size, otherwise not. But actually at this point, if
+   * a CompositeTransform has local support, it means all its sub-transforms
+   * have local support. So they should all be deformation fields, so just
+   * verify that the first one is at least.
+   * Eventually we'll want a method in Transform something like a
+   * GetInputDomainSize to check this cleanly. */
+  MovingTransformType* transform;
+  transform = this->m_MovingTransform.GetPointer();
+  /* If it's a CompositeTransform, get the last transform (1st applied). */
+  MovingCompositeTransformType* comptx =
+               dynamic_cast< MovingCompositeTransformType * > ( transform );
+  if( comptx != NULL )
+    {
+    transform = comptx->GetBackTransform().GetPointer();
+    }
+  /* Check that it's a DeformationField type, the only type we expect
+   * at this point */
+  MovingDeformationFieldTransformType* deftx =
+          dynamic_cast< MovingDeformationFieldTransformType * >( transform );
+  if( deftx == NULL )
+    {
+    itkExceptionMacro("Expected m_MovingTransform to be of type "
+                      "DeformationFieldTransform" );
+    }
+  typedef typename MovingDeformationFieldTransformType::DeformationFieldType
+                                                                    FieldType;
+  typename FieldType::Pointer field = deftx->GetDeformationField();
+  typename FieldType::RegionType
+    fieldRegion = field->GetBufferedRegion();
+  VirtualRegionType virtualRegion =
+                            m_VirtualDomainImage->GetBufferedRegion();
+  if( virtualRegion.GetSize() != fieldRegion.GetSize() ||
+      virtualRegion.GetIndex() != fieldRegion.GetIndex() )
+    {
+    itkExceptionMacro("Virtual domain and moving transform deformation field"
+                      " must have the same size and index for "
+                      " LargestPossibleRegion."
+                      << std::endl << "Virtual size/index: "
+                      << virtualRegion.GetSize() << " / "
+                      << virtualRegion.GetIndex() << std::endl
+                      << "Deformation field size/index: "
+                      << fieldRegion.GetSize() << " / "
+                      << fieldRegion.GetIndex() << std::endl );
+    }
+
+    /* check that the image occupy the same physical space, and that
+     * each index is at the same physical location.
+     * this code is from ImageToImageFilter */
+
+    /* tolerance for origin and spacing depends on the size of pixel
+     * tolerance for directions a fraction of the unit cube. */
+    const double coordinateTol
+      = 1.0e-6 * m_VirtualDomainImage->GetSpacing()[0]; // use first dimension spacing
+    const double directionTol = 1.0e-6;
+
+    if ( !m_VirtualDomainImage->GetOrigin().GetVnlVector().
+               is_equal( field->GetOrigin().GetVnlVector(), coordinateTol ) ||
+         !m_VirtualDomainImage->GetSpacing().GetVnlVector().
+               is_equal( field->GetSpacing().GetVnlVector(), coordinateTol ) ||
+         !m_VirtualDomainImage->GetDirection().GetVnlMatrix().as_ref().
+               is_equal( field->GetDirection().GetVnlMatrix(), directionTol ) )
+      {
+      std::ostringstream originString, spacingString, directionString;
+      originString << "m_VirtualDomainImage Origin: "
+                   << m_VirtualDomainImage->GetOrigin()
+                   << ", DeformationField Origin: " << field->GetOrigin()
+                   << std::endl;
+      spacingString << "m_VirtualDomainImage Spacing: "
+                    << m_VirtualDomainImage->GetSpacing()
+                    << ", DeformationField Spacing: "
+                    << field->GetSpacing() << std::endl;
+      directionString << "m_VirtualDomainImage Direction: "
+                      << m_VirtualDomainImage->GetDirection()
+                      << ", DeformationField Direction: "
+                      << field->GetDirection() << std::endl;
+      itkExceptionMacro(<< "m_VirtualDomainImage and DeformationField do not "
+                        << "occupy the same physical space! "
+                        << std::endl
+                        << originString.str() << spacingString.str()
+                        << directionString.str() );
+      }
 }
 
 /**
