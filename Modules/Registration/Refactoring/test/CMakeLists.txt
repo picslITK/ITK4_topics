@@ -82,22 +82,22 @@ itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTe
       COMMAND ITK-RegistrationRefactoringTestDriver
       itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest)
 
-# Tests are disabled since it requires some image files as input
-#itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
-#      COMMAND ITK-RegistrationRefactoringTestDriver
-#      itkQuasiNewtonDemonsRegistrationTest
-#      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
-#      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
-#      ${TEMP}/QNDemonsOutput.nii
-#      )
+# TODO add test images to the git repository
+itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkQuasiNewtonDemonsRegistrationTest
+      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+      ${TEMP}/QNDemonsOutput.nii
+      )
 
-#itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
-#      COMMAND ITK-RegistrationRefactoringTestDriver
-#      itkQuasiNewtonObjectOptimizerTest
+itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+      COMMAND ITK-RegistrationRefactoringTestDriver
+      itkQuasiNewtonObjectOptimizerTest
 #      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
 #      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
 #      ${TEMP}/QNOptOutput.nii
-#      )
+      )
 
 
 #TODO

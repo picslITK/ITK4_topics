@@ -164,6 +164,8 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
                                                   TranslationTransformType;
+  typedef TranslationTransformType::ParametersType
+                                                  ParametersType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
@@ -243,7 +245,40 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   //
   // results
   //
-  std::cout << " Results: Transform = " << translationTransform->GetParameters() << std::endl;
+  ParametersType actualParameters = imageSource->GetActualParameters();
+  ParametersType finalParameters  = translationTransform->GetParameters();
+
+  const unsigned int numbeOfParameters = actualParameters.Size();
+
+  // We know that for the Affine transform the Translation parameters are at
+  // the end of the list of parameters.
+  const unsigned int offsetOrder = finalParameters.Size()-actualParameters.Size();
+
+  const double tolerance = 1.0;  // equivalent to 1 pixel.
+  std::cout << "Estimated scales = " << optimizer->GetScales() << std::endl;
+  std::cout << "finalParameters = " << finalParameters << std::endl;
+  std::cout << "actualParameters = " << actualParameters << std::endl;
+
+  bool pass = true;
+  for(unsigned int i=0; i<numbeOfParameters; i++)
+    {
+    // the parameters are negated in order to get the inverse transformation.
+    // this only works for comparing translation parameters....
+    std::cout << finalParameters[i+offsetOrder] << " == " << -actualParameters[i] << std::endl;
+    if( vnl_math_abs ( finalParameters[i+offsetOrder] - (-actualParameters[i]) ) > tolerance )
+      {
+      std::cout << "Tolerance exceeded at component " << i << std::endl;
+      pass = false;
+      }
+    }
+
+  if( !pass )
+    {
+    std::cout << "Test FAILED." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::cout << "Test PASSED." << std::endl;
 
   return EXIT_SUCCESS;
 }
