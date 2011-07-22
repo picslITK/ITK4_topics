@@ -401,14 +401,14 @@ const typename KernelTransform< TScalarType, NDimensions >::JacobianType &
 KernelTransform< TScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 template< class TScalarType, unsigned int NDimensions >
 void
 KernelTransform< TScalarType, NDimensions >
-::GetLocalJacobian(const InputPointType &, JacobianType & jacobian) const
+::GetJacobianWithRespectToParameters(const InputPointType &, JacobianType & jacobian) const
 {
   jacobian.Fill(0.0);
 

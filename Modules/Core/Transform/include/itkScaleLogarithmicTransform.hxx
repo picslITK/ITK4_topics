@@ -96,14 +96,14 @@ const typename ScaleLogarithmicTransform< ScalarType, NDimensions >::JacobianTyp
 ScaleLogarithmicTransform< ScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 template< class ScalarType, unsigned int NDimensions >
 void
 ScaleLogarithmicTransform< ScalarType, NDimensions >
-::GetLocalJacobian(const InputPointType & p, JacobianType & jacobian) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType & jacobian) const
 {
   const ScaleType & scales = this->GetScale();
 

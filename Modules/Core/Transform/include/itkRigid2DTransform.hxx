@@ -278,14 +278,14 @@ template< class TScalarType >
 const typename Rigid2DTransform< TScalarType >::JacobianType &
 Rigid2DTransform< TScalarType >::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 // Compute transformation Jacobian
 template< class TScalarType >
 void
-Rigid2DTransform< TScalarType >::GetLocalJacobian(const InputPointType & p,
+Rigid2DTransform< TScalarType >::GetJacobianWithRespectToParameters(const InputPointType & p,
         JacobianType &j ) const
 {
   j.SetSize( OutputSpaceDimension, this->GetNumberOfLocalParameters() );

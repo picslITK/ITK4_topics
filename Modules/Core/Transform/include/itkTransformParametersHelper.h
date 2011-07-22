@@ -27,7 +27,7 @@ namespace itk
  *  \brief Basic helper class to manage parameter data as an Array type,
  *  the default type.
  *
- * \ingroup ITK-Transform
+ * \ingroup ITKTransform
  */
 
 template< typename TValueType >
@@ -84,7 +84,7 @@ public:
 }//namespace itk
 
 //#if ITK_TEMPLATE_TXX
-//#include "itkTransformParametersHelper.txx"
+//#include "itkTransformParametersHelper.hxx"
 //#endif
 
 #endif

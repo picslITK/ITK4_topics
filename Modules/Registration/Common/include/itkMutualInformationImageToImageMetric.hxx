@@ -466,7 +466,7 @@ MutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 
   typedef typename TransformType::JacobianType JacobianType;
   JacobianType jacobian;
-  this->m_Transform->GetLocalJacobian(point, jacobian);
+  this->m_Transform->GetJacobianWithRespectToParameters(point, jacobian);
 
   unsigned int numberOfParameters = this->m_Transform->GetNumberOfParameters();
 
