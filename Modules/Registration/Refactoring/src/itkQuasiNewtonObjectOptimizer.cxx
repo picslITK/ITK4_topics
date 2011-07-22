@@ -109,6 +109,7 @@ QuasiNewtonObjectOptimizer
   catch ( ExceptionObject & )
     {
     //This may happen with a singular hessian matrix
+    std::cout << "Warning: exception in estimating Newton step." << std::endl;
     newtonStepException = true;
     }
 
@@ -185,6 +186,8 @@ QuasiNewtonObjectOptimizer
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
   ScalesType scales = this->GetScales();
 
+  bool   newtonStepException = false;
+
   // Use reference to save memory copy
   const ParametersType & currentPositionRef = this->m_Metric->GetParameters();
 
@@ -198,15 +201,11 @@ QuasiNewtonObjectOptimizer
     {
     this->EstimateLocalNewtonStep();
     }
-  catch ( ExceptionObject & excp )
+  catch ( ExceptionObject )
     {
-    m_StopCondition = QuasiNewtonStepError;
-    m_StopConditionDescription << "QuasiNewton step error after "
-                               << this->GetCurrentIteration()
-                               << " iterations. "
-                               << excp.GetDescription();
-    this->StopOptimization();
-    return;
+    //This may happen with a singular hessian matrix
+    std::cout << "Warning: exception in estimating Newton step." << std::endl;
+    newtonStepException = true;
     }
 
   /** Save for the next iteration */
@@ -226,8 +225,9 @@ QuasiNewtonObjectOptimizer
       }
     }
 
-  double scaleGradient = maxGradient / m_MaximumVoxelShift;
-  double scaleNewtonStep = maxNewtonStep / m_MaximumVoxelShift;
+  double gradientLearningRate = m_MaximumVoxelShift / maxGradient;
+  double newtonLearningRate   = m_MaximumVoxelShift / maxNewtonStep;
+  newtonLearningRate = vnl_math_min(newtonLearningRate, 1.0);
 
   for ( unsigned int p=0; p<spaceDimension; p++ )
     {
@@ -236,16 +236,29 @@ QuasiNewtonObjectOptimizer
      * approximation produces a convex instead of an expected concave, or
      * vice versa.
      */
-    if ( (m_Gradient[p] * m_NewtonStep[p]) <= 0 )
+    if ( m_Gradient[p] * m_NewtonStep[p] <= 0 )
       {
-      m_NewtonStep[p] = m_Gradient[p] / scaleGradient;
+      m_NewtonStep[p] = m_Gradient[p] * gradientLearningRate;
       }
     else
       {
-      m_NewtonStep[p] = m_NewtonStep[p] / scaleNewtonStep;
+      m_NewtonStep[p] = m_NewtonStep[p] * newtonLearningRate;
       }
 
     } //end of for
+  /*
+  std::cout << "Iter = " << this->GetCurrentIteration() << std::endl;
+  std::cout << "spaceDimension = " << spaceDimension << std::endl;
+  int irow = 122, icol = 55, pos = 2 * (irow * 256 + icol);
+  std::cout << "currentPositionRef[" << pos << "] = " << currentPositionRef[pos] << std::endl;
+  std::cout << "currentPositionRef[" << pos+1 << "] = " << currentPositionRef[pos+1] << std::endl;
+  std::cout << "m_NewtonStep[" << pos << "] = " << m_NewtonStep[pos] << std::endl;
+  std::cout << "m_NewtonStep[" << pos+1 << "] = " << m_NewtonStep[pos+1] << std::endl;
+  std::cout << "m_LocalHessian[" << pos << "] = " << m_LocalHessian[pos] << std::endl;
+  std::cout << "m_LocalHessian[" << pos+1 << "] = " << m_LocalHessian[pos+1] << std::endl;
+  std::cout << "m_Gradient[" << pos << "] = " << m_Gradient[pos] << std::endl;
+  std::cout << "m_Gradient[" << pos+1 << "] = " << m_Gradient[pos+1] << std::endl;
+  */
 
   this->m_Metric->UpdateTransformParameters( this->m_NewtonStep );
 
@@ -336,7 +349,21 @@ void QuasiNewtonObjectOptimizer
   // Compute the Newton step
   for (unsigned int i=0; i<numPara; i++)
     {
-    m_NewtonStep[i] = m_Gradient[i] / m_LocalHessian[i];
+    if (m_LocalHessian[i] == NumericTraits<double>::max())
+      {
+      m_NewtonStep[i] = 0;
+      m_LocalHessian[i] = 1; //reset
+      }
+    else if (m_LocalHessian[i] == 0)
+      {
+      m_NewtonStep[i] = 0;
+      m_LocalHessian[i] = 1; //reset
+      }
+    else
+      {
+      //m_NewtonStep[i] = - m_Gradient[i] / m_LocalHessian[i];
+      m_NewtonStep[i] = m_Gradient[i] / m_LocalHessian[i];
+      }
     }
 
 }
@@ -367,7 +394,8 @@ void QuasiNewtonObjectOptimizer
   for (unsigned int i=0; i<numPara; i++)
     {
     dx = currentPositionRef[i] - this->m_PreviousPosition[i];
-    dg = this->m_Gradient[i] - this->m_PreviousGradient[i];
+    //dg = this->m_Gradient[i] - this->m_PreviousGradient[i];
+    dg = this->m_PreviousGradient[i] - this->m_Gradient[i];
     edg = m_LocalHessian[i] * dx;
 
     double dot_dg_dx = dg * dx;

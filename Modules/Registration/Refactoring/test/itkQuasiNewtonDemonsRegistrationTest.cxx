@@ -73,20 +73,16 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
-    std::cerr << " [numberOfIterations] ";
-    std::cerr << " [scalarScale] [learningRate] " << std::endl;
+    std::cerr << " [numberOfIterations] " << std::endl;
     return EXIT_FAILURE;
     }
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
-  double scalarScale = 1.0;
-  double learningRate = 0.1;
+
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
-  if( argc >= 6)
-    scalarScale = atof( argv[5] );
-  if( argc == 7 )
-    learningRate = atof( argv[6] );
+
+  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -121,33 +117,6 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   movingImageReader->Update();
   matcher->Update();
   MovingImageType::Pointer movingImage = matcher->GetOutput();
-  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
-
-  //demons registration
-/*  typedef Vector< float, Dimension >             VectorPixelType;
-  typedef GPUImage<  VectorPixelType, Dimension >   DeformationFieldType;
-  typedef GPUDemonsRegistrationFilter<
-                                InternalImageType,
-                                InternalImageType,
-                                DeformationFieldType> RegistrationFilterType;
-
-  RegistrationFilterType::Pointer filter = RegistrationFilterType::New();
-
-  typedef ShowProgressObject<RegistrationFilterType> ProgressType;
-  ProgressType progressWatch(filter);
-  SimpleMemberCommand<ProgressType>::Pointer command;
-  command = SimpleMemberCommand<ProgressType>::New();
-  command->SetCallbackFunction(&progressWatch,
-                               &ProgressType::ShowProgress);
-  filter->AddObserver( ProgressEvent(), command);
-
-  filter->SetFixedImage( fixedImageCaster->GetOutput() );
-  filter->SetMovingImage( matcher->GetOutput() );
-
-  filter->SetNumberOfIterations( 100 );
-  filter->SetStandardDeviations( 1.0 );
-  filter->Update();
-*/
 
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
@@ -207,15 +176,14 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
-  optimizer->SetLearningRate( learningRate );
+
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
+  optimizer->SetScalarScale( 1.0 );
   optimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
-            << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl;
+            << "Number of iterations: " << numberOfIterations << std::endl;
+
   try
     {
     optimizer->StartOptimization();
@@ -241,23 +209,6 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
   ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
-  /* print out a few deformation field vectors */
-  /*std::cout
-      << "First few elements of first few rows of final deformation field:"
-      << std::endl;
-  for(unsigned int i=0; i< 5; i++ )
-    {
-     for(unsigned int j=0; j< 5; j++ )
-      {
-      DeformationFieldType::IndexType index;
-      index[0] = i;
-      index[1] = j;
-      it.SetIndex(index);
-      std::cout << it.Value() << " ";
-      }
-    std::cout << std::endl;
-    }
-  */
 
   //
   // results
