@@ -133,14 +133,14 @@ const typename CenteredAffineTransform< TScalarType, NDimensions >
 ::JacobianType &
 CenteredAffineTransform< TScalarType, NDimensions >::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 template< class TScalarType, unsigned int NDimensions >
 void
 CenteredAffineTransform< TScalarType, NDimensions >
-::GetLocalJacobian(const InputPointType & p, JacobianType & jacobian) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType & jacobian) const
 {
   // The Jacobian of the affine transform is composed of
   // subblocks of diagonal matrices, each one of them having

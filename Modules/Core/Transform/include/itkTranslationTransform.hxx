@@ -194,7 +194,7 @@ TranslationTransform< TScalarType, NDimensions >::GetJacobian(const InputPointTy
 // Compute the Jacobian in one position
 template< class TScalarType, unsigned int NDimensions >
 void
-TranslationTransform< TScalarType, NDimensions >::GetLocalJacobian(
+TranslationTransform< TScalarType, NDimensions >::GetJacobianWithRespectToParameters(
         const InputPointType &,
         JacobianType & j) const
 {

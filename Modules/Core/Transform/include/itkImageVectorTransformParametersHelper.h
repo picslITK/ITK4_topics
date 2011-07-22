@@ -28,7 +28,7 @@ namespace itk
  *          Image<Vector<...>,...>, used in Transforms.
  *
  *  \sa TransformParametersHelper
- *  \ingroup ITK-Transform
+ *  \ingroup ITKTransform
  */
 
 /* Can we template of Image type instead, but require that Image be of type
@@ -87,7 +87,7 @@ private:
 }//namespace itk
 
 #if ITK_TEMPLATE_TXX
-#include "itkImageVectorTransformParametersHelper.txx"
+#include "itkImageVectorTransformParametersHelper.hxx"
 #endif
 
 #endif

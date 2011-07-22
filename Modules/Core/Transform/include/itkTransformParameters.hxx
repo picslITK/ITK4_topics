@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __itkTransformParameters_txx
-#define __itkTransformParameters_txx
+#ifndef __itkTransformParameters_hxx
+#define __itkTransformParameters_hxx
 
 #include "itkTransformParameters.h"
 

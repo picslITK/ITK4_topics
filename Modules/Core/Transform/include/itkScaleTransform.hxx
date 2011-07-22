@@ -214,7 +214,7 @@ const typename ScaleTransform< ScalarType, NDimensions >::JacobianType &
 ScaleTransform< ScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
@@ -223,7 +223,7 @@ ScaleTransform< ScalarType, NDimensions >
 template< class ScalarType, unsigned int NDimensions >
 void
 ScaleTransform< ScalarType, NDimensions >
-::GetLocalJacobian(const InputPointType & p, JacobianType &j) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
 {
   j.SetSize( SpaceDimension, this->GetNumberOfLocalParameters() );
   j.Fill(0.0);

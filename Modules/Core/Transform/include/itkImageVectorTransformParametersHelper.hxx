@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __itkImageVectorTransformParametersHelper_txx
-#define __itkImageVectorTransformParametersHelper_txx
+#ifndef __itkImageVectorTransformParametersHelper_hxx
+#define __itkImageVectorTransformParametersHelper_hxx
 
 #include "itkImageVectorTransformParametersHelper.h"
 

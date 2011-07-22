@@ -132,14 +132,14 @@ template< class TScalarType >
 const typename CenteredRigid2DTransform< TScalarType >::JacobianType &
 CenteredRigid2DTransform< TScalarType >::GetJacobian(const InputPointType & p) const
 {
-  GetLocalJacobian( p, this->m_Jacobian );
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 template< class TScalarType >
 void
 CenteredRigid2DTransform< TScalarType >
-::GetLocalJacobian(const InputPointType & p, JacobianType & jacobian) const
+::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType & jacobian) const
 {
   const double ca = vcl_cos( this->GetAngle() );
   const double sa = vcl_sin( this->GetAngle() );
