@@ -100,6 +100,10 @@ QuasiNewtonObjectOptimizer
     {
     m_PreviousPosition = this->m_CurrentPosition;
     m_PreviousGradient = this->m_Gradient;
+
+    m_NewtonStep.SetSize(spaceDimension);
+    m_Hessian.SetSize(spaceDimension, spaceDimension);
+    m_HessianInverse.SetSize(spaceDimension, spaceDimension);
     }
 
   try
@@ -195,6 +199,9 @@ QuasiNewtonObjectOptimizer
     {
     m_PreviousPosition = currentPositionRef;
     m_PreviousGradient = this->m_Gradient;
+
+    m_NewtonStep.SetSize(spaceDimension);
+    m_LocalHessian.SetSize(spaceDimension);
     }
 
   try
@@ -276,34 +283,40 @@ void QuasiNewtonObjectOptimizer
 
   // Compute the Newton step
   ParametersType sdx(numPara);
-  sdx = m_HessianInverse * m_Gradient;
 
-  //this->m_NewtonStep = -1.0 * sdx; //minimize
-  this->m_NewtonStep = sdx; //maximize
+  if (this->GetCurrentIteration() == 0 ||
+      m_Hessian[0][0] == NumericTraits<double>::max() ||
+      m_HessianInverse[0][0] == NumericTraits<double>::max())
+    {
+    m_NewtonStep.Fill(0); //use gradient step
 
+    // Initialize Hessian to identity matrix
+    m_Hessian.Fill(0.0f);
+    m_HessianInverse.Fill(0.0f);
+    for (unsigned int i=0; i<numPara; i++)
+      {
+      m_Hessian[i][i] = 1.0; //identity matrix
+      m_HessianInverse[i][i] = 1.0; //identity matrix
+      }
+    }
+  else
+    {
+    sdx = m_HessianInverse * m_Gradient;
+    //this->m_NewtonStep = -1.0 * sdx; //minimize
+    this->m_NewtonStep = sdx; //maximize
+    }
 }
 
 /** Estimate Hessian matrix */
 void QuasiNewtonObjectOptimizer
 ::EstimateHessian()
 {
-  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
-
-  // Initialize Hessian to identity matrix
-  if ( this->GetCurrentIteration() == 0 )
+  if (this->GetCurrentIteration() == 0)
     {
-    m_Hessian.SetSize(numPara, numPara);
-    m_Hessian.Fill(0.0f);
-    m_HessianInverse.SetSize(numPara, numPara);
-    m_HessianInverse.Fill(0.0f);
-
-    for (unsigned int i=0; i<numPara; i++)
-      {
-      m_Hessian[i][i] = 1.0; //identity matrix
-      m_HessianInverse[i][i] = 1.0; //identity matrix
-      }
     return;
     }
+
+  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
 
   ParametersType dx(numPara);  //delta of position x: x_k+1 - x_k
   ParametersType dg(numPara);  //delta of gradient: g_k+1 - g_k
@@ -319,7 +332,7 @@ void QuasiNewtonObjectOptimizer
 
   if (dot_dg_dx ==0 || dot_edg_dx == 0)
     {
-    itkExceptionMacro(<< "Division by zero in Quasi-Newton step. ");
+    m_Hessian[0][0] = NumericTraits<double>::max();
     return;
     }
 
@@ -328,8 +341,15 @@ void QuasiNewtonObjectOptimizer
   vnl_matrix<double> newHessian = m_Hessian + plus - minus;
 
   m_Hessian         = newHessian;
-  m_HessianInverse  = vnl_matrix_inverse<double>(newHessian);
 
+  if ( vnl_determinant(newHessian) == 0.0 )
+    {
+    m_HessianInverse[0][0] = NumericTraits<double>::max();
+    }
+  else
+    {
+    m_HessianInverse = vnl_matrix_inverse<double>(newHessian);
+    }
 }
 
 /** Estimate Hessian step */
@@ -341,22 +361,14 @@ void QuasiNewtonObjectOptimizer
   // Estimate Hessian
   EstimateLocalHessian();
 
-  if ( this->GetCurrentIteration() == 0 )
-    {
-    m_NewtonStep.SetSize(numPara);
-    }
-
   // Compute the Newton step
   for (unsigned int i=0; i<numPara; i++)
     {
-    if (m_LocalHessian[i] == NumericTraits<double>::max())
+    if (this->GetCurrentIteration() == 0 ||
+        m_LocalHessian[i] == NumericTraits<double>::max() ||
+        m_LocalHessian[i] == 0)
       {
-      m_NewtonStep[i] = 0;
-      m_LocalHessian[i] = 1; //reset
-      }
-    else if (m_LocalHessian[i] == 0)
-      {
-      m_NewtonStep[i] = 0;
+      m_NewtonStep[i] = 0; //use gradient
       m_LocalHessian[i] = 1; //reset
       }
     else
@@ -372,20 +384,14 @@ void QuasiNewtonObjectOptimizer
 void QuasiNewtonObjectOptimizer
 ::EstimateLocalHessian()
 {
+  if (this->GetCurrentIteration() == 0)
+    {
+    return;
+    }
+
   unsigned int numPara = this->m_Metric->GetNumberOfParameters();
   // Use reference to save memory copy
   const ParametersType & currentPositionRef = this->m_Metric->GetParameters();
-
-  // Initialize Hessian to identity matrix
-  if ( this->GetCurrentIteration() == 0 )
-    {
-    m_LocalHessian.SetSize(numPara);
-    m_LocalHessian.Fill(1.0f);
-    //m_LocalHessianInverse.SetSize(numPara);
-    //m_LocalHessianInverse.Fill(1.0f);
-
-    return;
-    }
 
   double dx;  //delta of position x: x_k+1 - x_k
   double dg;  //delta of gradient: g_k+1 - g_k
