@@ -232,9 +232,27 @@ QuasiNewtonObjectOptimizer
       }
     }
 
-  double gradientLearningRate = m_MaximumVoxelShift / maxGradient;
+  double gradientLearningRate = 0.1;//m_MaximumVoxelShift / maxGradient;
   double newtonLearningRate   = m_MaximumVoxelShift / maxNewtonStep;
   newtonLearningRate = vnl_math_min(newtonLearningRate, 1.0);
+
+  int irow = 160, icol = 160, pos = 2 * (irow * 256 + icol);
+  if (this->GetDebug())
+    {
+    std::cout << "Iter = " << this->GetCurrentIteration() << std::endl;
+    std::cout << "spaceDimension = " << spaceDimension << std::endl;
+    std::cout << "newtonLearningRate = " << newtonLearningRate << std::endl;
+    std::cout << "gradientLearningRate = " << gradientLearningRate << std::endl;
+
+    std::cout << "currentPositionRef[" << pos << "] = " << currentPositionRef[pos] << std::endl;
+    std::cout << "currentPositionRef[" << pos+1 << "] = " << currentPositionRef[pos+1] << std::endl;
+    std::cout << "m_NewtonStep[" << pos << "] = " << m_NewtonStep[pos] << std::endl;
+    std::cout << "m_NewtonStep[" << pos+1 << "] = " << m_NewtonStep[pos+1] << std::endl;
+    std::cout << "m_LocalHessian[" << pos << "] = " << m_LocalHessian[pos] << std::endl;
+    std::cout << "m_LocalHessian[" << pos+1 << "] = " << m_LocalHessian[pos+1] << std::endl;
+    std::cout << "m_Gradient[" << pos << "] = " << m_Gradient[pos] << std::endl;
+    std::cout << "m_Gradient[" << pos+1 << "] = " << m_Gradient[pos+1] << std::endl;
+    }
 
   for ( unsigned int p=0; p<spaceDimension; p++ )
     {
@@ -253,20 +271,11 @@ QuasiNewtonObjectOptimizer
       }
 
     } //end of for
-  /*
-  std::cout << "Iter = " << this->GetCurrentIteration() << std::endl;
-  std::cout << "spaceDimension = " << spaceDimension << std::endl;
-  int irow = 122, icol = 55, pos = 2 * (irow * 256 + icol);
-  std::cout << "currentPositionRef[" << pos << "] = " << currentPositionRef[pos] << std::endl;
-  std::cout << "currentPositionRef[" << pos+1 << "] = " << currentPositionRef[pos+1] << std::endl;
-  std::cout << "m_NewtonStep[" << pos << "] = " << m_NewtonStep[pos] << std::endl;
-  std::cout << "m_NewtonStep[" << pos+1 << "] = " << m_NewtonStep[pos+1] << std::endl;
-  std::cout << "m_LocalHessian[" << pos << "] = " << m_LocalHessian[pos] << std::endl;
-  std::cout << "m_LocalHessian[" << pos+1 << "] = " << m_LocalHessian[pos+1] << std::endl;
-  std::cout << "m_Gradient[" << pos << "] = " << m_Gradient[pos] << std::endl;
-  std::cout << "m_Gradient[" << pos+1 << "] = " << m_Gradient[pos+1] << std::endl;
-  */
-
+  if (this->GetDebug())
+    {
+    std::cout << "UpdateStep[" << pos << "] = " << m_NewtonStep[pos] << std::endl;
+    std::cout << "UpdateStep[" << pos+1 << "] = " << m_NewtonStep[pos+1] << std::endl;
+    }
   this->m_Metric->UpdateTransformParameters( this->m_NewtonStep );
 
   this->InvokeEvent( IterationEvent() );

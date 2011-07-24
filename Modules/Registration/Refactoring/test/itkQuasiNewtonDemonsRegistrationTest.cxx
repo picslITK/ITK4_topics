@@ -85,7 +85,8 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
   const unsigned int Dimension = 2;
-  typedef double PixelType; //I assume png is unsigned short
+  //typedef double PixelType;
+  typedef unsigned short PixelType;
 
   typedef Image< PixelType, Dimension >  FixedImageType;
   typedef Image< PixelType, Dimension >  MovingImageType;
@@ -99,34 +100,51 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   fixedImageReader->SetFileName( argv[1] );
   movingImageReader->SetFileName( argv[2] );
 
+  //casting pixel type from short to float
+  typedef double                                     InternalPixelType;
+  typedef itk::Image< InternalPixelType, Dimension > InternalImageType;
+  typedef itk::CastImageFilter< FixedImageType,
+                                InternalImageType >  FixedImageCasterType;
+  typedef itk::CastImageFilter< MovingImageType,
+                                InternalImageType >  MovingImageCasterType;
+
+  FixedImageCasterType::Pointer fixedImageCaster   = FixedImageCasterType::New();
+  MovingImageCasterType::Pointer movingImageCaster = MovingImageCasterType::New();
+
+  fixedImageCaster->SetInput( fixedImageReader->GetOutput() );
+  movingImageCaster->SetInput( movingImageReader->GetOutput() );
+
   //matching intensity histogram
-  typedef HistogramMatchingImageFilter<
-                                    MovingImageType,
-                                    MovingImageType >   MatchingFilterType;
+  typedef itk::HistogramMatchingImageFilter<
+                                    InternalImageType,
+                                    InternalImageType >   MatchingFilterType;
   MatchingFilterType::Pointer matcher = MatchingFilterType::New();
 
-  matcher->SetInput( movingImageReader->GetOutput() );
-  matcher->SetReferenceImage( fixedImageReader->GetOutput() );
 
-  matcher->SetNumberOfHistogramLevels( 256 );
-  matcher->SetNumberOfMatchPoints( 10 );
+  matcher->SetInput( movingImageCaster->GetOutput() );
+  matcher->SetReferenceImage( fixedImageCaster->GetOutput() );
+
+  matcher->SetNumberOfHistogramLevels( 1024 );
+  matcher->SetNumberOfMatchPoints( 7 );
+
   matcher->ThresholdAtMeanIntensityOn();
+
   //get the images
   fixedImageReader->Update();
-  FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
+  InternalImageType::Pointer  fixedImage = fixedImageCaster->GetOutput();
   movingImageReader->Update();
   matcher->Update();
-  MovingImageType::Pointer movingImage = matcher->GetOutput();
+  InternalImageType::Pointer movingImage = matcher->GetOutput();
 
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
-                                                    TranslationTransformType;
+                                                  TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
   typedef DeformationFieldTransform<double, Dimension>
-                                                    DeformationTransformType;
+                                                  DeformationTransformType;
   DeformationTransformType::Pointer deformationTransform =
                                               DeformationTransformType::New();
   typedef DeformationTransformType::DeformationFieldType DeformationFieldType;
@@ -155,7 +173,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
+  typedef DemonsImageToImageObjectMetric< InternalImageType, InternalImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
 
@@ -224,11 +242,14 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
                                    double          >  InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
   WarperType::Pointer warper = WarperType::New();
-  warper->SetInput( movingImage );
+
+  FixedImageType::Pointer origFixedImage = fixedImageReader->GetOutput();
+  MovingImageType::Pointer origMovingImage = movingImageReader->GetOutput();
+  warper->SetInput( origMovingImage );
   warper->SetInterpolator( interpolator );
-  warper->SetOutputSpacing( fixedImage->GetSpacing() );
-  warper->SetOutputOrigin( fixedImage->GetOrigin() );
-  warper->SetOutputDirection( fixedImage->GetDirection() );
+  warper->SetOutputSpacing( origFixedImage->GetSpacing() );
+  warper->SetOutputOrigin( origFixedImage->GetOrigin() );
+  warper->SetOutputDirection( origFixedImage->GetDirection() );
 
   warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
@@ -236,15 +257,15 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
   std::string outfilename( argv[3] );
-  std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
-  std::string defout=outfilename + std::string("_def") + ext;
+  //std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
+  std::string defout = outfilename + std::string("_def") + ".nii"; //supports double
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
   deformationwriter->Update();
 
   //write the warped image into a file
-  typedef double                              OutputPixelType;
-  //typedef unsigned char                       OutputPixelType;
+  //typedef double                              OutputPixelType;
+  typedef unsigned char                       OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
