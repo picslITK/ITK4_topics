@@ -33,6 +33,9 @@ CompositeTransformReader<TScalar, NDimensions>
 {
   m_CompositeTransform = NULL;
   TransformFactory<CompositeTransformType>::RegisterTransform();
+
+  /* temporary. to be removed when final CompositeTransform IO is developed. */
+  m_ReadingCompositeTransform = true;
 }
 
 //---------------------------------------------------------
