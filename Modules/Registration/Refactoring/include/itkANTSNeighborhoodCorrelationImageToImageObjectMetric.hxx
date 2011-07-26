@@ -92,8 +92,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     MeasureType metricValueResult;
     MeasureType metricValueSum = 0;
 
-    DerivativeType localDerivativeResult(
-            dataHolder->GetNumberOfLocalParameters());
+//    DerivativeType localDerivativeResult(
+//            dataHolder->GetNumberOfLocalParameters());
+
+    DerivativeType & localDerivativeResult = dataHolder->m_LocalDerivativesPerThread[threadID];
 
     typedef Self MetricType;
 
@@ -601,16 +603,19 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         const ScanParaType &scan_para, DerivativeType &deriv,
         MeasureType &local_cc, const ThreadIdType threadID) {
 
-    DerivativeType deriv_wrt_image(VirtualImageDimension);
-    deriv_wrt_image.Fill(0.0);
+    MovingImageDerivativesType deriv_wrt_image;
 
-    deriv.Fill(0.0);
-//    derivInv.Fill(0.0);
+    //    MovingImageDerivativesType deriv_wrt_image(0.0);
+    //    DerivativeType deriv_wrt_image(VirtualImageDimension);
+    //    deriv_wrt_image.Fill(0.0);
+
+    //    deriv.Fill(0.0);
+    //    derivInv.Fill(0.0);
     local_cc = 1.0;
 
     typedef InternalComputationValueType LocalRealType;
 
-    IndexType index = scan_it.GetIndex();
+    //    IndexType index = scan_it.GetIndex();
 
     LocalRealType sff = scan_mem.sff;
     LocalRealType smm = scan_mem.smm;
@@ -621,8 +626,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     FixedImageDerivativesType gradI = scan_mem.gradI;
     MovingImageDerivativesType gradJ = scan_mem.gradJ;
 
-    if (sff == 0.0 || smm == 0.0)
+    if (sff == 0.0 || smm == 0.0) {
+        deriv.Fill(0.0);
         return;
+    }
 
     for (unsigned int qq = 0; qq < VirtualImageDimension; qq++) {
 //        deriv_wrt_image[qq] -= 2.0 * sfm / (sff * smm) * (Ji - sfm / sff * Ii)
@@ -642,8 +649,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     this->m_MovingTransform->GetJacobianWithRespectToParameters(
             scan_mem.mappedMovingPoint, jacobian);
 
-    for (unsigned int par = 0; par < this->GetNumberOfLocalParameters();
-            par++) {
+    unsigned int numberOfLocalParameters = this->m_MovingTransform->GetNumberOfLocalParameters();
+
+    for (unsigned int par = 0; par < numberOfLocalParameters; par++) {
 
         double sum = 0.0;
         for (unsigned int dim = 0; dim < this->MovingImageDimension; dim++) {

@@ -1,20 +1,20 @@
 /*=========================================================================
-*
-*  Copyright Insight Software Consortium
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*         http://www.apache.org/licenses/LICENSE-2.0.txt
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 
 /**
  * Test program for ANTSNeighborhoodCorrelationImageToImageObjectMetric and
@@ -33,98 +33,109 @@
 #include "itkCastImageFilter.h"
 #include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
-
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
-
 #include "itkImageRegistrationMethodImageSource.h"
 #include "itkAffineTransform.h"
 
-namespace{
+using namespace itk;
+
+namespace {
 // The following class is used to support callbacks
 // on the filter in the pipeline that follows later
 template<typename TRegistration>
-class ShowProgressObject
-{
+class ShowProgressObject {
 public:
-  ShowProgressObject(TRegistration* o)
-    {m_Process = o;}
-  void ShowProgress()
-    {
-    std::cout << "Progress: " << m_Process->GetProgress() << "  ";
-    std::cout << "Iter: " << m_Process->GetElapsedIterations() << "  ";
-    std::cout << "Metric: "   << m_Process->GetMetric()   << "  ";
-    std::cout << "RMSChange: " << m_Process->GetRMSChange() << "  ";
-    std::cout << std::endl;
-    if ( m_Process->GetElapsedIterations() == 10 )
-      { m_Process->StopRegistration(); }
+    ShowProgressObject(TRegistration* o) {
+        m_Process = o;
     }
-  typename TRegistration::Pointer m_Process;
+    void ShowProgress() {
+        std::cout << "Progress: " << m_Process->GetProgress() << "  ";
+        std::cout << "Iter: " << m_Process->GetElapsedIterations() << "  ";
+        std::cout << "Metric: " << m_Process->GetMetric() << "  ";
+        std::cout << "RMSChange: " << m_Process->GetRMSChange() << "  ";
+        std::cout << std::endl;
+        if (m_Process->GetElapsedIterations() == 10) {
+            m_Process->StopRegistration();
+        }
+    }
+    typename TRegistration::Pointer m_Process;
 };
 }
 
-using namespace itk;
+int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
+        char *argv[]) {
 
-int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, char *argv[])
-{
+    unsigned int numberOfIterations = 100;
+    double scalarScale = 1.0;
+    double learningRate = 1000;
+    bool usePreWarp = true;
 
-  unsigned int numberOfIterations = 100;
-  double scalarScale = 1.0;
-  double learningRate = 1000;
+    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
+        std::cerr << "Missing Parameters " << std::endl;
+        std::cerr << "Usage: " << argv[0];
+        std::cerr << " [numberOfIterations=100] ";
+        std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
+        std::cerr << " [usePreWarp=1 | 0]" << std::endl;
+        std::cerr << "For test purpose, return PASSED here." << std::endl;
+        std::cout << "Test PASSED." << std::endl;
 
-  const unsigned int Dimension = 2;
+        //TODO: return EXIT_SUCCESS just for test purpose
+        return EXIT_SUCCESS;
 
-  Size<Dimension> radSize;
-  radSize.Fill(5);
+    }
 
-  typedef double PixelType;
+    const unsigned int Dimension = 2;
 
-  typedef Image< PixelType, Dimension >  FixedImageType;
-  typedef Image< PixelType, Dimension >  MovingImageType;
+    Size<Dimension> radSize;
+    radSize.Fill(5);
 
+    typedef double PixelType;
 
-    numberOfIterations = atoi( argv[2] );
-    scalarScale = atof( argv[3] );
-    learningRate = atof( argv[4] );
+    typedef Image<PixelType, Dimension> FixedImageType;
+    typedef Image<PixelType, Dimension> MovingImageType;
 
+    if (argc >= 2)
+        numberOfIterations = atoi(argv[2]);
 
+    if (argc >= 3)
+        scalarScale = atof(argv[3]);
+    if (argc >= 4)
+        learningRate = atof(argv[4]);
+    if (argc >= 5)
+        usePreWarp = atoi(argv[5]);
 
-  bool pass = true;
-  // Size Type
-  typedef MovingImageType::SizeType                 SizeType;
+    bool pass = true;
+    // Size Type
+    typedef MovingImageType::SizeType SizeType;
 
+    // ImageSource
+    typedef itk::testhelper::ImageRegistrationMethodImageSource<
+            FixedImageType::PixelType, MovingImageType::PixelType, Dimension> ImageSourceType;
 
-  // ImageSource
-  typedef itk::testhelper::ImageRegistrationMethodImageSource<
-                                  FixedImageType::PixelType,
-                                  MovingImageType::PixelType,
-                                  Dimension >         ImageSourceType;
+    ImageSourceType::Pointer imageSource = ImageSourceType::New();
 
+    SizeType size;
+    size[0] = 100;
+    size[1] = 100;
 
-  ImageSourceType::Pointer    imageSource   = ImageSourceType::New();
+    imageSource->GenerateImages(size);
 
-  SizeType size;
-  size[0] = 100;
-  size[1] = 100;
+    FixedImageType::Pointer fixedImage =
+            const_cast<FixedImageType *>(imageSource->GetFixedImage());MovingImageType
+    ::Pointer movingImage =
+            const_cast<MovingImageType *>(imageSource->GetMovingImage());
 
-  imageSource->GenerateImages( size );
+   // Transform Type
+    typedef itk::AffineTransform<double, Dimension> TransformType;
+    typedef TransformType::ParametersType           ParametersType;
 
-  FixedImageType::Pointer  fixedImage    = const_cast<FixedImageType *>(imageSource->GetFixedImage());
-  MovingImageType::Pointer movingImage   = const_cast<MovingImageType *>(imageSource->GetMovingImage());
+    TransformType::Pointer affineTransform = TransformType::New();
+    affineTransform->SetIdentity();
 
-
-  // Transform Type
-  typedef itk::AffineTransform< double, Dimension > TransformType;
-  typedef TransformType::ParametersType             ParametersType;
-
-
-  TransformType::Pointer      affineTransform     = TransformType::New();
-  affineTransform->SetIdentity();
-
-
-  //create a deformation field transform
+    //create a deformation field transform
     typedef TranslationTransform<double, Dimension> TranslationTransformType;
     TranslationTransformType::Pointer translationTransform =
             TranslationTransformType::New();
@@ -154,46 +165,50 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
             IdentityTransformType::New();
     identityTransform->SetIdentity();
 
-  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
-      MetricType;
+    typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric<FixedImageType,
+            MovingImageType> MetricType;
 
-  MetricType::Pointer metric = MetricType::New();
+    MetricType::Pointer metric = MetricType::New();
 
-  // Assign images and transforms.
-  // By not setting a virtual domain image or virtual domain settings,
-  // the metric will use the fixed image for the virtual domain.
+    // Assign images and transforms.
+    // By not setting a virtual domain image or virtual domain settings,
+    // the metric will use the fixed image for the virtual domain.
 
+    metric->SetVirtualDomainImage(fixedImage);
+    metric->SetFixedImage(fixedImage);
+    metric->SetMovingImage(movingImage);
+    metric->SetFixedTransform(identityTransform);
+    // metric->SetMovingTransform( affineTransform );
+    // metric->SetMovingTransform( deformationTransform );
 
-  metric->SetVirtualDomainImage( fixedImage );
-  metric->SetFixedImage( fixedImage );
-  metric->SetMovingImage( movingImage );
-  metric->SetFixedTransform( identityTransform );
-  // metric->SetMovingTransform( affineTransform );
+    metric->SetMovingTransform(translationTransform);
 
-  // metric->SetMovingTransform( deformationTransform );
-  metric->SetMovingTransform( translationTransform );
+    metric->SetRadius(radSize);
 
+    metric->SetPreWarpImages(usePreWarp);
+    metric->SetPrecomputeImageGradient(false);
 
-  metric->SetRadius(radSize);
+    //Initialize the metric to prepare for use
+    metric->Initialize();
 
-  //Initialize the metric to prepare for use
-  metric->Initialize();
+    // Optimizer
+    typedef GradientDescentObjectOptimizer OptimizerType;
+    OptimizerType::Pointer optimizer = OptimizerType::New();
+    optimizer->SetMetric(metric);
+    optimizer->SetLearningRate(learningRate);
+    optimizer->SetNumberOfIterations(numberOfIterations);
+    optimizer->SetScalarScale(scalarScale);
+    optimizer->SetUseScalarScale(true);
 
-  // Optimizer
-  typedef GradientDescentObjectOptimizer  OptimizerType;
-  OptimizerType::Pointer  optimizer = OptimizerType::New();
-  optimizer->SetMetric( metric );
-  optimizer->SetLearningRate( learningRate );
-  optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
-
-  std::cout << "Start optimization..." << std::endl
+    std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl
-            << "Radius: " << radSize << std::endl;
-  try {
+            << "Scalar scale: " << scalarScale << std::endl << "Learning rate: "
+            << learningRate << std::endl << "CC radius: " << metric->GetRadius()
+            << std::endl << "CC prewarp: " << metric->GetPreWarpImages()
+            << std::endl << "CC number of threads: "
+            << metric->GetNumberOfThreads() << std::endl;
+
+    try {
         optimizer->StartOptimization();
     } catch (ExceptionObject & e) {
         std::cout << "Exception thrown ! " << std::endl;
@@ -207,39 +222,35 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
         return EXIT_FAILURE;
     }
 
-  std::cout << "...finished. " << std::endl
-            << "StopCondition: " << optimizer->GetStopConditionDescription()
-            << std::endl
+    std::cout << "...finished. " << std::endl << "StopCondition: "
+            << optimizer->GetStopConditionDescription() << std::endl
             << "Metric: NumberOfValidPoints: "
-            << metric->GetNumberOfValidPoints()
-            << std::endl;
+            << metric->GetNumberOfValidPoints() << std::endl;
 
+    ParametersType actualParameters = imageSource->GetActualParameters();
+    // ParametersType finalParameters  = affineTransform->GetParameters();
+    ParametersType finalParameters = translationTransform->GetParameters();
 
+    const unsigned int numbeOfParameters = actualParameters.Size();
 
-  ParametersType actualParameters = imageSource->GetActualParameters();
-  // ParametersType finalParameters  = affineTransform->GetParameters();
-  ParametersType finalParameters  = translationTransform->GetParameters();
+    // We know that for the Affine transform the Translation parameters are at
+    // the end of the list of parameters.
+    const unsigned int offsetOrder = finalParameters.Size()
+            - actualParameters.Size();
 
-  const unsigned int numbeOfParameters = actualParameters.Size();
+    const double tolerance = 1.0; // equivalent to 1 pixel.
 
-  // We know that for the Affine transform the Translation parameters are at
-  // the end of the list of parameters.
-  const unsigned int offsetOrder = finalParameters.Size()-actualParameters.Size();
-
-
-
-  const double tolerance = 1.0;  // equivalent to 1 pixel.
-
-  for(unsigned int i=0; i<numbeOfParameters; i++)
-    {
-    // the parameters are negated in order to get the inverse transformation.
-    // this only works for comparing translation parameters....
-    std::cout << finalParameters[i+offsetOrder] << " == " << -actualParameters[i] << std::endl;
-    if( vnl_math_abs ( finalParameters[i+offsetOrder] - (-actualParameters[i]) ) > tolerance )
-      {
-      std::cout << "Tolerance exceeded at component " << i << std::endl;
-      pass = false;
-      }
+    for (unsigned int i = 0; i < numbeOfParameters; i++) {
+        // the parameters are negated in order to get the inverse transformation.
+        // this only works for comparing translation parameters....
+        std::cout << finalParameters[i + offsetOrder] << " == "
+                << -actualParameters[i] << std::endl;
+        if (vnl_math_abs(
+                finalParameters[i + offsetOrder] - (-actualParameters[i]))
+                > tolerance) {
+            std::cout << "Tolerance exceeded at component " << i << std::endl;
+            pass = false;
+        }
     }
 
 //  //
@@ -251,35 +262,25 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
 //  TransformType::ConstPointer finalTransform =
 //    static_cast< const TransformType * >( transformDecorator->Get() );
 
-
-
-
-
-
-
-
-
-  field = deformationTransform->GetDeformationField();
-  std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
+    field = deformationTransform->GetDeformationField();
+    std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
+    ImageRegionIteratorWithIndex<DeformationFieldType> it(field,
+            field->GetLargestPossibleRegion());
 
-  typedef WarpImageFilter<
-                          MovingImageType,
-                          MovingImageType,
-                          DeformationFieldType  >     WarperType;
-  typedef LinearInterpolateImageFunction<
-                                   MovingImageType,
-                                   double          >  InterpolatorType;
-  InterpolatorType::Pointer interpolator = InterpolatorType::New();
-  WarperType::Pointer warper = WarperType::New();
-  warper->SetInput( movingImage );
-  warper->SetInterpolator( interpolator );
-  warper->SetOutputSpacing( fixedImage->GetSpacing() );
-  warper->SetOutputOrigin( fixedImage->GetOrigin() );
-  warper->SetOutputDirection( fixedImage->GetDirection() );
+    typedef WarpImageFilter<MovingImageType,
+                            MovingImageType,
+                            DeformationFieldType>                   WarperType;
+    typedef LinearInterpolateImageFunction<MovingImageType, double> InterpolatorType;
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+    WarperType::Pointer warper = WarperType::New();
+    warper->SetInput(movingImage);
+    warper->SetInterpolator(interpolator);
+    warper->SetOutputSpacing(fixedImage->GetSpacing());
+    warper->SetOutputOrigin(fixedImage->GetOrigin());
+    warper->SetOutputDirection(fixedImage->GetDirection());
 
-  warper->SetDeformationField( deformationTransform->GetDeformationField() );
+    warper->SetDeformationField(deformationTransform->GetDeformationField());
 
 //  //write out the deformation field
 //  typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
@@ -291,32 +292,27 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc, 
 //  deformationwriter->SetInput( deformationTransform->GetDeformationField() );
 //  deformationwriter->Update();
 
-  //write the warped image into a file
-  typedef double                           OutputPixelType;
-  typedef Image< OutputPixelType, Dimension > OutputImageType;
-  typedef CastImageFilter<
-                        MovingImageType,
-                        OutputImageType > CastFilterType;
-  typedef ImageFileWriter< OutputImageType >  WriterType;
+    //write the warped image into a file
+    typedef double                                            OutputPixelType;
+    typedef Image<OutputPixelType, Dimension>                 OutputImageType;
+    typedef CastImageFilter<MovingImageType, OutputImageType> CastFilterType;
+    typedef ImageFileWriter<OutputImageType>                  WriterType;
 
-  WriterType::Pointer      writer =  WriterType::New();
-  CastFilterType::Pointer  caster =  CastFilterType::New();
+    WriterType::Pointer writer = WriterType::New();
+    CastFilterType::Pointer caster = CastFilterType::New();
 
-  writer->SetFileName( argv[1] );
+    writer->SetFileName(argv[1]);
 
-  caster->SetInput( warper->GetOutput() );
-  writer->SetInput( caster->GetOutput() );
-  writer->Update();
+    caster->SetInput(warper->GetOutput());
+    writer->SetInput(caster->GetOutput());
+    writer->Update();
 
-  if( !pass )
-    {
-    std::cout << "Test FAILED." << std::endl;
-    return EXIT_FAILURE;
+    if (!pass) {
+        std::cout << "Test FAILED." << std::endl;
+        return EXIT_FAILURE;
     }
 
-  std::cout << "Test PASSED." << std::endl;
-  return EXIT_SUCCESS;
-
-
+    std::cout << "Test PASSED." << std::endl;
+    return EXIT_SUCCESS;
 
 }

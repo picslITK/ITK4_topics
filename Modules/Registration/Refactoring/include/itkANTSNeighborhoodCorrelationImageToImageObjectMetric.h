@@ -115,6 +115,10 @@ public:
     typedef typename Superclass::MovingTransformJacobianType
                                                     MovingTransformJacobianType;
 
+    typedef typename Superclass::VirtualImageDerivativesType
+                                                    VirtualImageDerivativesType;
+
+
     typedef typename Superclass::FixedImageType           FixedImageType;
     typedef typename Superclass::MovingImageType          MovingImageType;
     typedef typename Superclass::VirtualImageType         VirtualImageType;

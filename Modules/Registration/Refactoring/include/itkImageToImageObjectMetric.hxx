@@ -746,8 +746,16 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( computeImageGradient )
     {
-    ComputeFixedImageDerivatives( virtualPoint, fixedGradient, threadID );
-    ComputeMovingImageDerivatives( virtualPoint, movingGradient, threadID );
+      // since m_FixedWarpedImage and m_MovingWarpedImage are of same size of virtual
+      // image m_VirtualDomainImage, we can use index instead of point when calling
+      // functions of computing derivatives, because index are the same for fixed warped
+      // and moving warped images
+
+      ComputeFixedImageDerivativesAtIndex( index, fixedGradient, threadID );
+      ComputeMovingImageDerivativesAtIndex( index, movingGradient, threadID );
+
+//    ComputeFixedImageDerivatives( virtualPoint, fixedGradient, threadID );
+//    ComputeMovingImageDerivatives( virtualPoint, movingGradient, threadID );
     }
 }
 
@@ -1010,6 +1018,86 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       {
       // if not using the gradient image
       gradient = m_MovingGradientCalculator->Evaluate(mappedPoint);
+      }
+    }
+}
+
+/*
+ * Compute fixed warped image derivatives for an index at virtual domain.
+ * NOTE: This doesn't transform result into virtual space. For that,
+ * see TransformAndEvaluateFixedPoint
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::ComputeFixedImageDerivativesAtIndex(
+                              const VirtualIndexType & index,
+                              FixedImageDerivativesType & gradient,
+                              ThreadIdType threadID) const
+{
+  if ( m_FixedInterpolatorIsBSpline )
+    {
+    // Computed Fixed image gradient using derivative BSpline kernel.
+//    gradient = m_FixedBSplineInterpolator->EvaluateDerivative(mappedPoint,
+//                                                              threadID);
+      //TODO: check if bspline interpolator can evalute at index
+      gradient = m_FixedBSplineInterpolator->EvaluateDerivativeAtContinuousIndex(index,
+                                                                    threadID);
+
+    }
+  else
+    {
+    if ( m_PrecomputeImageGradient )
+      {
+//      ContinuousIndex< double, FixedImageDimension > tempIndex;
+//      m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
+//                                                             tempIndex);
+//      FixedImageIndexType mappedIndex;
+//      mappedIndex.CopyWithRound(tempIndex);
+//      gradient = m_FixedGaussianGradientImage->GetPixel(mappedIndex);
+        gradient = m_FixedGaussianGradientImage->GetPixel(index);
+
+
+        //
+      }
+    else
+      {
+      // if not using the gradient image
+      gradient = m_FixedGradientCalculator->EvaluateAtIndex(index);
+      }
+    }
+}
+
+/*
+ * Compute image derivatives for a moving point.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::ComputeMovingImageDerivativesAtIndex(
+                              const VirtualIndexType & index,
+                              MovingImageDerivativesType & gradient,
+                              ThreadIdType threadID) const
+{
+  if ( m_MovingInterpolatorIsBSpline )
+    {
+//    // Computed moving image gradient using derivative BSpline kernel.
+//    gradient = m_MovingBSplineInterpolator->EvaluateDerivative(mappedPoint,
+//                                                               threadID);
+
+    gradient = m_MovingBSplineInterpolator->EvaluateDerivativeAtContinuousIndex(index,
+                                                                   threadID);
+    }
+  else
+    {
+    if ( m_PrecomputeImageGradient )
+      {
+      gradient = m_MovingGaussianGradientImage->GetPixel(index);
+      }
+    else
+      {
+      // if not using the gradient image
+      gradient = m_MovingGradientCalculator->EvaluateAtIndex(index);
       }
     }
 }
