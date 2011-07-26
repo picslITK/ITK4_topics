@@ -364,7 +364,7 @@ private:
 #endif
 
 #if ITK_TEMPLATE_TXX
-# include "itkCenteredCompositeTransform.txx"
+# include "itkCenteredCompositeTransform.hxx"
 #endif
 
 #endif // __itkCompositeTransform_h

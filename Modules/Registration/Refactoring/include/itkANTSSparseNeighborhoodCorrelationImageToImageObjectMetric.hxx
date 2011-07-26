@@ -1,7 +1,7 @@
 /*=========================================================================
 
  Program:   Insight Segmentation & Registration Toolkit
- Module:    $RCSfile: itkDemonsImageToImageObjectMetric.txx,v $
+ Module:    $RCSfile: itkDemonsImageToImageObjectMetric.hxx,v $
  Language:  C++
  Date:      $Date: $
  Version:   $Revision: $
@@ -14,8 +14,8 @@
  PURPOSE.  See the above copyright notices for more information.
 
  =========================================================================*/
-#ifndef __itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric_txx
-#define __itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric_txx
+#ifndef __itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric_hxx
+#define __itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric_hxx
 
 #include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkImageRandomConstIteratorWithIndex.h"

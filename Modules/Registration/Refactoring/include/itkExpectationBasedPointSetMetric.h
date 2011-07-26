@@ -97,7 +97,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkExpectationBasedPointSetMetric.txx"
+#include "itkExpectationBasedPointSetMetric.hxx"
 #endif
 
 #endif

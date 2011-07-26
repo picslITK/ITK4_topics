@@ -264,7 +264,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkJensenHavrdaCharvatTsallisPointSetMetric.txx"
+#include "itkJensenHavrdaCharvatTsallisPointSetMetric.hxx"
 #endif
 
 #endif

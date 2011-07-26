@@ -265,7 +265,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.txx"
+#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.hxx"
 #endif
 
 #endif

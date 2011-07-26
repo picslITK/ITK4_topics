@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkManifoldParzenWindowsPointSetFunction_txx
-#define __itkManifoldParzenWindowsPointSetFunction_txx
+#ifndef __itkManifoldParzenWindowsPointSetFunction_hxx
+#define __itkManifoldParzenWindowsPointSetFunction_hxx
 
 #include "itkManifoldParzenWindowsPointSetFunction.h"
 

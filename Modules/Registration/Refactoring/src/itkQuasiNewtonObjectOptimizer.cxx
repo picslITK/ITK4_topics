@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef _itkQuasiNewtonObjectOptimizer_txx
-#define _itkQuasiNewtonObjectOptimizer_txx
+#ifndef _itkQuasiNewtonObjectOptimizer_hxx
+#define _itkQuasiNewtonObjectOptimizer_hxx
 
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkCommand.h"

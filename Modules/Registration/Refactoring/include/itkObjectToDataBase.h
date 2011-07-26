@@ -210,7 +210,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkObjectToDataBase.txx"
+# include "itkObjectToDataBase.hxx"
 #endif
 
 #endif

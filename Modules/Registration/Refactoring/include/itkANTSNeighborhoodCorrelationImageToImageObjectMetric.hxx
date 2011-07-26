@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkANTSNeighborhoodCorrelationImageToImageObjectMetric_txx
-#define __itkANTSNeighborhoodCorrelationImageToImageObjectMetric_txx
+#ifndef __itkANTSNeighborhoodCorrelationImageToImageObjectMetric_hxx
+#define __itkANTSNeighborhoodCorrelationImageToImageObjectMetric_hxx
 
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkNumericTraits.h"

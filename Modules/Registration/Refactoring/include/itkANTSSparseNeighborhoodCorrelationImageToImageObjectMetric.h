@@ -249,7 +249,7 @@ protected:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.txx"
+#include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.hxx"
 #endif
 
 #endif

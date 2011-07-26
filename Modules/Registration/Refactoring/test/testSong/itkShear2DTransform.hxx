@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkShear2DTransform_txx
-#define __itkShear2DTransform_txx
+#ifndef __itkShear2DTransform_hxx
+#define __itkShear2DTransform_hxx
 
 #include "itkShear2DTransform.h"
 #include "itkMath.h"
