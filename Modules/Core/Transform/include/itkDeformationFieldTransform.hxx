@@ -121,6 +121,28 @@ DeformationFieldTransform<TScalar, NDimensions>
 }
 
 /**
+ * Transfrom a point given its index
+ */
+
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputPointType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformIndex(const InputIndexType & index) const
+{
+
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  InputPointType inputPoint;
+  this->m_DeformationField->TransformIndexToPhysicalPoint( index, inputPoint );
+  inputPoint += this->m_DeformationField->GetPixel( index );
+  OutputPointType outputPoint;
+  outputPoint.CastFrom( inputPoint );
+  return outputPoint;
+}
+
+/**
  * Transform covariant vector
  */
 
