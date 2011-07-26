@@ -264,6 +264,10 @@ public:
                              itkGetStaticConstMacro(MovingImageDimension) >
                                                       MovingImageDerivativesType;
 
+  typedef   CovariantVector< CoordinateRepresentationType,
+                             itkGetStaticConstMacro(VirtualImageDimension) >
+                                                      VirtualImageDerivativesType;
+
   /** Gaussian filter types to compute the gradient of the images.
    * This is used by default to compute image gradients. See comments
    * in main documentation */
@@ -626,6 +630,16 @@ protected:
                                     ThreadIdType threadID) const;
   virtual void ComputeMovingImageDerivatives(
                                     const MovingImagePointType & mappedPoint,
+                                    MovingImageDerivativesType & gradient,
+                                    ThreadIdType threadID) const;
+
+  /** Compute image derivatives at an index. */
+  virtual void ComputeFixedImageDerivativesAtIndex(
+                                    const VirtualIndexType & index,
+                                    FixedImageDerivativesType & gradient,
+                                    ThreadIdType threadID) const;
+  virtual void ComputeMovingImageDerivativesAtIndex(
+                                    const VirtualIndexType & index,
                                     MovingImageDerivativesType & gradient,
                                     ThreadIdType threadID) const;
 
