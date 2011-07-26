@@ -95,7 +95,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkEuclideanDistancePointSetMetric.txx"
+#include "itkEuclideanDistancePointSetMetric.hxx"
 #endif
 
 #endif

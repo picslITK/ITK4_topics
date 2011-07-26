@@ -352,7 +352,7 @@ private:
 #endif
 
 #if ITK_TEMPLATE_TXX
-#include "itkRotate2DTransform.txx"
+#include "itkRotate2DTransform.hxx"
 #endif
 
 #endif /* __itkRigid2DTransform_h */

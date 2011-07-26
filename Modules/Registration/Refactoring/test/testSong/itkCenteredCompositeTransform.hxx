@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkCenteredCompositeTransform_txx
-#define __itkCenteredCompositeTransform_txx
+#ifndef __itkCenteredCompositeTransform_hxx
+#define __itkCenteredCompositeTransform_hxx
 
 #include "itkCenteredCompositeTransform.h"
 #include <string.h> // for memcpy on some platforms

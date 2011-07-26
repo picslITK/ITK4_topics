@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkImageSource.txx,v $
+  Module:    $RCSfile: itkImageSource.hxx,v $
   Language:  C++
   Date:      $Date: 2009-11-03 12:24:24 $
   Version:   $Revision: 1.69 $
@@ -17,8 +17,8 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkImageToData_txx
-#define __itkImageToData_txx
+#ifndef __itkImageToData_hxx
+#define __itkImageToData_hxx
 #include "itkImageToData.h"
 
 #include "vnl/vnl_math.h"

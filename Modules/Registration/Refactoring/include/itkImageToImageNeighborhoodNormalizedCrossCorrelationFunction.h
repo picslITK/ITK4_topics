@@ -315,7 +315,7 @@ public:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction.txx"
+#include "itkImageToImageNeighborhoodNormalizedCrossCorrelationFunction.hxx"
 #endif
 
 #endif

@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkDemonsVectorImageToVectorImageObjectMetric.txx,v $
+  Module:    $RCSfile: itkDemonsImageToImageObjectMetric.hxx,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,10 +14,10 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef __itkDemonsVectorImageToVectorImageObjectMetric_txx
-#define __itkDemonsVectorImageToVectorImageObjectMetric_txx
+#ifndef __itkDemonsImageToImageObjectMetric_hxx
+#define __itkDemonsImageToImageObjectMetric_hxx
 
-#include "itkDemonsVectorImageToVectorImageObjectMetric.h"
+#include "itkDemonsImageToImageObjectMetric.h"
 #include "vnl/vnl_math.h"
 
 namespace itk
@@ -27,14 +27,14 @@ namespace itk
  * Constructor
  */
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
-DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
-::DemonsVectorImageToVectorImageObjectMetric()
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+::DemonsImageToImageObjectMetric()
 {
 }
 
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
-DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
-::~DemonsVectorImageToVectorImageObjectMetric()
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+::~DemonsImageToImageObjectMetric()
 {
 }
 
@@ -43,7 +43,7 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
  */
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
 void
-DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::GetValueAndDerivative( MeasureType & value, DerivativeType & derivative)
 {
   // This starts threading, and will iterate over virtual image region and
@@ -62,7 +62,7 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
  */
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
 bool
-DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::GetValueAndDerivativeProcessPoint(
                     const VirtualPointType &           virtualPoint,
                     const FixedImagePointType &        mappedFixedPoint,
@@ -75,16 +75,19 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID)
 {
-  //localDerivativeReturn.Fill(0); //see direct assignment below of sum
-
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = fixedImageValue - movingImageValue;
   metricValueReturn =
     vcl_fabs( diff  ) / (double) this->FixedImageDimension;
 
+  /* Use a pre-allocated jacobian object for efficiency */
+  MovingTransformJacobianType & jacobian =
+                            this->m_MovingTransformJacobianPerThread[threadID];
+
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->GetJacobianWithRespectToParameters(
-                                              mappedMovingPoint, m_Jacobian);
+                                                            mappedMovingPoint,
+                                                            jacobian);
 
   for ( unsigned int par = 0;
           par < this->GetNumberOfLocalParameters(); par++ )
@@ -92,9 +95,8 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
     double sum = 0.0;
     for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
       {
-        sum += 2.0 * diff * m_Jacobian(dim, par) * movingImageDerivatives[dim];
+        sum += 2.0 * diff * jacobian(dim, par) * movingImageDerivatives[dim];
       }
-    //localDerivativeReturn[par]+=sum;
     localDerivativeReturn[par] = sum;
   }
   //  std::cout << localDerivativeReturn << std::endl;
@@ -107,11 +109,10 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
  */
 template < class TFixedImage, class TMovingImage, class TVirtualImage  >
 void
-DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
-  os << indent << "m_Jacobian size: " << m_Jacobian.size();
 }
 
 /**
@@ -119,15 +120,10 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
  */
 template <class TFixedImage, class TMovingImage, class TVirtualImage>
 void
-DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::Initialize(void) throw ( ExceptionObject )
 {
   this->Superclass::Initialize();
-
-  //Size the jacobian matrix here so we can do it
-  // just once.
-  m_Jacobian.SetSize( this->VirtualImageDimension,
-                      this->GetNumberOfLocalParameters() );
 }
 
 } // end namespace itk

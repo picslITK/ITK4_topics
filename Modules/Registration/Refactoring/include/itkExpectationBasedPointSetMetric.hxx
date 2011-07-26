@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkExpectationBasedPointSetMetric_txx
-#define __itkExpectationBasedPointSetMetric_txx
+#ifndef __itkExpectationBasedPointSetMetric_hxx
+#define __itkExpectationBasedPointSetMetric_hxx
 
 #include "itkExpectationBasedPointSetMetric.h"
 

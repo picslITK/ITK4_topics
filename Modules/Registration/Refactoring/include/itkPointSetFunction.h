@@ -130,7 +130,7 @@ private:
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkPointSetFunction.txx"
+# include "itkPointSetFunction.hxx"
 #endif
 
 

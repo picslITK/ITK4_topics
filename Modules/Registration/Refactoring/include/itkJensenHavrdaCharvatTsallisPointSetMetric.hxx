@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkJensenHavrdaCharvatTsallisPointSetMetric_txx
-#define __itkJensenHavrdaCharvatTsallisPointSetMetric_txx
+#ifndef __itkJensenHavrdaCharvatTsallisPointSetMetric_hxx
+#define __itkJensenHavrdaCharvatTsallisPointSetMetric_hxx
 
 #include "itkJensenHavrdaCharvatTsallisPointSetMetric.h"
 

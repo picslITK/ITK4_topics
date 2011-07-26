@@ -114,7 +114,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkArray1DToData.txx"
+# include "itkArray1DToData.hxx"
 #endif
 
 #endif

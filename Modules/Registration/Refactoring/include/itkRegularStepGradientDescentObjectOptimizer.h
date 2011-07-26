@@ -302,7 +302,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkRegularStepGradientDescentObjectOptimizer.txx"
+# include "itkRegularStepGradientDescentObjectOptimizer.hxx"
 #endif
 
 #endif

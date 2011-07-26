@@ -303,7 +303,7 @@ private:
 #endif
 
 #if ITK_TEMPLATE_TXX
-#include "itkShear2DTransform.txx"
+#include "itkShear2DTransform.hxx"
 #endif
 
 #endif /* __itkShear2DTransform_h */

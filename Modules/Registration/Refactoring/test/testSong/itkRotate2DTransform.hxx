@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkRotate2DTransform_txx
-#define __itkRotate2DTransform_txx
+#ifndef __itkRotate2DTransform_hxx
+#define __itkRotate2DTransform_hxx
 
 #include "itkRotate2DTransform.h"
 #include "vnl/algo/vnl_svd.h"

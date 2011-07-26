@@ -161,7 +161,7 @@ private:
 } // end namespace itk
 
 //#ifndef ITK_MANUAL_INSTANTIATION
-//# include "itkGradientDescentObjectOptimizerBase.txx"
+//# include "itkGradientDescentObjectOptimizerBase.hxx"
 //#endif
 
 #endif
