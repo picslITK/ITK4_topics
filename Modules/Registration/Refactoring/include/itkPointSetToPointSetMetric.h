@@ -38,7 +38,7 @@ namespace itk
  * point-set and the transformed moving point-set.
  *
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 
 template<class TFixedPointSet,  class TMovingPointSet>

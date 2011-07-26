@@ -56,7 +56,7 @@ namespace itk {
  * "Point set registration using Havrda-Charvat-Tsallis entropy measures"
  * IEEE Transactions on Medical Imaging, 30(2):451-60, 2011.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 
 template<class TPointSet>

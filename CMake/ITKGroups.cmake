@@ -90,6 +90,7 @@ set(Registration_module_list
 ITKFEMRegistration
 ITKPDEDeformableRegistration
 ITKRegistrationCommon
+ITKRegistrationRefactoring
 )
 
 set(Registration_documentation

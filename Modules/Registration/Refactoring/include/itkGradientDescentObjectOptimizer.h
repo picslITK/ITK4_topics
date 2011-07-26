@@ -34,7 +34,7 @@ namespace itk
  * metric::UpateTransformParameters method, after the optimizer applies scales
  * and a learning rate.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 class ITK_EXPORT GradientDescentObjectOptimizer
   : public GradientDescentObjectOptimizerBase

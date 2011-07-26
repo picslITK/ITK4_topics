@@ -36,7 +36,7 @@ namespace itk
  *    PJ Besl and ND McKay, "A Method for Registration of 3-D Shapes",
  *    IEEE PAMI, Vol 14, No. 2, February 1992
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 template<class TFixedPointSet, class TMovingPointSet = TFixedPointSet>
 class ITK_EXPORT EuclideanDistancePointSetMetric:

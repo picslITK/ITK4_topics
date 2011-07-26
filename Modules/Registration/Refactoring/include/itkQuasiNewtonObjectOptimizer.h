@@ -48,7 +48,7 @@ namespace itk
  * compute the local update of the deformation field. In this case, we compute
  * the local Quasi-Newton step at a specific index of the field.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 class ITK_EXPORT QuasiNewtonObjectOptimizer:
   public GradientDescentObjectOptimizer

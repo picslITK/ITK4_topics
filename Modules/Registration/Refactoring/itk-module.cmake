@@ -1,15 +1,15 @@
-itk_module(ITK-RegistrationRefactoring
+itk_module(ITKRegistrationRefactoring
   DEPENDS
-    ITK-RegistrationCommon
-    ITK-Optimizers
-    ITK-ImageIntensity
-    ITK-ImageFunction
-    ITK-ImageGrid
-    ITK-SpatialObjects
-    ITK-Smoothing
-    ITK-ImageGradient
-    ITK-ImageFeature
-    ITK-FiniteDifference
+    ITKRegistrationCommon
+    ITKOptimizers
+    ITKImageIntensity
+    ITKImageFunction
+    ITKImageGrid
+    ITKSpatialObjects
+    ITKSmoothing
+    ITKImageGradient
+    ITKImageFeature
+    ITKFiniteDifference
   TEST_DEPENDS
-    ITK-TestKernel
+    ITKTestKernel
 )

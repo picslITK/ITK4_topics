@@ -39,7 +39,7 @@ namespace itk
  *    "Appearance and incomplete label matching for diffeomorphic template
  *     "based hippocampus segmentation", Hippocampus, 2009 Jun; 19(6):565-71.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 template<class TFixedPointSet, class TMovingPointSet = TFixedPointSet>
 class ITK_EXPORT ExpectationBasedPointSetMetric:
