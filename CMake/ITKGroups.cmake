@@ -78,6 +78,7 @@ set(Registration_module_list
 ITKFEMRegistration
 ITKPDEDeformableRegistration
 ITKRegistrationCommon
+ITKRegistrationRefactoring
 )
 
 set(Segmentation_module_list

@@ -58,7 +58,7 @@ namespace itk
  * before running.
  *
  * \sa ObjectToDataBase
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 
 

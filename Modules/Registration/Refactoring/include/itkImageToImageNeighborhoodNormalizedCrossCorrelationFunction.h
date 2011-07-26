@@ -39,7 +39,7 @@ namespace itk
  * derived classes, operate on meshes, images, etc.  This class computes a
  * value that measures the similarity between the two objects.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  *
  */
 template< class TFixedImage,  class TMovingImage >

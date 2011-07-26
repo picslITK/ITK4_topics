@@ -33,7 +33,7 @@ namespace itk
 
 /** \class ManifoldParzenWindowsPointSetFunction.h
  * \brief point set filter.
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  *
  */
 

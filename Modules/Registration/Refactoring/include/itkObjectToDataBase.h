@@ -63,7 +63,7 @@ namespace itk
  * changed for more clarity.
  *
  * \sa ImageToData
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 
 template <class TInputObject, class TDataHolder>

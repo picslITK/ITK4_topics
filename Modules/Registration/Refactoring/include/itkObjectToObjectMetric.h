@@ -47,7 +47,7 @@ namespace itk
  *  HasLocalSupport
  *  UpdateTransformParameters
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 
 class ITK_EXPORT ObjectToObjectMetric:

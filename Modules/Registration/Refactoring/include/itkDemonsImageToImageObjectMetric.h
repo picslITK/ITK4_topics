@@ -28,7 +28,7 @@ namespace itk
  *
  *  See \c GetValueAndDerivativeProcessPoint for algorithm implementation.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 template <class TFixedImage,
           class TMovingImage,

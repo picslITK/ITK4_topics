@@ -29,7 +29,7 @@ namespace itk {
  * \brief Computes normalized cross correlation using a small neighborhood
  * for each voxel between two images.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  *
  * Please cite this reference for more details:
  *

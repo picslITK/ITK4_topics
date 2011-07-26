@@ -48,7 +48,7 @@ namespace itk
  *
  * TODO: Remove implementation code out of header file.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKRegistrationRefactoring
  */
 
 class ITK_EXPORT ObjectToObjectOptimizerBase : public Object

@@ -1,20 +1,20 @@
-set(ITK-RegistrationRefactoring_SRC
+set(ITKRegistrationRefactoring_SRC
 itkGradientDescentObjectOptimizerBase.cxx
 itkGradientDescentObjectOptimizer.cxx
 itkQuasiNewtonObjectOptimizer.cxx
 )
 
-add_library(ITK-RegistrationRefactoring ${ITK-RegistrationRefactoring_SRC})
-target_link_libraries(ITK-RegistrationRefactoring
-  ${ITK-RegistrationCommon_LIBRARIES}
-  ${ITK-Optimizers_LIBRARIES}
-  ${ITK-ImageIntensity_LIBRARIES}
-  ${ITK-ImageFunction_LIBRARIES}
-  ${ITK-ImageGrid_LIBRARIES}
-  ${ITK-SpatialObjects_LIBRARIES}
-  ${ITK-Smoothing_LIBRARIES}
-  ${ITK-ImageGradient_LIBRARIES}
-  ${ITK-ImageFeature_LIBRARIES}
-  ${ITK-FiniteDifference_LIBRARIES}
+add_library(ITKRegistrationRefactoring ${ITKRegistrationRefactoring_SRC})
+target_link_libraries(ITKRegistrationRefactoring
+  ${ITKRegistrationCommon_LIBRARIES}
+  ${ITKOptimizers_LIBRARIES}
+  ${ITKImageIntensity_LIBRARIES}
+  ${ITKImageFunction_LIBRARIES}
+  ${ITKImageGrid_LIBRARIES}
+  ${ITKSpatialObjects_LIBRARIES}
+  ${ITKSmoothing_LIBRARIES}
+  ${ITKImageGradient_LIBRARIES}
+  ${ITKImageFeature_LIBRARIES}
+  ${ITKFiniteDifference_LIBRARIES}
    )
-itk_module_target(ITK-RegistrationRefactoring)
+itk_module_target(ITKRegistrationRefactoring)
