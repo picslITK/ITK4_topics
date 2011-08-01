@@ -25,6 +25,7 @@
 //#include "itkDemonsImageToImageObjectMetric.h"
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
+#include "itkOptimizerParameterEstimator.h"
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
@@ -216,6 +217,18 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
                                     OptimizerType >      CommandIterationType;
   CommandIterationType::Pointer iterationCommand = CommandIterationType::New();
   iterationCommand->SetOptimizer(  optimizer.GetPointer() );
+
+  // Testing optimizer parameter estimator
+  typedef itk::OptimizerParameterEstimator< MetricType,
+                                        IdentityTransformType,
+                                        TranslationTransformType > OptimizerParameterEstimatorType;
+  OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
+
+  parameterEstimator->SetMetric(metric);
+  parameterEstimator->SetTransformForward(true);
+  parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
+  optimizer->SetOptimizerParameterEstimator( parameterEstimator );
+  // Estimating optimizer parameters done
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl

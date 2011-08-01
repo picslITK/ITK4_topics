@@ -26,7 +26,7 @@
 #include "itkIntTypes.h"
 #include "itkGradientDescentObjectOptimizer.h"
 #include "itkImageToImageObjectMetric.h"
-#include "itkOptimizerHelper.h"
+#include "itkOptimizerParameterEstimatorBase.h"
 #include <string>
 
 namespace itk
@@ -71,7 +71,15 @@ public:
   //typedef MetricType::Pointer                       ImageMetricPointer;
 
   /** Type for Hessian matrix in the Quasi-Newton method */
-  typedef Array2D<double>            HessianType;
+  typedef itk::Array2D<double>                      HessianType;
+  typedef itk::Matrix<double, 2, 2>                 LocalHessianType;
+
+  /** Pointer of OptimizerParameterEstimatorBase. */
+  typedef OptimizerParameterEstimatorBase::Pointer  OptimizerParameterEstimatorBasePointer;
+
+  /** Connect the OptimizerParameterEstimator .  */
+  itkSetObjectMacro(OptimizerParameterEstimator, OptimizerParameterEstimatorBase);
+  itkGetObjectMacro(OptimizerParameterEstimator, OptimizerParameterEstimatorBase);
 
   /** Start and run the optimization */
   virtual void StartOptimization();
@@ -85,6 +93,8 @@ public:
 
 protected:
 
+  OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
+
   /** The gradient in the previous step */
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
@@ -93,13 +103,16 @@ protected:
   // Use reference to save memory copy
   //ParametersType& m_CurrentPositionRef;
 
-  /** The hessian estimated by a Quasi-Newton method
-   */
+  /** The Quasi-Newton step */
+  ParametersType  m_NewtonStep;
+
+  /** The Hessian estimated by a Quasi-Newton method */
   HessianType     m_Hessian;
   HessianType     m_HessianInverse;
 
-  ParametersType  m_LocalHessian;
-  ParametersType  m_NewtonStep;
+  /** The Hessian with local support */
+  LocalHessianType  *m_LocalHessian;
+  LocalHessianType  *m_LocalHessianInverse;
 
   //bool            m_LineSearchEnabled;
 
@@ -135,7 +148,17 @@ protected:
                               ParametersType thisStep) const;
 
   QuasiNewtonObjectOptimizer();
-  virtual ~QuasiNewtonObjectOptimizer() {}
+  virtual ~QuasiNewtonObjectOptimizer()
+    {
+    if (m_LocalHessian)
+      {
+      delete[] m_LocalHessian;
+      }
+    if (m_LocalHessianInverse)
+      {
+      delete[] m_LocalHessianInverse;
+      }
+    }
   void PrintSelf(std::ostream & os, Indent indent) const;
 
   /** helper object to estimate scales and compute maximum voxel shift. */
