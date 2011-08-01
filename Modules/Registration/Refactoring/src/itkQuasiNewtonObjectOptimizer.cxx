@@ -252,70 +252,13 @@ QuasiNewtonObjectOptimizer
   double newtonLearningRate   = 100*m_MaximumVoxelShift / maxNewtonStep;
   newtonLearningRate = vnl_math_min(newtonLearningRate, 1.0);
 
-  //int irow = 152, icol = 170, pos = irow * 256 + icol, pos2 = 2*pos;
-  int irow = 127, icol = 127, pos = irow * 256 + icol, pos2 = 2*pos;
-  const int delta = 127;
-  //itk::Matrix<unsigned char,2*delta+1,2*delta+1> mask; //either gradient (=0) or newton (=1)
-
-  /*typedef unsigned char DebugPixelType; //I assume png is unsigned short
-  typedef Image< DebugPixelType, 2 >  DebugImageType;
-  DebugImageType::SizeType    size;
-  size.Fill( 256 );  // the size of image have to be at least 4 in each dimension to
-                   // compute gradient image inside the metric.
-  FixedImageType::RegionType  region( size );
-
-  DebugImageType::Pointer maskImage = DebugImageType::New();
-  fixedImage->SetRegions( region );
-  fixedImage->Allocate();
-  fixedImage->FillBuffer( 3.0 );
-  */
-  typedef double PixelType; //I assume png is unsigned short
-  const int Dimension = 2;
-  typedef Image< PixelType, Dimension >  FixedImageType;
-  typedef Image< PixelType, Dimension >  MovingImageType;
-
-  typedef ImageDuplicator<FixedImageType> DuplicatorType;
-  DuplicatorType::Pointer duplicator = DuplicatorType::New();
-  duplicator->SetInputImage(
-    ((ImageToImageObjectMetric<FixedImageType, MovingImageType> *)(this->m_Metric.GetPointer()))
-    ->GetFixedImage() );
-  duplicator->Update();
-  PixelType *mask = duplicator->GetOutput()->GetBufferPointer();
-
-  this->SetDebug(true);
+  //this->SetDebug(true);
   if (this->GetDebug())
     {
-    std::cout << "Iter = " << this->GetCurrentIteration() << std::endl;
+    std::cout << "Iteration = " << this->GetCurrentIteration() << std::endl;
     std::cout << "spaceDimension = " << spaceDimension << std::endl;
     std::cout << "newtonLearningRate = " << newtonLearningRate << std::endl;
     std::cout << "gradientLearningRate = " << gradientLearningRate << std::endl;
-    std::cout << "currentPositionRef[" << irow << ", " << icol << "] = [" << currentPositionRef[pos2] << " " << currentPositionRef[pos2+1] << "]\n";
-    /*std::cout << "m_Gradient[" << irow << ", " << icol << "]'s radius-" << delta << " neighborhood [" << std::endl;
-    for (int rr=-delta; rr<=delta; rr++)
-      {
-      for (int cc=-delta; cc<=delta; cc++)
-        {
-        pos = (irow+rr) * 256 + (icol+cc);
-        pos2 = 2*pos;
-        std::cout << "[";
-        std::cout << std::setw(15) << m_Gradient[pos2] << std::setw(15) << m_Gradient[pos2+1];
-        std::cout << "]";
-        }
-      std::cout << "\n" ;
-      }
-    std::cout << "m_NewtonStep[" << irow << ", " << icol << "]'s radius-" << delta << " neighborhood [" << std::endl;
-    for (int rr=-delta; rr<=delta; rr++)
-      {
-      for (int cc=-delta; cc<=delta; cc++)
-        {
-        pos = (irow+rr) * 256 + (icol+cc);
-        pos2 = 2*pos;
-        std::cout << "[";
-        std::cout << std::setw(15) << m_NewtonStep[pos2] << std::setw(15) << m_NewtonStep[pos2+1];
-        std::cout << "]";
-        }
-      std::cout << "\n" ;
-      }*/
     }
 
   for ( unsigned int i=0; i<imageSize; i++ )
@@ -325,7 +268,6 @@ QuasiNewtonObjectOptimizer
      * approximation produces a convex instead of an expected concave, or
      * vice versa.
      */
-    int trow = i / 256, tcol = i% 256;
     double dotProduct = 0;
     for (unsigned int d=0; d<imageDimension; d++)
       {
@@ -333,10 +275,6 @@ QuasiNewtonObjectOptimizer
       }
     if ( dotProduct <= 0 )
       {
-      //m_NewtonStep[p] = m_Gradient[p] * gradientLearningRate;
-      //if (abs(trow-irow) <= delta && abs(tcol-icol) <= delta)
-      //  mask[trow-irow + delta][tcol-icol + delta] = 0;
-      mask[i] = 0;
       for (unsigned int d=0; d<imageDimension; d++)
         {
         m_NewtonStep[i*imageDimension + d] = m_Gradient[i*imageDimension + d] * gradientLearningRate;
@@ -344,10 +282,6 @@ QuasiNewtonObjectOptimizer
       }
     else
       {
-      //m_NewtonStep[p] = m_NewtonStep[p] * newtonLearningRate;
-      //if (abs(trow-irow) <= delta && abs(tcol-icol) <= delta)
-      //  mask[trow-irow + delta][tcol-icol + delta] = 1;
-      mask[i] = 1;
       for (unsigned int d=0; d<imageDimension; d++)
         {
         m_NewtonStep[i*imageDimension + d] = m_NewtonStep[i*imageDimension + d] * newtonLearningRate;
@@ -355,39 +289,7 @@ QuasiNewtonObjectOptimizer
       }
 
     } //end of for
-  if (this->GetDebug())
-    {
-    /*std::cout << "UpdateStep[" << irow << ", " << icol << "]'s radius-" << delta << " neighborhood [" << std::endl;
-    for (int rr=-delta; rr<=delta; rr++)
-      {
-      for (int cc=-delta; cc<=delta; cc++)
-        {
-        pos = (irow+rr) * 256 + (icol+cc);
-        pos2 = 2*pos;
-        std::cout << "[";
-        std::cout << std::setw(15) << m_NewtonStep[pos2] << std::setw(15) << m_NewtonStep[pos2+1];
-        std::cout << "]";
-        }
-      std::cout << "\n" ;
-      }
-    std::cout << "]\n";
-    std::cout << "mask[" << irow << ", " << icol << "]'s +/- " << delta << " neighborhood [" << std::endl;
-    std::cout << mask << "]\n";
-    */
 
-    typedef ImageFileWriter< FixedImageType >  WriterType;
-
-    WriterType::Pointer      writer =  WriterType::New();
-    char debugFile[256];
-    sprintf(debugFile, "h:\\cygwin\\home\\baohua\\tmp\\tmpmask%d.nii.gz", this->GetCurrentIteration());
-    writer->SetFileName( debugFile );
-    writer->SetInput( duplicator->GetOutput() );
-
-    writer->Update();
-
-    //m_NewtonStep[pos2] = 20;
-    //m_NewtonStep[pos2+1] = 20;
-    }
   this->m_Metric->UpdateTransformParameters( this->m_NewtonStep );
 
   this->InvokeEvent( IterationEvent() );
@@ -463,7 +365,7 @@ void QuasiNewtonObjectOptimizer
 
   m_Hessian         = newHessian;
 
-  if ( vcl_abs(vnl_determinant(newHessian)) <= 1e-10 )
+  if ( vcl_abs(vnl_determinant(newHessian)) == 0 )
     {
     m_HessianInverse[0][0] = NumericTraits<double>::max();
     }
@@ -562,7 +464,7 @@ void QuasiNewtonObjectOptimizer
 
       m_LocalHessian[i] = m_LocalHessian[i] + plus - minus;
 
-      if ( vcl_abs(vnl_determinant(m_LocalHessian[i].GetVnlMatrix())) <= 1e-3 )
+      if ( vcl_abs(vnl_determinant(m_LocalHessian[i].GetVnlMatrix())) <= 5e-3 )
         {
         m_LocalHessianInverse[i][0][0] = NumericTraits<double>::max();
         }
@@ -584,8 +486,8 @@ double QuasiNewtonObjectOptimizer
 
   double shift, learningRate;
 
-  shift = this->m_Metric->ComputeMaximumVoxelShift(true, step);
-  //shift = m_OptimizerHelper->ComputeMaximumVoxelShift(parameters, step);
+  //shift = this->m_Metric->ComputeMaximumVoxelShift(true, step);
+  shift = m_OptimizerParameterEstimator->ComputeMaximumVoxelShift(parameters, step);
 
   //initialize for the first time of executing EstimateLearningRate
   if (this->GetCurrentIteration() == 0 || m_MinimumVoxelShift == 0)

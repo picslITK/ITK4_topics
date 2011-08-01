@@ -139,13 +139,6 @@ public:
   virtual void UpdateTransformParameters( DerivativeType & derivative,
                                           ParametersValueType factor = 1.0) = 0;
 
-  /** Estimate the scales of transform parameters. */
-  virtual void EstimateScales(bool isMovingTransform, ParametersType &parameterScales) {}
-
-  /** Compute the shift in voxels when deltaParameters is applied onto the
-   * current parameters. */
-  virtual double ComputeMaximumVoxelShift(bool isMovingTransform, ParametersType deltaParameters) { return 0; }
-
 protected:
   ObjectToObjectMetric() {}
   virtual ~ObjectToObjectMetric() {}
