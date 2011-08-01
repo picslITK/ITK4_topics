@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkOptimizerHelper_h
-#define __itkOptimizerHelper_h
+#ifndef __itkOptimizerParameterEstimatorBase_h
+#define __itkOptimizerParameterEstimatorBase_h
 
 #include "itkObject.h"
 #include "itkObjectFactory.h"
@@ -26,8 +26,8 @@
 namespace itk
 {
 
-/** \class OptimizerHelper
- *  \brief OptimizerHelper is a helper class intended to estimate the scales
+/** \class OptimizerParameterEstimatorBase
+ *  \brief OptimizerParameterEstimatorBase is a helper class intended to estimate the scales
  * and the maximum voxel shift in optimizers of image registration.
  *
  * The estimation requires information about images and transform that are
@@ -41,11 +41,11 @@ namespace itk
  * \ingroup Numerics Optimizers
  * \ingroup ITK-Optimizers
  */
-class ITK_EXPORT OptimizerHelper : public Object
+class ITK_EXPORT OptimizerParameterEstimatorBase : public Object
 {
 public:
   /** Standard class typedefs. */
-  typedef OptimizerHelper                       Self;
+  typedef OptimizerParameterEstimatorBase       Self;
   typedef Object                                Superclass;
   typedef SmartPointer<Self>                    Pointer;
   typedef SmartPointer<const Self>              ConstPointer;
@@ -54,7 +54,7 @@ public:
   //itkNewMacro( Self );
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro( OptimizerHelper, Object );
+  itkTypeMacro( OptimizerParameterEstimatorBase, Object );
 
   /** Type of scales */
   typedef Array< double > ScalesType;
@@ -72,8 +72,8 @@ public:
     ParametersType deltaParameters) = 0;
 
 protected:
-  OptimizerHelper(){};
-  ~OptimizerHelper(){};
+  OptimizerParameterEstimatorBase(){};
+  ~OptimizerParameterEstimatorBase(){};
 
   void PrintSelf(std::ostream &os, Indent indent) const
     {
@@ -81,16 +81,16 @@ protected:
     }
 
 private:
-  OptimizerHelper(const Self&); //purposely not implemented
+  OptimizerParameterEstimatorBase(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-}; //class OptimizerHelper
+}; //class OptimizerParameterEstimatorBase
 
 }  // namespace itk
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-//#include "itkOptimizerHelper.txx"
+//#include "itkOptimizerParameterEstimatorBase.txx"
 #endif
 
-#endif /* __itkOptimizerHelper_h */
+#endif /* __itkOptimizerParameterEstimatorBase_h */

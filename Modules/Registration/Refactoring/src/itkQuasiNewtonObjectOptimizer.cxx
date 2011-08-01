@@ -15,13 +15,18 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef _itkQuasiNewtonObjectOptimizer_hxx
-#define _itkQuasiNewtonObjectOptimizer_hxx
+//#ifndef __itkQuasiNewtonObjectOptimizer_hxx
+//#define __itkQuasiNewtonObjectOptimizer_hxx
+
+#include <iostream>
+#include <iomanip>
 
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkCommand.h"
 #include "itkEventObject.h"
 #include "itkMacro.h"
+#include "itkImageDuplicator.h"
+#include "itkImageFileWriter.h"
 
 namespace itk
 {
@@ -39,6 +44,8 @@ QuasiNewtonObjectOptimizer
   // according the first step
   m_MinimumVoxelShift = 0;
 
+  m_LocalHessian = NULL;
+  m_LocalHessianInverse = NULL;
 }
 
 void
@@ -57,12 +64,12 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("StartOptimization");
 
-  if (!this->m_Metric->HasLocalSupport())
+  if ( ! this->m_Metric->HasLocalSupport() )
     {
     // initialize scales
     ScalesType scales(this->m_Metric->GetNumberOfParameters());
-    this->m_Metric->EstimateScales(true, scales);
-    //m_OptimizerHelper->EstimateScales(this->m_Metric->GetParameters(), scales);
+    //this->m_Metric->EstimateScales(true, scales);
+    m_OptimizerParameterEstimator->EstimateScales(this->m_Metric->GetParameters(), scales);
     this->SetScales(scales);
     std::cout << " Estimated scales = " << scales << std::endl;
     }
@@ -117,6 +124,9 @@ QuasiNewtonObjectOptimizer
     newtonStepException = true;
     }
 
+  //std::cout << "m_NewtonStep = " << m_NewtonStep << std::endl;
+  //std::cout << "m_Gradient = "   << m_Gradient << std::endl;
+
   /** Save for the next iteration */
   m_PreviousPosition = this->GetCurrentPosition();
   m_PreviousGradient = this->GetGradient();
@@ -136,6 +146,7 @@ QuasiNewtonObjectOptimizer
     {
     learningRate = this->EstimateLearningRate(gradientStep);
     this->SetLearningRate( learningRate );
+    //std::cout << "using gradient, learningRate = " << learningRate << std::endl;
 
     if ( learningRate == 0)
       {
@@ -155,6 +166,7 @@ QuasiNewtonObjectOptimizer
     learningRate = this->EstimateLearningRate(m_NewtonStep);
     learningRate = vnl_math_min(learningRate, 1.0);
     this->SetLearningRate( learningRate );
+    //std::cout << "using newton, learningRate = " << learningRate << std::endl;
 
     if ( learningRate == 0)
       {
@@ -188,6 +200,8 @@ QuasiNewtonObjectOptimizer
 ::AdvanceOneLocalStep(void)
 {
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
+  const unsigned int imageDimension = 2;
+  const unsigned int imageSize = spaceDimension / imageDimension;
   ScalesType scales = this->GetScales();
 
   bool   newtonStepException = false;
@@ -201,7 +215,9 @@ QuasiNewtonObjectOptimizer
     m_PreviousGradient = this->m_Gradient;
 
     m_NewtonStep.SetSize(spaceDimension);
-    m_LocalHessian.SetSize(spaceDimension);
+    m_LocalHessian = new LocalHessianType[imageSize];
+    m_LocalHessianInverse = new LocalHessianType[imageSize];
+
     }
 
   try
@@ -232,49 +248,145 @@ QuasiNewtonObjectOptimizer
       }
     }
 
-  double gradientLearningRate = 0.1;//m_MaximumVoxelShift / maxGradient;
-  double newtonLearningRate   = m_MaximumVoxelShift / maxNewtonStep;
+  double gradientLearningRate = 100*m_MaximumVoxelShift / maxGradient;
+  double newtonLearningRate   = 100*m_MaximumVoxelShift / maxNewtonStep;
   newtonLearningRate = vnl_math_min(newtonLearningRate, 1.0);
 
-  int irow = 160, icol = 160, pos = 2 * (irow * 256 + icol);
+  //int irow = 152, icol = 170, pos = irow * 256 + icol, pos2 = 2*pos;
+  int irow = 127, icol = 127, pos = irow * 256 + icol, pos2 = 2*pos;
+  const int delta = 127;
+  //itk::Matrix<unsigned char,2*delta+1,2*delta+1> mask; //either gradient (=0) or newton (=1)
+
+  /*typedef unsigned char DebugPixelType; //I assume png is unsigned short
+  typedef Image< DebugPixelType, 2 >  DebugImageType;
+  DebugImageType::SizeType    size;
+  size.Fill( 256 );  // the size of image have to be at least 4 in each dimension to
+                   // compute gradient image inside the metric.
+  FixedImageType::RegionType  region( size );
+
+  DebugImageType::Pointer maskImage = DebugImageType::New();
+  fixedImage->SetRegions( region );
+  fixedImage->Allocate();
+  fixedImage->FillBuffer( 3.0 );
+  */
+  typedef double PixelType; //I assume png is unsigned short
+  const int Dimension = 2;
+  typedef Image< PixelType, Dimension >  FixedImageType;
+  typedef Image< PixelType, Dimension >  MovingImageType;
+
+  typedef ImageDuplicator<FixedImageType> DuplicatorType;
+  DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(
+    ((ImageToImageObjectMetric<FixedImageType, MovingImageType> *)(this->m_Metric.GetPointer()))
+    ->GetFixedImage() );
+  duplicator->Update();
+  PixelType *mask = duplicator->GetOutput()->GetBufferPointer();
+
+  this->SetDebug(true);
   if (this->GetDebug())
     {
     std::cout << "Iter = " << this->GetCurrentIteration() << std::endl;
     std::cout << "spaceDimension = " << spaceDimension << std::endl;
     std::cout << "newtonLearningRate = " << newtonLearningRate << std::endl;
     std::cout << "gradientLearningRate = " << gradientLearningRate << std::endl;
-
-    std::cout << "currentPositionRef[" << pos << "] = " << currentPositionRef[pos] << std::endl;
-    std::cout << "currentPositionRef[" << pos+1 << "] = " << currentPositionRef[pos+1] << std::endl;
-    std::cout << "m_NewtonStep[" << pos << "] = " << m_NewtonStep[pos] << std::endl;
-    std::cout << "m_NewtonStep[" << pos+1 << "] = " << m_NewtonStep[pos+1] << std::endl;
-    std::cout << "m_LocalHessian[" << pos << "] = " << m_LocalHessian[pos] << std::endl;
-    std::cout << "m_LocalHessian[" << pos+1 << "] = " << m_LocalHessian[pos+1] << std::endl;
-    std::cout << "m_Gradient[" << pos << "] = " << m_Gradient[pos] << std::endl;
-    std::cout << "m_Gradient[" << pos+1 << "] = " << m_Gradient[pos+1] << std::endl;
+    std::cout << "currentPositionRef[" << irow << ", " << icol << "] = [" << currentPositionRef[pos2] << " " << currentPositionRef[pos2+1] << "]\n";
+    /*std::cout << "m_Gradient[" << irow << ", " << icol << "]'s radius-" << delta << " neighborhood [" << std::endl;
+    for (int rr=-delta; rr<=delta; rr++)
+      {
+      for (int cc=-delta; cc<=delta; cc++)
+        {
+        pos = (irow+rr) * 256 + (icol+cc);
+        pos2 = 2*pos;
+        std::cout << "[";
+        std::cout << std::setw(15) << m_Gradient[pos2] << std::setw(15) << m_Gradient[pos2+1];
+        std::cout << "]";
+        }
+      std::cout << "\n" ;
+      }
+    std::cout << "m_NewtonStep[" << irow << ", " << icol << "]'s radius-" << delta << " neighborhood [" << std::endl;
+    for (int rr=-delta; rr<=delta; rr++)
+      {
+      for (int cc=-delta; cc<=delta; cc++)
+        {
+        pos = (irow+rr) * 256 + (icol+cc);
+        pos2 = 2*pos;
+        std::cout << "[";
+        std::cout << std::setw(15) << m_NewtonStep[pos2] << std::setw(15) << m_NewtonStep[pos2+1];
+        std::cout << "]";
+        }
+      std::cout << "\n" ;
+      }*/
     }
 
-  for ( unsigned int p=0; p<spaceDimension; p++ )
+  for ( unsigned int i=0; i<imageSize; i++ )
     {
     /** If a Newton step is on the opposite direction of a gradient step, we'd
      * better use the gradient step. This happens when the second order
      * approximation produces a convex instead of an expected concave, or
      * vice versa.
      */
-    if ( m_Gradient[p] * m_NewtonStep[p] <= 0 )
+    int trow = i / 256, tcol = i% 256;
+    double dotProduct = 0;
+    for (unsigned int d=0; d<imageDimension; d++)
       {
-      m_NewtonStep[p] = m_Gradient[p] * gradientLearningRate;
+      dotProduct += m_Gradient[i*imageDimension + d] * m_NewtonStep[i*imageDimension + d];
+      }
+    if ( dotProduct <= 0 )
+      {
+      //m_NewtonStep[p] = m_Gradient[p] * gradientLearningRate;
+      //if (abs(trow-irow) <= delta && abs(tcol-icol) <= delta)
+      //  mask[trow-irow + delta][tcol-icol + delta] = 0;
+      mask[i] = 0;
+      for (unsigned int d=0; d<imageDimension; d++)
+        {
+        m_NewtonStep[i*imageDimension + d] = m_Gradient[i*imageDimension + d] * gradientLearningRate;
+        }
       }
     else
       {
-      m_NewtonStep[p] = m_NewtonStep[p] * newtonLearningRate;
+      //m_NewtonStep[p] = m_NewtonStep[p] * newtonLearningRate;
+      //if (abs(trow-irow) <= delta && abs(tcol-icol) <= delta)
+      //  mask[trow-irow + delta][tcol-icol + delta] = 1;
+      mask[i] = 1;
+      for (unsigned int d=0; d<imageDimension; d++)
+        {
+        m_NewtonStep[i*imageDimension + d] = m_NewtonStep[i*imageDimension + d] * newtonLearningRate;
+        }
       }
 
     } //end of for
   if (this->GetDebug())
     {
-    std::cout << "UpdateStep[" << pos << "] = " << m_NewtonStep[pos] << std::endl;
-    std::cout << "UpdateStep[" << pos+1 << "] = " << m_NewtonStep[pos+1] << std::endl;
+    /*std::cout << "UpdateStep[" << irow << ", " << icol << "]'s radius-" << delta << " neighborhood [" << std::endl;
+    for (int rr=-delta; rr<=delta; rr++)
+      {
+      for (int cc=-delta; cc<=delta; cc++)
+        {
+        pos = (irow+rr) * 256 + (icol+cc);
+        pos2 = 2*pos;
+        std::cout << "[";
+        std::cout << std::setw(15) << m_NewtonStep[pos2] << std::setw(15) << m_NewtonStep[pos2+1];
+        std::cout << "]";
+        }
+      std::cout << "\n" ;
+      }
+    std::cout << "]\n";
+    std::cout << "mask[" << irow << ", " << icol << "]'s +/- " << delta << " neighborhood [" << std::endl;
+    std::cout << mask << "]\n";
+    */
+
+    typedef ImageFileWriter< FixedImageType >  WriterType;
+
+    WriterType::Pointer      writer =  WriterType::New();
+    char debugFile[256];
+    sprintf(debugFile, "h:\\cygwin\\home\\baohua\\tmp\\tmpmask%d.nii.gz", this->GetCurrentIteration());
+    writer->SetFileName( debugFile );
+    writer->SetInput( duplicator->GetOutput() );
+
+    writer->Update();
+
+    //m_NewtonStep[pos2] = 20;
+    //m_NewtonStep[pos2+1] = 20;
     }
   this->m_Metric->UpdateTransformParameters( this->m_NewtonStep );
 
@@ -351,7 +463,7 @@ void QuasiNewtonObjectOptimizer
 
   m_Hessian         = newHessian;
 
-  if ( vnl_determinant(newHessian) == 0.0 )
+  if ( vcl_abs(vnl_determinant(newHessian)) <= 1e-10 )
     {
     m_HessianInverse[0][0] = NumericTraits<double>::max();
     }
@@ -366,24 +478,42 @@ void QuasiNewtonObjectOptimizer
 ::EstimateLocalNewtonStep()
 {
   unsigned int numPara = this->m_Metric->GetNumberOfParameters();
+  const unsigned int imageDimension = 2;
+  const unsigned int imageSize = numPara / imageDimension;
+
+  ParametersType localGradient(imageDimension);
+  ParametersType localNewtonStep(imageDimension);
 
   // Estimate Hessian
   EstimateLocalHessian();
 
   // Compute the Newton step
-  for (unsigned int i=0; i<numPara; i++)
+  for (unsigned int i=0; i<imageSize; i++)
     {
     if (this->GetCurrentIteration() == 0 ||
-        m_LocalHessian[i] == NumericTraits<double>::max() ||
-        m_LocalHessian[i] == 0)
+        m_LocalHessian[i][0][0] == NumericTraits<double>::max() ||
+        m_LocalHessianInverse[i][0][0] == NumericTraits<double>::max())
       {
-      m_NewtonStep[i] = 0; //use gradient
-      m_LocalHessian[i] = 1; //reset
+      for (unsigned int d=0; d<imageDimension; d++)
+        {
+        m_NewtonStep[i*imageDimension + d] = 0; //use gradient
+        }
+      m_LocalHessian[i].SetIdentity(); //reset
+      m_LocalHessianInverse[i].SetIdentity(); //reset
       }
     else
       {
+      for (unsigned int d=0; d<imageDimension; d++)
+        {
+        localGradient[d] = m_Gradient[i*imageDimension + d];
+        }
       //m_NewtonStep[i] = - m_Gradient[i] / m_LocalHessian[i];
-      m_NewtonStep[i] = m_Gradient[i] / m_LocalHessian[i];
+      localNewtonStep = m_LocalHessianInverse[i] * localGradient;
+
+      for (unsigned int d=0; d<imageDimension; d++)
+        {
+        m_NewtonStep[i*imageDimension + d] = localNewtonStep[d];
+        }
       }
     }
 
@@ -399,34 +529,47 @@ void QuasiNewtonObjectOptimizer
     }
 
   unsigned int numPara = this->m_Metric->GetNumberOfParameters();
+  const unsigned int imageDimension = 2;
+  const unsigned int imageSize = numPara / imageDimension;
+
   // Use reference to save memory copy
   const ParametersType & currentPositionRef = this->m_Metric->GetParameters();
 
-  double dx;  //delta of position x: x_k+1 - x_k
-  double dg;  //delta of gradient: g_k+1 - g_k
-  double edg; //estimated delta of gradient: hessian_k * dx
+  ParametersType dx(imageDimension);  //delta of position x: x_k+1 - x_k
+  ParametersType dg(imageDimension);  //delta of gradient: g_k+1 - g_k
+  ParametersType edg(imageDimension); //estimated delta of gradient: hessian_k * dx
 
-  for (unsigned int i=0; i<numPara; i++)
+  for (unsigned int i=0; i<imageSize; i++)
     {
-    dx = currentPositionRef[i] - this->m_PreviousPosition[i];
-    //dg = this->m_Gradient[i] - this->m_PreviousGradient[i];
-    dg = this->m_PreviousGradient[i] - this->m_Gradient[i];
+    for (unsigned int j=0; j<imageDimension; j++)
+      {
+      dx[j] = currentPositionRef[i*imageDimension+j] - this->m_PreviousPosition[i*imageDimension+j];
+      dg[j] = this->m_PreviousGradient[i*imageDimension+j] - this->m_Gradient[i*imageDimension+j]; //maximize
+      }
     edg = m_LocalHessian[i] * dx;
 
-    double dot_dg_dx = dg * dx;
-    double dot_edg_dx = edg * dx;
+    double dot_dg_dx = inner_product(dg, dx);
+    double dot_edg_dx = inner_product(edg, dx);
 
     if (dot_dg_dx ==0 || dot_edg_dx == 0)
       {
-      m_LocalHessian[i] = NumericTraits<double>::max();
+      m_LocalHessian[i][0][0] = NumericTraits<double>::max();
       }
     else
       {
-      double plus  = (dg * dg) / dot_dg_dx;
-      double minus = (edg * edg) / dot_edg_dx;
+      vnl_matrix<double> plus  = outer_product(dg, dg) / dot_dg_dx;
+      vnl_matrix<double> minus = outer_product(edg, edg) / dot_edg_dx;
 
       m_LocalHessian[i] = m_LocalHessian[i] + plus - minus;
-      //m_LocalHessianInverse[i] = 1/newHessian;
+
+      if ( vcl_abs(vnl_determinant(m_LocalHessian[i].GetVnlMatrix())) <= 1e-3 )
+        {
+        m_LocalHessianInverse[i][0][0] = NumericTraits<double>::max();
+        }
+      else
+        {
+        m_LocalHessianInverse[i] = vnl_matrix_inverse<double>(m_LocalHessian[i].GetVnlMatrix());
+        }
       }
     }
 }
@@ -483,4 +626,4 @@ void QuasiNewtonObjectOptimizer
 
 } // end namespace itk
 
-#endif
+//#endif
