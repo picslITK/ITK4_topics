@@ -73,6 +73,13 @@ QuasiNewtonObjectOptimizer
     this->SetScales(scales);
     std::cout << " Estimated scales = " << scales << std::endl;
     }
+  else
+    {
+    //no longer used for quasi-newton with localsupport
+    //optimizer->SetLearningRate( 1.0 );
+    //optimizer->SetScalarScale( 1.0 );
+    //optimizer->SetUseScalarScale(true);
+    }
 
   this->Superclass::StartOptimization();
 
@@ -215,9 +222,16 @@ QuasiNewtonObjectOptimizer
     m_PreviousGradient = this->m_Gradient;
 
     m_NewtonStep.SetSize(spaceDimension);
+
     m_LocalHessian = new LocalHessianType[imageSize];
     m_LocalHessianInverse = new LocalHessianType[imageSize];
 
+    unsigned int imgDim = this->m_OptimizerParameterEstimator->GetImageDimension();
+    for (unsigned int i=0; i<imageSize; i++)
+      {
+      m_LocalHessian[i].SetSize(imgDim, imgDim);
+      m_LocalHessianInverse[i].SetSize(imgDim, imgDim);
+      }
     }
 
   try
@@ -396,12 +410,14 @@ void QuasiNewtonObjectOptimizer
         m_LocalHessian[i][0][0] == NumericTraits<double>::max() ||
         m_LocalHessianInverse[i][0][0] == NumericTraits<double>::max())
       {
+      m_LocalHessian[i].Fill(0.0);
+      m_LocalHessianInverse[i].Fill(0.0);
       for (unsigned int d=0; d<imageDimension; d++)
         {
         m_NewtonStep[i*imageDimension + d] = 0; //use gradient
+        m_LocalHessian[i][d][d] = 1; //reset to identity
+        m_LocalHessianInverse[i][d][d] = 1; //reset to identity
         }
-      m_LocalHessian[i].SetIdentity(); //reset
-      m_LocalHessianInverse[i].SetIdentity(); //reset
       }
     else
       {
@@ -461,16 +477,17 @@ void QuasiNewtonObjectOptimizer
       {
       vnl_matrix<double> plus  = outer_product(dg, dg) / dot_dg_dx;
       vnl_matrix<double> minus = outer_product(edg, edg) / dot_edg_dx;
+      vnl_matrix<double> newHessian = m_LocalHessian[i] + plus - minus;
 
-      m_LocalHessian[i] = m_LocalHessian[i] + plus - minus;
+      m_LocalHessian[i] = newHessian;
 
-      if ( vcl_abs(vnl_determinant(m_LocalHessian[i].GetVnlMatrix())) <= 5e-3 )
+      if ( vcl_abs(vnl_determinant(newHessian)) <= 0.5 )
         {
         m_LocalHessianInverse[i][0][0] = NumericTraits<double>::max();
         }
       else
         {
-        m_LocalHessianInverse[i] = vnl_matrix_inverse<double>(m_LocalHessian[i].GetVnlMatrix());
+        m_LocalHessianInverse[i] = vnl_matrix_inverse<double>(newHessian);
         }
       }
     }

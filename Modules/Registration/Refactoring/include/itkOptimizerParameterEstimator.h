@@ -85,6 +85,14 @@ public:
   typedef typename MovingImageType::ConstPointer  MovingImagePointer;
   typedef typename VirtualImageType::ConstPointer VirtualImagePointer;
 
+  /* Image dimension accessors */
+  itkStaticConstMacro(FixedImageDimension, unsigned int,
+      ::itk::GetImageDimension<FixedImageType>::ImageDimension);
+  itkStaticConstMacro(MovingImageDimension, unsigned int,
+      ::itk::GetImageDimension<MovingImageType>::ImageDimension);
+  itkStaticConstMacro(VirtualImageDimension, unsigned int,
+      ::itk::GetImageDimension<VirtualImageType>::ImageDimension);
+
   /** The stratigies to decide scales */
   typedef enum { ScalesFromShift, ScalesFromJacobian } ScaleStrategyType;
   /** Set the learning rate strategy */
@@ -158,6 +166,11 @@ public:
    * current parameters. */
   virtual double ComputeMaximumVoxelShift(ParametersType parameters,
                             ParametersType deltaParameters);
+
+  virtual unsigned int GetImageDimension()
+    {
+    return Self::VirtualImageDimension;
+    }
 
 protected:
   OptimizerParameterEstimator();

@@ -72,7 +72,7 @@ public:
 
   /** Type for Hessian matrix in the Quasi-Newton method */
   typedef itk::Array2D<double>                      HessianType;
-  typedef itk::Matrix<double, 2, 2>                 LocalHessianType;
+  typedef itk::Array2D<double>                      LocalHessianType;
 
   /** Pointer of OptimizerParameterEstimatorBase. */
   typedef OptimizerParameterEstimatorBase::Pointer  OptimizerParameterEstimatorBasePointer;
