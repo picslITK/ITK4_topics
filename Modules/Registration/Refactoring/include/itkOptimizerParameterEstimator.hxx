@@ -129,7 +129,7 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 ::EstimateScalesFromJacobian(ParametersType parameters,
                              ScalesType &parameterScales)
 {
-  typedef TTransform::Pointer TransformPointer;
+  typedef typename TTransform::Pointer TransformPointer;
   TransformPointer transform = TTransform::New();
   transform->SetParameters(parameters);
 
@@ -293,7 +293,7 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 ::ComputeTemplatedMaximumVoxelShift(ParametersType parameters,
                            ParametersType deltaParameters)
 {
-  typedef TTransform::Pointer TransformPointer;
+  typedef typename TTransform::Pointer TransformPointer;
 
   double voxelShift = 0.0;
 
