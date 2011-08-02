@@ -71,6 +71,8 @@ public:
   virtual double ComputeMaximumVoxelShift(ParametersType parameters,
     ParametersType deltaParameters) = 0;
 
+  virtual unsigned int GetImageDimension() = 0;
+
 protected:
   OptimizerParameterEstimatorBase(){};
   ~OptimizerParameterEstimatorBase(){};

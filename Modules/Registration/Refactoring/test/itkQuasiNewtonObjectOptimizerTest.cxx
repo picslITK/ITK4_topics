@@ -91,6 +91,8 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
     learningRate = atof( argv[6] );
     }
 
+  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
+
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
 

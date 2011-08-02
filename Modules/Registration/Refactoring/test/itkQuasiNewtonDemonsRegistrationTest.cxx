@@ -27,6 +27,7 @@
 
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
+#include "itkOptimizerParameterEstimator.h"
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
@@ -73,14 +74,14 @@ using namespace itk;
 int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc < 4 || argc > 7)
+  if( argc < 4 || argc > 5)
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations] ";
-    std::cerr << " [scalarScale] [learningRate] " << std::endl;
+    //std::cerr << " [scalarScale] [learningRate] " << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
@@ -88,16 +89,12 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
-  double scalarScale = 1.0;
-  double learningRate = 0.1;
+  //double scalarScale = 1.0;
+  //double learningRate = 0.1;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
-  if( argc >= 6)
-    scalarScale = atof( argv[5] );
-  if( argc == 7 )
-    learningRate = atof( argv[6] );
 
-  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
+  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -196,15 +193,27 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
-  optimizer->SetLearningRate( learningRate );
+  //optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
+  //optimizer->SetScalarScale( scalarScale );
+  //optimizer->SetUseScalarScale(true);
+
+  // Testing optimizer parameter estimator
+  typedef itk::OptimizerParameterEstimator< MetricType,
+                                        IdentityTransformType,
+                                        DeformationTransformType > OptimizerParameterEstimatorType;
+  OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
+
+  parameterEstimator->SetMetric(metric);
+  parameterEstimator->SetTransformForward(true);
+  parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
+  optimizer->SetOptimizerParameterEstimator( parameterEstimator );
+  // Estimating optimizer parameters done
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl
+            //<< "Scalar scale: " << scalarScale << std::endl
+            //<< "Learning rate: " << learningRate << std::endl
             << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
     {
