@@ -61,6 +61,7 @@ VectorLinearInterpolateImageFunction< TInputImage, TCoordRep >
 ::EvaluateAtContinuousIndex(
   const ContinuousIndexType & index) const
 {
+  //std::cout << "Evaluate" << std::endl;
   unsigned int dim;  // index over dimension
 
   /**
@@ -81,7 +82,12 @@ VectorLinearInterpolateImageFunction< TInputImage, TCoordRep >
    * neighbors. The weight for each neighbor is the fraction overlap
    * of the neighbor pixel with respect to a pixel centered on point.
    */
+
+  //std::cout << "Initialize output" << std::endl;
   OutputType output;
+  //std::cout << "original size = " << output.Size() << std::endl;
+  NumericTraits<OutputType>::SetLength( output, this->GetInputImage()->GetNumberOfComponentsPerPixel() );
+  //std::cout << "output size = " << output.Size() << "/" << this->GetInputImage()->GetNumberOfComponentsPerPixel() << std::endl;
   output.Fill(0.0);
 
   typedef typename NumericTraits< PixelType >::ScalarRealType ScalarRealType;
@@ -126,7 +132,7 @@ VectorLinearInterpolateImageFunction< TInputImage, TCoordRep >
     if ( overlap )
       {
       const PixelType input = this->GetInputImage()->GetPixel(neighIndex);
-      for ( unsigned int k = 0; k < Dimension; k++ )
+      for ( unsigned int k = 0; k < this->GetInputImage()->GetNumberOfComponentsPerPixel(); k++ )
         {
         output[k] += overlap * static_cast< RealType >( input[k] );
         }
@@ -140,6 +146,7 @@ VectorLinearInterpolateImageFunction< TInputImage, TCoordRep >
       }
     }
 
+  //std::cout << "return " << output << std::endl;
   return ( output );
 }
 } // end namespace itk
