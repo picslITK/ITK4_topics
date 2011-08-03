@@ -64,8 +64,8 @@ public:
   typedef typename Superclass::RealType       RealType;
 
   /** Grab the vector dimension from the superclass. */
-  itkStaticConstMacro(Dimension, unsigned int,
-                      Superclass::Dimension);
+  //itkStaticConstMacro(Dimension, unsigned int,
+  //                    Superclass::Dimension);
 
   /** Dimension underlying input image. */
   itkStaticConstMacro(ImageDimension, unsigned int, Superclass::ImageDimension);
