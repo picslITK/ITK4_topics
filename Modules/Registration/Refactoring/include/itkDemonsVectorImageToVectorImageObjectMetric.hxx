@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkDemonsVectorImageToVectorImageObjectMetric.hxx,v $
+  Module:    $RCSfile: itkDemonsVectorImageToVectorImageObjectMetric.txx,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -77,26 +77,40 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
 {
   //localDerivativeReturn.Fill(0); //see direct assignment below of sum
 
+  const unsigned int numberOfComponents
+    = NumericTraits<FixedImagePixelType>::GetLength( fixedImageValue );
+
   /** Only the voxelwise contribution given the point pairs. */
-  FixedImagePixelType diff = fixedImageValue - movingImageValue;
-  metricValueReturn =
-    vcl_fabs( diff  ) / (double) this->FixedImageDimension;
+  metricValueReturn = 0;
+  FixedImagePixelType diff;
+  NumericTraits<FixedImagePixelType>::SetLength(diff, numberOfComponents );
+  for (unsigned int i=0; i<numberOfComponents; i++)
+    {
+    diff[i] = fixedImageValue[i] - movingImageValue[i];
+    metricValueReturn += vcl_fabs( diff[i] );
+    }
+  metricValueReturn /= (double) this->FixedImageDimension;
 
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->GetJacobianWithRespectToParameters(
                                               mappedMovingPoint, m_Jacobian);
 
+  localDerivativeReturn.SetSize( this->GetNumberOfLocalParameters() );
+
   for ( unsigned int par = 0;
           par < this->GetNumberOfLocalParameters(); par++ )
-  {
+    {
     double sum = 0.0;
-    for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
+    for ( unsigned int com = 0; com < numberOfComponents; com++ )
       {
-        sum += 2.0 * diff * m_Jacobian(dim, par) * movingImageDerivatives[dim];
+      for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
+        {
+        sum += 2.0 * diff[com] * m_Jacobian(dim, par) * movingImageDerivatives(com,dim);
+        }
       }
+    localDerivativeReturn(par) = sum;
     //localDerivativeReturn[par]+=sum;
-    localDerivativeReturn[par] = sum;
-  }
+    }
   //  std::cout << localDerivativeReturn << std::endl;
   // Return true if the point was used in evaluation
   return true;
