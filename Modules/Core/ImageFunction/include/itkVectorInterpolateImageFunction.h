@@ -50,7 +50,7 @@ struct GetDimension {
  *
  * \sa InterpolateImageFunction
  * \ingroup ImageFunctions ImageInterpolators
- * \ingroup ITKImageFunction
+ * \ingroup ITK-ImageFunction
  */
 template< class TInputImage, class TCoordRep = double >
 class ITK_EXPORT VectorInterpolateImageFunction:
@@ -61,8 +61,8 @@ class ITK_EXPORT VectorInterpolateImageFunction:
 {
 public:
   /** Extract the vector dimension from the pixel template parameter. */
-  itkStaticConstMacro(Dimension, unsigned int,
-                      TInputImage::PixelType::Dimension);
+  //itkStaticConstMacro(Dimension, unsigned int,
+  //                    TInputImage::PixelType::Dimension);
 
   /** Dimension underlying input image. */
   itkStaticConstMacro(ImageDimension, unsigned int,
@@ -139,7 +139,7 @@ public:
     OutputType output;
     PixelType  input = this->GetInputImage()->GetPixel(index);
 
-    for ( unsigned int k = 0; k < Dimension; k++ )
+    for ( unsigned int k = 0; k < this->GetInputImage()->GetNumberOfComponentsPerPixel(); k++ )
       {
       output[k] = static_cast< double >( input[k] );
       }
