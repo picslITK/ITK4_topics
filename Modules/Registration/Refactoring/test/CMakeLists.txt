@@ -17,6 +17,7 @@ set(ITKRegistrationRefactoringTests
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
+  itkPolyAffineTransformTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
 )
 
@@ -103,6 +104,10 @@ itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
 #      ${TEMP}/QNOptOutput.nii
 #      )
 
+itk_add_test(NAME itkPolyAffineTransformTest
+      COMMAND ITKRegistrationRefactoringTestDriver
+      itkPolyAffineTransformTest
+      )
 
 #TODO
 # itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
