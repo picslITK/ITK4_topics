@@ -30,6 +30,7 @@
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
 #include "itkDeformationFieldTransform.h"
+#include "itkPolyAffineTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -67,7 +68,7 @@ public:
 
 using namespace itk;
 
-int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
+int itkPolyAffineTransformTest(int argc, char *argv[])
 {
 
   if( argc >= 2 && (argc < 4 || argc > 5))
@@ -165,13 +166,20 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   movingImage = matcher->GetOutput();
 
   //create a deformation field transform
-  typedef TranslationTransform<double, Dimension>
-                                                  TranslationTransformType;
-  typedef TranslationTransformType::ParametersType
+  typedef MatrixOffsetTransformBase<double, Dimension, Dimension>
+                                                  AtomTransformType;
+
+  typedef PolyAffineTransform<double, Dimension, Dimension>
+                                                  MovingTransformType;
+  typedef MovingTransformType::ParametersType
                                                   ParametersType;
-  TranslationTransformType::Pointer translationTransform =
-                                                  TranslationTransformType::New();
-  translationTransform->SetIdentity();
+  MovingTransformType::Pointer movingTransform =
+                                                  MovingTransformType::New();
+  AtomTransformType::Pointer atomTransform1 = AtomTransformType::New();
+  //AtomTransformType::Pointer atomTransform2 = AtomTransformType::New();
+  movingTransform->AddAtomTransform(atomTransform1);
+  //movingTransform->AddAtomTransform(atomTransform2);
+  movingTransform->SetIdentity();
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension>    IdentityTransformType;
@@ -195,7 +203,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( translationTransform );
+  metric->SetMovingTransform( movingTransform );
 
   Size<Dimension> radSize;
   radSize.Fill(2);
@@ -220,7 +228,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   // Testing optimizer parameter estimator
   typedef itk::OptimizerParameterEstimator< MetricType,
                                         IdentityTransformType,
-                                        TranslationTransformType > OptimizerParameterEstimatorType;
+                                        MovingTransformType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);
@@ -258,7 +266,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   // results
   //
   ParametersType actualParameters = imageSource->GetActualParameters();
-  ParametersType finalParameters  = translationTransform->GetParameters();
+  ParametersType finalParameters  = movingTransform->GetParameters();
 
   const unsigned int numbeOfParameters = actualParameters.Size();
 
