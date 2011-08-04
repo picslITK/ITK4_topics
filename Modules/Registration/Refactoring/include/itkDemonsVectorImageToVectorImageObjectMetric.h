@@ -17,7 +17,7 @@
 #ifndef __itkDemonsVectorImageToVectorImageObjectMetric_h
 #define __itkDemonsVectorImageToVectorImageObjectMetric_h
 
-#include "itkImageToImageObjectMetric.h"
+#include "itkVectorImageToVectorImageObjectMetric.h"
 
 namespace itk
 {
@@ -26,13 +26,13 @@ template <class TFixedImage,
           class TMovingImage,
           class TVirtualImage = TFixedImage >
 class ITK_EXPORT DemonsVectorImageToVectorImageObjectMetric :
-public ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+public VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 {
 public:
 
   /** Standard class typedefs. */
   typedef DemonsVectorImageToVectorImageObjectMetric                      Self;
-  typedef ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+  typedef VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
                                                               Superclass;
   typedef SmartPointer<Self>                                  Pointer;
   typedef SmartPointer<const Self>                            ConstPointer;
@@ -41,7 +41,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(DemonsVectorImageToVectorImageObjectMetric, ImageToImageObjectMetric);
+  itkTypeMacro(DemonsVectorImageToVectorImageObjectMetric, VectorImageToVectorImageObjectMetric);
 
   /** superclass types */
   typedef typename Superclass::MeasureType             MeasureType;
@@ -50,14 +50,14 @@ public:
   typedef typename Superclass::FixedImagePointType     FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType     FixedImagePixelType;
   typedef typename Superclass::FixedImageDerivativesType
-                                                     FixedImageDerivativesType;
+                                                       FixedImageDerivativesType;
   typedef typename Superclass::MovingImagePointType    MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType    MovingImagePixelType;
   typedef typename Superclass::MovingImageDerivativesType
-                                                    MovingImageDerivativesType;
+                                                       MovingImageDerivativesType;
   typedef typename Superclass::MovingTransformType     MovingTransformType;
   typedef typename MovingTransformType::JacobianType
-                                                    MovingTransformJacobianType;
+                                                       MovingTransformJacobianType;
 
   /** Initialize. Must be called before first call to GetValue or
    *  GetValueAndDerivative, after metric settings are changed. */

@@ -2,6 +2,7 @@ itk_module_test()
 set(ITKRegistrationRefactoringTests
 # itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
+  itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
   itkArray1DToDataTest.cxx
   itkObjectToObjectOptimizerBaseTest.cxx
   itkObjectToObjectMetricTest.cxx
@@ -35,6 +36,10 @@ CreateTestDriver(ITKRegistrationRefactoring  "${ITKRegistrationRefactoring-Test_
 itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectMetricTest)
+
+itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
+      COMMAND ITKRegistrationRefactoringTestDriver
+      itkDemonsVectorImageToVectorImageObjectMetricTest)
 
 itk_add_test(NAME itkArray1DToDataTest
          COMMAND ITKRegistrationRefactoringTestDriver itkArray1DToDataTest)
@@ -91,13 +96,13 @@ itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
       ${TEMP}/QNDemonsOutput.nii
       )
 
-itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkQuasiNewtonObjectOptimizerTest
+#itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+#      COMMAND ITKRegistrationRefactoringTestDriver
+#      itkQuasiNewtonObjectOptimizerTest
 #      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
 #      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
 #      ${TEMP}/QNOptOutput.nii
-      )
+#      )
 
 itk_add_test(NAME itkPolyAffineTransformTest
       COMMAND ITKRegistrationRefactoringTestDriver
