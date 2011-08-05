@@ -727,6 +727,8 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 
   bool result = true;
   /* For DeformationFieldTransform and derived classes with local support.
+   * Need to investigate if will work with new BSplineTransform which has local
+   * support.
    * Verify that the filter's requested region is within the deformation field's
    * BufferedRegion, and are in the same physical space.
    * If so, we can use Transform::TransformIndex
@@ -760,8 +762,7 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
           dynamic_cast< DeformationFieldTransformType * >( transform );
   if( deftx == NULL )
     {
-    itkExceptionMacro("Expected m_Transform to be of type "
-                      "DeformationFieldTransform" );
+    return false;
     }
   typedef typename DeformationFieldTransformType::DeformationFieldType
                                                                     FieldType;
