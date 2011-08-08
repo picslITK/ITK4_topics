@@ -44,6 +44,7 @@
 
 // #include "itkMinimumMaximumImageCalculator.h"
 
+using namespace itk;
 
 namespace{
 // The following class is used to support callbacks
@@ -67,8 +68,6 @@ public:
   typename TRegistration::Pointer m_Process;
 };
 }
-
-using namespace itk;
 
 int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
@@ -275,7 +274,8 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
-  std::string defout=outfilename + std::string("_def") + ext;
+  std::string name = itksys::SystemTools::GetFilenameWithoutExtension( outfilename );
+  std::string defout = name + std::string("_def") + ext;
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDeformationField() );
   deformationwriter->Update();
