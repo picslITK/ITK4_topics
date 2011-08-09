@@ -35,11 +35,42 @@ template< class TInputImage, class TCoordRep >
 class VectorInterpolateImageFunction;
 
 /** \class DeformationFieldTransform
- * \brief TODO
+ * \brief Provides local/dense/high-dimensionaltiy transformation via a
+ * a deformation field.
+ *
+ * The deformation field is defined using an itkImage, and must be set
+ * before use by the user, using \c SetDeformationField. The image has
+ * the same dimensionality as the input and output spaces, defined by
+ * template parameter \c NDimensions, and is an image of vectors of
+ * type \c OutputVectorType (i.e. with dimensionality NDimensions as well).
+ *
+ * An interpolator of type \c VectorInterpolateImageFunction is used with
+ * the deformation field image. By default, VectorLinearInterpolateImageFunction
+ * is used, and the user can override using SetInterpolator.
+ *
+ * The deformation field data is stored using the common \c TransformParameters
+ * type
+ * in conjunction with the \c ImageVectorTransformParametersHelper class. This
+ * allows access of the deformation field image as if it were an itkArray,
+ * allowing transparent use with other classes. Note that the \c SetParameters
+ * method
+ * will copy the passed parameters, which can be costly since deformation fields
+ * are dense and thus potentially very large.
+ *
+ * UpdateTransformParameters - after adding the passed update, this method
+ * performs smoothing using the GaussianOperator filter. The smoothing can
+ * be performed on demand by calling \c SmoothDeformationFieldGauss - see
+ * this method for details.
+ *
+ * Because this is a local transform, methods that have a version that takes
+ * a point must be used, such as \c TransformVector, \c TransformCovariantVector,
+ * and \c TransformTensor. Also, \c GetJacobianWithRespectToParameters simply
+ * returns
+ * an identity matrix, and \c GetJacobianWithRespectToPosition should be used.
  *
  * \ingroup Transforms
  *
- * \ingroup ITKReview
+ * \ingroup ITKTransform
  */
 template
   <class TScalar, unsigned int NDimensions>
@@ -132,8 +163,7 @@ public:
   typedef MatrixOffsetTransformBase< double, NDimensions, NDimensions >
                                                           AffineTransformType;
   typedef typename AffineTransformType::Pointer AffineTransformPointer;
-
-  typedef Transform< double, NDimensions, NDimensions >   TransformType;
+  typedef Superclass                            TransformType;
 
   /** Define the internal parameter helper used to access the field */
   typedef ImageVectorTransformParametersHelper<
@@ -320,7 +350,9 @@ public:
                                           ScalarType factor = 1.0 );
 
   /** Smooth the deformation field in-place.
-   * Uses m_GaussSmoothSigma to set the variance for the GaussianOperator.
+   * Uses m_GaussSmoothSigma to change the variance for the GaussianOperator,
+   * the default is 3. Other parameters MaximumError and MaximumKernelWidth
+   * are hardcoded.
    * \warning Not thread safe. Does its own threading. */
   virtual void SmoothDeformationFieldGauss();
 
@@ -400,7 +432,7 @@ private:
 # include "Templates/itkDeformationFieldTransform+-.h"
 #endif
 
-#if ITK_TEMPLATE_TXX
+#if ITK_MANUAL_INSTANTIATION
 # include "itkDeformationFieldTransform.hxx"
 #endif
 
