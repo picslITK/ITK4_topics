@@ -183,11 +183,13 @@ public:
   /**  Method to transform a vector. */
   virtual OutputVectorType  TransformVector(const InputVectorType &) const = 0;
 
-  /** Method to transform a vector at a given location*/
+  /** Method to transform a vector at a given location.
+   * For global transforms, \c point is ignored and \c TransformVector( vector )
+   * is called.  */
   virtual OutputVectorType    TransformVector(
                               const InputVectorType & vector,
                               const InputPointType & itkNotUsed(point) ) const
-    { return TransformVector( vector ); }
+  { return TransformVector( vector ); }
 
   /**  Method to transform a vnl_vector. */
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &)
@@ -196,14 +198,17 @@ public:
   virtual OutputVnlVectorType    TransformVector(
                               const InputVnlVectorType & vector,
                               const InputPointType & itkNotUsed(point) ) const
-    { return TransformVector( vector ); }
+  { return TransformVector( vector ); }
 
   /** Method to transform a vector stored in a VectorImage.  */
   virtual OutputVectorPixelType TransformVector(
-                                    const InputVectorPixelType & vector ) const
-  { return vector; }
+                       const InputVectorPixelType & itkNotUsed(vector) ) const
+  { itkExceptionMacro( "TransformVector( const InputVectorPixelType & ) is "
+                       "unimplemented for " << this->GetNameOfClass() ); }
 
-  /** Method to transform a vector stored in a VectorImage.  */
+  /** Method to transform a vector stored in a VectorImage, at a point.
+   * For global transforms, \c point is ignored and \c TransformVector( vector )
+   * is called.  */
   virtual OutputVectorPixelType TransformVector(
                               const InputVectorPixelType & vector,
                               const InputPointType & itkNotUsed(point) ) const
@@ -226,8 +231,9 @@ public:
 
   /**  Method to transform a CovariantVector stored in a VectorImage. */
   virtual OutputVectorPixelType TransformCovariantVector(
-                                     const InputVectorPixelType & vector) const
-  { return vector; }
+                        const InputVectorPixelType & itkNotUsed(vector) ) const
+  { itkExceptionMacro( "TransformCovariantVector(const InputVectorPixelType &)"
+                       "is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a CovariantVector, using a point. Global transforms
    * can ignore the \c point parameter. Local transforms (e.g. deformation
@@ -241,26 +247,31 @@ public:
   { return TransformCovariantVector( vector ); }
 
   /** Method to transform a diffusion tensor */
-  virtual OutputTensorType TransformTensor( const InputTensorType & tensor )
-                                                                          const
-  { return tensor; }
-
-  /** Method to transform a diffusion tensor  */
   virtual OutputTensorType TransformTensor(
-                               const InputTensorType & tensor,
+                                   const InputTensorType & itkNotUsed(tensor) )
+                                                                          const
+  { itkExceptionMacro( "TransformTensor( const InputTensorType & ) is "
+                       "unimplemented for " << this->GetNameOfClass() ); }
+
+  /** Method to transform a diffusion tensor at a point. */
+  virtual OutputTensorType TransformTensor(
+                               const InputTensorType & itkNotUsed(tensor),
                                const InputPointType & itkNotUsed(point) ) const
-  { return tensor; }
+  { itkExceptionMacro( "TransformTensor( const InputTensorType &, const "
+      "InputPointType & ) is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a diffusion tensor stored in a VectorImage */
   virtual OutputVectorPixelType TransformTensor(
-                                    const InputVectorPixelType & tensor ) const
-  { return tensor; }
+                        const InputVectorPixelType & itkNotUsed(tensor) ) const
+  { itkExceptionMacro( "TransformTensor( const InputVectorPixelType & ) is "
+                       "unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a diffusion tensor stored in a VectorImage */
   virtual OutputVectorPixelType TransformTensor(
-                               const InputVectorPixelType & tensor,
+                               const InputVectorPixelType & itkNotUsed(tensor),
                                const InputPointType & itkNotUsed(point) ) const
-  { return tensor; }
+  { itkExceptionMacro( "TransformTensor( const InputVectorPixelType &, const "
+      "InputPointType & ) is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Set the transformation parameters and update internal transformation.
    * SetParameters gives the transform the option to set it's
@@ -428,7 +439,7 @@ public:
   { return false; }
 
   /** Indicates if this transform is a "global" transform
-   *  e.g. an affine transform or a local one, e.g. a deformation field.
+   *  e.g. an affine transform, or a local one, e.g. a deformation field.
    */
   virtual bool HasLocalSupport() const
   { return false; }
