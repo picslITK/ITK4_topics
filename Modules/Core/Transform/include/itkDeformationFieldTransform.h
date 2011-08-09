@@ -21,7 +21,6 @@
 #include "itkTransform.h"
 
 #include "itkImage.h"
-#include "itkVectorInterpolateImageFunction.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkImageVectorTransformParametersHelper.h"
 #include "itkVectorNeighborhoodOperatorImageFilter.h"

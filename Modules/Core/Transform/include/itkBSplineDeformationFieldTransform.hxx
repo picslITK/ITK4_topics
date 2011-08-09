@@ -18,6 +18,18 @@
 #ifndef __itkBSplineDeformationFieldTransform_hxx
 #define __itkBSplineDeformationFieldTransform_hxx
 
+/* ***
+ * This class isn't ready yet. Include files need module dependencies upate
+ * and itkBSplineScatteredDataPointSetToImageFilter.h, include from .h, is
+ * still in Review.
+ * The test for this class is not yet included in TransformTestDriver. But,
+ * since new paradigm creates TransformHeaderTest files automatically, this
+ * header gets included and causes compilation errors, so comment out.
+ */
+#if 0
+
+/* *** */
+
 #include "itkBSplineDeformationFieldTransform.h"
 
 #include "itkContinuousIndex.h"
@@ -192,5 +204,7 @@ PrintSelf( std::ostream& os, Indent indent ) const
     << this->m_NumberOfFittingLevels << std::endl;
 }
 } // namespace itk
+
+#endif //#if 0
 
 #endif
