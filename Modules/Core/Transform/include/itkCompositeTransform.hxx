@@ -159,33 +159,43 @@ const typename CompositeTransform< TScalar, NDimensions >::JacobianType &
 CompositeTransform<TScalar, NDimensions>
 ::GetJacobian( const InputPointType & p ) const
  {
-    /* Returns a concatenated MxN array, holding the Jacobian of each sub
-     * transform that is selected for optimization. The order is the same
-     * as that in which they're applied, i.e. reverse order.
-     * M rows = dimensionality of the transforms
-     * N cols = total number of parameters in the selected sub transforms. */
 
-    this->m_Jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
-    unsigned int offset = 0;
-    OutputPointType transformedPoint( p );
 
-    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
-            tind >= 0; tind-- )
-    {
-        TransformTypePointer transform = this->GetNthTransform( tind );
-        if( this->GetNthTransformToOptimize( tind ) )
-        {
-            /* Copy from another matrix, element-by-element */
-            /* The matrices are row-major, so block copy is less obviously better */
-            this->m_Jacobian.update(
-                    transform->GetJacobian( transformedPoint ), 0, offset );
-            offset += transform->GetParameters().Size();
-        }
-        /* Transform the point so it's ready for next transform's Jacobian */
-        transformedPoint = transform->TransformPoint( transformedPoint );
-    }
+    // The Jacobian of the affine transform is composed of
+    // subblocks of diagonal matrices, each one of them having
+    // a constant value in the diagonal.
 
+    GetJacobianWithRespectToParameters(p, this->m_Jacobian);
     return this->m_Jacobian;
+
+//
+//    /* Returns a concatenated MxN array, holding the Jacobian of each sub
+//     * transform that is selected for optimization. The order is the same
+//     * as that in which they're applied, i.e. reverse order.
+//     * M rows = dimensionality of the transforms
+//     * N cols = total number of parameters in the selected sub transforms. */
+//
+//    this->m_Jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
+//    unsigned int offset = 0;
+//    OutputPointType transformedPoint( p );
+//
+//    for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
+//            tind >= 0; tind-- )
+//    {
+//        TransformTypePointer transform = this->GetNthTransform( tind );
+//        if( this->GetNthTransformToOptimize( tind ) )
+//        {
+//            /* Copy from another matrix, element-by-element */
+//            /* The matrices are row-major, so block copy is less obviously better */
+//            this->m_Jacobian.update(
+//                    transform->GetJacobian( transformedPoint ), 0, offset );
+//            offset += transform->GetParameters().Size();
+//        }
+//        /* Transform the point so it's ready for next transform's Jacobian */
+//        transformedPoint = transform->TransformPoint( transformedPoint );
+//    }
+//
+//    return this->m_Jacobian;
  }
 
 
@@ -201,14 +211,58 @@ CompositeTransform<TScalar, NDimensions>
      * M rows = dimensionality of the transforms
      * N cols = total number of parameters in the selected sub transforms. */
     j.SetSize( NDimensions, this->GetNumberOfLocalParameters() );
-    unsigned int offset = 0;
-//    unsigned int offset_previous = -1;
+    unsigned int offset = 0, offsetLast = -1;
+
     OutputPointType transformedPoint( p );
+
+    bool finishFirstIter = false;
+    /*
+     * Composite transform $T is composed of $T1(p1,x), $T2(p2,x) and $T3(p3, x) as:
+     *
+     * T(p1, p2, p3, x0)
+     * = T3(p3, T2(p2, T1(p1, x0)))
+     *
+     * p1, p2, p3 are the transform parameters for transform T1, T2, T3 respectively.
+     *
+     * Let p = (p1, p2, p3).
+     *  x1 = T1(p1, x0).
+     *  x2 = T2(p2, x1).
+     *
+     *
+     * The following loop computes dT/dp:
+     *
+     * dT/dp
+     * = (dT/dp1, dT/dp2, dT/dp3)
+     * = ( ( dT3/dT2 | x2 ) * ( dT2/dT1 | x1 ) * ( dT1/dp1 | x0 ),
+     *     ( dT3/dT2 | x2 ) * ( dT2/dp2 | x1 ),
+     *     ( dT3/dp3 | x2 )
+     *
+     * In the first iteration, it computes
+     *   dT1/dp1 | x0
+     *
+     * In the second iteration, it computes
+     *   dT2/dp2 | x1
+     *
+     *  and it computes
+     *   dT2/dT1 | x1, and left multiplying to  dT1/dp1 | x0
+     *
+     * In the third iteration, it computes
+     *   dT3/dp3 | x2,
+     *
+     *  and it computes
+     *   dT3/dT2 | x2, and left multiplying to
+     *    ( dT2/dT1 | x1 ) * ( dT1/dp1 | x0 )
+     *    and ( dT2/dT1 | x1 )
+     *
+     */
 
     for( signed long tind = (signed long) this->GetNumberOfTransforms()-1;
             tind >= 0; tind-- )
     {
         TransformTypePointer transform = this->GetNthTransform( tind );
+
+        offsetLast = offset;
+
         if( this->GetNthTransformToOptimize( tind ) )
         {
             /* Copy from another matrix, element-by-element */
@@ -217,21 +271,17 @@ CompositeTransform<TScalar, NDimensions>
 
             // to do: why parameters are listed from N-1 to 1???
             typename TransformType::JacobianType current_jacobian;
+
             current_jacobian.SetSize(
               NDimensions, transform->GetNumberOfLocalParameters());
+
             transform->GetJacobianWithRespectToParameters(
               transformedPoint, current_jacobian );
 
-            // debug: force only the closes transform to update!!
-//            if (offset > 0){
-//                current_jacobian.Fill(0.0);
-//            }
-
             j.update( current_jacobian, 0, offset );
-//            std::cout << "cur_tr=" << transform->GetParameters() << std::endl;
-//            std::cout << "new_j=" << std::endl << j << std::endl;
 
             offset += transform->GetNumberOfLocalParameters();
+
 
         }
 
@@ -249,16 +299,30 @@ CompositeTransform<TScalar, NDimensions>
          *
          */
 
-        if (offset > 0){
-            JacobianType old_j = j.extract(NDimensions,offset,0,0);
-//            j.update( transform->GetJacobianWithRespectToPosition() * old_j, 0, 0);
-itkExceptionMacro(" To sort out with new GetJacobianWithRespectToPosition prototype ");
+        // update every old term by left multiplying dTk / dT{k-1}
+        // do this before computing the transformedPoint for the next iteration
+        if (offsetLast > 0) {
+
+            JacobianType old_j = j.extract(NDimensions, offsetLast, 0, 0);
+
+            JacobianType j1;
+
+            j1.SetSize(NDimensions, NDimensions);
+
+            transform->GetJacobianWithRespectToPosition(transformedPoint, j1);
+
+            j.update(j1 * old_j, 0, 0);
+
+            // itkExceptionMacro(" To sort out with new GetJacobianWithRespectToPosition prototype ");
         }
 
         /* Transform the point so it's ready for next transform's Jacobian */
         transformedPoint = transform->TransformPoint( transformedPoint );
+
+        finishFirstIter = true;
     }
 
+//    std::cout << "final j:" << std::endl << j << std::endl;
 
     return;
  }

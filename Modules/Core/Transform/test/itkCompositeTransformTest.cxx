@@ -279,6 +279,7 @@ int itkCompositeTransformTest(int ,char *[] )
   jacSingle = affine->GetJacobian( jacPoint );
   std::cout << "Single jacobian:" << std::endl << jacSingle << std::endl;
   jacComposite = compositeTransform->GetJacobian( jacPoint );
+  std::cout << "Composite jacobian:" << std::endl << jacComposite << std::endl;
   if( !testJacobian( jacComposite, jacSingle ) )
     {
     std::cout << "Failed getting jacobian for single transform." << std::endl;
@@ -632,7 +633,7 @@ int itkCompositeTransformTest(int ,char *[] )
   jacPoint2 = affine2->TransformPoint( jacPoint2 );
   jacAffine = affine->GetJacobian( jacPoint2 );
   jacTruth.SetSize( jacAffine3.rows(), jacAffine.cols()+jacAffine3.cols() );
-  jacTruth.update( jacAffine3, 0, 0 );
+  jacTruth.update( affine->GetMatrix() * affine2->GetMatrix() * jacAffine3, 0, 0 );
   jacTruth.update( jacAffine, 0, jacAffine3.cols() );
   std::cout << "transformed jacPoint: " << jacPoint2 << std::endl;
   std::cout << "Affine jacobian:" << std::endl << jacAffine;
@@ -810,6 +811,8 @@ int itkCompositeTransformTest(int ,char *[] )
 
   /* Test printing */
   compositeTransform->Print(std::cout);
+
+  std::cout << "Passed test!" << std::endl;
   return EXIT_SUCCESS;
 
 }
