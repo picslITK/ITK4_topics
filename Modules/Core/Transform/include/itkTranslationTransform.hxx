@@ -205,6 +205,21 @@ TranslationTransform< TScalarType, NDimensions >::GetJacobianWithRespectToParame
 }
 
 
+// Compute jacobian with respect to position
+template< class TScalarType, unsigned int NDimensions >
+void
+TranslationTransform< TScalarType, NDimensions >
+::GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+{
+  jac.SetSize( NDimensions, NDimensions );
+  jac.Fill(0.0);
+  for( unsigned int dim=0; dim < NDimensions; dim++ )
+    {
+    jac[dim][dim] = 1.0;
+    }
+}
+
 // Set the parameters for an Identity transform of this class
 template< class TScalarType, unsigned int NDimensions >
 void

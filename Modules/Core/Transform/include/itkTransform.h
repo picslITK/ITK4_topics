@@ -476,9 +476,6 @@ protected:
 
   mutable DirectionChangeMatrix m_DirectionChange;
 
-  /* Store an identity jacobian for convenience */
-  JacobianType m_IdentityJacobian;
-
 private:
   Transform(const Self &);      //purposely not implemented
   void operator=(const Self &); //purposely not implemented

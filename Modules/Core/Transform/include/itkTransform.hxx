@@ -34,13 +34,6 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
   m_FixedParameters(1),
   m_Jacobian(NOutputDimensions, 1)
 {
-  m_IdentityJacobian.SetSize(NOutputDimensions,NOutputDimensions);
-  m_IdentityJacobian.Fill(0);
-  for( unsigned int i=0; i < NOutputDimensions; i++ )
-    {
-    m_IdentityJacobian[i][i] = 1.0;
-    }
-
   m_DirectionChange.SetIdentity();
 
   itkWarningMacro(
@@ -59,12 +52,6 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
   m_FixedParameters(numberOfParameters),
   m_Jacobian(dimension, numberOfParameters)
 {
-  m_IdentityJacobian.SetSize(NOutputDimensions,NOutputDimensions);
-  m_IdentityJacobian.Fill(0);
-  for( unsigned int i=0; i < NOutputDimensions; i++ )
-    {
-    m_IdentityJacobian[i][i] = 1.0;
-    }
   m_DirectionChange.SetIdentity();
 }
 

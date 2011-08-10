@@ -375,6 +375,13 @@ public:
                       << this->GetNameOfClass() );
   }
 
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
+
   /** Return the number of parameters that completely define the Transfom */
   virtual unsigned int GetNumberOfParameters() const;
 

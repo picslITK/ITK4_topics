@@ -399,7 +399,8 @@ public:
                                           JacobianType &j) const;
 
   /** Get the jacobian with respect to position. This simply returns
-   * the current Matrix. \jac will be resized as needed. */
+   * the current Matrix. \jac will be resized as needed, but it's
+   * more efficient if it's already properly sized. */
   virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
                                                   JacobianType &jac) const;
 

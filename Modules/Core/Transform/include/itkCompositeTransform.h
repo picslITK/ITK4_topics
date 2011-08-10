@@ -330,6 +330,13 @@ public:
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                   JacobianType &j) const;
 
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
+
   /** Get/Set Parameter functions work on the current list of transforms
       that are set to be optimized (active) using the
       'Set[Nth|All]TransformToOptimze' routines.

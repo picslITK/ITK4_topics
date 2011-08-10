@@ -193,6 +193,13 @@ public:
   virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const;
 
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
+
   /** Set a fixed offset: this allow to center the object to be transformed */
   itkGetConstReferenceMacro(FixedOffset, OffsetType);
   itkSetMacro(FixedOffset, OffsetType);

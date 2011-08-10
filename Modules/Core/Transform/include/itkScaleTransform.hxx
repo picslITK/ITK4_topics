@@ -233,6 +233,21 @@ ScaleTransform< ScalarType, NDimensions >
     }
 }
 
+// Compute the Jacobian of the transformation with respect to position
+template< class ScalarType, unsigned int NDimensions >
+void
+ScaleTransform< ScalarType, NDimensions >
+::GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+{
+  jac.SetSize( NDimensions, NDimensions );
+  jac.Fill(0.0);
+  for( unsigned int dim=0; dim < NDimensions; dim++ )
+    {
+    jac[dim][dim] = m_Scale[dim];
+    }
+}
+
 template< class ScalarType, unsigned int NDimensions >
 const typename ScaleTransform< ScalarType, NDimensions >::ParametersType &
 ScaleTransform< ScalarType, NDimensions >

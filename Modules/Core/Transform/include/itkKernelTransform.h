@@ -173,6 +173,13 @@ public:
   virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const;
 
+  virtual void GetJacobianWithRespectToPosition(const InputPointType  &x,
+                                                  JacobianType &jac) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
+
   /** Set the Transformation Parameters and update the internal transformation.
    * The parameters represent the source landmarks. Each landmark point is
    * represented by NDimensions doubles. All the landmarks are concatenated to
