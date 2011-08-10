@@ -109,7 +109,7 @@ Transform< TScalarType, NInputDimensions, NOutputDimensions >
         }
       }
   m_DirectionChange = movingDir2 * fixedDir;
-
+  this->Modified();
 }
 
 /**

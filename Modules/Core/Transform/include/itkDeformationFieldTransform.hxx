@@ -294,9 +294,9 @@ DeformationFieldTransform<TScalar, NDimensions>
  * Transform tensor
  */
 template<class TScalar, unsigned int NDimensions>
-typename DeformationFieldTransform<TScalar, NDimensions>::OutputTensorType
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputDiffusionTensorType
 DeformationFieldTransform<TScalar, NDimensions>
-::TransformTensor( const InputTensorType& inputTensor, const InputPointType & point ) const
+::TransformDiffusionTensor( const InputDiffusionTensorType& inputTensor, const InputPointType & point ) const
 {
   if( !this->m_DeformationField )
     {
@@ -311,12 +311,12 @@ DeformationFieldTransform<TScalar, NDimensions>
   //this->GetJacobianWithRespectToPosition( point, jacobian );
 
   //Get Tensor-space version of local transform (i.e. always 3D)
-  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
+  typedef MatrixOffsetTransformBase<ScalarType, InputDiffusionTensorType::Dimension, InputDiffusionTensorType::Dimension> EigenVectorTransformType;
   typename  EigenVectorTransformType::MatrixType matrix;
   typename  EigenVectorTransformType::MatrixType dMatrix;
   matrix.Fill(0.0);
   dMatrix.Fill(0.0);
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensorType::Dimension; i++)
     {
     matrix(i,i) = 1.0;
     dMatrix(i,i) = 1.0;
@@ -329,7 +329,7 @@ DeformationFieldTransform<TScalar, NDimensions>
     {
     for (unsigned int j=0; j<NDimensions; j++)
       {
-      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
+      if ( (i < InputDiffusionTensorType::Dimension) && (j < InputDiffusionTensorType::Dimension))
         {
         matrix(i,j) = invJacobian(i,j);
         dMatrix(i,j) = this->GetDirectionChangeMatrix()(i,j);
@@ -337,15 +337,15 @@ DeformationFieldTransform<TScalar, NDimensions>
       }
     }
 
-  typename InputTensorType::EigenValuesArrayType eigenValues;
-  typename InputTensorType::EigenVectorsMatrixType eigenVectors;
+  typename InputDiffusionTensorType::EigenValuesArrayType eigenValues;
+  typename InputDiffusionTensorType::EigenVectorsMatrixType eigenVectors;
   inputTensor.ComputeEigenAnalysis( eigenValues, eigenVectors );
 
   InputTensorEigenVectorType ev1;
   InputTensorEigenVectorType ev2;
   InputTensorEigenVectorType ev3;
 
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensorType::Dimension; i++)
     {
     ev1[i] = eigenVectors(2,i);
     ev2[i] = eigenVectors(1,i);
@@ -373,9 +373,9 @@ DeformationFieldTransform<TScalar, NDimensions>
   typename EigenVectorTransformType::MatrixType e1;
   typename EigenVectorTransformType::MatrixType e2;
   typename EigenVectorTransformType::MatrixType e3;
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensorType::Dimension; i++)
     {
-    for (unsigned int j=0; j<InputTensorType::Dimension; j++)
+    for (unsigned int j=0; j<InputDiffusionTensorType::Dimension; j++)
       {
       e1(i,j) = eigenValues[2] * ev1[i]*ev1[j];
       e2(i,j) = eigenValues[1] * ev2[i]*ev2[j];
@@ -385,7 +385,7 @@ DeformationFieldTransform<TScalar, NDimensions>
 
   typename EigenVectorTransformType::MatrixType rotated = e1 + e2 + e3;
 
-  OutputTensorType result;     // Converted vector
+  OutputDiffusionTensorType result;     // Converted vector
   result[0] = rotated(0,0);
   result[1] = rotated(0,1);
   result[2] = rotated(0,2);
@@ -399,14 +399,14 @@ DeformationFieldTransform<TScalar, NDimensions>
   //localTransform->SetIdentity();
   //localTransform->SetMatrix( jacobian );
   //localTransform->SetDirectionChangeMatrix( this->GetDirectionChangeMatrix() );
-  //return localTransform->TransformTensor( inputTensor );
+  //return localTransform->TransformDiffusionTensor( inputTensor );
 
 }
 
 template<class TScalar, unsigned int NDimensions>
 typename DeformationFieldTransform<TScalar, NDimensions>::OutputVectorPixelType
 DeformationFieldTransform<TScalar, NDimensions>
-::TransformTensor( const InputVectorPixelType& inputTensor, const InputPointType & point ) const
+::TransformDiffusionTensor( const InputVectorPixelType& inputTensor, const InputPointType & point ) const
 {
   if( !this->m_DeformationField )
     {
@@ -417,19 +417,19 @@ DeformationFieldTransform<TScalar, NDimensions>
     itkExceptionMacro( "No interpolator is specified." );
     }
 
-  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted tensor
+  OutputVectorPixelType result( InputDiffusionTensorType::InternalDimension );     // Converted tensor
   result.Fill( 0.0 );
 
-  InputTensorType dt(0.0);
+  InputDiffusionTensorType dt(0.0);
   const unsigned int tDim = inputTensor.Size();
   for (unsigned int i=0; i<tDim; i++)
     {
     dt[i] = inputTensor[i];
     }
 
-  OutputTensorType outDT = this->TransformTensor( dt, point );
+  OutputDiffusionTensorType outDT = this->TransformDiffusionTensor( dt, point );
 
-  for (unsigned int i=0; i<InputTensorType::InternalDimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensorType::InternalDimension; i++)
     {
     result[i] = outDT[i];
     }
@@ -444,7 +444,7 @@ DeformationFieldTransform<TScalar, NDimensions>
   AffineTransformPointer localTransform = AffineTransformType::New();
   localTransform->SetIdentity();
   localTransform->SetMatrix( jacobian );
-  return localTransform->TransformTensor( inputTensor );
+  return localTransform->TransformDiffusionTensor( inputTensor );
   */
 }
 

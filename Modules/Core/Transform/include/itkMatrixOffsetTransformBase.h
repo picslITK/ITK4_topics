@@ -125,12 +125,12 @@ public:
                            itkGetStaticConstMacro(OutputSpaceDimension) >
   OutputCovariantVectorType;
 
-  typedef typename Superclass::InputVectorPixelType InputVectorPixelType;
+  typedef typename Superclass::InputVectorPixelType  InputVectorPixelType;
   typedef typename Superclass::OutputVectorPixelType OutputVectorPixelType;
 
   /** Standard tensor type for this class */
-  typedef typename Superclass::InputTensorType InputTensorType;
-  typedef typename Superclass::OutputTensorType OutputTensorType;
+  typedef typename Superclass::InputDiffusionTensorType InputDiffusionTensorType;
+  typedef typename Superclass::OutputDiffusionTensorType OutputDiffusionTensorType;
 
   typedef typename Superclass::InputTensorEigenVectorType InputTensorEigenVectorType;
   typedef typename Superclass::OutputTensorEigenVectorType OutputTensorEigenVectorType;
@@ -365,17 +365,23 @@ public:
       const InputPointType & itkNotUsed(point) ) const
     { return TransformCovariantVector( vector ); }
 
-  OutputTensorType TransformTensor( const InputTensorType & tensor) const;
+  OutputDiffusionTensorType TransformDiffusionTensor(
+                                const InputDiffusionTensorType & tensor) const;
 
-  OutputTensorType TransformTensor( const InputTensorType & tensor,
-                                    const InputPointType & itkNotUsed(point) ) const
-    { return TransformTensor( tensor ); }
+  OutputDiffusionTensorType TransformDiffusionTensor(
+                                    const InputDiffusionTensorType & tensor,
+                                    const InputPointType & itkNotUsed(point) )
+                                                                          const
+    { return TransformDiffusionTensor( tensor ); }
 
-  OutputVectorPixelType TransformTensor( const InputVectorPixelType & tensor ) const;
+  OutputVectorPixelType TransformDiffusionTensor(
+                                  const InputVectorPixelType & tensor ) const;
 
-  OutputVectorPixelType TransformTensor( const InputVectorPixelType & tensor,
-                                         const InputPointType & itkNotUsed(tensor) ) const
-    { return TransformTensor( tensor ); }
+  OutputVectorPixelType TransformDiffusionTensor(
+                                    const InputVectorPixelType & tensor,
+                                    const InputPointType & itkNotUsed(tensor) )
+                                                                          const
+    { return TransformDiffusionTensor( tensor ); }
 
   /** Compute the Jacobian of the transformation
    *

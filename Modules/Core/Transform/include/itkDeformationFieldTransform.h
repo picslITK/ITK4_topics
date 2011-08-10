@@ -64,7 +64,7 @@ class VectorInterpolateImageFunction;
  *
  * Because this is a local transform, methods that have a version that takes
  * a point must be used, such as \c TransformVector, \c TransformCovariantVector,
- * and \c TransformTensor. Also, \c GetJacobianWithRespectToParameters simply
+ * and \c TransformDiffusionTensor. Also, \c GetJacobianWithRespectToParameters simply
  * returns
  * an identity matrix, and \c GetJacobianWithRespectToPosition should be used.
  *
@@ -133,8 +133,8 @@ public:
   typedef typename Superclass::OutputVnlVectorType  OutputVnlVectorType;
 
   /** Standard tensor type for this class */
-  typedef typename Superclass::InputTensorType      InputTensorType;
-  typedef typename Superclass::OutputTensorType     OutputTensorType;
+  typedef typename Superclass::InputDiffusionTensorType      InputDiffusionTensorType;
+  typedef typename Superclass::OutputDiffusionTensorType     OutputDiffusionTensorType;
 
   /** Standard tensor type for this class */
   typedef typename Superclass::InputTensorEigenVectorType      InputTensorEigenVectorType;
@@ -223,19 +223,22 @@ public:
                                               const InputPointType & ) const;
 
   /** Method to transform a tensor */
-  OutputTensorType TransformTensor(const InputTensorType & ) const
-  { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use "
-    "TransformTensor(Tensor,Point)" ); }
+  OutputDiffusionTensorType TransformDiffusionTensor(
+                                      const InputDiffusionTensorType & ) const
+  { itkExceptionMacro( "TransformDiffusionTensor(Tensor) unimplemented, use "
+    "TransformDiffusionTensor(Tensor,Point)" ); }
 
-  OutputVectorPixelType TransformTensor(const InputVectorPixelType & ) const
-  { itkExceptionMacro( "TransformTensor(Tensor) unimplemented, use "
-    "TransformTensor(Tensor,Point)" ); }
+  OutputVectorPixelType TransformDiffusionTensor(const InputVectorPixelType & )
+                                                                          const
+  { itkExceptionMacro( "TransformDiffusionTensor(Tensor) unimplemented, use "
+    "TransformDiffusionTensor(Tensor,Point)" ); }
 
-  OutputTensorType TransformTensor(const InputTensorType &,
-                                   const InputPointType &) const;
+  OutputDiffusionTensorType TransformDiffusionTensor(
+                                              const InputDiffusionTensorType &,
+                                              const InputPointType &) const;
 
-  OutputVectorPixelType TransformTensor(const InputVectorPixelType &,
-                                        const InputPointType &) const;
+  OutputVectorPixelType TransformDiffusionTensor(const InputVectorPixelType &,
+                                                 const InputPointType &) const;
 
   /**  Method to transform a CovariantVector. */
   virtual OutputCovariantVectorType TransformCovariantVector(
