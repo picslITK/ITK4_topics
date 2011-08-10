@@ -10,7 +10,6 @@ itk_module(ITKTransform
   DEPENDS
     ITKStatistics
     ITKHDF5
-    ITKImageFunction
     ITKImageFilterBase
   TEST_DEPENDS
     ITKTestKernel

@@ -20,13 +20,17 @@
 
 #include "itkDeformationFieldTransform.h"
 
-#include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
 #include "vnl/algo/vnl_matrix_inverse.h"
 
 namespace itk
 {
+
+/* Forward-declaration to avoid including the header file that would
+ * introduce a circular dependency in the Transform module. */
+template< class TInputImage, class TCoordRep >
+class VectorLinearInterpolateImageFunction;
 
 /**
  * Constructor

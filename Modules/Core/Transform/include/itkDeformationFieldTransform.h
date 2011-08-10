@@ -23,11 +23,16 @@
 #include "itkImage.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkImageVectorTransformParametersHelper.h"
-#include "itkVectorNeighborhoodOperatorImageFilter.h"
 #include "itkGaussianOperator.h"
+#include "itkVectorNeighborhoodOperatorImageFilter.h"
 
 namespace itk
 {
+
+/* Forward-declaration to avoid including the header file that would
+ * introduce a circular dependency in the Transform module. */
+template< class TInputImage, class TCoordRep >
+class VectorInterpolateImageFunction;
 
 /** \class DeformationFieldTransform
  * \brief TODO
