@@ -70,14 +70,14 @@ public:
    * \c container is the TransformParameters object to which this helper
    * is assigned.
    */
-  virtual void SetParametersObject(CommonContainerType* container,
-                                   LightObject * object )
+  virtual void SetParametersObject(CommonContainerType *,
+                                   LightObject *)
     {
     itkGenericExceptionMacro("TransformParamersHelper::SetParameterObject: "
       "Not implemented for base class.");
     }
 
-  ~TransformParametersHelper(){}
+  virtual ~TransformParametersHelper(){}
 
 };
 

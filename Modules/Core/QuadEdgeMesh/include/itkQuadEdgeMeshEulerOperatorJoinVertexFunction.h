@@ -24,9 +24,6 @@
 
 namespace itk
 {
-//FIXME
-//
-// http://www.cgal.org/Manual/doc_html/cgal_manual/Polyhedron_ref/Class_Polyhedron_3.html
 /**
  * \class QuadEdgeMeshEulerOperatorJoinVertexFunction
  *
@@ -52,9 +49,6 @@ namespace itk
  * and for each such square an added diagonal. No imagine what happens
  * when one operates JoinVertex on a diagonal edge of a corner square
  * (and how it differs with feeding JoinVertex with the opposite edge).
- *
- * \sa The operator \ref itkQE::EulerOperatorJoinVertexFunction can be
- *    seen as the inverse operator.
  *
  * \ingroup QEMeshModifierFunctions
  * \ingroup ITKQuadEdgeMesh

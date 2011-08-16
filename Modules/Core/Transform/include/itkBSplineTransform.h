@@ -342,6 +342,7 @@ public:
 
   /** Method to transform a vector -
    *  not applicable for this type of transform. */
+  using Superclass::TransformVector;
   virtual OutputVectorType TransformVector( const InputVectorType & ) const
     {
     itkExceptionMacro( "Method not applicable for deformable transform." );
@@ -358,6 +359,7 @@ public:
 
   /** Method to transform a CovariantVector -
    *  not applicable for this type of transform */
+  using Superclass::TransformCovariantVector;
   virtual OutputCovariantVectorType TransformCovariantVector(
     const InputCovariantVectorType & ) const
     {
@@ -368,11 +370,18 @@ public:
   /** Compute the Jacobian Matrix of the transformation at one point */
   virtual const JacobianType & GetJacobian( const InputPointType  & ) const;
 
-  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
-                                                  JacobianType &j) const
+  virtual void GetJacobianWithRespectToParameters(const InputPointType &,
+                                                  JacobianType &) const
   {
     itkExceptionMacro("GetJacobianWithRespectToParameters unimplemented for "
                       << this->GetNameOfClass() );
+  }
+
+  virtual void GetJacobianWithRespectToPosition(const InputPointType &,
+                                                  JacobianType &) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
   }
 
   /** Return the number of parameters that completely define the Transfom */

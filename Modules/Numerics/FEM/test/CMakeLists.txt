@@ -4,7 +4,6 @@ get_filename_component(ITK_TOP_DIR ${ITKFEM_SOURCE_DIR}/../../.. ABSOLUTE)
 include(${ITK_TOP_DIR}/CMake/ITKExternalData.cmake)
 
 set(ITKFEMTests
-itkFEMHeaderTest.cxx
 itkFEMExceptionTest.cxx
 itkFEMElement2DMembraneTest.cxx
 itkFEMElement3DMembraneTest.cxx
@@ -42,12 +41,13 @@ itkImageToRectilinearFEMObjectFilter2DTest.cxx
 itkImageToRectilinearFEMObjectFilter3DTest.cxx
 itkFEMElement2DTest.cxx
 itkFEMElement3DTest.cxx
+itkFEMObjectTest.cxx
+itkFEMObjectTest2.cxx
+itkFEMSpatialObjectTest.cxx
 )
 
 CreateTestDriver(ITKFEM  "${ITKFEM-Test_LIBRARIES}" "${ITKFEMTests}")
 
-itk_add_test(NAME itkFEMHeaderTest
-      COMMAND ITKFEMTestDriver itkFEMHeaderTest)
 itk_add_test(NAME itkFEMElement2DMembraneTest
       COMMAND ITKFEMTestDriver itkFEMElement2DMembraneTest)
 itk_add_test(NAME itkFEMElement2DQuadraticTriangularTest
@@ -265,6 +265,16 @@ itk_add_test(NAME itkFEMLandmarkLoadImplementationTest ${FEM_TESTS3}
          COMMAND ITKFEMTestDriver itkFEMLandmarkLoadImplementationTest
          DATA{Input/quad-lm.meta}
          ${ITK_TEST_OUTPUT_DIR}/QuadLandmardkWrite.meta)
+
+itk_add_test(NAME itkFEMObjectTest ${FEM_TESTS3}
+         COMMAND ITKFEMTestDriver itkFEMObjectTest)
+
+itk_add_test(NAME itkFEMObjectTest2 ${FEM_TESTS3}
+         COMMAND ITKFEMTestDriver itkFEMObjectTest2)
+
+itk_add_test(NAME itkFEMSpatialObjectTest ${FEM_TESTS3}
+         COMMAND ITKFEMTestDriver itkFEMSpatialObjectTest
+         DATA{Input/tri3-e.meta})
 
 #add_test(NAME itkFEMRegistrationFilterTest ${FEM_TESTS3}
 #         COMMAND ITKFEMTestDriver itkFEMRegistrationFilterTest)

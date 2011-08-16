@@ -15,16 +15,13 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
 
 #include <iostream>
 
 #include "itkAffineTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkArray2D.h"
-//#include "itkDeformationFieldTransform.h"
+//#include "itkDisplacementFieldTransform.h"
 
 namespace {
 
@@ -695,19 +692,19 @@ int itkCompositeTransformTest(int ,char *[] )
     }
   }
 
-  /* Add a deformation field transform */
+  /* Add a displacement field transform */
   /* NOTE this should maybe go in a separate test so we don't have
-   * this test rely on DeformationFieldTransform class which is also a
+   * this test rely on DisplacementFieldTransform class which is also a
    * new class. */
-//Remove until new DeformationFieldTransform class is added to itk main.
+//Remove until new DisplacementFieldTransform class is added to itk main.
 #if 0
   {
-  /* Create a deformation field transform */
-  typedef itk::DeformationFieldTransform<double, 2>
-                                              DeformationTransformType;
-  DeformationTransformType::Pointer deformationTransform =
-      DeformationTransformType::New();
-  typedef DeformationTransformType::DeformationFieldType FieldType;
+  /* Create a displacement field transform */
+  typedef itk::DisplacementFieldTransform<double, 2>
+                                              DisplacementTransformType;
+  DisplacementTransformType::Pointer displacementTransform =
+      DisplacementTransformType::New();
+  typedef DisplacementTransformType::DisplacementFieldType FieldType;
   FieldType::Pointer field = FieldType::New(); //This is based on itk::Image
 
   FieldType::SizeType size;
@@ -721,16 +718,16 @@ int itkCompositeTransformTest(int ,char *[] )
   field->SetRegions( region );
   field->Allocate();
 
-  DeformationTransformType::OutputVectorType defVector;
+  DisplacementTransformType::OutputVectorType defVector;
   defVector.Fill( 1 );
   field->FillBuffer( defVector );
 
-  deformationTransform->SetDeformationField( field );
-  compositeTransform->AddTransform( deformationTransform );
+  displacementTransform->SetDisplacementField( field );
+  compositeTransform->AddTransform( displacementTransform );
 
-  /* TODO Test transformation with deformation field */
+  /* TODO Test transformation with displacement field */
 
-  /* Test TransformUpdateParameters with deformation
+  /* Test TransformUpdateParameters with displacement
    * field and one affine transforms */
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn();
   compositeTransform->SetNthTransformToOptimizeOn(2);
@@ -742,27 +739,27 @@ int itkCompositeTransformTest(int ,char *[] )
     update[i] = i;
     }
   truth += update;
-  /* Just exercise it. The update in DeformationFieldTransform includes
+  /* Just exercise it. The update in DisplacementFieldTransform includes
    * a smoothing operation, so to verify numerically we'll have to account
-   * for that. This could be done by calling DeformationFieldTransform::
-   * SmoothDeformationFieldGauss directly and putting the result into
+   * for that. This could be done by calling DisplacementFieldTransform::
+   * SmoothDisplacementFieldGauss directly and putting the result into
    * 'truth'. */
   compositeTransform->UpdateTransformParameters( update );
   /*
   CompositeType::ParametersType
     updateResult = compositeTransform->GetParameters();
-  std::cout << "UpdateTransformParameters with Deformation Field 1. "
+  std::cout << "UpdateTransformParameters with Displacement Field 1. "
             << std::endl;
   if( ! testVectorArray( truth, updateResult ) )
     {
-    std::cout << "UpdateTransformParameters with Deformation Field 1 failed. "
+    std::cout << "UpdateTransformParameters with Displacement Field 1 failed. "
               << std::endl
               << " truth:  " << truth << std::endl
               << " result: " << updateResult << std::endl;
     return EXIT_FAILURE;
     }
   */
-  }// end test with deformation field
+  }// end test with displacement field
 #endif
 
   /* Test SetParameters with wrong size array */

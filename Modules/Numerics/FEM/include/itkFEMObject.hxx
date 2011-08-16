@@ -18,11 +18,6 @@
 #ifndef __itkFEMObject_hxx
 #define __itkFEMObject_hxx
 
-// disable debug warnings in MS compiler
-#ifdef _MSC_VER
-#pragma warning(disable: 4786)
-#endif
-
 #include "itkFEMObject.h"
 
 #include "itkFEMLoadNode.h"
@@ -73,8 +68,34 @@ void
 FEMObject<VDimension>
 ::Clear()
 {
-  this->m_NodeContainer->Initialize();
+  // Required because of circular references between nodes
+  // and elements
+  int numElements = this->GetNumberOfElements();
+  for( int e = 0; e < numElements; e++ )
+    {
+    Element::Pointer el = this->GetElement(e);
+    unsigned int     Npts = el->GetNumberOfNodes();
+    for( unsigned int pt = 0; pt < Npts; pt++ )
+      {
+      el->GetNode(pt)->m_elements.clear( );
+      }
+    }
   this->m_ElementContainer->Initialize();
+
+  int numNodes = this->GetNumberOfNodes();
+  for(int e = 0; e < numNodes; e++)
+    {
+    Element::Node::Pointer n = this->GetNode(e);
+    n->m_elements.clear();
+    }
+  this->m_NodeContainer->Initialize();
+  int numLoads = this->GetNumberOfLoads();
+  for(int e = 0; e < numLoads; e++)
+    {
+    Element::Pointer dummy;
+    Load *l = this->GetLoad(e).GetPointer();
+    l->SetElement(dummy);
+    }
   this->m_LoadContainer->Initialize();
   this->m_MaterialContainer->Initialize();
 
@@ -129,7 +150,7 @@ FEMObject<VDimension>
     fem::Element *elCopy = Copy->GetElement(i);
     // create a new object of the correct class
     a = ObjectFactoryBase::CreateInstance( elCopy->GetNameOfClass() );
-
+    a->UnRegister();
     fem::Element::Pointer o1 = dynamic_cast<fem::Element *>( a.GetPointer() );
     o1->SetGlobalNumber(elCopy->GetGlobalNumber() );
 
@@ -150,7 +171,6 @@ FEMObject<VDimension>
     {
     fem::Load *load = Copy->GetLoad(k);
     // create a new object of the correct class
-    a = ObjectFactoryBase::CreateInstance( load->GetNameOfClass() );
 
     std::string loadname = std::string(load->GetNameOfClass() );
     if( loadname == "LoadNode" )
@@ -501,7 +521,7 @@ Element::Pointer
 FEMObject<VDimension>
 ::GetElement(ElementIdentifier index)
 {
-  return this->m_ElementContainer->GetElement(index).GetPointer();
+  return this->m_ElementContainer->GetElement(index);
 }
 
 template <unsigned int VDimension>

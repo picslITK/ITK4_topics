@@ -15,13 +15,10 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
 
 #include "itkAnalyzeImageIOTest.h"
+#include "itkNiftiImageIOFactory.h"
 
-//template int MakeImage<char>();
 int TestAnalyzeByteSwap(const std::string & AugmentName)
 {
   int rval;

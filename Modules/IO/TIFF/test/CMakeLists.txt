@@ -1,13 +1,11 @@
 itk_module_test()
 set(ITKIOTIFFTests
 itkTIFFImageIOTest.cxx
-itkIOTIFFHeaderTest.cxx
+itkTIFFImageIOTest2.cxx
 )
 
 CreateTestDriver(ITKIOTIFF  "${ITKIOTIFF-Test_LIBRARIES}" "${ITKIOTIFFTests}")
 
-itk_add_test(NAME itkIOTIFFHeaderTest
-      COMMAND ITKIOTIFFTestDriver itkIOTIFFHeaderTest)
 itk_add_test(NAME itkTIFFImageIOTest
       COMMAND ITKIOTIFFTestDriver
     --compare ${ITK_DATA_ROOT}/Baseline/IO/cthead1.tif
@@ -103,3 +101,6 @@ itk_add_test(NAME itkTIFFImageIOMultResTest2
     --compare ${ITK_DATA_ROOT}/Baseline/IO/cthead1.tif
               ${ITK_TEST_OUTPUT_DIR}/itkTIFFImageIOMultResTest2.tif
     itkTIFFImageIOTest ${ITK_DATA_ROOT}/Input/cthead1-multires.tif ${ITK_TEST_OUTPUT_DIR}/itkTIFFImageIOMultResTest2.tif 3)
+itk_add_test(NAME itkTIFFImageIOSpacing
+   COMMAND ITKIOTIFFTestDriver
+    itkTIFFImageIOTest2 ${ITK_TEST_OUTPUT_DIR}/itkTIFFImageIOSpacing.tif)

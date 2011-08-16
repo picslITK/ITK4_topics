@@ -163,6 +163,8 @@ public:
   OutputPointType  TransformPoint(const InputPointType  & point) const;
 
   /** These vector transforms are not implemented for this transform */
+  using Superclass::TransformVector;
+
   virtual OutputVectorType TransformVector(const InputVectorType &) const
   {
     itkExceptionMacro(
@@ -173,6 +175,8 @@ public:
     itkExceptionMacro(
       << "TransformVector(const InputVnlVectorType &) is not implemented for Rigid3DPerspectiveTransform");
   }
+
+  using Superclass::TransformCovariantVector;
 
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const
   {
@@ -192,6 +196,13 @@ public:
    *  allowing for thread-safety. */
   virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const;
+
+  virtual void GetJacobianWithRespectToPosition(const InputPointType &,
+                                                  JacobianType &) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
 
   /** Set a fixed offset: this allow to center the object to be transformed */
   itkGetConstReferenceMacro(FixedOffset, OffsetType);

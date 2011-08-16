@@ -62,9 +62,19 @@ namespace itk
  *   OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const
  *   void                      SetParameters(const ParametersType &)
  *   void                      SetFixedParameters(const ParametersType &)
- *   const                     JacobianType & GetJacobian(const InputPointType  &) const
- *   void                      GetJacobianWithRespectToParameters(const InputPointType &,
- *                                                                JacobianType &) const
+ *   const                     JacobianType & GetJacobian(
+ *                                              const InputPointType  &) const
+ *   void                      GetJacobianWithRespectToParameters(
+ *                                                     const InputPointType &,
+ *                                                       JacobianType &) const
+ *   void                      GetJacobianWithRespectToPosition(
+ *                                                  const InputPointType & x,
+ *                                                JacobianType &j ) const;
+ *
+ * Since TranformVector and TransformCovariantVector have multiple
+ * overloaded methods from the base class, subclasses must specify:
+ *  using Superclass::TransformVector;
+ *  using Superclass::TransformCovariantVector;
  *
  * \ingroup Transforms
  *
@@ -116,16 +126,8 @@ public:
   typedef VariableLengthVector< TScalarType >      OutputVectorPixelType;
 
   /* Standard tensor type for this class */
-  typedef DiffusionTensor3D< TScalarType >         InputTensorType;
-  typedef DiffusionTensor3D< TScalarType >         OutputTensorType;
-
-  typedef SymmetricSecondRankTensor< TScalarType, 3 >   InputTensorMatrixType;
-  typedef SymmetricSecondRankTensor< TScalarType, 3 >   OutputTensorMatrixType;
-
-  typedef CovariantVector<TScalarType, InputTensorType::Dimension>
-                                                    InputTensorEigenVectorType;
-  typedef CovariantVector<TScalarType, OutputTensorType::Dimension>
-                                                    OutputTensorEigenVectorType;
+  typedef DiffusionTensor3D< TScalarType >         InputDiffusionTensor3DType;
+  typedef DiffusionTensor3D< TScalarType >         OutputDiffusionTensor3DType;
 
   /** Standard covariant vector type for this class */
   typedef CovariantVector< TScalarType, NInputDimensions >
@@ -155,25 +157,26 @@ public:
 
   typedef Matrix< TScalarType,
                   itkGetStaticConstMacro(OutputSpaceDimension),
-                  itkGetStaticConstMacro(InputSpaceDimension) >
-                                                                MatrixType;
+                  itkGetStaticConstMacro(InputSpaceDimension) >     MatrixType;
 
   typedef Matrix<double,
                  itkGetStaticConstMacro(OutputSpaceDimension),
-                 itkGetStaticConstMacro(OutputSpaceDimension) > OutputDirectionMatrix;
+                 itkGetStaticConstMacro(OutputSpaceDimension) >
+                                                         OutputDirectionMatrix;
   typedef Matrix<double,
                  itkGetStaticConstMacro(InputSpaceDimension),
-                 itkGetStaticConstMacro(InputSpaceDimension) > InputDirectionMatrix;
+                 itkGetStaticConstMacro(InputSpaceDimension) >
+                                                          InputDirectionMatrix;
   typedef Matrix<double,
                  itkGetStaticConstMacro(OutputSpaceDimension),
-                 itkGetStaticConstMacro(InputSpaceDimension) > DirectionChangeMatrix;
-
+                 itkGetStaticConstMacro(InputSpaceDimension) >
+                                                         DirectionChangeMatrix;
 
   void SetDirectionChange( const OutputDirectionMatrix fixedDir,
                            const InputDirectionMatrix  movingDir );
 
-  void SetDirectionChangeMatrix( const DirectionChangeMatrix changeDir )
-    { m_DirectionChange = changeDir; }
+  void SetDirectionChangeMatrix( const DirectionChangeMatrix & changeDir )
+    { m_DirectionChange = changeDir; this->Modified(); }
 
   DirectionChangeMatrix GetDirectionChangeMatrix( void ) const
     { return m_DirectionChange; }
@@ -198,27 +201,38 @@ public:
   /**  Method to transform a vector. */
   virtual OutputVectorType  TransformVector(const InputVectorType &) const = 0;
 
-  /** Method to transform a vector at a given location*/
+  /** Method to transform a vector at a given location.
+   * For global transforms, \c point is ignored and \c TransformVector( vector )
+   * is called. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior. */
   virtual OutputVectorType    TransformVector(
                               const InputVectorType & vector,
                               const InputPointType & itkNotUsed(point) ) const
-    { return TransformVector( vector ); }
+  { return TransformVector( vector ); }
 
   /**  Method to transform a vnl_vector. */
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &)
                                                                      const = 0;
 
-  virtual OutputVnlVectorType    TransformVector(
+  /** Method to transform a vnl_vector, at a point.
+   * For global transforms, \c point is ignored and \c TransformVector( vector )
+   * is called. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior. */
+  virtual OutputVnlVectorType TransformVector(
                               const InputVnlVectorType & vector,
                               const InputPointType & itkNotUsed(point) ) const
-    { return TransformVector( vector ); }
+  { return TransformVector( vector ); }
 
   /** Method to transform a vector stored in a VectorImage.  */
   virtual OutputVectorPixelType TransformVector(
-                                    const InputVectorPixelType & vector ) const
-  { return vector; }
+                       const InputVectorPixelType & itkNotUsed(vector) ) const
+  { itkExceptionMacro( "TransformVector( const InputVectorPixelType & ) is "
+                       "unimplemented for " << this->GetNameOfClass() ); }
 
-  /** Method to transform a vector stored in a VectorImage.  */
+  /** Method to transform a vector stored in a VectorImage, at a point.
+   * For global transforms, \c point is ignored and \c TransformVector( vector )
+   * is called. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior. */
   virtual OutputVectorPixelType TransformVector(
                               const InputVectorPixelType & vector,
                               const InputPointType & itkNotUsed(point) ) const
@@ -241,8 +255,9 @@ public:
 
   /**  Method to transform a CovariantVector stored in a VectorImage. */
   virtual OutputVectorPixelType TransformCovariantVector(
-                                     const InputVectorPixelType & vector) const
-  { return vector; }
+                        const InputVectorPixelType & itkNotUsed(vector) ) const
+  { itkExceptionMacro( "TransformCovariantVector(const InputVectorPixelType &)"
+                       "is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a CovariantVector, using a point. Global transforms
    * can ignore the \c point parameter. Local transforms (e.g. deformation
@@ -256,26 +271,44 @@ public:
   { return TransformCovariantVector( vector ); }
 
   /** Method to transform a diffusion tensor */
-  virtual OutputTensorType TransformTensor( const InputTensorType & tensor )
+  virtual OutputDiffusionTensor3DType TransformDiffusionTensor(
+                        const InputDiffusionTensor3DType & itkNotUsed(tensor) )
                                                                           const
-  { return tensor; }
+  { itkExceptionMacro(
+            "TransformDiffusionTensor( const InputDiffusionTensor3DType & ) is "
+                            "unimplemented for " << this->GetNameOfClass() ); }
 
-  /** Method to transform a diffusion tensor  */
-  virtual OutputTensorType TransformTensor(
-                               const InputTensorType & tensor,
-                               const InputPointType & itkNotUsed(point) ) const
-  { return tensor; }
+  /** Method to transform a diffusion tensor at a point. Global transforms
+   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior.
+   * By default, \c point is ignored and \c TransformDiffusionTensor(tensor) is
+   * called */
+  virtual OutputDiffusionTensor3DType TransformDiffusionTensor(
+                            const InputDiffusionTensor3DType & itkNotUsed(tensor),
+                            const InputPointType & itkNotUsed(point) ) const
+  { itkExceptionMacro(
+      "TransformDiffusionTensor( const InputDiffusionTensor3DType &, const "
+      "InputPointType & ) is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a diffusion tensor stored in a VectorImage */
-  virtual OutputVectorPixelType TransformTensor(
-                                    const InputVectorPixelType & tensor ) const
-  { return tensor; }
+  virtual OutputVectorPixelType TransformDiffusionTensor(
+                        const InputVectorPixelType & itkNotUsed(tensor) ) const
+  { itkExceptionMacro(
+                "TransformDiffusionTensor( const InputVectorPixelType & ) is "
+                            "unimplemented for " << this->GetNameOfClass() ); }
 
-  /** Method to transform a diffusion tensor stored in a VectorImage */
-  virtual OutputVectorPixelType TransformTensor(
-                               const InputVectorPixelType & tensor,
+  /** Method to transform a diffusion tensor stored in a VectorImage, at
+   * a point.  Global transforms
+   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * field transform) must override and provide required behavior.
+   * By default, \c point is ignored and \c TransformDiffusionTensor(tensor) is
+   * called */
+  virtual OutputVectorPixelType TransformDiffusionTensor(
+                               const InputVectorPixelType & itkNotUsed(tensor),
                                const InputPointType & itkNotUsed(point) ) const
-  { return tensor; }
+  { itkExceptionMacro(
+      "TransformDiffusionTensor( const InputVectorPixelType &, const "
+      "InputPointType & ) is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Set the transformation parameters and update internal transformation.
    * SetParameters gives the transform the option to set it's
@@ -363,15 +396,13 @@ public:
                                                   JacobianType &j) const = 0;
 
   /** This provides the ability to get a local jacobian value
-   *  in a dense deformation field as in this case it would
-   *  would be unclear what parameters would refer to.
-   *  By default this returns identity in \c j, and should be overridden in
-   *  dervied classes as needed. */
-  inline virtual void GetJacobianWithRespectToPosition(
+   *  in a dense/local transform, e.g. DisplacementFieldTransform. For such
+   *  transforms it would be unclear what parameters would refer to.
+   *  Generally, global transforms should return an indentity jacobian
+   *  since there is no change with respect to position. */
+  virtual void GetJacobianWithRespectToPosition(
                                        const InputPointType & x,
-                                       JacobianType &j ) const
-  { j = m_IdentityJacobian; }
-
+                                       JacobianType &j ) const = 0;
 
   /** Update the transform's parameters by the adding values in \c update
    * to current parameter values.
@@ -443,7 +474,7 @@ public:
   { return false; }
 
   /** Indicates if this transform is a "global" transform
-   *  e.g. an affine transform or a local one, e.g. a deformation field.
+   *  e.g. an affine transform, or a local one, e.g. a deformation field.
    */
   virtual bool HasLocalSupport() const
   { return false; }
@@ -459,9 +490,6 @@ protected:
   mutable JacobianType m_Jacobian;
 
   mutable DirectionChangeMatrix m_DirectionChange;
-
-  /* Store an identity jacobian for convenience */
-  JacobianType m_IdentityJacobian;
 
 private:
   Transform(const Self &);      //purposely not implemented

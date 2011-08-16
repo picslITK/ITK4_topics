@@ -18,14 +18,11 @@
 #ifndef __itkLoggerThreadWrapper_h
 #define __itkLoggerThreadWrapper_h
 
-//NOTE: This class does not work gnu 2.95
-#if !( defined( __GNUC__ ) && ( __GNUC__ <= 2 ) )
+#include <string>
+#include <queue>
 
 #include "itkMultiThreader.h"
 #include "itkSimpleFastMutexLock.h"
-
-#include <string>
-#include <queue>
 
 namespace itk
 {
@@ -39,7 +36,6 @@ namespace itk
  * \ingroup ITKCommon
  */
 
-// MSVS6 can't do this type of nested template
 template< class SimpleLoggerType >
 class LoggerThreadWrapper:public SimpleLoggerType
 {
@@ -58,6 +54,7 @@ public:
 
   typedef  typename SimpleLoggerType::OutputType        OutputType;
   typedef  typename SimpleLoggerType::PriorityLevelType PriorityLevelType;
+  typedef  unsigned int                                 DelayType;
 
   /** Definition of types of operations for LoggerThreadWrapper. */
   typedef enum {
@@ -81,6 +78,16 @@ public:
   virtual void SetLevelForFlushing(PriorityLevelType level);
 
   virtual PriorityLevelType GetLevelForFlushing() const;
+
+/** Set the delay in milliseconds between checks to see if there are any
+ *  low priority messages to be processed.
+ */
+  virtual void SetDelay(DelayType delay);
+
+/** Get the delay in milliseconds between checks to see if there are any
+ *  low priority messages to be processed.
+ */
+  virtual DelayType GetDelay() const;
 
   /** Registers another output stream with the multiple output. */
   virtual void AddLogOutput(OutputType *output);
@@ -126,7 +133,8 @@ private:
 
   SimpleFastMutexLock m_Mutex;
 
-  SimpleFastMutexLock m_WaitMutex;
+  DelayType m_Delay;
+
 };  // class LoggerThreadWrapper
 } // namespace itk
 
@@ -134,5 +142,4 @@ private:
 #include "itkLoggerThreadWrapper.hxx"
 #endif
 
-#endif
 #endif  // __itkLoggerThreadWrapper_h

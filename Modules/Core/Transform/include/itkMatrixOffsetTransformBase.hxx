@@ -321,17 +321,17 @@ template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
 typename MatrixOffsetTransformBase< TScalarType,
                                     NInputDimensions,
-                                    NOutputDimensions >::OutputTensorType
+                                    NOutputDimensions >::OutputDiffusionTensor3DType
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformTensor(const InputTensorType & tensor) const
+::TransformDiffusionTensor(const InputDiffusionTensor3DType & tensor) const
 {
   //Get Tensor-space version of local transform (i.e. always 3D)
-  typedef MatrixOffsetTransformBase<ScalarType, InputTensorType::Dimension, InputTensorType::Dimension> EigenVectorTransformType;
+  typedef MatrixOffsetTransformBase<ScalarType, InputDiffusionTensor3DType::Dimension, InputDiffusionTensor3DType::Dimension> EigenVectorTransformType;
   typename  EigenVectorTransformType::MatrixType matrix;
   typename  EigenVectorTransformType::MatrixType dMatrix;
   matrix.Fill(0.0);
   dMatrix.Fill(0.0);
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensor3DType::Dimension; i++)
     {
     matrix(i,i) = 1.0;
     dMatrix(i,i) = 1.0;
@@ -341,7 +341,7 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
     {
     for (unsigned int j=0; j<NInputDimensions; j++)
       {
-      if ( (i < InputTensorType::Dimension) && (j < InputTensorType::Dimension))
+      if ( (i < InputDiffusionTensor3DType::Dimension) && (j < InputDiffusionTensor3DType::Dimension))
         {
         matrix(i,j) = this->GetVarInverseMatrix()(i,j);
         dMatrix(i,j) = this->GetDirectionChangeMatrix()(i,j);
@@ -349,15 +349,15 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
       }
     }
 
-  typename InputTensorType::EigenValuesArrayType eigenValues;
-  typename InputTensorType::EigenVectorsMatrixType eigenVectors;
+  typename InputDiffusionTensor3DType::EigenValuesArrayType eigenValues;
+  typename InputDiffusionTensor3DType::EigenVectorsMatrixType eigenVectors;
   tensor.ComputeEigenAnalysis( eigenValues, eigenVectors );
 
   InputTensorEigenVectorType ev1;
   InputTensorEigenVectorType ev2;
   InputTensorEigenVectorType ev3;
 
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensor3DType::Dimension; i++)
     {
     ev1[i] = eigenVectors(2,i);
     ev2[i] = eigenVectors(1,i);
@@ -385,9 +385,9 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
   typename EigenVectorTransformType::MatrixType e1;
   typename EigenVectorTransformType::MatrixType e2;
   typename EigenVectorTransformType::MatrixType e3;
-  for (unsigned int i=0; i<InputTensorType::Dimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensor3DType::Dimension; i++)
     {
-    for (unsigned int j=0; j<InputTensorType::Dimension; j++)
+    for (unsigned int j=0; j<InputDiffusionTensor3DType::Dimension; j++)
       {
       e1(i,j) = eigenValues[2] * ev1[i]*ev1[j];
       e2(i,j) = eigenValues[1] * ev2[i]*ev2[j];
@@ -397,7 +397,7 @@ MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
 
   typename EigenVectorTransformType::MatrixType rotated = e1 + e2 + e3;
 
-  OutputTensorType result;     // Converted vector
+  OutputDiffusionTensor3DType result;     // Converted vector
   result[0] = rotated(0,0);
   result[1] = rotated(0,1);
   result[2] = rotated(0,2);
@@ -416,21 +416,21 @@ typename MatrixOffsetTransformBase< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputVectorPixelType
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformTensor(const InputVectorPixelType & tensor) const
+::TransformDiffusionTensor(const InputVectorPixelType & tensor) const
 {
-  OutputVectorPixelType result( InputTensorType::InternalDimension );     // Converted tensor
+  OutputVectorPixelType result( InputDiffusionTensor3DType::InternalDimension );     // Converted tensor
   result.Fill( 0.0 );
 
-  InputTensorType dt(0.0);
+  InputDiffusionTensor3DType dt(0.0);
   const unsigned int tDim = tensor.Size();
   for (unsigned int i=0; i<tDim; i++)
     {
     dt[i] = tensor[i];
     }
 
-  OutputTensorType outDT = this->TransformTensor( dt );
+  OutputDiffusionTensor3DType outDT = this->TransformDiffusionTensor( dt );
 
-  for (unsigned int i=0; i<InputTensorType::InternalDimension; i++)
+  for (unsigned int i=0; i<InputDiffusionTensor3DType::InternalDimension; i++)
     {
     result[i] = outDT[i];
     }
@@ -683,7 +683,7 @@ template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
 void
 MatrixOffsetTransformBase< TScalarType, NInputDimensions, NOutputDimensions >
-::GetJacobianWithRespectToPosition(const InputPointType  &x,
+::GetJacobianWithRespectToPosition(const InputPointType  &,
                                                   JacobianType &jac) const
 {
   jac.SetSize( MatrixType::RowDimensions, MatrixType::ColumnDimensions );

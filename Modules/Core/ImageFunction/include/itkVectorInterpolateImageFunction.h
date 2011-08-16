@@ -23,6 +23,7 @@
 
 namespace itk
 {
+#ifndef __itkVectorCentralDifferenceImageFunction_h
 /**
  * Due to a bug in MSVC, an enum value cannot be accessed out of a template
  * parameter until the template class opens.  In order for templated classes
@@ -33,6 +34,7 @@ template< typename T >
 struct GetDimension {
   itkStaticConstMacro(Dimension, int, T::Dimension);
 };
+#endif
 
 /** \class VectorInterpolateImageFunction
  * \brief Base class for all vector image interpolaters.
@@ -50,7 +52,7 @@ struct GetDimension {
  *
  * \sa InterpolateImageFunction
  * \ingroup ImageFunctions ImageInterpolators
- * \ingroup ITK-ImageFunction
+ * \ingroup ITKImageFunction
  */
 template< class TInputImage, class TCoordRep = double >
 class ITK_EXPORT VectorInterpolateImageFunction:
@@ -61,8 +63,8 @@ class ITK_EXPORT VectorInterpolateImageFunction:
 {
 public:
   /** Extract the vector dimension from the pixel template parameter. */
-  //itkStaticConstMacro(Dimension, unsigned int,
-  //                    TInputImage::PixelType::Dimension);
+  itkStaticConstMacro(Dimension, unsigned int,
+                      TInputImage::PixelType::Dimension);
 
   /** Dimension underlying input image. */
   itkStaticConstMacro(ImageDimension, unsigned int,
@@ -139,7 +141,8 @@ public:
     OutputType output;
     PixelType  input = this->GetInputImage()->GetPixel(index);
 
-    for ( unsigned int k = 0; k < this->GetInputImage()->GetNumberOfComponentsPerPixel(); k++ )
+    for ( unsigned int k = 0;
+              k < this->GetInputImage()->GetNumberOfComponentsPerPixel(); k++ )
       {
       output[k] = static_cast< double >( input[k] );
       }

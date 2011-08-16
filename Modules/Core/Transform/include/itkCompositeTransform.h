@@ -93,8 +93,9 @@ namespace itk
  *  call to SetParameters. Is this worth worrying about? i.e. how much time
  *  will it take in the overall registration process? Probably very little.
  *
- * \ingroup ITK-Transform
+ * \ingroup Transforms
  *
+ * \ingroup ITKTransform
  */
 template
 <class TScalar = double, unsigned int NDimensions = 3>
@@ -300,6 +301,7 @@ public:
                                           bool &isInsideTransformRegion ) const;
   */
   /**  Method to transform a vector. */
+  using Superclass::TransformVector;
   virtual OutputVectorType TransformVector(const InputVectorType &) const
   {
     itkExceptionMacro( "TransformVector unimplemented" );
@@ -312,6 +314,7 @@ public:
   }
 
   /**  Method to transform a CovariantVector. */
+  using Superclass::TransformCovariantVector;
   virtual OutputCovariantVectorType
   TransformCovariantVector(const InputCovariantVectorType &) const
   {
@@ -331,6 +334,13 @@ public:
    */
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                   JacobianType &j) const;
+
+  virtual void GetJacobianWithRespectToPosition(const InputPointType &,
+                                                  JacobianType &) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
 
   /** Get/Set Parameter functions work on the current list of transforms
       that are set to be optimized (active) using the

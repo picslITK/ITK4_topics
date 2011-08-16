@@ -5,6 +5,9 @@ itkVectorInterpolateImageFunctionTest.cxx
 itkVarianceImageFunctionTest.cxx
 itkMedianImageFunctionTest.cxx
 itkBinaryThresholdImageFunctionTest.cxx
+itkBSplineDecompositionImageFilterTest.cxx
+itkBSplineInterpolateImageFunctionTest.cxx
+itkBSplineResampleImageFunctionTest.cxx
 itkScatterMatrixImageFunctionTest.cxx
 itkMeanImageFunctionTest.cxx
 itkGaussianDerivativeImageFunctionTest.cxx
@@ -16,7 +19,6 @@ itkRayCastInterpolateImageFunctionTest.cxx
 itkNearestNeighborExtrapolateImageFunctionTest.cxx
 itkVectorMeanImageFunctionTest.cxx
 itkMahalanobisDistanceThresholdImageFunctionTest.cxx
-itkImageFunctionHeaderTest.cxx
 itkInterpolateTest.cxx
 itkRGBInterpolateImageFunctionTest.cxx
 itkWindowedSincInterpolateImageFunctionTest.cxx
@@ -27,8 +29,6 @@ itkNearestNeighborInterpolateImageFunctionTest.cxx
 
 CreateTestDriver(ITKImageFunction  "${ITKImageFunction-Test_LIBRARIES}" "${ITKImageFunctionTests}")
 
-itk_add_test(NAME itkImageFunctionHeaderTest
-      COMMAND ITKImageFunctionTestDriver itkImageFunctionHeaderTest)
 itk_add_test(NAME itkGaussianBlurImageFunctionTest
       COMMAND ITKImageFunctionTestDriver itkGaussianBlurImageFunctionTest)
 itk_add_test(NAME itkVectorInterpolateImageFunctionTest
@@ -39,6 +39,12 @@ itk_add_test(NAME itkMedianImageFunctionTest
       COMMAND ITKImageFunctionTestDriver itkMedianImageFunctionTest)
 itk_add_test(NAME itkBinaryThresholdImageFunctionTest
       COMMAND ITKImageFunctionTestDriver itkBinaryThresholdImageFunctionTest)
+itk_add_test(NAME itkBSplineDecompositionImageFilterTest
+      COMMAND ITKImageFunctionTestDriver itkBSplineDecompositionImageFilterTest)
+itk_add_test(NAME itkBSplineInterpolateImageFunctionTest
+      COMMAND ITKImageFunctionTestDriver itkBSplineInterpolateImageFunctionTest)
+itk_add_test(NAME itkBSplineResampleImageFunctionTest
+      COMMAND ITKImageFunctionTestDriver itkBSplineResampleImageFunctionTest)
 itk_add_test(NAME itkScatterMatrixImageFunctionTest
       COMMAND ITKImageFunctionTestDriver itkScatterMatrixImageFunctionTest)
 itk_add_test(NAME itkMeanImageFunctionTest

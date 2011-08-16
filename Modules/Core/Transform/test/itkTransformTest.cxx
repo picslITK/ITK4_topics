@@ -15,9 +15,6 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
 
 #include <iostream>
 
@@ -59,21 +56,28 @@ public:
   virtual OutputPointType TransformPoint(const InputPointType  & inputPoint ) const
     { return inputPoint; }
 
+  using Superclass::TransformVector;
   virtual OutputVectorType TransformVector(const InputVectorType  & inputVector ) const
     { return inputVector; }
 
   virtual OutputVnlVectorType TransformVector(const InputVnlVectorType  & inputVector ) const
     { return inputVector; }
 
+  using Superclass::TransformCovariantVector;
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType  & inputVector ) const
     { return inputVector; }
 
   virtual const JacobianType & GetJacobian(const InputPointType  & ) const
     { return this->m_Jacobian; }
 
-  virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
+  virtual void GetJacobianWithRespectToParameters(const InputPointType &,
                                                   JacobianType &j) const
     { j.SetSize(3,6); j.Fill(1); }
+
+  inline virtual void GetJacobianWithRespectToPosition(
+                                                  const InputPointType &,
+                                                  JacobianType &j ) const
+    { j.SetSize(NOutputDimensions, NInputDimensions); j.Fill(1); }
 
   virtual void SetParameters(const ParametersType &) {}
   virtual void SetFixedParameters(const ParametersType &) {}

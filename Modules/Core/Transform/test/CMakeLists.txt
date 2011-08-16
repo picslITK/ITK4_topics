@@ -22,7 +22,6 @@ itkScaleLogarithmicTransformTest.cxx
 itkQuaternionRigidTransformTest.cxx
 itkScaleTransformTest.cxx
 itkSimilarity3DTransformTest.cxx
-itkTransformHeaderTest.cxx
 itkAzimuthElevationToCartesianTransformTest.cxx
 itkCenteredEuler3DTransformTest.cxx
 itkTransformFileReaderWriterTest.cxx
@@ -37,14 +36,13 @@ itkVersorRigid3DTransformTest.cxx
 itkVersorTransformTest.cxx
 itkSplineKernelTransformTest.cxx
 itkCompositeTransformTest.cxx
-itkDeformationFieldTransformTest.cxx
+itkDisplacementFieldTransformTest.cxx
+itkGaussianSmoothingOnUpdateDisplacementFieldTransformTest.cxx
 itkTimeVaryingVelocityFieldTransformTest.cxx
 )
 
 CreateTestDriver(ITKTransform  "${ITKTransform-Test_LIBRARIES}" "${ITKTransformTests}")
 
-itk_add_test(NAME itkTransformHeaderTest
-      COMMAND ITKTransformTestDriver itkTransformHeaderTest)
 itk_add_test(NAME itkFixedCenterOfRotationAffineTransformTest
       COMMAND ITKTransformTestDriver itkFixedCenterOfRotationAffineTransformTest)
 itk_add_test(NAME itkAffineTransformTest
@@ -158,7 +156,10 @@ itk_add_test(NAME itkSplineKernelTransformTest
       COMMAND ITKTransformTestDriver itkSplineKernelTransformTest)
 itk_add_test(NAME itkCompositeTransformTest
       COMMAND ITKTransformTestDriver itkCompositeTransformTest)
-itk_add_test(NAME itkDeformationFieldTransformTest
-      COMMAND ITKTransformTestDriver itkDeformationFieldTransformTest)
+itk_add_test(NAME itkDisplacementFieldTransformTest
+      COMMAND ITKTransformTestDriver itkDisplacementFieldTransformTest)
+itk_add_test(NAME itkGaussianSmoothingOnUpdateDisplacementFieldTransformTest
+      COMMAND ITKTransformTestDriver
+      itkGaussianSmoothingOnUpdateDisplacementFieldTransformTest)
 itk_add_test(NAME itkTimeVaryingVelocityFieldTransformTest
       COMMAND ITKTransformTestDriver itkTimeVaryingVelocityFieldTransformTest)

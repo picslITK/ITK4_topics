@@ -15,9 +15,6 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
 
 #include "itkMesh.h"
 
@@ -126,6 +123,7 @@ int itkCommonPrintTest(int , char* [])
   typedef itk::Image<unsigned char,2> CharType;
   typedef itk::Image<float,2>         OutputType;
 
+  typedef itk::Point<float,3>   Point3DType;
   typedef itk::Point<float,2>   PointType;
   typedef itk::Mesh<PointType>  MeshType;
 
@@ -268,8 +266,8 @@ int itkCommonPrintTest(int , char* [])
     itk::FileOutputWindow::New();
   std::cout << "------------FileOutputWindow" << FileOutputWindowObj;
 
-  itk::FiniteCylinderSpatialFunction<3,PointType>::Pointer FiniteCylinderSpatialFunctionObj =
-    itk::FiniteCylinderSpatialFunction<3,PointType>::New();
+  itk::FiniteCylinderSpatialFunction<3,Point3DType>::Pointer FiniteCylinderSpatialFunctionObj =
+    itk::FiniteCylinderSpatialFunction<3,Point3DType>::New();
   std::cout << "------------FiniteCylinderSpatialFunction" << FiniteCylinderSpatialFunctionObj;
 
   itk::FrustumSpatialFunction<2,PointType>::Pointer FrustumSpatialFunctionObj =

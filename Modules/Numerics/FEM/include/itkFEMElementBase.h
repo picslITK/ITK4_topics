@@ -212,21 +212,6 @@ public:
       }
 
     /**
-     * Create 2D node.
-     */
-    Node(Float x, Float y) : m_coordinates( VectorType(2) )
-      {
-        m_coordinates[0] = x; m_coordinates[1] = y;
-      }
-
-    /**
-     * Create 3D node.
-     */
-    Node(Float x, Float y, Float z) : m_coordinates( VectorType(3) )
-      {
-        m_coordinates[0] = x; m_coordinates[1] = y; m_coordinates[2] = z;
-      }
-    /**
      * Return a reference to a vector that contains coordinates
      * of this node.
      */
@@ -277,7 +262,7 @@ public:
      * List of pointers to elements that use this node. External code is
      * responsible for maintaining the list.
      */
-    typedef std::set<Element::Pointer> SetOfElements;
+    typedef std::set<Element *> SetOfElements;
     mutable SetOfElements m_elements;
   protected:
     virtual void PrintSelf(std::ostream& os, Indent indent) const

@@ -145,6 +145,7 @@ public:
   virtual OutputPointType TransformPoint(const InputPointType & thisPoint) const;
 
   /** These vector transforms are not implemented for this transform */
+  using Superclass::TransformVector;
   virtual OutputVectorType TransformVector(const InputVectorType &) const
   {
     itkExceptionMacro(
@@ -157,6 +158,7 @@ public:
   }
 
   /**  Method to transform a CovariantVector. */
+  using Superclass::TransformCovariantVector;
   virtual OutputCovariantVectorType TransformCovariantVector(const InputCovariantVectorType &) const
   {
     itkExceptionMacro(
@@ -172,6 +174,13 @@ public:
   /** Compute the Jacobian Matrix of the transformation at one point */
   virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const;
+
+  virtual void GetJacobianWithRespectToPosition(const InputPointType &,
+                                                  JacobianType &) const
+  {
+    itkExceptionMacro( "GetJacobianWithRespectToPosition not yet implemented "
+                       "for " << this->GetNameOfClass() );
+  }
 
   /** Set the Transformation Parameters and update the internal transformation.
    * The parameters represent the source landmarks. Each landmark point is
