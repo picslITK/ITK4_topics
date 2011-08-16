@@ -325,7 +325,10 @@ public:
    */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const;
 
-
+  /**
+   * Compute the Jacobian with respect to the parameters for the compositie
+   * transform using Jacobian rule. See comments in the implementation.
+   */
   virtual void GetJacobianWithRespectToParameters(const InputPointType  &p,
                                                   JacobianType &j) const;
 

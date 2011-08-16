@@ -25,7 +25,7 @@
  * as no exception occurs.
  */
 
-#include "itkDemonsImageToImageObjectMetric.h"
+#include "itkDemonsVectorImageToVectorImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
 
 #include "itkIdentityTransform.h"
@@ -33,9 +33,10 @@
 #include "itkDeformationFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
-#include "itkCastImageFilter.h"
-#include "itkWarpImageFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
+//#include "itkCastImageFilter.h"
+//#include "itkWarpImageFilter.h"
+#include "itkVectorResampleImageFilter.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -69,7 +70,7 @@ public:
 };
 }
 
-int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
+int itkDemonsVectorImageToVectorImageObjectRegistrationTest(int argc, char *argv[])
 {
 
   if( argc < 4 || argc > 7)
@@ -99,8 +100,8 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
 
-  typedef Image< PixelType, Dimension >  FixedImageType;
-  typedef Image< PixelType, Dimension >  MovingImageType;
+  typedef VectorImage< PixelType, Dimension >  FixedImageType;
+  typedef VectorImage< PixelType, Dimension >  MovingImageType;
 
   typedef ImageFileReader< FixedImageType  > FixedImageReaderType;
   typedef ImageFileReader< MovingImageType > MovingImageReaderType;
@@ -112,24 +113,24 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   movingImageReader->SetFileName( argv[2] );
 
   //matching intensity histogram
-  typedef HistogramMatchingImageFilter<
-                                    MovingImageType,
-                                    MovingImageType >   MatchingFilterType;
-  MatchingFilterType::Pointer matcher = MatchingFilterType::New();
+  //typedef HistogramMatchingImageFilter<
+  //                                  MovingImageType,
+  //                                  MovingImageType >   MatchingFilterType;
+  //MatchingFilterType::Pointer matcher = MatchingFilterType::New();
 
-  matcher->SetInput( movingImageReader->GetOutput() );
-  matcher->SetReferenceImage( fixedImageReader->GetOutput() );
+  //matcher->SetInput( movingImageReader->GetOutput() );
+  //matcher->SetReferenceImage( fixedImageReader->GetOutput() );
 
-  matcher->SetNumberOfHistogramLevels( 256 );
-  matcher->SetNumberOfMatchPoints( 10 );
-  matcher->ThresholdAtMeanIntensityOn();
+  //matcher->SetNumberOfHistogramLevels( 256 );
+  //matcher->SetNumberOfMatchPoints( 10 );
+  //matcher->ThresholdAtMeanIntensityOn();
   //get the images
   fixedImageReader->Update();
   FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
   movingImageReader->Update();
-  matcher->Update();
-  MovingImageType::Pointer movingImage = matcher->GetOutput();
-  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
+  //matcher->Update();
+  //MovingImageType::Pointer movingImage = matcher->GetOutput();
+  MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
@@ -168,7 +169,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
+  typedef DemonsVectorImageToVectorImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
 
@@ -188,6 +189,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   //Initialize the metric to prepare for use
   metric->Initialize();
+
+  MetricType::MeasureType valueReturn;
+  MetricType::DerivativeType derivativeReturn;
+  metric->GetValueAndDerivative( valueReturn, derivativeReturn );
+  std::cout << "Initial metric: " << valueReturn << std::endl;
 
   // Optimizer
   typedef GradientDescentObjectOptimizer  OptimizerType;
@@ -252,11 +258,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   //
   //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
   //warp the image with the deformation field
-  typedef WarpImageFilter<
+  typedef VectorResampleImageFilter<
                           MovingImageType,
                           MovingImageType,
-                          DeformationFieldType  >     WarperType;
-  typedef LinearInterpolateImageFunction<
+                          double  >     WarperType;
+  typedef VectorLinearInterpolateImageFunction<
                                    MovingImageType,
                                    double          >  InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
@@ -266,8 +272,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   warper->SetOutputSpacing( fixedImage->GetSpacing() );
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
-
-  warper->SetDeformationField( deformationTransform->GetDeformationField() );
+  warper->SetTransform( deformationTransform );
+  warper->SetSize( fixedImage->GetLargestPossibleRegion().GetSize() );
+  //warper->SetDeformationField( deformationTransform->GetDeformationField() );
 
   //write out the deformation field
   typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
@@ -282,19 +289,19 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   //write the warped image into a file
   typedef double                              OutputPixelType;
-  typedef Image< OutputPixelType, Dimension > OutputImageType;
-  typedef CastImageFilter<
-                        MovingImageType,
-                        OutputImageType >     CastFilterType;
-  typedef ImageFileWriter< OutputImageType >  WriterType;
+  //typedef Image< OutputPixelType, Dimension > OutputImageType;
+  //typedef CastImageFilter<
+  //                      MovingImageType,
+  //                      OutputImageType >     CastFilterType;
+  typedef ImageFileWriter< MovingImageType >  WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();
-  CastFilterType::Pointer  caster =  CastFilterType::New();
+  //CastFilterType::Pointer  caster =  CastFilterType::New();
 
   writer->SetFileName( argv[3] );
 
-  caster->SetInput( warper->GetOutput() );
-  writer->SetInput( caster->GetOutput() );
+  //caster->SetInput( warper->GetOutput() );
+  writer->SetInput( warper->GetOutput() );
 
   writer->Update();
 
