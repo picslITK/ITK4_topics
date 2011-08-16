@@ -21,7 +21,7 @@
 #include "itkVector.h"
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkIdentityTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
 

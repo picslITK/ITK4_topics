@@ -26,7 +26,7 @@
 //#include "itkBSplineInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
 #include "itkImageToData.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkIdentityTransform.h"
 #include "itkVectorResampleImageFilter.h"
@@ -177,10 +177,10 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
-  /** Deformation field typedef for convenience */
-  typedef DeformationFieldTransform<CoordinateRepresentationType,
+  /** Displacement field typedef for convenience */
+  typedef DisplacementFieldTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
-                                          MovingDeformationFieldTransformType;
+                                          MovingDisplacementFieldTransformType;
   /** CompositeTransform typedef for convenience */
   typedef CompositeTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
@@ -787,7 +787,7 @@ protected:
   std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
   /** FIXME: may need separate types for fixed and moving, but ok for now. */
   std::vector<
-    typename MovingDeformationFieldTransformType::AffineTransformPointer >
+    typename MovingDisplacementFieldTransformType::AffineTransformPointer >
                                                 m_AffineTransformPerThread;
 
   VectorImageToVectorImageObjectMetric();

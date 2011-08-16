@@ -26,7 +26,7 @@
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkSpecialCoordinatesImage.h"
 #include "itkCompositeTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 
 namespace itk
 {
@@ -726,18 +726,18 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     }
 
   bool result = true;
-  /* For DeformationFieldTransform and derived classes with local support.
+  /* For DisplacementFieldTransform and derived classes with local support.
    * Need to investigate if will work with new BSplineTransform which has local
    * support.
-   * Verify that the filter's requested region is within the deformation field's
+   * Verify that the filter's requested region is within the displacement field's
    * BufferedRegion, and are in the same physical space.
    * If so, we can use Transform::TransformIndex
    * instead of Transform::TransformPoint, for speed optimization.
-   * If it's a composite transform and the deformation field is the first
+   * If it's a composite transform and the displacement field is the first
    * to be applied (i.e. the most recently added), then it has to be
    * of the same size, otherwise not. But actually at this point, if
    * a CompositeTransform has local support, it means all its sub-transforms
-   * have local support. So they should all be deformation fields, so just
+   * have local support. So they should all be displacement fields, so just
    * verify that the first one is at least.
    * Eventually we'll want a method in Transform something like a
    * GetInputDomainSize to check this cleanly. */
@@ -753,20 +753,20 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     {
     transform = comptx->GetBackTransform().GetPointer();
     }
-  /* Check that it's a DeformationField type, the only type we expect
+  /* Check that it's a DisplacementField type, the only type we expect
    * at this point */
-  typedef DeformationFieldTransform< TInterpolatorPrecisionType,
+  typedef DisplacementFieldTransform< TInterpolatorPrecisionType,
                                      itkGetStaticConstMacro(ImageDimension) >
-                                                  DeformationFieldTransformType;
-  DeformationFieldTransformType* deftx =
-          dynamic_cast< DeformationFieldTransformType * >( transform );
+                                                  DisplacementFieldTransformType;
+  DisplacementFieldTransformType* deftx =
+          dynamic_cast< DisplacementFieldTransformType * >( transform );
   if( deftx == NULL )
     {
     return false;
     }
-  typedef typename DeformationFieldTransformType::DeformationFieldType
+  typedef typename DisplacementFieldTransformType::DisplacementFieldType
                                                                     FieldType;
-  typename FieldType::Pointer field = deftx->GetDeformationField();
+  typename FieldType::Pointer field = deftx->GetDisplacementField();
   typename FieldType::RegionType
     fieldRegion = field->GetBufferedRegion();
 

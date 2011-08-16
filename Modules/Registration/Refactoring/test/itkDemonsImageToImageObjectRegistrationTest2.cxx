@@ -20,7 +20,7 @@
 #endif
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkIdentityTransform.h"
 
 #include "itkIndex.h"
@@ -116,7 +116,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
     learningRate = atof( argv[3] );
 
   //--------------------------------------------------------
-  std::cout << "Generate input images and deformation field";
+  std::cout << "Generate input images and displacement field";
   std::cout << std::endl;
 
   ImageType::SizeValueType sizeArray[ImageDimension] = { 128, 128 };
@@ -154,13 +154,13 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   center[0] = 62; center[1] = 64; radius = 32;
   FillWithCircle<ImageType>( fixedImage, center, radius, fgnd, bgnd );
 
-  //create a deformation field transform
-  typedef itk::DeformationFieldTransform<double, ImageDimension>
-                                                    DeformationTransformType;
-  DeformationTransformType::Pointer deformationTransform =
-                                              DeformationTransformType::New();
-  typedef DeformationTransformType::DeformationFieldType DeformationFieldType;
-  DeformationFieldType::Pointer field = DeformationFieldType::New();
+  //create a displacement field transform
+  typedef itk::DisplacementFieldTransform<double, ImageDimension>
+                                                    DisplacementTransformType;
+  DisplacementTransformType::Pointer displacementTransform =
+                                              DisplacementTransformType::New();
+  typedef DisplacementTransformType::DisplacementFieldType DisplacementFieldType;
+  DisplacementFieldType::Pointer field = DisplacementFieldType::New();
 
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
@@ -171,12 +171,12 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
             << fixedImage->GetBufferedRegion() << std::endl;
   field->Allocate();
   // Fill it with 0's
-  DeformationTransformType::OutputVectorType zeroVector;
+  DisplacementTransformType::OutputVectorType zeroVector;
   zeroVector.Fill( 0 );
   field->FillBuffer( zeroVector );
   // Assign to transform
-  deformationTransform->SetDeformationField( field );
-  deformationTransform->SetGaussianSmoothSigma( 1.0 );
+  displacementTransform->SetDisplacementField( field );
+  displacementTransform->SetGaussianSmoothSigma( 1.0 );
 
   //identity transform for fixed image
   typedef itk::IdentityTransform<double, ImageDimension> IdentityTransformType;
@@ -205,7 +205,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( deformationTransform );
+  metric->SetMovingTransform( displacementTransform );
 
   // Optimizer
   typedef itk::GradientDescentObjectOptimizer  OptimizerType;
@@ -248,7 +248,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
 
 
   // warp moving image
-  typedef itk::WarpImageFilter<ImageType,ImageType,DeformationFieldType> WarperType;
+  typedef itk::WarpImageFilter<ImageType,ImageType,DisplacementFieldType> WarperType;
   WarperType::Pointer warper = WarperType::New();
 
   typedef WarperType::CoordRepType CoordRepType;
@@ -257,7 +257,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
   warper->SetInput( movingImage );
-  warper->SetDeformationField( deformationTransform->GetDeformationField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
   warper->SetInterpolator( interpolator );
   warper->SetOutputSpacing( fixedImage->GetSpacing() );
   warper->SetOutputOrigin( fixedImage->GetOrigin() );

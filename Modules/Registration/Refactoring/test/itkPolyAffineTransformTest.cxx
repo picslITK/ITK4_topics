@@ -29,7 +29,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkPolyAffineTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
@@ -165,7 +165,7 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   matcher->Update();
   movingImage = matcher->GetOutput();
 
-  //create a deformation field transform
+  //create a displacement field transform
   typedef MatrixOffsetTransformBase<double, Dimension, Dimension>
                                                   AtomTransformType;
 

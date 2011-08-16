@@ -17,7 +17,7 @@
  *=========================================================================*/
 #include "itkImage.h"
 #include "itkImageToImageObjectMetric.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkTranslationTransform.h"
 #include "vnl/vnl_math.h"
 
@@ -26,8 +26,8 @@
  * of metric evaluation.
  *
  * TODO
- * Test assigning deformation field of wrong size, expect exception.
- * Test with deformation field for fixed image transform.
+ * Test assigning displacement field of wrong size, expect exception.
+ * Test with displacement field for fixed image transform.
  * Test evaluating over sub-region, maybe with non-identity tx's.
  * Test assigning different virtual image.
  * Test various options for image gradient calculation
@@ -409,15 +409,15 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
     }
 
   //
-  // Test with an identity deformation field transform for moving image
+  // Test with an identity displacement field transform for moving image
   //
 
-  // Create a deformation field transform
-  typedef itk::DeformationFieldTransform<double, imageDimensionality>
-                                                    DeformationTransformType;
-  DeformationTransformType::Pointer deformationTransform =
-      DeformationTransformType::New();
-  typedef DeformationTransformType::DeformationFieldType FieldType;
+  // Create a displacement field transform
+  typedef itk::DisplacementFieldTransform<double, imageDimensionality>
+                                                    DisplacementTransformType;
+  DisplacementTransformType::Pointer displacementTransform =
+      DisplacementTransformType::New();
+  typedef DisplacementTransformType::DisplacementFieldType FieldType;
   FieldType::Pointer field = FieldType::New(); //This is based on itk::Image
 
   FieldType::SizeType defsize;
@@ -430,17 +430,17 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
   field->SetRegions( defregion );
   field->Allocate();
   // Fill it with 0's
-  DeformationTransformType::OutputVectorType zeroVector;
+  DisplacementTransformType::OutputVectorType zeroVector;
   zeroVector.Fill( 0 );
   field->FillBuffer( zeroVector );
   // Assign to transform
-  deformationTransform->SetDeformationField( field );
+  displacementTransform->SetDisplacementField( field );
 
   // Assign it to the metric
-  metric->SetMovingTransform( deformationTransform );
+  metric->SetMovingTransform( displacementTransform );
   //Evaluate the metric
   std::cout
-    << "==Testing with identity DeformationFieldTransform for moving image..."
+    << "==Testing with identity DisplacementFieldTransform for moving image..."
     << std::endl;
   if( RunTest( metric, fixedImage, movingImage ) != EXIT_SUCCESS )
     {

@@ -188,7 +188,7 @@ public:
   virtual OutputPointType TransformPoint(const InputPointType  &) const = 0;
 
   /** Method to transform a point given its index, returning a point.
-   * Useful only for certain transforms, e.g. DeformationFieldTransform.
+   * Useful only for certain transforms, e.g. DisplacementFieldTransform.
    * This method is provided for speed optimization, to avoid cost of
    * interpolation when a dense transform's domain is aligned with
    * the input domain.
@@ -203,7 +203,7 @@ public:
 
   /** Method to transform a vector at a given location.
    * For global transforms, \c point is ignored and \c TransformVector( vector )
-   * is called. Local transforms (e.g. deformation
+   * is called. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior. */
   virtual OutputVectorType    TransformVector(
                               const InputVectorType & vector,
@@ -216,7 +216,7 @@ public:
 
   /** Method to transform a vnl_vector, at a point.
    * For global transforms, \c point is ignored and \c TransformVector( vector )
-   * is called. Local transforms (e.g. deformation
+   * is called. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior. */
   virtual OutputVnlVectorType TransformVector(
                               const InputVnlVectorType & vector,
@@ -231,7 +231,7 @@ public:
 
   /** Method to transform a vector stored in a VectorImage, at a point.
    * For global transforms, \c point is ignored and \c TransformVector( vector )
-   * is called. Local transforms (e.g. deformation
+   * is called. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior. */
   virtual OutputVectorPixelType TransformVector(
                               const InputVectorPixelType & vector,
@@ -243,7 +243,7 @@ public:
                                    const InputCovariantVectorType &) const = 0;
 
   /** Method to transform a CovariantVector, using a point. Global transforms
-   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * can ignore the \c point parameter. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior.
    * By default, \c point is ignored and
    * \c TransformCovariantVector(vector) is called */
@@ -260,7 +260,7 @@ public:
                        "is unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a CovariantVector, using a point. Global transforms
-   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * can ignore the \c point parameter. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior.
    * By default, \c point is ignored and \c TransformCovariantVector(vector) is
    * called */
@@ -279,7 +279,7 @@ public:
                             "unimplemented for " << this->GetNameOfClass() ); }
 
   /** Method to transform a diffusion tensor at a point. Global transforms
-   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * can ignore the \c point parameter. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior.
    * By default, \c point is ignored and \c TransformDiffusionTensor(tensor) is
    * called */
@@ -299,7 +299,7 @@ public:
 
   /** Method to transform a diffusion tensor stored in a VectorImage, at
    * a point.  Global transforms
-   * can ignore the \c point parameter. Local transforms (e.g. deformation
+   * can ignore the \c point parameter. Local transforms (e.g. displacement
    * field transform) must override and provide required behavior.
    * By default, \c point is ignored and \c TransformDiffusionTensor(tensor) is
    * called */
@@ -421,7 +421,7 @@ public:
    *  Transform at an individual voxel.
    *  For transforms with local support, this will enable downstream
    *  computation of the jacobian wrt only the local support region.
-   *  For instance, in the case of a deformation field, this will be equal to
+   *  For instance, in the case of a displacement field, this will be equal to
    *  the number of image dimensions. If it is an affine transform, this will
    *  be the same as the GetNumberOfParameters().
    */
@@ -474,7 +474,7 @@ public:
   { return false; }
 
   /** Indicates if this transform is a "global" transform
-   *  e.g. an affine transform, or a local one, e.g. a deformation field.
+   *  e.g. an affine transform, or a local one, e.g. a displacement field.
    */
   virtual bool HasLocalSupport() const
   { return false; }

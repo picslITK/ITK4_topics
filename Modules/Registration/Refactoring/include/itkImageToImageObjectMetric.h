@@ -25,7 +25,7 @@
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
 #include "itkImageToData.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
@@ -176,10 +176,10 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
-  /** Deformation field typedef for convenience */
-  typedef DeformationFieldTransform<CoordinateRepresentationType,
+  /** Displacement field typedef for convenience */
+  typedef DisplacementFieldTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
-                                          MovingDeformationFieldTransformType;
+                                          MovingDisplacementFieldTransformType;
   /** CompositeTransform typedef for convenience */
   typedef CompositeTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
@@ -775,7 +775,7 @@ protected:
   std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
   /** FIXME: may need separate types for fixed and moving, but ok for now. */
   std::vector<
-    typename MovingDeformationFieldTransformType::AffineTransformPointer >
+    typename MovingDisplacementFieldTransformType::AffineTransformPointer >
                                                 m_AffineTransformPerThread;
 
   ImageToImageObjectMetric();
@@ -788,9 +788,9 @@ protected:
     }
 
 
-  /* Verify that virtual domain and deformation field are the same size
+  /* Verify that virtual domain and displacement field are the same size
    * and in the same physical space. */
-  virtual void VerifyDeformationFieldSizeAndPhysicalSpace();
+  virtual void VerifyDisplacementFieldSizeAndPhysicalSpace();
 
 private:
 

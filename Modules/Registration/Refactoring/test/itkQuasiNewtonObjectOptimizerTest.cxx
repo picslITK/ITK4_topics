@@ -29,7 +29,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -164,7 +164,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   matcher->Update();
   movingImage = matcher->GetOutput();
 
-  //create a deformation field transform
+  //create a displacement field transform
   typedef TranslationTransform<double, Dimension>
                                                   TranslationTransformType;
   typedef TranslationTransformType::ParametersType

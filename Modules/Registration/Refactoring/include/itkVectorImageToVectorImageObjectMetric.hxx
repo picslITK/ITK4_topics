@@ -136,13 +136,13 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( m_MovingTransform->HasLocalSupport() )
     {
-    /* Verify that virtual domain and deformation field are the same size.
+    /* Verify that virtual domain and displacement field are the same size.
      * Effects transformation, and calc of offset in StoreDerivativeResult.
-     * If it's a composite transform and the deformation field is the first
+     * If it's a composite transform and the displacement field is the first
      * to be applied (i.e. the most recently added), then it has to be
      * of the same size, otherwise not. But actually at this point, if
      * a CompositeTransform has local support, it means all its sub-transforms
-     * have local support. So they should all be deformation fields, so just
+     * have local support. So they should all be displacement fields, so just
      * verify that the first one is at least.
      * Eventually we'll want a method in Transform something like a
      * GetInputDomainSize to check this cleanly. */
@@ -154,16 +154,16 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       {
       transform = comptx->GetBackTransform().GetPointer();
       }
-    MovingDeformationFieldTransformType* deftx =
-            dynamic_cast< MovingDeformationFieldTransformType * >( transform );
+    MovingDisplacementFieldTransformType* deftx =
+            dynamic_cast< MovingDisplacementFieldTransformType * >( transform );
     if( deftx == NULL )
       {
       itkExceptionMacro("Expected m_MovingTransform to be of type "
-                        "DeformationFieldTransform" );
+                        "DisplacementFieldTransform" );
       }
-    typedef typename MovingDeformationFieldTransformType::DeformationFieldType
+    typedef typename MovingDisplacementFieldTransformType::DisplacementFieldType
                                                                       FieldType;
-    typename FieldType::Pointer field = deftx->GetDeformationField();
+    typename FieldType::Pointer field = deftx->GetDisplacementField();
     typename FieldType::RegionType
       fieldRegion = field->GetBufferedRegion();
     VirtualRegionType virtualRegion =
@@ -171,13 +171,13 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     if( virtualRegion.GetSize() != fieldRegion.GetSize() ||
         virtualRegion.GetIndex() != fieldRegion.GetIndex() )
       {
-      itkExceptionMacro("Virtual domain and moving transform deformation field"
+      itkExceptionMacro("Virtual domain and moving transform displacement field"
                         " must have the same size and index for "
                         " LargestPossibleRegion."
                         << std::endl << "Virtual size/index: "
                         << virtualRegion.GetSize() << " / "
                         << virtualRegion.GetIndex() << std::endl
-                        << "Deformation field size/index: "
+                        << "Displacement field size/index: "
                         << fieldRegion.GetSize() << " / "
                         << fieldRegion.GetIndex() << std::endl );
       }
@@ -403,7 +403,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* Per-thread pre-allocated Jacobian objects for efficiency */
   this->m_MovingTransformJacobianPerThread.resize( this->m_NumberOfThreads );
   /* Per-thread pre-allocated affine transform used by
-   * DeformationFieldTransform for efficiency */
+   * DisplacementFieldTransform for efficiency */
   this->m_AffineTransformPerThread.resize( this->m_NumberOfThreads );
 
   /* This size always comes from the moving image */
@@ -425,7 +425,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     this->m_MovingTransformJacobianPerThread[i].SetSize(
                                           this->VirtualImageDimension,
                                           this->GetNumberOfLocalParameters() );
-    /* For transforms with local support, e.g. deformation field,
+    /* For transforms with local support, e.g. displacement field,
      * use a single derivative container that's updated by region
      * in multiple threads. */
     if ( this->m_MovingTransform->HasLocalSupport() )
@@ -446,10 +446,10 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
        * that holds the result over a particular image region. */
         this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
       }
-    /* Allocate affine transforms for use in DeformationFieldTransform::
+    /* Allocate affine transforms for use in DisplacementFieldTransform::
      * TransformCovariantVector, to avoid repeated stack allocation */
     /* TODO: remove this, not needed anymore */
-    typedef typename MovingDeformationFieldTransformType::AffineTransformType
+    typedef typename MovingDisplacementFieldTransformType::AffineTransformType
                                                          AffineTransformType;
     this->m_AffineTransformPerThread[i] = AffineTransformType::New();
     }
@@ -718,9 +718,9 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    // Dense transform, e.g. deformation field.
+    // Dense transform, e.g. displacement field.
     // update derivative at some index
-    // this requires the moving image deformation field to be
+    // this requires the moving image displacement field to be
     // same size as virtual image, and that VirtualImage PixelType
     // is scalar.
     try

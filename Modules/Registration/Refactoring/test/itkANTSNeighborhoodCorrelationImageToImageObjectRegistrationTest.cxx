@@ -28,7 +28,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -131,7 +131,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
 
-  //create a deformation field transform
+  //create a displacement field transform
   typedef TranslationTransform<double, Dimension>
                                                     TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
@@ -144,24 +144,24 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
 
   translationTransform->SetParameters(initial_translation);
 
-  typedef DeformationFieldTransform<double, Dimension>
-                                                    DeformationTransformType;
-  DeformationTransformType::Pointer deformationTransform =
-                                              DeformationTransformType::New();
-  typedef DeformationTransformType::DeformationFieldType DeformationFieldType;
-  DeformationFieldType::Pointer field = DeformationFieldType::New();
+  typedef DisplacementFieldTransform<double, Dimension>
+                                                    DisplacementTransformType;
+  DisplacementTransformType::Pointer displacementTransform =
+                                              DisplacementTransformType::New();
+  typedef DisplacementTransformType::DisplacementFieldType DisplacementFieldType;
+  DisplacementFieldType::Pointer field = DisplacementFieldType::New();
 
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
   field->SetRegions( fixedImage->GetLargestPossibleRegion() );
   field->Allocate();
   // Fill it with 0's
-  DeformationTransformType::OutputVectorType zeroVector;
+  DisplacementTransformType::OutputVectorType zeroVector;
   zeroVector.Fill( 0 );
   field->FillBuffer( zeroVector );
   // Assign to transform
-  deformationTransform->SetDeformationField( field );
-  deformationTransform->SetGaussianSmoothSigma( 6 );
+  displacementTransform->SetDisplacementField( field );
+  displacementTransform->SetGaussianSmoothSigma( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -182,7 +182,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( deformationTransform );
+  metric->SetMovingTransform( displacementTransform );
   // metric->SetMovingTransform( translationTransform );
 
   Size<Dimension> radSize;
@@ -242,16 +242,16 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
 
 //  std::cout << "final para: " << translationTransform->GetParameters() << std::endl;
 
-  field = deformationTransform->GetDeformationField();
+  field = displacementTransform->GetDisplacementField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
+  ImageRegionIteratorWithIndex< DisplacementFieldType > it( field, field->GetLargestPossibleRegion() );
 
-  //warp the image with the deformation field
+  //warp the image with the displacement field
   typedef WarpImageFilter<
                           MovingImageType,
                           MovingImageType,
-                          DeformationFieldType  >     WarperType;
+                          DisplacementFieldType  >     WarperType;
   typedef LinearInterpolateImageFunction<
                                    MovingImageType,
                                    double          >  InterpolatorType;
@@ -263,17 +263,17 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDeformationField( deformationTransform->GetDeformationField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
 
-  //write out the deformation field
-  typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
-  DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
+  //write out the displacement field
+  typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
+  DisplacementWriterType::Pointer      displacementwriter =  DisplacementWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
   std::string defout=outfilename + std::string("_def") + ext;
-  deformationwriter->SetFileName( defout.c_str() );
-  deformationwriter->SetInput( deformationTransform->GetDeformationField() );
-  deformationwriter->Update();
+  displacementwriter->SetFileName( defout.c_str() );
+  displacementwriter->SetInput( displacementTransform->GetDisplacementField() );
+  displacementwriter->Update();
 
   //write the warped image into a file
   typedef double                              OutputPixelType;

@@ -31,7 +31,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -131,19 +131,19 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   MovingImageType::Pointer movingImage = matcher->GetOutput();
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
-  //create a deformation field transform
+  //create a displacement field transform
   typedef TranslationTransform<double, Dimension>
                                                     TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
-  typedef DeformationFieldTransform<double, Dimension>
-                                                    DeformationTransformType;
-  DeformationTransformType::Pointer deformationTransform =
-                                              DeformationTransformType::New();
-  typedef DeformationTransformType::DeformationFieldType DeformationFieldType;
-  DeformationFieldType::Pointer field = DeformationFieldType::New();
+  typedef DisplacementFieldTransform<double, Dimension>
+                                                    DisplacementTransformType;
+  DisplacementTransformType::Pointer displacementTransform =
+                                              DisplacementTransformType::New();
+  typedef DisplacementTransformType::DisplacementFieldType DisplacementFieldType;
+  DisplacementFieldType::Pointer field = DisplacementFieldType::New();
 
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
@@ -154,12 +154,12 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
             << fixedImage->GetBufferedRegion() << std::endl;
   field->Allocate();
   // Fill it with 0's
-  DeformationTransformType::OutputVectorType zeroVector;
+  DisplacementTransformType::OutputVectorType zeroVector;
   zeroVector.Fill( 0 );
   field->FillBuffer( zeroVector );
   // Assign to transform
-  deformationTransform->SetDeformationField( field );
-  deformationTransform->SetGaussianSmoothSigma( 3 );
+  displacementTransform->SetDisplacementField( field );
+  displacementTransform->SetGaussianSmoothSigma( 3 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -179,7 +179,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( deformationTransform );
+  metric->SetMovingTransform( displacementTransform );
   //  metric->SetMovingTransform( translationTransform );
 
   metric->SetPreWarpImages( true );
@@ -201,7 +201,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   // Testing optimizer parameter estimator
   typedef itk::OptimizerParameterEstimator< MetricType,
                                         IdentityTransformType,
-                                        DeformationTransformType > OptimizerParameterEstimatorType;
+                                        DisplacementTransformType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);
@@ -237,19 +237,19 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
             << metric->GetNumberOfValidPoints()
             << std::endl;
 
-  field = deformationTransform->GetDeformationField();
+  field = displacementTransform->GetDisplacementField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DeformationFieldType > it( field, field->GetLargestPossibleRegion() );
-  /* print out a few deformation field vectors */
+  ImageRegionIteratorWithIndex< DisplacementFieldType > it( field, field->GetLargestPossibleRegion() );
+  /* print out a few displacement field vectors */
   /*std::cout
-      << "First few elements of first few rows of final deformation field:"
+      << "First few elements of first few rows of final displacement field:"
       << std::endl;
   for(unsigned int i=0; i< 5; i++ )
     {
      for(unsigned int j=0; j< 5; j++ )
       {
-      DeformationFieldType::IndexType index;
+      DisplacementFieldType::IndexType index;
       index[0] = i;
       index[1] = j;
       it.SetIndex(index);
@@ -263,11 +263,11 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   // results
   //
   //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
-  //warp the image with the deformation field
+  //warp the image with the displacement field
   typedef WarpImageFilter<
                           MovingImageType,
                           MovingImageType,
-                          DeformationFieldType  >     WarperType;
+                          DisplacementFieldType  >     WarperType;
   typedef LinearInterpolateImageFunction<
                                    MovingImageType,
                                    double          >  InterpolatorType;
@@ -279,17 +279,17 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDeformationField( deformationTransform->GetDeformationField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
 
-  //write out the deformation field
-  typedef ImageFileWriter< DeformationFieldType >  DeformationWriterType;
-  DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
+  //write out the displacement field
+  typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
+  DisplacementWriterType::Pointer      displacementwriter =  DisplacementWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
   std::string defout=outfilename + std::string("_def") + ext;
-  deformationwriter->SetFileName( defout.c_str() );
-  deformationwriter->SetInput( deformationTransform->GetDeformationField() );
-  deformationwriter->Update();
+  displacementwriter->SetFileName( defout.c_str() );
+  displacementwriter->SetInput( displacementTransform->GetDisplacementField() );
+  displacementwriter->Update();
 
   //write the warped image into a file
   typedef double                              OutputPixelType;

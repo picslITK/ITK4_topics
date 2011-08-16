@@ -22,7 +22,7 @@
 #include "itkVector.h"
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkIdentityTransform.h"
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
 
@@ -31,7 +31,7 @@
 
 /**
  * Test program for ANTSNeighborhoodCorrelationImageToImageObjectMetric,
- * using a synthectic image and initial deformation.
+ * using a synthectic image and initial displacement.
  *
  */
 
@@ -145,14 +145,14 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
     typedef itk::IdentityTransform<double, ImageDimension> IdentityTransformType;
     typedef itk::CompositeTransform<double, ImageDimension> CompositeTransformType;
     typedef itk::TranslationTransform<double, ImageDimension> TranslationTransformType;
-    typedef itk::DeformationFieldTransform<double, ImageDimension> DeformationTransformType;
-    typedef DeformationTransformType::DeformationFieldType FieldType;
+    typedef itk::DisplacementFieldTransform<double, ImageDimension> DisplacementTransformType;
+    typedef DisplacementTransformType::DisplacementFieldType FieldType;
 
     IdentityTransformType::Pointer transformFId = IdentityTransformType::New();
 
     IdentityTransformType::Pointer transformMId = IdentityTransformType::New();
-    DeformationTransformType::Pointer transformMdeformation =
-            DeformationTransformType::New();
+    DisplacementTransformType::Pointer transformMdisplacement =
+            DisplacementTransformType::New();
     TranslationTransformType::Pointer transformMtranslation =
             TranslationTransformType::New();
     TranslationTransformType::Pointer transformMtranslation2 =
@@ -240,11 +240,11 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
     zero.Fill(def_value * (1.0));
     transformMtranslation2->Translate(zero);
 
-    transformMdeformation->SetDeformationField(field);
-    transformMdeformation->SetInverseDeformationField(fieldInv);
+    transformMdisplacement->SetDisplacementField(field);
+    transformMdisplacement->SetInverseDisplacementField(fieldInv);
 
     transformMComp->AddTransform(transformMtranslation);
-//  transformMComp->AddTransform(transformMdeformation);
+//  transformMComp->AddTransform(transformMdisplacement);
     transformFComp->AddTransform(transformFId);
 
     typedef itk::ANTSNeighborhoodCorrelationImageToImageObjectMetric<ImageType, ImageType> MetricType;
@@ -264,7 +264,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 //  metric->SetMovingTransform(transformMComp);
 
     metric->SetFixedTransform(transformFId);
-    metric->SetMovingTransform(transformMdeformation);
+    metric->SetMovingTransform(transformMdisplacement);
 
 
     std::cout << "fixedImage:" << std::endl;
@@ -309,10 +309,10 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 
     std::cout << "Test passed." << std::endl;
 
-    std::cout << "transformMdeformation parameters" << std::endl;
+    std::cout << "transformMdisplacement parameters" << std::endl;
 
-    std::cout << transformMdeformation->GetParameters() << std::endl;
-    PrintImage(transformMdeformation->GetDeformationField());
+    std::cout << transformMdisplacement->GetParameters() << std::endl;
+    PrintImage(transformMdisplacement->GetDisplacementField());
 
 //    std::cout << "transformMtranslation2 parameters" << std::endl;
 //    std::cout << transformMtranslation2->GetParameters() << std::endl;

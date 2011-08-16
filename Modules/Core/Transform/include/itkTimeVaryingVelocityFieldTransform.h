@@ -18,7 +18,7 @@
 #ifndef __itkTimeVaryingVelocityFieldTransform_h
 #define __itkTimeVaryingVelocityFieldTransform_h
 
-#include "itkDeformationFieldTransform.h"
+#include "itkDisplacementFieldTransform.h"
 
 #include "itkImageVectorTransformParametersHelper.h"
 
@@ -30,7 +30,7 @@ namespace itk
  * field.
  *
  * Diffeomorphisms are topology-preserving mappings that are useful for
- * describing biologically plausible deformations.  Mathematically, a
+ * describing biologically plausible displacements.  Mathematically, a
  * diffeomorphism, \phi, is generated from a time-varying velocity field, v, as
  * described by the first-order differential equation:
  *
@@ -39,7 +39,7 @@ namespace itk
  * In this class, the input is the time-varying velocity field.  The output
  * diffeomorphism is produced using fourth order Runge-Kutta.
  *
- * \warning The output deformation field needs to have dimensionality of 1
+ * \warning The output displacement field needs to have dimensionality of 1
  * less than the input time-varying velocity field.
  *
  * \author Nick Tustison
@@ -53,17 +53,17 @@ namespace itk
  */
 template<class TScalar, unsigned int NDimensions>
 class ITK_EXPORT TimeVaryingVelocityFieldTransform :
-  public DeformationFieldTransform<TScalar, NDimensions>
+  public DisplacementFieldTransform<TScalar, NDimensions>
 {
 public:
   /** Standard class typedefs. */
   typedef TimeVaryingVelocityFieldTransform                 Self;
-  typedef DeformationFieldTransform<TScalar, NDimensions>   Superclass;
+  typedef DisplacementFieldTransform<TScalar, NDimensions>   Superclass;
   typedef SmartPointer<Self>                                Pointer;
   typedef SmartPointer<const Self>                          ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro( TimeVaryingVelocityFieldTransform, DeformationFieldTransform );
+  itkTypeMacro( TimeVaryingVelocityFieldTransform, DisplacementFieldTransform );
 
   /** New macro for creation of through a Smart Pointer */
   itkSimpleNewMacro( Self );
@@ -112,9 +112,9 @@ public:
    * Define the time-varying velocity field type and corresponding interpolator
    * type.
    */
-  typedef typename Superclass::DeformationFieldType   DeformationFieldType;
-  typedef typename DeformationFieldType::PixelType    VectorType;
-  typedef typename DeformationFieldType::PointType    PointType;
+  typedef typename Superclass::DisplacementFieldType   DisplacementFieldType;
+  typedef typename DisplacementFieldType::PixelType    VectorType;
+  typedef typename DisplacementFieldType::PointType    PointType;
 
   typedef Image<OutputVectorType,
     itkGetStaticConstMacro( TimeVaryingVelocityFieldDimension )>
@@ -124,7 +124,7 @@ public:
   typedef typename TimeVaryingVelocityFieldInterpolatorType::Pointer
                                      TimeVaryingVelocityFieldInterpolatorPointer;
 
-  /* Define tranform based upon ImageDirections of Deformation Field */
+  /* Define tranform based upon ImageDirections of Displacement Field */
   typedef typename Superclass::AffineTransformType   AffineTransformType;
   typedef typename AffineTransformType::Pointer      AffineTransformPointer;
 
@@ -133,7 +133,7 @@ public:
     <ScalarType, OutputVectorType::Dimension,
     itkGetStaticConstMacro( Dimension ) + 1>      TransformParametersHelperType;
 
-  /** Get the time-varying deformation field. */
+  /** Get the time-varying displacement field. */
   itkGetObjectMacro( TimeVaryingVelocityField, TimeVaryingVelocityFieldType );
 
   /** Set the time-varying field.  */
@@ -147,15 +147,15 @@ public:
   itkGetConstObjectMacro( TimeVaryingVelocityFieldInterpolator,
     TimeVaryingVelocityFieldInterpolatorType );
 
-  /** Get the modification time of deformation field */
+  /** Get the modification time of displacement field */
   itkGetConstMacro( TimeVaryingVelocityFieldSetTime, unsigned long );
 
   /**
-   * Set the deformation field. We want to override the base class
-   * implementation since we don't want to optimize over the deformation
+   * Set the displacement field. We want to override the base class
+   * implementation since we don't want to optimize over the displacement
    * field for this class but rather the time-varying velocity field
    */
-  itkSetObjectMacro( DeformationField, DeformationFieldType );
+  itkSetObjectMacro( DisplacementField, DisplacementFieldType );
 
   /**
    * Set whether or not the time-varying velocity field should be integrated.
@@ -279,7 +279,7 @@ private:
   TimeVaryingVelocityFieldTransform( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
-  /** The deformation field and its inverse (if it exists). */
+  /** The displacement field and its inverse (if it exists). */
   typename TimeVaryingVelocityFieldType::Pointer    m_TimeVaryingVelocityField;
 
   TimeVaryingVelocityFieldInterpolatorPointer
