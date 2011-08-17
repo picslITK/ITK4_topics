@@ -204,6 +204,15 @@ public:
   virtual OutputPointType TransformPoint( const InputPointType& thisPoint )
                                                                         const;
 
+  virtual OutputPointType TransformIndex(const InputIndexType &) const;
+
+  /** Check if the \c TransformIndex method can be used, given a
+   * region, spacing, direction and origin. If the passed parameters
+   * match those of the assigned displacement field image and its
+   * Buffered region, return true. */
+  bool CanUseTransformIndex( RegionType&, OriginType&,
+                             SpacingType&, DirectionType& ) const;
+
   /**  Method to transform a vector. */
   virtual OutputVectorType TransformVector(const InputVectorType &) const
   { itkExceptionMacro( "TransformVector(Vector) unimplemented, use "

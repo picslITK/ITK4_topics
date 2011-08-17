@@ -25,8 +25,6 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkSpecialCoordinatesImage.h"
-#include "itkCompositeTransform.h"
-#include "itkDisplacementFieldTransform.h"
 
 namespace itk
 {
@@ -718,14 +716,6 @@ bool
 ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 ::CanUseTransformIndex()
 {
-  /* NOTE This will likely be moved to a method within Transform itself. */
-
-  if( ! this->m_Transform->HasLocalSupport() )
-    {
-    return false;
-    }
-
-  bool result = true;
   /* For DisplacementFieldTransform and derived classes with local support.
    * Need to investigate if will work with new BSplineTransform which has local
    * support.
@@ -741,10 +731,10 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
    * verify that the first one is at least.
    * Eventually we'll want a method in Transform something like a
    * GetInputDomainSize to check this cleanly. */
-  TransformType* transform;
-  transform = const_cast<TransformType*>( this->m_Transform.GetPointer() );
+//  TransformType* transform;
+//  transform = const_cast<TransformType*>( this->m_Transform.GetPointer() );
   /* If it's a CompositeTransform, get the last transform (1st applied). */
-  typedef CompositeTransform< TInterpolatorPrecisionType,
+/*  typedef CompositeTransform< TInterpolatorPrecisionType,
                      itkGetStaticConstMacro(ImageDimension) >
                                                         CompositeTransformType;
   CompositeTransformType* comptx =
@@ -752,24 +742,7 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
   if( comptx != NULL )
     {
     transform = comptx->GetBackTransform().GetPointer();
-    }
-  /* Check that it's a DisplacementField type, the only type we expect
-   * at this point */
-  typedef DisplacementFieldTransform< TInterpolatorPrecisionType,
-                                     itkGetStaticConstMacro(ImageDimension) >
-                                                  DisplacementFieldTransformType;
-  DisplacementFieldTransformType* deftx =
-          dynamic_cast< DisplacementFieldTransformType * >( transform );
-  if( deftx == NULL )
-    {
-    return false;
-    }
-  typedef typename DisplacementFieldTransformType::DisplacementFieldType
-                                                                    FieldType;
-  typename FieldType::Pointer field = deftx->GetDisplacementField();
-  typename FieldType::RegionType
-    fieldRegion = field->GetBufferedRegion();
-
+    } */
 
   /* Check each possible output. For simplicity, return false if any one of
    * them do not match. */
@@ -779,38 +752,19 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     if ( outputPtr )
       {
       OutputImageRegionType outputRegion = outputPtr->GetRequestedRegion();
-
-      if( outputRegion.GetSize() != fieldRegion.GetSize() ||
-          outputRegion.GetIndex() != fieldRegion.GetIndex() )
+      if( !this->m_Transform->CanUseTransformIndex( outputRegion,
+                                                   outputPtr->GetOrigin(),
+                                                   outputPtr->GetSpacing(),
+                                                   outputPtr->GetDirection() ) )
         {
-        result = false;
-        break;
-        }
-
-      /* check that the image occupy the same physical space, and that
-       * each index is at the same physical location.
-       * this code is from ImageToImageFilter */
-
-      /* tolerance for origin and spacing depends on the size of pixel
-       * tolerance for directions a fraction of the unit cube. */
-      const double coordinateTol = 1.0e-6 * outputPtr->GetSpacing()[0];
-          // use first dimension spacing
-      const double directionTol = 1.0e-6;
-
-      if ( ! outputPtr->GetOrigin().GetVnlVector().
-                 is_equal( field->GetOrigin().GetVnlVector(), coordinateTol ) ||
-           ! outputPtr->GetSpacing().GetVnlVector().
-                 is_equal( field->GetSpacing().GetVnlVector(), coordinateTol ) ||
-           ! outputPtr->GetDirection().GetVnlMatrix().as_ref().
-                 is_equal( field->GetDirection().GetVnlMatrix(), directionTol ) )
-        {
-        result = false;
-        break;
+        return false;
         }
       }
     }
-  return result;
+
+  return true;
 }
+
 } // end namespace itk
 
 #endif

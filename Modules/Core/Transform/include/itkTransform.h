@@ -26,6 +26,7 @@
 #include "vnl/vnl_vector_fixed.h"
 #include "itkMatrix.h"
 #include "itkIndex.h"
+#include "itkImage.h"
 
 namespace itk
 {
@@ -172,6 +173,13 @@ public:
                  itkGetStaticConstMacro(InputSpaceDimension) >
                                                          DirectionChangeMatrix;
 
+  /** Typedefs for use in CanUseTransformIndex. */
+  typedef Image< TScalarType, NInputDimensions >         ImageType;
+  typedef typename ImageType::RegionType                 RegionType;
+  typedef typename ImageType::SpacingType                SpacingType;
+  typedef typename ImageType::PointType                  OriginType;
+  typedef typename ImageType::DirectionType              DirectionType;
+
   void SetDirectionChange( const OutputDirectionMatrix fixedDir,
                            const InputDirectionMatrix  movingDir );
 
@@ -192,11 +200,24 @@ public:
    * This method is provided for speed optimization, to avoid cost of
    * interpolation when a dense transform's domain is aligned with
    * the input domain.
+   * The user must first check if TransformIndex can be used for a given
+   * region, spacing, direction and origin, by calling \c CanUseTransformIndex.
    * This method throws an exception unless overridden by a dervied class.
    */
   virtual OutputPointType TransformIndex(const InputIndexType &) const
   { itkExceptionMacro("TransformAtIndex not implemented for class "
                       << this->GetNameOfClass() ); }
+
+  /** Check if the \c TransformIndex method can be used, given a
+   * region, spacing, direction and origin. If the passed parameters
+   * match those of the transform's displacement field image (or other dense
+   * parameter source), then return true. Transforms that cannot support
+   * TransformIndex at all will return false by default.
+   * Must be overridden by derived classes that can support TransformIndex
+   * given the proper conditions. */
+  bool CanUseTransformIndex( RegionType&, OriginType&,
+                             SpacingType&, DirectionType& ) const
+  { return false; }
 
   /**  Method to transform a vector. */
   virtual OutputVectorType  TransformVector(const InputVectorType &) const = 0;

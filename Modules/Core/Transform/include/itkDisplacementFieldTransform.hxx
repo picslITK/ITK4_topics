@@ -117,6 +117,28 @@ DisplacementFieldTransform<TScalar, NDimensions>
 }
 
 /**
+ * Transfrom a point given its index
+ */
+
+template<class TScalar, unsigned int NDimensions>
+typename DeformationFieldTransform<TScalar, NDimensions>::OutputPointType
+DeformationFieldTransform<TScalar, NDimensions>
+::TransformIndex(const InputIndexType & index) const
+{
+
+  if( !this->m_DeformationField )
+    {
+    itkExceptionMacro( "No deformation field is specified." );
+    }
+  InputPointType inputPoint;
+  this->m_DeformationField->TransformIndexToPhysicalPoint( index, inputPoint );
+  inputPoint += this->m_DeformationField->GetPixel( index );
+  OutputPointType outputPoint;
+  outputPoint.CastFrom( inputPoint );
+  return outputPoint;
+}
+
+/**
  * Transform covariant vector
  */
 
@@ -732,6 +754,50 @@ void DisplacementFieldTransform<TScalar, NDimensions>
       this->m_Interpolator->SetInputImage( this->m_DisplacementField );
       }
     }
+}
+
+/*
+ * CanUseTrasnformIndex
+ */
+
+template<class TScalar, unsigned int NDimensions>
+bool
+DisplacementFieldTransform<TScalar, NDimensions>
+::CanUseTransformIndex( RegionType & region, OriginType & origin,
+                        SpacingType & spacing, DirectionType & direction )
+                                                                          const
+{
+  typename DisplacementFieldType::Pointer field = this->GetDisplacementField();
+  typename DisplacementFieldType::RegionType
+                                      fieldRegion = field->GetBufferedRegion();
+
+  if( region.GetSize() != fieldRegion.GetSize() ||
+      region.GetIndex() != fieldRegion.GetIndex() )
+    {
+    return false;
+    }
+
+  /* check that the image occupy the same physical space, and that
+   * each index is at the same physical location.
+   * this code is from ImageToImageFilter */
+
+  /* tolerance for origin and spacing depends on the size of pixel
+   * tolerance for directions a fraction of the unit cube. */
+  const TScalar coordinateTol = 1.0e-6 * outputPtr->GetSpacing()[0];
+      // use first dimension spacing
+  const TScalar directionTol = 1.0e-6;
+
+  if ( ! origin.GetVnlVector().
+             is_equal( field->GetOrigin().GetVnlVector(), coordinateTol ) ||
+       ! spacing.GetVnlVector().
+             is_equal( field->GetSpacing().GetVnlVector(), coordinateTol ) ||
+       ! direction.GetVnlMatrix().as_ref().
+             is_equal( field->GetDirection().GetVnlMatrix(), directionTol ) )
+    {
+    return false;
+    }
+
+  return true;
 }
 
 template <class TScalar, unsigned int NDimensions>
