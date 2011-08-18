@@ -291,6 +291,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                 LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
                 LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
 
+                if (b!=b) std::cout << "---------------------NaN here" << std::endl;
+
+
                 suma2 += a * a;
                 sumb2 += b * b;
                 suma += a;
@@ -410,6 +413,11 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
             LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
             LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
+
+
+            if (b!=b)
+                std::cout << "---------------------NaN here2" << std::endl;
+
 
             suma2 += a * a;
             sumb2 += b * b;

@@ -201,6 +201,11 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   radSize.Fill(2);
   metric->SetRadius(radSize);
 
+
+  metric->SetPreWarpImages(true);
+  metric->SetPrecomputeImageGradient(false);
+
+
   //Initialize the metric to prepare for use
   metric->Initialize();
 

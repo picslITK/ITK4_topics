@@ -1121,6 +1121,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   m_FixedWarpResampleImageFilter->Update();
   m_FixedWarpedImage = m_FixedWarpResampleImageFilter->GetOutput();
 
+  //temp: check the pixel at index=(78,48)
+  VirtualIndexType tmpIndex;
+  tmpIndex[0] = 78; tmpIndex[1] = 48;
+  std::cout << "m_MovingWarpedImage at (78, 48)" << m_MovingWarpedImage->GetPixel(tmpIndex) << std::endl;
+
+
+
+
   /* Point the interpolators to the warped images.
    * We should try to skip this for efficiency. Will be possible if
    * ResampleImageFilter always returns the same image pointer after
