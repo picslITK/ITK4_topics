@@ -131,6 +131,12 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
 
+  MovingImageType::IndexType movind;
+  movind[0]=78; movind[1]=48;
+  std::cout << "=============" << movingImage->GetPixel(movind) << std::endl;
+  std::cout << "=============" << movingImageReader->GetOutput()->GetPixel(movind) << std::endl;
+
+
   //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
                                                     TranslationTransformType;

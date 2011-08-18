@@ -315,6 +315,17 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     PixelType        pixval;
     OutputType       value;
     // Evaluate input at right position and copy to the output
+
+    bool btest=false;
+    if (outIt.GetIndex()[0]==78 && outIt.GetIndex()[1]==48){
+        std::cout << "kdjkafdjkadskj======" << outIt.GetIndex() << "|" << inputPoint << std::endl << " | " << m_Interpolator->GetInputImage()->GetBufferedRegion() << std::endl;
+        std::cout << m_Interpolator->GetInputImage()->GetPixel(outIt.GetIndex()) << std::endl;
+
+        btest=true;
+
+    }
+
+
     if ( m_Interpolator->IsInsideBuffer(inputIndex) )
       {
       if ( m_InterpolatorIsBSpline )
@@ -325,6 +336,10 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
       else
         {
         value = m_Interpolator ->EvaluateAtContinuousIndex(inputIndex);
+
+        if (btest)
+          std::cout << "btest, value=" << value << std::endl;
+
         }
       // Check boundaries and assign
       if ( value < minOutputValue )
@@ -340,12 +355,18 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
         pixval = static_cast< PixelType >( value );
         }
       outIt.Set(pixval);
+
+      if (pixval!=pixval)
+          std::cout<<"------------- nan: " << outIt.GetIndex() << std::endl;
       }
     else
       {
       if( m_Extrapolator.IsNull() )
         {
         outIt.Set( m_DefaultPixelValue ); // default background value
+
+        if (m_DefaultPixelValue!=m_DefaultPixelValue)
+            std::cout<<"------------- nan2: " << outIt.GetIndex() << std::endl;
         }
       else
         {
@@ -364,6 +385,10 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
           pixval = static_cast< PixelType >( value );
           }
         outIt.Set(pixval);
+
+        if (pixval!=pixval)
+            std::cout<<"------------- nan3: " << outIt.GetIndex() << std::endl;
+
         }
       }
 
