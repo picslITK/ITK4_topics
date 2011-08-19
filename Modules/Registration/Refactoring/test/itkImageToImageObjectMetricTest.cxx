@@ -65,11 +65,11 @@ public:
   typedef typename Superclass::FixedImagePointType        FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType        FixedImagePixelType;
   typedef typename Superclass::FixedImageDerivativesType
-                                                     FixedImageDerivativesType;
-  typedef typename Superclass::MovingImagePointType       MovingImagePointType;
-  typedef typename Superclass::MovingImagePixelType       MovingImagePixelType;
+                                                      FixedImageDerivativesType;
+  typedef typename Superclass::MovingImagePointType   MovingImagePointType;
+  typedef typename Superclass::MovingImagePixelType   MovingImagePixelType;
   typedef typename Superclass::MovingImageDerivativesType
-                                                    MovingImageDerivativesType;
+                                                     MovingImageDerivativesType;
 
   /* Implement pure virtual methods */
   void Initialize() throw ( itk::ExceptionObject )
@@ -402,7 +402,7 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
 
   //Evaluate the metric
   //metric->SetNumberOfThreads(1);
-  std::cout << "==Testing with IdentityTransform for moving image..." << std::endl;
+  std::cout << "* Testing with IdentityTransform for moving image..." << std::endl;
   if( RunTest( metric, fixedImage, movingImage ) != EXIT_SUCCESS )
     {
     result = EXIT_FAILURE;
@@ -440,7 +440,7 @@ int itkImageToImageObjectMetricTest(int argc, char * argv[])
   metric->SetMovingTransform( displacementTransform );
   //Evaluate the metric
   std::cout
-    << "==Testing with identity DisplacementFieldTransform for moving image..."
+    << "* Testing with identity DisplacementFieldTransform for moving image..."
     << std::endl;
   if( RunTest( metric, fixedImage, movingImage ) != EXIT_SUCCESS )
     {
