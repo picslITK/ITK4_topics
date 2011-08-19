@@ -10,12 +10,13 @@ set(ITKRegistrationRefactoringTests
   itkImageToImageObjectMetricTest.cxx
   itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
+ itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
+  itkMattesMutualInformationImageToImageObjectMetricTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
   itkPolyAffineTransformTest.cxx
@@ -37,6 +38,10 @@ CreateTestDriver(ITKRegistrationRefactoring  "${ITKRegistrationRefactoring-Test_
 itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkDemonsImageToImageObjectMetricTest)
+
+itk_add_test(NAME itkMattesMutualInformationImageToImageObjectMetricTest
+      COMMAND ITKRegistrationRefactoringTestDriver
+      itkMattesMutualInformationImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
