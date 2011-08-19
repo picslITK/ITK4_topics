@@ -1,0 +1,4 @@
+include/itkImageToImageObjectMetric.h
+include/itkImageToImageObjectMetric.hxx
+include/itkVectorImageToVectorImageObjectMetric.h
+include/itkVectorImageToVectorImageObjectMetric.hxx

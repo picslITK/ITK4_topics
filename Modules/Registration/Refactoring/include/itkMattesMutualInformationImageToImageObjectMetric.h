@@ -75,10 +75,10 @@ public:
   typedef typename Superclass::VirtualPointType            VirtualPointType;
   typedef typename Superclass::FixedImagePointType         FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType         FixedImagePixelType;
-  typedef typename Superclass::FixedImageDerivativesType   FixedImageDerivativesType;
+  typedef typename Superclass::FixedImageGradientType   FixedImageGradientType;
   typedef typename Superclass::MovingImagePointType        MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType        MovingImagePixelType;
-  typedef typename Superclass::MovingImageDerivativesType  MovingImageDerivativesType;
+  typedef typename Superclass::MovingImageGradientType  MovingImageGradientType;
     
   /** Value type of the PDF */
   typedef float PDFValueType;
@@ -104,7 +104,7 @@ public:
   
   /** Compute the PDF Derivatives. */
   void ComputePDFDerivatives(int pdfMovingIndex,
-                             const MovingImageDerivativesType & movingImageGradientValue,
+                             const MovingImageGradientType & movingImageGradientValue,
                              double & cubicBSplineDerivativeValue,
                              ThreadIdType threadID) const;
   /** Get the value */
@@ -132,10 +132,10 @@ protected:
                     const VirtualPointType &           itkNotUsed(virtualPoint),
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  fixedImageDerivatives,
+                    const FixedImageGradientType &  fixedImageGradient,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
+                    const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID);

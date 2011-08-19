@@ -64,12 +64,12 @@ public:
   typedef typename Superclass::VirtualPointType           VirtualPointType;
   typedef typename Superclass::FixedImagePointType        FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType        FixedImagePixelType;
-  typedef typename Superclass::FixedImageDerivativesType
-                                                      FixedImageDerivativesType;
+  typedef typename Superclass::FixedImageGradientType
+                                                      FixedImageGradientType;
   typedef typename Superclass::MovingImagePointType   MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType   MovingImagePixelType;
-  typedef typename Superclass::MovingImageDerivativesType
-                                                     MovingImageDerivativesType;
+  typedef typename Superclass::MovingImageGradientType
+                                                     MovingImageGradientType;
 
   /* Implement pure virtual methods */
   void Initialize() throw ( itk::ExceptionObject )
@@ -85,10 +85,10 @@ public:
                     const VirtualPointType &           virtualPoint,
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  fixedImageDerivatives,
+                    const FixedImageGradientType &  fixedImageGradient,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
+                    const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID)
@@ -98,9 +98,9 @@ public:
 
     /*
     std::cout << "Metric: " << mappedMovingPoint << ": movingImageDerivative:"
-              << movingImageDerivatives << std::endl
+              << movingImageGradient << std::endl
               << "Metric: " << mappedFixedPoint << ": fixedImageDerivative: "
-              << fixedImageDerivatives << std::endl;
+              << fixedImageGradient << std::endl;
     */
 
     for ( unsigned int par = 0;
@@ -110,7 +110,7 @@ public:
       for ( unsigned int dim = 0;
             dim < Superclass::MovingImageDimension; dim++ )
         {
-        sum += movingImageDerivatives[dim] + fixedImageDerivatives[dim];
+        sum += movingImageGradient[dim] + fixedImageGradient[dim];
         }
       localDerivativeReturn[par] = sum;
       }
@@ -247,8 +247,8 @@ int RunTest( TestMetricType::Pointer & metric,
 
   // Default behavior is for the metric to precompute image derivatives, so
   // we access them here for testing.
-  TestMetricType::FixedImageDerivativesType  fixedImageDerivative;
-  TestMetricType::MovingImageDerivativesType movingImageDerivative;
+  TestMetricType::FixedImageGradientType  fixedImageDerivative;
+  TestMetricType::MovingImageGradientType movingImageDerivative;
   TestMetricType::FixedGradientImageType::ConstPointer
     fixedGradientImage = metric->GetFixedGaussianGradientImage();
   TestMetricType::MovingGradientImageType::ConstPointer

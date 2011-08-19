@@ -84,10 +84,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     VirtualPointType virtualPoint;
     FixedOutputPointType mappedFixedPoint;
     // FixedImagePixelType fixedImageValue;
-    FixedImageDerivativesType fixedImageDerivatives;
+    FixedImageGradientType fixedImageGradient;
     MovingOutputPointType mappedMovingPoint;
     // MovingImagePixelType movingImageValue;
-    MovingImageDerivativesType movingImageDerivatives;
+    MovingImageGradientType movingImageGradient;
     bool pointIsValid;
     MeasureType metricValueResult;
     MeasureType metricValueSum = 0;
@@ -222,10 +222,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             VirtualPointType virtualPoint;
             FixedOutputPointType mappedFixedPoint;
             FixedImagePixelType fixedImageValue;
-            FixedImageDerivativesType fixedImageDerivatives;
+            FixedImageGradientType fixedImageGradient;
             MovingOutputPointType mappedMovingPoint;
             MovingImagePixelType movingImageValue;
-            MovingImageDerivativesType movingImageDerivatives;
+            MovingImageGradientType movingImageGradient;
             bool pointIsValid;
 
             this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
@@ -237,7 +237,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                     this->EvaluatePreWarpedImagesAtIndex(index, virtualPoint,
                             false, /* compute gradient */
                             fixedImageValue, movingImageValue,
-                            fixedImageDerivatives, movingImageDerivatives,
+                            fixedImageGradient, movingImageGradient,
                             pointIsValid, threadID);
 //                    /* Get the point in moving and fixed space for use below */
 //                    mappedFixedPoint = self->m_FixedTransform->TransformPoint(
@@ -263,7 +263,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             pointIsValid, //
                             fixedImageValue, //
                             false/*compute gradient*/, // true /*compute gradient*/,
-                            fixedImageDerivatives, //
+                            fixedImageGradient, //
                             threadID);
                     if (pointIsValid) {
                         this->TransformAndEvaluateMovingPoint( //
@@ -273,7 +273,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                                 pointIsValid, //
                                 movingImageValue, //
                                 false/*compute gradient*/, // true /*compute gradient*/,
-                                movingImageDerivatives, //
+                                movingImageGradient, //
                                 threadID);
                     }
 
@@ -345,10 +345,10 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         VirtualPointType virtualPoint;
         FixedOutputPointType mappedFixedPoint;
         FixedImagePixelType fixedImageValue;
-        FixedImageDerivativesType fixedImageDerivatives;
+        FixedImageGradientType fixedImageGradient;
         MovingOutputPointType mappedMovingPoint;
         MovingImagePixelType movingImageValue;
-        MovingImageDerivativesType movingImageDerivatives;
+        MovingImageGradientType movingImageGradient;
         bool pointIsValid;
 
         this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
@@ -358,8 +358,8 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         if (this->m_PreWarpImages) {
             try {
                 this->EvaluatePreWarpedImagesAtIndex(index, virtualPoint, false, /* compute gradient */
-                fixedImageValue, movingImageValue, fixedImageDerivatives,
-                        movingImageDerivatives, pointIsValid, threadID);
+                fixedImageValue, movingImageValue, fixedImageGradient,
+                        movingImageGradient, pointIsValid, threadID);
                 //                    /* Get the point in moving and fixed space for use below */
                 //                    mappedFixedPoint = self->m_FixedTransform->TransformPoint(
                 //                            virtualPoint);
@@ -383,7 +383,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         pointIsValid, //
                         fixedImageValue, //
                         false/*compute gradient*/, // true /*compute gradient*/,
-                        fixedImageDerivatives, //
+                        fixedImageGradient, //
                         threadID);
                 if (pointIsValid) {
                     this->TransformAndEvaluateMovingPoint( //
@@ -393,7 +393,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             pointIsValid, //
                             movingImageValue, //
                             false/*compute gradient*/, // true /*compute gradient*/,
-                            movingImageDerivatives, //
+                            movingImageGradient, //
                             threadID);
                 }
             } catch (ExceptionObject & exc) {
@@ -516,10 +516,10 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     VirtualPointType virtualPoint;
     FixedOutputPointType mappedFixedPoint;
     FixedImagePixelType fixedImageValue;
-    FixedImageDerivativesType fixedImageDerivatives;
+    FixedImageGradientType fixedImageGradient;
     MovingOutputPointType mappedMovingPoint;
     MovingImagePixelType movingImageValue;
-    MovingImageDerivativesType movingImageDerivatives;
+    MovingImageGradientType movingImageGradient;
     bool pointIsValid;
 
     this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(oindex,
@@ -529,8 +529,8 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     if (this->m_PreWarpImages) {
         try {
             this->EvaluatePreWarpedImagesAtIndex(oindex, virtualPoint, true, /* compute gradient */
-            fixedImageValue, movingImageValue, fixedImageDerivatives,
-                    movingImageDerivatives, pointIsValid, threadID);
+            fixedImageValue, movingImageValue, fixedImageGradient,
+                    movingImageGradient, pointIsValid, threadID);
             //                    /* Get the point in moving and fixed space for use below */
 //                       mappedFixedPoint = self->m_FixedTransform->TransformPoint(
 //                               virtualPoint);
@@ -554,7 +554,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                     pointIsValid, //
                     fixedImageValue, //
                     true/*compute gradient*/, // true /*compute gradient*/,
-                    fixedImageDerivatives, threadID);
+                    fixedImageGradient, threadID);
             if (pointIsValid) {
                 this->TransformAndEvaluateMovingPoint(
                         oindex,
@@ -563,7 +563,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         pointIsValid, //
                         movingImageValue, //
                         true/*compute gradient*/, // true /*compute gradient*/,
-                        movingImageDerivatives, threadID);
+                        movingImageGradient, threadID);
             }
         } catch (ExceptionObject & exc) {
             //NOTE: there must be a cleaner way to do this:
@@ -585,8 +585,8 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         scan_mem.sff = sff;
         scan_mem.smm = smm;
 
-        scan_mem.gradI = fixedImageDerivatives;
-        scan_mem.gradJ = movingImageDerivatives;
+        scan_mem.gradI = fixedImageGradient;
+        scan_mem.gradJ = movingImageGradient;
 
         scan_mem.mappedMovingPoint = mappedMovingPoint;
 
@@ -603,9 +603,9 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         const ScanParaType &scan_para, DerivativeType &deriv,
         MeasureType &local_cc, const ThreadIdType threadID) {
 
-    MovingImageDerivativesType deriv_wrt_image;
+    MovingImageGradientType deriv_wrt_image;
 
-    //    MovingImageDerivativesType deriv_wrt_image(0.0);
+    //    MovingImageGradientType deriv_wrt_image(0.0);
     //    DerivativeType deriv_wrt_image(VirtualImageDimension);
     //    deriv_wrt_image.Fill(0.0);
 
@@ -623,8 +623,8 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     LocalRealType Ji = scan_mem.Ja;
     LocalRealType Ii = scan_mem.Ia;
 
-    FixedImageDerivativesType gradI = scan_mem.gradI;
-    MovingImageDerivativesType gradJ = scan_mem.gradJ;
+    FixedImageGradientType gradI = scan_mem.gradI;
+    MovingImageGradientType gradJ = scan_mem.gradJ;
 
     if (sff == 0.0 || smm == 0.0) {
         deriv.Fill(0.0);

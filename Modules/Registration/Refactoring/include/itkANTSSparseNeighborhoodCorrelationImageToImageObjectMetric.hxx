@@ -73,10 +73,10 @@ bool ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         const VirtualPointType & virtualPoint,
         const FixedImagePointType & mappedFixedPoint,
         const FixedImagePixelType & fixedImageValue,
-        const FixedImageDerivativesType & fixedImageDerivatives,
+        const FixedImageGradientType & fixedImageGradient,
         const MovingImagePointType & mappedMovingPoint,
         const MovingImagePixelType & movingImageValue,
-        const MovingImageDerivativesType & movingImageDerivatives,
+        const MovingImageGradientType & movingImageGradient,
         MeasureType & metricValueReturn, DerivativeType & localDerivativeReturn,
         ThreadIdType threadID) {
     bool pointIsValid;
@@ -135,10 +135,10 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     VirtualPointType virtualPoint;
     FixedOutputPointType mappedFixedPoint;
     FixedImagePixelType fixedImageValue;
-    FixedImageDerivativesType fixedImageDerivatives;
+    FixedImageGradientType fixedImageGradient;
     MovingOutputPointType mappedMovingPoint;
     MovingImagePixelType movingImageValue;
-    MovingImageDerivativesType movingImageDerivatives;
+    MovingImageGradientType movingImageGradient;
     bool pointIsValid;
     MeasureType metricValueResult;
     MeasureType metricValueSum = 0;
@@ -189,13 +189,13 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             dataHolder->TransformAndEvaluateFixedPoint(
                     virtualIndex, virtualPoint,
                     mappedFixedPoint, pointIsValid, fixedImageValue,
-                    false /*compute gradient*/, fixedImageDerivatives,
+                    false /*compute gradient*/, fixedImageGradient,
                     threadID);
             if (pointIsValid) {
                 dataHolder->TransformAndEvaluateMovingPoint(
                         virtualIndex, virtualPoint,
                         mappedMovingPoint, pointIsValid, movingImageValue,
-                        false /*compute gradient*/, movingImageDerivatives,
+                        false /*compute gradient*/, movingImageGradient,
                         threadID);
             }
         } catch (ExceptionObject & exc) {
@@ -214,8 +214,8 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         dataHolder->SparseGetValueAndDerivativeProcessPoint(
                                 virtualImageSubRegion, virtualIndex,
                                 virtualPoint, mappedFixedPoint, fixedImageValue,
-                                fixedImageDerivatives, mappedMovingPoint,
-                                movingImageValue, movingImageDerivatives,
+                                fixedImageGradient, mappedMovingPoint,
+                                movingImageValue, movingImageGradient,
                                 metricValueResult, localDerivativeResult,
                                 threadID);
             }

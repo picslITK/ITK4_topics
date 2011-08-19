@@ -162,9 +162,9 @@ private:
   void GetDerivative( const ParametersType &, DerivativeType &) const
   { itkExceptionMacro("Not implemented. Use GetDerivative(DerivativeType&).");}
 
-  void GetValueAndDerivative (const ParametersType &parameters,
-                              MeasureType &value,
-                              DerivativeType &derivative) const
+  void GetValueAndDerivative (const ParametersType &,
+                              MeasureType &,
+                              DerivativeType &) const
   { itkExceptionMacro("Not implemented. Use GetValueAndDerivative( "
                       "MeasureType & value, DerivativeType & derivative)."); }
 

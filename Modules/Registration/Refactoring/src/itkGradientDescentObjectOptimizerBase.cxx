@@ -81,7 +81,7 @@ GradientDescentObjectOptimizerBase
 void
 GradientDescentObjectOptimizerBase
 ::ModifyGradientThreaded( const IndexRangeType& rangeForThread,
-                          ThreadIdType threadId,
+                          ThreadIdType,
                           Self *holder )
 {
   holder->ModifyGradientOverSubRange( rangeForThread );

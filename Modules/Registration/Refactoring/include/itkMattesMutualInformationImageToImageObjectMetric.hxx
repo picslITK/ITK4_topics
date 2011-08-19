@@ -369,10 +369,10 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
                     const VirtualPointType &           itkNotUsed (virtualPoint),
                     const FixedImagePointType &        itkNotUsed (mappedFixedPoint),
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  itkNotUsed(fixedImageDerivatives),
+                    const FixedImageGradientType &  itkNotUsed(fixedImageGradient),
                     const MovingImagePointType &       itkNotUsed (mappedMovingPoint),
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
+                    const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      itkNotUsed(metricValueResult),
                     DerivativeType &                   itkNotUsed(localDerivativeReturn),
                     ThreadIdType                       threadID)
@@ -438,7 +438,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
   this->ComputePDFDerivatives (fixedImageParzenWindowIndex, 
                                movingImageParzenWindowIndex, 
                                cubicBSplineDerivativeValue,
-                               movingImageDerivatives,
+                               movingImageGradient,
                                threadID);  
                                */
   return true;
@@ -570,7 +570,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 ::ComputePDFDerivatives(int & fixedImageParzenWindowIndex, 
                         int & movingImageParzenWindowIndex, 
                         const double & cubicBSplineDerivativeValue,
-                        const MovingImageDerivativesType & movingImageDerivatives,
+                        const MovingImageGradientType & movingImageGradient,
                         ThreadIdType threadID)
 {
   // Update the bins for the current point
@@ -597,7 +597,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
       double innerProduct = 0.0;
       for ( unsigned int dim = 0; dim < Superclass::FixedImageDimension; dim++ )
         {
-        innerProduct += jacobian[dim][mu] * movingImageDerivatives[dim];
+        innerProduct += jacobian[dim][mu] * movingImageGradient[dim];
         }
 
       // Equation 24 of Thevenaz and Unser.

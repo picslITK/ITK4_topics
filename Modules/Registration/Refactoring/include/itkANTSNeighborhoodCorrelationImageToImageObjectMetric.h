@@ -103,20 +103,20 @@ public:
     typedef typename Superclass::VirtualPointType    VirtualPointType;
     typedef typename Superclass::FixedImagePointType FixedImagePointType;
     typedef typename Superclass::FixedImagePixelType FixedImagePixelType;
-    typedef typename Superclass::FixedImageDerivativesType
-                                                FixedImageDerivativesType;
+    typedef typename Superclass::FixedImageGradientType
+                                                FixedImageGradientType;
 
     typedef typename Superclass::MovingImagePointType MovingImagePointType;
     typedef typename Superclass::MovingImagePixelType MovingImagePixelType;
-    typedef typename Superclass::MovingImageDerivativesType
-                                                     MovingImageDerivativesType;
+    typedef typename Superclass::MovingImageGradientType
+                                                     MovingImageGradientType;
     typedef typename Superclass::MovingTransformType MovingTransformType;
 //    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
     typedef typename Superclass::MovingTransformJacobianType
                                                     MovingTransformJacobianType;
 
-    typedef typename Superclass::VirtualImageDerivativesType
-                                                    VirtualImageDerivativesType;
+    typedef typename Superclass::VirtualImageGradientType
+                                                    VirtualImageGradientType;
 
 
     typedef typename Superclass::FixedImageType           FixedImageType;
@@ -189,8 +189,8 @@ protected:
         QUEUEREALTYPE sff;
         QUEUEREALTYPE smm;
 
-        FixedImageDerivativesType gradI;
-        MovingImageDerivativesType gradJ;
+        FixedImageGradientType gradI;
+        MovingImageGradientType gradJ;
 
         MovingImagePointType mappedMovingPoint;
 

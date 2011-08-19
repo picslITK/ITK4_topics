@@ -519,10 +519,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   VirtualPointType            virtualPoint;
   FixedOutputPointType        mappedFixedPoint;
   FixedImagePixelType         fixedImageValue;
-  FixedImageDerivativesType   fixedImageDerivatives;
+  FixedImageGradientType      fixedImageGradient;
   MovingOutputPointType       mappedMovingPoint;
   MovingImagePixelType        movingImageValue;
-  MovingImageDerivativesType  movingImageDerivatives;
+  MovingImageGradientType     movingImageGradient;
   bool                        pointIsValid = false;
   MeasureType                 metricValueResult;
   MeasureType                 metricValueSum = 0;
@@ -550,8 +550,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                         true, /* compute gradient */
                                         fixedImageValue,
                                         movingImageValue,
-                                        fixedImageDerivatives,
-                                        movingImageDerivatives,
+                                        fixedImageGradient,
+                                        movingImageGradient,
                                         pointIsValid,
                                         threadID );
         /* Get the point in moving and fixed space for use below */
@@ -605,7 +605,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                               pointIsValid,
                                               fixedImageValue,
                                               true /*compute gradient*/,
-                                              fixedImageDerivatives,
+                                              fixedImageGradient,
                                               threadID );
         if( pointIsValid )
           {
@@ -615,7 +615,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                 pointIsValid,
                                                 movingImageValue,
                                                 true /*compute gradient*/,
-                                                movingImageDerivatives,
+                                                movingImageGradient,
                                                 threadID );
           }
         }
@@ -638,8 +638,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         {
         pointIsValid = self->GetValueAndDerivativeProcessPoint(
                  virtualPoint,
-                 mappedFixedPoint, fixedImageValue, fixedImageDerivatives,
-                 mappedMovingPoint, movingImageValue, movingImageDerivatives,
+                 mappedFixedPoint, fixedImageValue, fixedImageGradient,
+                 mappedMovingPoint, movingImageValue, movingImageGradient,
                  metricValueResult, localDerivativeResult, threadID );
         }
       }
@@ -729,8 +729,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                  const bool computeImageGradient,
                                  FixedImagePixelType & fixedImageValue,
                                  MovingImagePixelType & movingImageValue,
-                                 FixedImageDerivativesType & fixedGradient,
-                                 MovingImageDerivativesType & movingGradient,
+                                 FixedImageGradientType & fixedImageGradient,
+                                 MovingImageGradientType & movingImageGradient,
                                  bool & pointIsValid,
                                  const ThreadIdType threadID ) const
 {
@@ -751,11 +751,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       // functions of computing derivatives, because index are the same for fixed warped
       // and moving warped images
 
-      ComputeFixedImageDerivativesAtIndex( index, fixedGradient, threadID );
-      ComputeMovingImageDerivativesAtIndex( index, movingGradient, threadID );
+      ComputeFixedImageGradientAtIndex( index, fixedImageGradient, threadID );
+      ComputeMovingImageGradientAtIndex( index, movingImageGradient, threadID );
 
-//    ComputeFixedImageDerivatives( virtualPoint, fixedGradient, threadID );
-//    ComputeMovingImageDerivatives( virtualPoint, movingGradient, threadID );
+//    ComputeFixedImageGradient( virtualPoint, fixedImageGradient, threadID );
+//    ComputeMovingImageGradient( virtualPoint, movingImageGradient, threadID );
     }
 }
 
@@ -773,7 +773,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       bool & pointIsValid,
                       FixedImagePixelType & fixedImageValue,
                       bool computeImageGradient,
-                      FixedImageDerivativesType & fixedGradient,
+                      FixedImageGradientType & fixedImageGradient,
                       ThreadIdType threadID) const
 {
   pointIsValid = true;
@@ -817,7 +817,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         m_FixedBSplineInterpolator->EvaluateValueAndDerivative(
                                                       mappedFixedPoint,
                                                       fixedImageValue,
-                                                      fixedGradient,
+                                                      fixedImageGradient,
                                                       threadID);
         }
       else
@@ -836,8 +836,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
       if( computeImageGradient )
         {
-        this->ComputeFixedImageDerivatives(mappedFixedPoint,
-                                           fixedGradient,
+        this->ComputeFixedImageGradient(mappedFixedPoint,
+                                           fixedImageGradient,
                                            threadID);
         }
       }
@@ -852,8 +852,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     // of the warped image, unless they were created during initilization.
     // But, pre-warping the images would be inefficient when a mask or
     // sampling is used to compute only a subset of points.
-    fixedGradient =
-      m_FixedTransform->TransformCovariantVector( fixedGradient,
+    fixedImageGradient =
+      m_FixedTransform->TransformCovariantVector( fixedImageGradient,
                                                        mappedFixedPoint );
     }
 }
@@ -871,7 +871,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       bool & pointIsValid,
                       MovingImagePixelType & movingImageValue,
                       bool computeImageGradient,
-                      MovingImageDerivativesType & movingGradient,
+                      MovingImageGradientType & movingImageGradient,
                       ThreadIdType threadID) const
 {
   pointIsValid = true;
@@ -914,7 +914,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         m_MovingBSplineInterpolator->EvaluateValueAndDerivative(
                                                       mappedMovingPoint,
                                                       movingImageValue,
-                                                      movingGradient,
+                                                      movingImageGradient,
                                                       threadID);
         }
       else
@@ -933,8 +933,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
       if( computeImageGradient )
         {
-        this->ComputeMovingImageDerivatives(mappedMovingPoint,
-                                            movingGradient,
+        this->ComputeMovingImageGradient(mappedMovingPoint,
+                                            movingImageGradient,
                                             threadID);
         }
       }
@@ -942,8 +942,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   if( pointIsValid && computeImageGradient )
     {
     // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
-    movingGradient =
-      m_MovingTransform->TransformCovariantVector( movingGradient,
+    movingImageGradient =
+      m_MovingTransform->TransformCovariantVector( movingImageGradient,
                                                         mappedMovingPoint );
     }
 }
@@ -956,9 +956,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedImageDerivatives(
+::ComputeFixedImageGradient(
                               const FixedImagePointType & mappedPoint,
-                              FixedImageDerivativesType & gradient,
+                              FixedImageGradientType & gradient,
                               ThreadIdType threadID) const
 {
   if ( m_FixedInterpolatorIsBSpline )
@@ -992,9 +992,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeMovingImageDerivatives(
+::ComputeMovingImageGradient(
                               const MovingImagePointType & mappedPoint,
-                              MovingImageDerivativesType & gradient,
+                              MovingImageGradientType & gradient,
                               ThreadIdType threadID) const
 {
   if ( m_MovingInterpolatorIsBSpline )
@@ -1030,9 +1030,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedImageDerivativesAtIndex(
+::ComputeFixedImageGradientAtIndex(
                               const VirtualIndexType & index,
-                              FixedImageDerivativesType & gradient,
+                              FixedImageGradientType & gradient,
                               ThreadIdType threadID) const
 {
   if ( m_FixedInterpolatorIsBSpline )
@@ -1074,9 +1074,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeMovingImageDerivativesAtIndex(
+::ComputeMovingImageGradientAtIndex(
                               const VirtualIndexType & index,
-                              MovingImageDerivativesType & gradient,
+                              MovingImageGradientType & gradient,
                               ThreadIdType threadID) const
 {
   if ( m_MovingInterpolatorIsBSpline )

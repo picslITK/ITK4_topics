@@ -57,13 +57,13 @@ public:
   typedef typename Superclass::VirtualPointType        VirtualPointType;
   typedef typename Superclass::FixedImagePointType     FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType     FixedImagePixelType;
-  typedef typename Superclass::FixedImageDerivativesType
-                                                     FixedImageDerivativesType;
+  typedef typename Superclass::FixedImageGradientType
+                                                     FixedImageGradientType;
 
   typedef typename Superclass::MovingImagePointType    MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType    MovingImagePixelType;
-  typedef typename Superclass::MovingImageDerivativesType
-                                                    MovingImageDerivativesType;
+  typedef typename Superclass::MovingImageGradientType
+                                                    MovingImageGradientType;
 
   typedef typename Superclass::MovingTransformType     MovingTransformType;
   typedef typename Superclass::MovingTransformJacobianType
@@ -86,10 +86,10 @@ protected:
                     const VirtualPointType &           virtualPoint,
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  fixedImageDerivatives,
+                    const FixedImageGradientType &  fixedImageGradient,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
+                    const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID);

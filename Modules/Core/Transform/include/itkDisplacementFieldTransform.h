@@ -180,6 +180,13 @@ public:
                                           itkGetStaticConstMacro( Dimension ) >
                                                 TransformParametersHelperType;
 
+  typedef typename Superclass::RegionType                 RegionType;
+  typedef typename Superclass::SpacingType                SpacingType;
+  typedef typename Superclass::OriginType                 OriginType;
+  typedef typename Superclass::DirectionType              DirectionType;
+
+  typedef Index< NDimensions >                            InputIndexType;
+
   /** Get/Set the displacement field. */
   itkGetObjectMacro( DisplacementField, DisplacementFieldType );
   /** Set the displacement field. Create special set accessor to update

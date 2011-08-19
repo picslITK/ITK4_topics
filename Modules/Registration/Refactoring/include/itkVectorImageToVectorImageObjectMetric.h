@@ -261,17 +261,17 @@ public:
 
   /** Image derivatives types */
   typedef VariableSizeMatrix<CoordinateRepresentationType>
-    FixedImageDerivativesType;
+    FixedImageGradientType;
   typedef VariableSizeMatrix<CoordinateRepresentationType>
-    MovingImageDerivativesType;
+    MovingImageGradientType;
 
   /*
   typedef   CovariantVector< CoordinateRepresentationType,
                              itkGetStaticConstMacro(FixedImageDimension) >
-                                                      FixedImageDerivativesType;
+                                                      FixedImageGradientType;
   typedef   CovariantVector< CoordinateRepresentationType,
                              itkGetStaticConstMacro(MovingImageDimension) >
-                                                      MovingImageDerivativesType;
+                                                      MovingImageGradientType;
   */
 
   /** Gaussian filter types to compute the gradient of the images.
@@ -566,10 +566,10 @@ protected:
         const VirtualPointType &           itkNotUsed(virtualPoint),
         const FixedImagePointType &        itkNotUsed(mappedFixedPoint),
         const FixedImagePixelType &        itkNotUsed(fixedImageValue),
-        const FixedImageDerivativesType &  itkNotUsed(FixedImageDerivatives),
+        const FixedImageGradientType &  itkNotUsed(FixedImageGradient),
         const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
         const MovingImagePixelType &       itkNotUsed(movingImageValue),
-        const MovingImageDerivativesType & itkNotUsed(movingImageDerivatives),
+        const MovingImageGradientType & itkNotUsed(movingImageGradient),
         MeasureType &                      itkNotUsed(metricValueReturn),
         DerivativeType &                   itkNotUsed(localDerivativeReturn),
         ThreadIdType                       itkNotUsed(threadID) )
@@ -601,7 +601,7 @@ protected:
                               bool & pointIsValid,
                               FixedImagePixelType & fixedImageValue,
                               bool computeImageGradient,
-                              FixedImageDerivativesType & fixedGradient,
+                              FixedImageGradientType & fixedImageGradient,
                               ThreadIdType threadID) const;
 
   /** Transform a point from VirtualImage domain to MovingImage domain,
@@ -611,7 +611,7 @@ protected:
                               bool & pointIsValid,
                               MovingImagePixelType & movingImageValue,
                               bool computeImageGradient,
-                              MovingImageDerivativesType & movingGradient,
+                              MovingImageGradientType & movingImageGradient,
                               ThreadIdType threadID) const;
 
   /** When using pre-warped images, this routine will return pixel value
@@ -620,7 +620,7 @@ protected:
    * \c virtualPoint is passed in for efficiency because it's already computed
    * before calling this method.
    * \c fixedImageValue and \c movingImageValue are returned.
-   * \c fixedGradient and \c movingGradient are returned if
+   * \c fixedImageGradient and \c movingImageGradient are returned if
    * \c computeImageGradient is true.
    * \c pointIsValid is returned true if the index is valid within a mask if
    * one is supplied.
@@ -630,19 +630,19 @@ protected:
                                  const bool computeImageGradient,
                                  FixedImagePixelType & fixedImageValue,
                                  MovingImagePixelType & movingImageValue,
-                                 FixedImageDerivativesType & fixedGradient,
-                                 MovingImageDerivativesType & movingGradient,
+                                 FixedImageGradientType & fixedImageGradient,
+                                 MovingImageGradientType & movingImageGradient,
                                  bool & pointIsValid,
                                  const ThreadIdType threadID ) const;
 
   /** Compute image derivatives at a point. */
-  virtual void ComputeFixedImageDerivatives(
+  virtual void ComputeFixedImageGradient(
                                     const FixedImagePointType & mappedPoint,
-                                    FixedImageDerivativesType & gradient,
+                                    FixedImageGradientType & gradient,
                                     ThreadIdType threadID) const;
-  virtual void ComputeMovingImageDerivatives(
+  virtual void ComputeMovingImageGradient(
                                     const MovingImagePointType & mappedPoint,
-                                    MovingImageDerivativesType & gradient,
+                                    MovingImageGradientType & gradient,
                                     ThreadIdType threadID) const;
 
   /** Store derivative result from a single point calculation.

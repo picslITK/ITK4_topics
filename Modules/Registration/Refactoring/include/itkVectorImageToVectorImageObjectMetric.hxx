@@ -565,10 +565,10 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   VirtualPointType            virtualPoint;
   FixedOutputPointType        mappedFixedPoint;
   FixedImagePixelType         fixedImageValue;
-  FixedImageDerivativesType   fixedImageDerivatives;
+  FixedImageGradientType   fixedImageGradient;
   MovingOutputPointType       mappedMovingPoint;
   MovingImagePixelType        movingImageValue;
-  MovingImageDerivativesType  movingImageDerivatives;
+  MovingImageGradientType  movingImageGradient;
   bool                        pointIsValid = false;
   MeasureType                 metricValueResult;
   MeasureType                 metricValueSum = 0;
@@ -596,8 +596,8 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                         true, /* compute gradient */
                                         fixedImageValue,
                                         movingImageValue,
-                                        fixedImageDerivatives,
-                                        movingImageDerivatives,
+                                        fixedImageGradient,
+                                        movingImageGradient,
                                         pointIsValid,
                                         threadID );
         /* Get the point in moving and fixed space for use below */
@@ -634,7 +634,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                               pointIsValid,
                                               fixedImageValue,
                                               true /*compute gradient*/,
-                                              fixedImageDerivatives,
+                                              fixedImageGradient,
                                               threadID );
         if( pointIsValid )
           {
@@ -643,7 +643,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                 pointIsValid,
                                                 movingImageValue,
                                                 true /*compute gradient*/,
-                                                movingImageDerivatives,
+                                                movingImageGradient,
                                                 threadID );
           }
         }
@@ -666,8 +666,8 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         {
         pointIsValid = self->GetValueAndDerivativeProcessPoint(
                  virtualPoint,
-                 mappedFixedPoint, fixedImageValue, fixedImageDerivatives,
-                 mappedMovingPoint, movingImageValue, movingImageDerivatives,
+                 mappedFixedPoint, fixedImageValue, fixedImageGradient,
+                 mappedMovingPoint, movingImageValue, movingImageGradient,
                  metricValueResult, localDerivativeResult, threadID );
         }
       }
@@ -757,8 +757,8 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                  const bool computeImageGradient,
                                  FixedImagePixelType & fixedImageValue,
                                  MovingImagePixelType & movingImageValue,
-                                 FixedImageDerivativesType & fixedGradient,
-                                 MovingImageDerivativesType & movingGradient,
+                                 FixedImageGradientType & fixedImageGradient,
+                                 MovingImageGradientType & movingImageGradient,
                                  bool & pointIsValid,
                                  const ThreadIdType threadID ) const
 {
@@ -774,8 +774,8 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( computeImageGradient )
     {
-    ComputeFixedImageDerivatives( virtualPoint, fixedGradient, threadID );
-    ComputeMovingImageDerivatives( virtualPoint, movingGradient, threadID );
+    ComputeFixedImageGradient( virtualPoint, fixedImageGradient, threadID );
+    ComputeMovingImageGradient( virtualPoint, movingImageGradient, threadID );
     }
 }
 
@@ -791,7 +791,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       bool & pointIsValid,
                       FixedImagePixelType & fixedImageValue,
                       bool computeImageGradient,
-                      FixedImageDerivativesType & fixedGradient,
+                      FixedImageGradientType & fixedImageGradient,
                       ThreadIdType threadID) const
 {
   pointIsValid = true;
@@ -820,8 +820,8 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
       if( computeImageGradient )
         {
-        this->ComputeFixedImageDerivatives(mappedFixedPoint,
-                                           fixedGradient,
+        this->ComputeFixedImageGradient(mappedFixedPoint,
+                                           fixedImageGradient,
                                            threadID);
         }
       }
@@ -842,14 +842,14 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       FixedGradientVectorPixelType cGrad;
       for (unsigned int dim=0; dim < FixedImageDimension; dim++)
         {
-        cGrad[dim] = fixedGradient(com,dim);
+        cGrad[dim] = fixedImageGradient(com,dim);
         }
       FixedGradientVectorPixelType tGrad
         = m_FixedTransform->TransformCovariantVector( cGrad, mappedFixedPoint );
 
       for (unsigned int dim=0; dim < FixedImageDimension; dim++)
         {
-        fixedGradient(com,dim) = tGrad[dim];
+        fixedImageGradient(com,dim) = tGrad[dim];
         }
       }
     }
@@ -866,7 +866,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       bool & pointIsValid,
                       MovingImagePixelType & movingImageValue,
                       bool computeImageGradient,
-                      MovingImageDerivativesType & movingGradient,
+                      MovingImageGradientType & movingImageGradient,
                       ThreadIdType threadID) const
 {
   pointIsValid = true;
@@ -894,8 +894,8 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
       if( computeImageGradient )
         {
-        this->ComputeMovingImageDerivatives(mappedMovingPoint,
-                                            movingGradient,
+        this->ComputeMovingImageGradient(mappedMovingPoint,
+                                            movingImageGradient,
                                             threadID);
         }
       }
@@ -909,14 +909,14 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       MovingGradientVectorPixelType cGrad;
       for (unsigned int dim=0; dim < MovingImageDimension; dim++)
         {
-        cGrad[dim] = movingGradient(com,dim);
+        cGrad[dim] = movingImageGradient(com,dim);
         }
       MovingGradientVectorPixelType tGrad
         = m_MovingTransform->TransformCovariantVector( cGrad, mappedMovingPoint );
 
       for (unsigned int dim=0; dim < MovingImageDimension; dim++)
         {
-        movingGradient(com,dim) = tGrad[dim];
+        movingImageGradient(com,dim) = tGrad[dim];
         }
       }
     }
@@ -930,9 +930,9 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedImageDerivatives(
+::ComputeFixedImageGradient(
                               const FixedImagePointType & mappedPoint,
-                              FixedImageDerivativesType & gradient,
+                              FixedImageGradientType & gradient,
                               ThreadIdType threadID) const
 {
 
@@ -960,9 +960,9 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeMovingImageDerivatives(
+::ComputeMovingImageGradient(
                               const MovingImagePointType & mappedPoint,
-                              MovingImageDerivativesType & gradient,
+                              MovingImageGradientType & gradient,
                               ThreadIdType threadID) const
 {
 

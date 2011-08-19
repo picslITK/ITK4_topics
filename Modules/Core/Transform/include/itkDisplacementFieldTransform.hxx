@@ -121,18 +121,18 @@ DisplacementFieldTransform<TScalar, NDimensions>
  */
 
 template<class TScalar, unsigned int NDimensions>
-typename DeformationFieldTransform<TScalar, NDimensions>::OutputPointType
-DeformationFieldTransform<TScalar, NDimensions>
+typename DisplacementFieldTransform<TScalar, NDimensions>::OutputPointType
+DisplacementFieldTransform<TScalar, NDimensions>
 ::TransformIndex(const InputIndexType & index) const
 {
 
-  if( !this->m_DeformationField )
+  if( !this->m_DisplacemntField )
     {
     itkExceptionMacro( "No deformation field is specified." );
     }
   InputPointType inputPoint;
-  this->m_DeformationField->TransformIndexToPhysicalPoint( index, inputPoint );
-  inputPoint += this->m_DeformationField->GetPixel( index );
+  this->m_DisplacementField->TransformIndexToPhysicalPoint( index, inputPoint );
+  inputPoint += this->m_DisplacementField->GetPixel( index );
   OutputPointType outputPoint;
   outputPoint.CastFrom( inputPoint );
   return outputPoint;
@@ -783,7 +783,7 @@ DisplacementFieldTransform<TScalar, NDimensions>
 
   /* tolerance for origin and spacing depends on the size of pixel
    * tolerance for directions a fraction of the unit cube. */
-  const TScalar coordinateTol = 1.0e-6 * outputPtr->GetSpacing()[0];
+  const TScalar coordinateTol = 1.0e-6 * spacing[0];
       // use first dimension spacing
   const TScalar directionTol = 1.0e-6;
 

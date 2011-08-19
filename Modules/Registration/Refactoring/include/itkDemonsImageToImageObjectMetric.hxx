@@ -67,10 +67,10 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                     const VirtualPointType &           virtualPoint,
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  fixedImageDerivatives,
+                    const FixedImageGradientType &  fixedImageGradient,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
+                    const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueReturn,
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID)
@@ -95,7 +95,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
     double sum = 0.0;
     for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
       {
-        sum += 2.0 * diff * jacobian(dim, par) * movingImageDerivatives[dim];
+        sum += 2.0 * diff * jacobian(dim, par) * movingImageGradient[dim];
       }
     localDerivativeReturn[par] = sum;
   }
