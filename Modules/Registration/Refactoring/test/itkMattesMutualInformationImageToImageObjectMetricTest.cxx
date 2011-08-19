@@ -22,7 +22,6 @@
 #include "itkVector.h"
 #include "itkMattesMutualInformationImageToImageObjectMetric.h"
 #include "itkIdentityTransform.h"
-#include "itkDeformationFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
 
@@ -35,7 +34,7 @@
 
 using namespace itk;
 
-int itkMattesMutualInformationImageToImageObjectMetricTest(int argc, char * argv[])
+int itkMattesMutualInformationImageToImageObjectMetricTest(int, char **)
 {
 
   const unsigned int imageSize = 5;
@@ -147,4 +146,3 @@ int itkMattesMutualInformationImageToImageObjectMetricTest(int argc, char * argv
   std::cout << "Test passed." << std::endl;
   return EXIT_SUCCESS;
 }
-

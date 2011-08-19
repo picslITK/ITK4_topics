@@ -70,13 +70,13 @@ bool ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::SparseGetValueAndDerivativeProcessPoint(
         const VirtualImageRegionType &scan_region,
         const VirtualIndexType & virtualIndex,
-        const VirtualPointType & virtualPoint,
-        const FixedImagePointType & mappedFixedPoint,
-        const FixedImagePixelType & fixedImageValue,
-        const FixedImageGradientType & fixedImageGradient,
-        const MovingImagePointType & mappedMovingPoint,
-        const MovingImagePixelType & movingImageValue,
-        const MovingImageGradientType & movingImageGradient,
+        const VirtualPointType &,
+        const FixedImagePointType &,
+        const FixedImagePixelType &,
+        const FixedImageGradientType &,
+        const MovingImagePointType &,
+        const MovingImagePixelType &,
+        const MovingImageGradientType &,
         MeasureType & metricValueReturn, DerivativeType & localDerivativeReturn,
         ThreadIdType threadID) {
     bool pointIsValid;
@@ -143,8 +143,6 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     MeasureType metricValueResult;
     MeasureType metricValueSum = 0;
 
-
-
     /* Get pre-allocated local results object. This actually provides very
      * little benefit, since this only gets called once for each thread. However
      * if we get up to the hundres of threads, it might have an impact */
@@ -167,8 +165,6 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         dataHolder->FullSampleVirtualImageRegion(virtualImageSubRegion,
                 sampleLocations);
     }
-
-
 
     for (unsigned int i = 0; i < sampleLocations.size(); i++) {
 
@@ -250,8 +246,8 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::InitializeScanning(
         const VirtualImageRegionType &scan_region,
         const VirtualIndexType &start_index, ScanningIteratorType &scan_it,
-        ScanMemType &scan_mem, ScanParaType &scan_para,
-        const ThreadIdType threadID) {
+        ScanMemType &, ScanParaType &scan_para,
+        const ThreadIdType ) {
 
     scan_para.scan_region = scan_region;
     scan_para.I = this->m_FixedImage;

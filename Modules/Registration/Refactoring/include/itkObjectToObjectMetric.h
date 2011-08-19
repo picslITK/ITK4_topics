@@ -79,21 +79,21 @@ public:
   typedef  Superclass::ParametersType       ParametersType;
   typedef  Superclass::ParametersValueType  ParametersValueType;
 
-  /** Source of the object derivatives (image derivatives, in the case of
+  /** Source of the gradient (image gradients, in the case of
    * image to image metrics). Defaults to Moving. */
-  typedef enum  { Fixed=0, Moving, Both } DerivativeSourceType;
+  typedef enum  { Fixed=0, Moving, Both } GradientSourceType;
 
   /**
    * Set source of derivative.  This variable allows the user to switch
    * between calculating the derivative with respect to the fixed
    * object or moving object.
    */
-  itkSetMacro( DerivativeSource, DerivativeSourceType );
+  itkSetMacro( GradientSource, GradientSourceType );
 
   /**
    * Get coordinate system type.
    */
-  itkGetConstMacro( DerivativeSource, DerivativeSourceType );
+  itkGetConstMacro( GradientSource, GradientSourceType );
 
   /** Initialize the Metric by making sure that all the components
    *  are present and plugged together correctly     */
@@ -146,7 +146,7 @@ protected:
   void PrintSelf(std::ostream & os, Indent indent) const
   { Superclass::PrintSelf(os, indent); os << indent << "TODO..."; }
 
-  DerivativeSourceType       m_DerivativeSource;
+  GradientSourceType       m_GradientSource;
 
 private:
   ObjectToObjectMetric(const Self &); //purposely not implemented

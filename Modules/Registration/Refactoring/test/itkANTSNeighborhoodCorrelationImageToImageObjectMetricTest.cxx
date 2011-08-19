@@ -29,6 +29,11 @@
 #include "itkImageRegionConstIterator.h"
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
+
 /**
  * Test program for ANTSNeighborhoodCorrelationImageToImageObjectMetric,
  * using a synthectic image and initial displacement.
@@ -126,26 +131,29 @@ void PrintImage(const ImagePointerType &image) {
     return;
 }
 
-int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
-        int argc, char * argv[]) {
-
+int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest( int, char **)
+{
 
 //    MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
     const int ImageDimension = 2;
 
-    typedef itk::Image<double, ImageDimension> ImageType;
-    typedef ImageType::Pointer ImagePointerType;
-    typedef ImageType::RegionType RegionType;
+    typedef itk::Image<double, ImageDimension>  ImageType;
+    typedef ImageType::Pointer                  ImagePointerType;
+    typedef ImageType::RegionType               RegionType;
 
-    typedef itk::Vector<double, ImageDimension> VectorType;
-    typedef itk::Image<VectorType, ImageDimension> VectorImageType;
+    typedef itk::Vector<double, ImageDimension>     VectorType;
+    typedef itk::Image<VectorType, ImageDimension>  VectorImageType;
 
-    typedef itk::Transform<double, ImageDimension> TransformType;
-    typedef itk::IdentityTransform<double, ImageDimension> IdentityTransformType;
-    typedef itk::CompositeTransform<double, ImageDimension> CompositeTransformType;
-    typedef itk::TranslationTransform<double, ImageDimension> TranslationTransformType;
-    typedef itk::DisplacementFieldTransform<double, ImageDimension> DisplacementTransformType;
+    typedef itk::Transform<double, ImageDimension>  TransformType;
+    typedef itk::IdentityTransform<double, ImageDimension>
+                                                    IdentityTransformType;
+    typedef itk::CompositeTransform<double, ImageDimension>
+                                                    CompositeTransformType;
+    typedef itk::TranslationTransform<double, ImageDimension>
+                                                    TranslationTransformType;
+    typedef itk::DisplacementFieldTransform<double, ImageDimension>
+                                                    DisplacementTransformType;
     typedef DisplacementTransformType::DisplacementFieldType FieldType;
 
     IdentityTransformType::Pointer transformFId = IdentityTransformType::New();
@@ -275,11 +283,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
 
 //  std::cout << "fixed transform field:" << std::endl;
 //  PrintImage(field);
-
 //    std::cout << "moving transform field:" << std::endl;
 //    PrintImage(field);
-
-
 
     /* Initialize. */
     try {
@@ -324,8 +329,6 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest(
     PrintDerivativeAsVectorImage(fixedImage, derivativeReturn, ImageDimension);
 
 //  PrintImage(fieldInv);
-
-
 
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;

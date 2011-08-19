@@ -25,7 +25,7 @@
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
 #include "itkImageToData.h"
-#include "itkDisplacementFieldTransform.h"
+//#include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
@@ -84,21 +84,16 @@ namespace itk
  * Random sampling or user-supplied point lists are not supported except
  * via a user-supplied mask.
  *
- * Derived classes need to override at least:
- *  GetValueAndDerivativeProcessPoint
+ * Derived classes:
+ *  Derived classes need to override at least:
+ *  \c GetValueAndDerivative
+ *  \c GetValueAndDerivativeProcessPoint
  *  Pure virtual methods declared in the base class.
  *
- * See ImageToImageObjectMetricTest for a clear example of what a
- * derived class must implement and do.
- *
- * This class also implements EstimateScales and ComputeMaximumVoxelShift.
- * These methods depends on the fixed image, moving image, virtual image and
- * the transform objects. Therefore, it is natural to put them here.
- *
- * \note: EstimateScales and ComputeMaximumVoxelShift might be put into a
- * separate class for two reasons: 1) Users might want to provide different
- * strategies; 2) There is more flexibility to manipulate transform objects
- * if the information about specific tranform classes is available.
+ *  See \c ImageToImageObjectMetricTest for a clear example of what a
+ *  derived class must implement and do. Pre- and Post-processing are
+ *  handled by the derived class in its \c GetValueAndDerivative method, as
+ *  described in \c ImageToImageObjectMetricTest.
  *
  * \ingroup ITKRegistrationRefactoring
  */
@@ -129,8 +124,8 @@ public:
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
-  /** Derivative source type */
-  typedef typename Superclass::DerivativeSourceType DerivativeSourceType;
+  /** Graident source type */
+  typedef typename Superclass::GradientSourceType GradientSourceType;
 
   /** Image-accessor typedefs */
   typedef TFixedImage                             FixedImageType;
@@ -177,13 +172,16 @@ public:
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
   /** Displacement field typedef for convenience */
+  /*
   typedef DisplacementFieldTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
                                           MovingDisplacementFieldTransformType;
+  */
   /** CompositeTransform typedef for convenience */
-  typedef CompositeTransform<CoordinateRepresentationType,
+  /*typedef CompositeTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
                                           MovingCompositeTransformType;
+  */
 
   /** Identity transform typedef's for convenience */
   typedef IdentityTransform<CoordinateRepresentationType,
@@ -500,13 +498,6 @@ public:
   virtual bool HasLocalSupport() const
     { return this->m_MovingTransform->HasLocalSupport(); }
 
-  /** Return the size of derivative result, taking DerivativeSource
-   * into account. */
-  /* Actually I think this is wrong. Local derivate is always relevant to
-   * moving transform since we're always optimizing moving transform. And
-   * DerivativeSource is only for source of image derivatives. */
-  //virtual SizeValueType GetLocalDerivativeSize() const;
-
   /* Initialize the metric before calling GetValue or GetDerivative.
    * Derived classes must call this Superclass version if they override
    * this to perform their own initialization.
@@ -595,8 +586,6 @@ protected:
   /** When using pre-warped images, this routine will return pixel value
    * and optionally the image gradient at a given \c index.
    * Used internally.
-   * \c virtualPoint is passed in for efficiency because it's already computed
-   * before calling this method.
    * \c fixedImageValue and \c movingImageValue are returned.
    * \c fixedImageGradient and \c movingImageGradient are returned if
    * \c computeImageGradient is true.
@@ -604,7 +593,6 @@ protected:
    * one is supplied.
    * \warning Use of masks with pre-warped images is not yet implemented. */
   virtual void EvaluatePreWarpedImagesAtIndex( const VirtualIndexType & index,
-                                 const VirtualPointType & virtualPoint,
                                  const bool computeImageGradient,
                                  FixedImagePixelType & fixedImageValue,
                                  MovingImagePixelType & movingImageValue,
@@ -773,10 +761,6 @@ protected:
   /** Pre-allocated transform jacobian objects, for use as needed by dervied
    * classes for efficiency. */
   std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
-  /** FIXME: may need separate types for fixed and moving, but ok for now. */
-  std::vector<
-    typename MovingDisplacementFieldTransformType::AffineTransformPointer >
-                                                m_AffineTransformPerThread;
 
   ImageToImageObjectMetric();
   virtual ~ImageToImageObjectMetric() {}

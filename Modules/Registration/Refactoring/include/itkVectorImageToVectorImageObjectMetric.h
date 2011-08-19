@@ -131,7 +131,7 @@ public:
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
   /** Derivative source type */
-  typedef typename Superclass::DerivativeSourceType DerivativeSourceType;
+  typedef typename Superclass::GradientSourceType GradientSourceType;
 
   /** Image-accessor typedefs */
   typedef TFixedImage                             FixedImageType;
@@ -516,13 +516,6 @@ public:
   virtual bool HasLocalSupport() const
     { return this->m_MovingTransform->HasLocalSupport(); }
 
-  /** Return the size of derivative result, taking DerivativeSource
-   * into account. */
-  /* Actually I think this is wrong. Local derivate is always relevant to
-   * moving transform since we're always optimizing moving transform. And
-   * DerivativeSource is only for source of image derivatives. */
-  //virtual SizeValueType GetLocalDerivativeSize() const;
-
   /* Initialize the metric before calling GetValue or GetDerivative.
    * Derived classes must call this Superclass version if they override
    * this to perform their own initialization.
@@ -785,10 +778,6 @@ protected:
   /** Pre-allocated transform jacobian objects, for use as needed by dervied
    * classes for efficiency. */
   std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
-  /** FIXME: may need separate types for fixed and moving, but ok for now. */
-  std::vector<
-    typename MovingDisplacementFieldTransformType::AffineTransformPointer >
-                                                m_AffineTransformPerThread;
 
   VectorImageToVectorImageObjectMetric();
   virtual ~VectorImageToVectorImageObjectMetric() {}

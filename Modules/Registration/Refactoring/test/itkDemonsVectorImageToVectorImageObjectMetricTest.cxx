@@ -25,6 +25,11 @@
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
 
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
+
 /* Simple test to verify that class builds and runs.
  * Results are not verified. See VectorImageToVectorImageObjectMetricTest
  * for verification of basic metric functionality.
@@ -34,7 +39,7 @@
 
 using namespace itk;
 
-int itkDemonsVectorImageToVectorImageObjectMetricTest(int argc, char * argv[])
+int itkDemonsVectorImageToVectorImageObjectMetricTest(int, char **)
 {
 
   const unsigned int imageSize = 5;

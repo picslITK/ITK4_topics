@@ -22,10 +22,13 @@
 #include <iostream>
 
 #include "itkDisplacementFieldTransform.h"
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
 #include "itkCenteredAffineTransform.h"
 #include "itkImageRegionIteratorWithIndex.h"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 const unsigned int dimensions = 2;
 typedef itk::DisplacementFieldTransform<double, dimensions>

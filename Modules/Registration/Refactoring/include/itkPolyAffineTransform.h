@@ -128,13 +128,6 @@ public:
   typedef typename Superclass::InputVectorPixelType  InputVectorPixelType;
   typedef typename Superclass::OutputVectorPixelType OutputVectorPixelType;
 
-  /** Standard tensor type for this class */
-  typedef typename Superclass::InputTensorType  InputTensorType;
-  typedef typename Superclass::OutputTensorType OutputTensorType;
-
-  typedef typename Superclass::InputTensorEigenVectorType  InputTensorEigenVectorType;
-  typedef typename Superclass::OutputTensorEigenVectorType OutputTensorEigenVectorType;
-
   /** Standard vnl_vector type for this class   */
   typedef vnl_vector_fixed< TScalarType,
                             itkGetStaticConstMacro(InputSpaceDimension) >
@@ -256,20 +249,29 @@ public:
   //    const InputPointType & itkNotUsed(point) ) const
   //  { return TransformCovariantVector( vector ); }
 
+  virtual const JacobianType & GetJacobian(const InputPointType  &) const
+  {
+    itkExceptionMacro("to be removed")
+  }
+
   /** Compute the Jacobian of the transformation
    *
    * This method computes the Jacobian matrix of the transformation.
    * given point or vector, returning the transformed point or
    * vector. The rank of the Jacobian will also indicate if the transform
-   * is invertible at this point. */
-  const JacobianType & GetJacobian(const InputPointType & point) const;
-
-  /** get local Jacobian for the given point
-   * \c j will sized properly as needed.
-   * This is a thread-safe version for GetJacobian(). Otherwise,
-   * m_Jacobian could be changed for different values in different threads. */
+   * is invertible at this point.
+   * \c jacobian will sized properly as needed. */
   void GetJacobianWithRespectToParameters(const InputPointType  &x,
-                                          JacobianType &j) const;
+                                          JacobianType &jacobian) const;
+
+  /** NOT IMPLEMENTED */
+  virtual void GetJacobianWithRespectToPosition(
+                                       const InputPointType &,
+                                       JacobianType & ) const
+  {
+    itkExceptionMacro("GetJacobianWithRespectToPosition not implemented for "
+                      << this->GetNameOfClass() );
+  }
 
   /** Create inverse of an affine transformation
    *

@@ -27,7 +27,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDisplacementFieldTransform.h"
+#include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -41,7 +41,12 @@
 
 // #include "itkMinimumMaximumImageCalculator.h"
 
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
+using namespace itk;
 
 namespace{
 // The following class is used to support callbacks
@@ -66,7 +71,6 @@ public:
 };
 }
 
-using namespace itk;
 int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
 
@@ -133,8 +137,6 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int a
   MovingImageType::Pointer movingImage = matcher->GetOutput();
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
-
-
   //create a displacement field transform
   typedef TranslationTransform<double, Dimension>
                                                     TranslationTransformType;
@@ -142,7 +144,7 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int a
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
-  typedef DisplacementFieldTransform<double, Dimension>
+  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<double, Dimension>
                                                     DisplacementTransformType;
   DisplacementTransformType::Pointer displacementTransform =
                                               DisplacementTransformType::New();
@@ -163,7 +165,7 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int a
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothSigma( 6 );
+  displacementTransform->SetGaussianSmoothingSigma( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -186,14 +188,11 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int a
   metric->SetMovingTransform( displacementTransform );
   //  metric->SetMovingTransform( translationTransform );
 
-
-
   Size<Dimension> radSize;
   radSize.Fill(2);
   metric->SetRadius(radSize);
 
   metric->SetNumberOfSampling(numberOfSampling);
-
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -255,7 +254,7 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int a
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
+  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
@@ -268,11 +267,11 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest(int a
   displacementwriter->Update();
 
   //write the warped image into a file
-  typedef double                           OutputPixelType;
+  typedef double                              OutputPixelType;
   typedef Image< OutputPixelType, Dimension > OutputImageType;
   typedef CastImageFilter<
                         MovingImageType,
-                        OutputImageType > CastFilterType;
+                        OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();

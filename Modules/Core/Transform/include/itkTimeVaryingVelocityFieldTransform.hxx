@@ -84,8 +84,8 @@ TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
     inverse->SetLowerTimeBound( this->m_UpperTimeBound );
     inverse->SetTimeVaryingVelocityFieldInterpolator(
       this->m_TimeVaryingVelocityFieldInterpolator );
-    inverse->SetDeformationField( this->m_InverseDeformationField );
-    inverse->SetInverseDeformationField( this->m_DeformationField );
+    inverse->SetDisplacementField( this->m_InverseDisplacementField );
+    inverse->SetInverseDisplacementField( this->m_DisplacementField );
     inverse->SetInterpolator( this->m_Interpolator );
     inverse->SetIntegrateTimeVaryingVelocityField( true );
     return true;
@@ -141,7 +141,7 @@ void TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
     if( this->m_IntegrateTimeVaryingVelocityField == true )
       {
       typedef TimeVaryingVelocityFieldIntegrationImageFilter
-        <TimeVaryingVelocityFieldType, DeformationFieldType> IntegratorType;
+        <TimeVaryingVelocityFieldType, DisplacementFieldType> IntegratorType;
 
       typename IntegratorType::Pointer integrator = IntegratorType::New();
       integrator->SetInput( this->m_TimeVaryingVelocityField );
@@ -154,13 +154,13 @@ void TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
         }
       integrator->SetNumberOfIntegrationSteps(
         this->m_NumberOfIntegrationSteps );
-      typename DeformationFieldType::Pointer deformationField =
+      typename DisplacementFieldType::Pointer displacementField =
         integrator->GetOutput();
-      deformationField->Update();
-      deformationField->DisconnectPipeline();
+      displacementField->Update();
+      displacementField->DisconnectPipeline();
 
-      this->SetDeformationField( deformationField );
-      this->GetInterpolator()->SetInputImage( deformationField );
+      this->SetDisplacementField( displacementField );
+      this->GetInterpolator()->SetInputImage( displacementField );
 
       typename IntegratorType::Pointer inverseIntegrator = IntegratorType::New();
       inverseIntegrator->SetInput( this->m_TimeVaryingVelocityField );
@@ -173,12 +173,12 @@ void TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
         }
       inverseIntegrator->SetNumberOfIntegrationSteps(
         this->m_NumberOfIntegrationSteps );
-      typename DeformationFieldType::Pointer inverseDeformationField =
+      typename DisplacementFieldType::Pointer inverseDisplacementField =
         inverseIntegrator->GetOutput();
-      inverseDeformationField->Update();
-      inverseDeformationField->DisconnectPipeline();
+      inverseDisplacementField->Update();
+      inverseDisplacementField->DisconnectPipeline();
 
-      this->SetInverseDeformationField( inverseDeformationField );
+      this->SetInverseDisplacementField( inverseDisplacementField );
       }
     }
 }

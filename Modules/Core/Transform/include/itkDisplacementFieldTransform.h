@@ -130,6 +130,9 @@ public:
   typedef typename Superclass::InputPointType   InputPointType;
   typedef typename Superclass::OutputPointType  OutputPointType;
 
+  /** Input index type for this class */
+  typedef typename Superclass::InputIndexType   InputIndexType;
+
   /** Standard vector type for this class. */
   typedef typename Superclass::InputVectorType      InputVectorType;
   typedef typename Superclass::OutputVectorType     OutputVectorType;
@@ -185,8 +188,6 @@ public:
   typedef typename Superclass::OriginType                 OriginType;
   typedef typename Superclass::DirectionType              DirectionType;
 
-  typedef Index< NDimensions >                            InputIndexType;
-
   /** Get/Set the displacement field. */
   itkGetObjectMacro( DisplacementField, DisplacementFieldType );
   /** Set the displacement field. Create special set accessor to update
@@ -213,10 +214,6 @@ public:
 
   virtual OutputPointType TransformIndex(const InputIndexType &) const;
 
-  /** Check if the \c TransformIndex method can be used, given a
-   * region, spacing, direction and origin. If the passed parameters
-   * match those of the assigned displacement field image and its
-   * Buffered region, return true. */
   bool CanUseTransformIndex( RegionType&, OriginType&,
                              SpacingType&, DirectionType& ) const;
 

@@ -358,9 +358,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_LocalDerivativesPerThread.resize( this->m_NumberOfThreads );
   /* Per-thread pre-allocated Jacobian objects for efficiency */
   this->m_MovingTransformJacobianPerThread.resize( this->m_NumberOfThreads );
-  /* Per-thread pre-allocated affine transform used by
-   * DisplacementFieldTransform for efficiency */
-  this->m_AffineTransformPerThread.resize( this->m_NumberOfThreads );
 
   /* This size always comes from the moving image */
   unsigned long globalDerivativeSize =
@@ -402,12 +399,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
        * that holds the result over a particular image region. */
         this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
       }
-    /* Allocate affine transforms for use in DisplacementFieldTransform::
-     * TransformCovariantVector, to avoid repeated stack allocation */
-    /* TODO: remove this, not needed anymore */
-    typedef typename MovingDisplacementFieldTransformType::AffineTransformType
-                                                         AffineTransformType;
-    this->m_AffineTransformPerThread[i] = AffineTransformType::New();
     }
   /* This will be true until next call to Initialize */
   this->m_ThreadingMemoryHasBeenInitialized = true;
@@ -546,7 +537,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       try
         {
         self->EvaluatePreWarpedImagesAtIndex( ItV.GetIndex(),
-                                        virtualPoint,
                                         true, /* compute gradient */
                                         fixedImageValue,
                                         movingImageValue,
@@ -725,7 +715,6 @@ template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::EvaluatePreWarpedImagesAtIndex( const VirtualIndexType & index,
-                                 const VirtualPointType & virtualPoint,
                                  const bool computeImageGradient,
                                  FixedImagePixelType & fixedImageValue,
                                  MovingImagePixelType & movingImageValue,
@@ -1323,6 +1312,10 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::VerifyDisplacementFieldSizeAndPhysicalSpace()
 {
+
+//TODO replace with common external method. Possibly use Transform::CanUseTransformIndex as stop-gap.
+
+#if 0
   /* Verify that virtual domain and displacement field are the same size
    * and in the same physical space.
    * Effects transformation, and calc of offset in StoreDerivativeResult.
@@ -1409,6 +1402,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                         << originString.str() << spacingString.str()
                         << directionString.str() );
       }
+#endif
 }
 
 }//namespace itk
