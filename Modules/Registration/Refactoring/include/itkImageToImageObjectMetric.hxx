@@ -54,10 +54,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* Interpolators. Default to linear. */
   m_FixedInterpolator = FixedLinearInterpolatorType::New();
   m_MovingInterpolator = MovingLinearInterpolatorType::New();
-  /* m_[Fixed|Moving]Interpolator get assigned to this during Initialize
-   * if they're found to be bspline interpolators. */
-  m_FixedBSplineInterpolator = NULL;
-  m_MovingBSplineInterpolator = NULL;
 
   m_PrecomputeImageGradient = true;
   /* These will be instantiated if needed in Initialize */
@@ -187,72 +183,29 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   m_FixedInterpolator->SetInputImage( m_FixedImage );
   m_MovingInterpolator->SetInputImage( m_MovingImage );
 
-  /* Setup for image gradient calculations and possible BSpline interpolation.
-    Check if the interpolator is of type BSplineInterpolateImageFunction.
-    If so, we can make use of its EvaluateDerivatives method.
-    Otherwise, we instantiate an external central difference
-    derivative calculator.
-  */
+  /* Setup for image gradient calculations.
+   * Instantiate a central difference derivative calculator
+   * if appropriate. */
+
   /* Fixed */
-  FixedBSplineInterpolatorType *fixedTestPtr =
-        dynamic_cast< FixedBSplineInterpolatorType * >
-          ( this->m_FixedInterpolator.GetPointer() );
-  if ( !fixedTestPtr )
-    {
-    /* It's a BSpline interpolator */
-    m_FixedInterpolatorIsBSpline = false;
-    m_FixedBSplineInterpolator = NULL;
     if( !m_PrecomputeImageGradient )
       {
       m_FixedGradientCalculator = FixedGradientCalculatorType::New();
       m_FixedGradientCalculator->UseImageDirectionOn();
       m_FixedGradientCalculator->SetInputImage(this->m_FixedImage);
       }
-    itkDebugMacro("Fixed Interpolator is not BSpline");
-    }
-  else
-    {
-    /* It's not a BSpline interpolator */
-    m_FixedInterpolatorIsBSpline = true;
-    m_FixedBSplineInterpolator = fixedTestPtr;
-    m_FixedBSplineInterpolator->SetNumberOfThreads(m_NumberOfThreads);
-    m_FixedBSplineInterpolator->UseImageDirectionOn();
-    m_FixedGradientCalculator = NULL;
-    itkDebugMacro("Fixed Interpolator is BSpline");
-    }
   /* Moving */
-  MovingBSplineInterpolatorType *movingTestPtr =
-        dynamic_cast< MovingBSplineInterpolatorType * >
-          ( this->m_MovingInterpolator.GetPointer() );
-  if ( !movingTestPtr )
-    {
-    m_MovingInterpolatorIsBSpline = false;
-    m_MovingBSplineInterpolator = NULL;
     if( ! m_PrecomputeImageGradient )
       {
       m_MovingGradientCalculator = MovingGradientCalculatorType::New();
       m_MovingGradientCalculator->UseImageDirectionOn();
       m_MovingGradientCalculator->SetInputImage(this->m_MovingImage);
       }
-    itkDebugMacro("Moving Interpolator is not BSpline");
-    }
-  else
+
+  /* If user set to use pre-calculated gradient image,
+   * then we need to calculate the gradient images. */
+  if ( m_PrecomputeImageGradient )
     {
-    m_MovingInterpolatorIsBSpline = true;
-    m_MovingBSplineInterpolator = movingTestPtr;
-    m_MovingBSplineInterpolator->SetNumberOfThreads(m_NumberOfThreads);
-    m_MovingBSplineInterpolator->UseImageDirectionOn();
-    m_MovingGradientCalculator = NULL;
-    itkDebugMacro("Moving Interpolator is BSpline");
-    }
-  /* If user set to use pre-calculated gradient image, and either interpolator
-   * isn't bspline, then we need to calculate the gradient images. */
-  if ( m_PrecomputeImageGradient &&
-       !( m_FixedInterpolatorIsBSpline && m_MovingInterpolatorIsBSpline ) )
-    {
-    //NOTE: This could be broken into separate fixed- and moving-gaussian
-    // calculations if users will be having one interpolator as bspline
-    // and not the other.
     ComputeGaussianGradient();
     }
 
@@ -269,14 +222,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       {
       itkExceptionMacro("Use of m_PreWarpImages with m_PrecomputeImageGradient "
                         "is not supported (currently, at least). ");
-      }
-    if( this->m_MovingInterpolatorIsBSpline || m_FixedInterpolatorIsBSpline )
-      {
-      /* Using BSpline with pre-warp option requires handling the two different
-       * ways bspline interpolators are used: 1) image gradient calcs; 2)
-       * interpolation. */
-      itkExceptionMacro("Use of BSpline interpolators is not currently "
-                        " with m_PreWarpImages option." );
       }
     m_MovingWarpResampleImageFilter = MovingWarpResampleImageFilterType::New();
     m_MovingWarpResampleImageFilter->SetUseReferenceImage( true );
@@ -542,29 +487,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                         movingImageValue,
                                         fixedImageGradient,
                                         movingImageGradient,
-                                        pointIsValid,
-                                        threadID );
-        /* Get the point in moving and fixed space for use below */
-        if( self->m_FixedTransform->HasLocalSupport() )
-          {
-          mappedFixedPoint =
-                    self->m_FixedTransform->TransformIndex( ItV.GetIndex() );
-          }
-        else
-          {
-          mappedFixedPoint =
-                        self->m_FixedTransform->TransformPoint( virtualPoint );
-          }
-        if( self->m_MovingTransform->HasLocalSupport() )
-          {
-          mappedMovingPoint =
-                   self->m_MovingTransform->TransformIndex( ItV.GetIndex() );
-          }
-        else
-          {
-          mappedMovingPoint =
-                        self->m_MovingTransform->TransformPoint( virtualPoint );
-          }
+                                        pointIsValid );
         }
       catch( ExceptionObject & exc )
         {
@@ -595,8 +518,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                               pointIsValid,
                                               fixedImageValue,
                                               true /*compute gradient*/,
-                                              fixedImageGradient,
-                                              threadID );
+                                              fixedImageGradient );
         if( pointIsValid )
           {
           self->TransformAndEvaluateMovingPoint( ItV.GetIndex(),
@@ -605,8 +527,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                 pointIsValid,
                                                 movingImageValue,
                                                 true /*compute gradient*/,
-                                                movingImageGradient,
-                                                threadID );
+                                                movingImageGradient );
           }
         }
       catch( ExceptionObject & exc )
@@ -720,12 +641,33 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                  MovingImagePixelType & movingImageValue,
                                  FixedImageGradientType & fixedImageGradient,
                                  MovingImageGradientType & movingImageGradient,
-                                 bool & pointIsValid,
-                                 const ThreadIdType threadID ) const
+                                 bool & pointIsValid ) const
 {
   /* For now, this is always true. When we enable mask usage with pre-warping,
    * we'll check the mask here. */
   pointIsValid = true;
+
+  /* Get the point in moving and fixed space for use below */
+  if( self->m_FixedTransform->HasLocalSupport() )
+    {
+    mappedFixedPoint =
+              self->m_FixedTransform->TransformIndex( ItV.GetIndex() );
+    }
+  else
+    {
+    mappedFixedPoint =
+                  self->m_FixedTransform->TransformPoint( virtualPoint );
+    }
+  if( self->m_MovingTransform->HasLocalSupport() )
+    {
+    mappedMovingPoint =
+             self->m_MovingTransform->TransformIndex( ItV.GetIndex() );
+    }
+  else
+    {
+    mappedMovingPoint =
+                  self->m_MovingTransform->TransformPoint( virtualPoint );
+    }
 
   /* TODO check mask */
 
@@ -740,11 +682,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       // functions of computing derivatives, because index are the same for fixed warped
       // and moving warped images
 
-      ComputeFixedImageGradientAtIndex( index, fixedImageGradient, threadID );
-      ComputeMovingImageGradientAtIndex( index, movingImageGradient, threadID );
-
-//    ComputeFixedImageGradient( virtualPoint, fixedImageGradient, threadID );
-//    ComputeMovingImageGradient( virtualPoint, movingImageGradient, threadID );
+      ComputeFixedImageGradientAtIndex( index, fixedImageGradient );
+      ComputeMovingImageGradientAtIndex( index, movingImageGradient );
     }
 }
 
@@ -762,8 +701,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       bool & pointIsValid,
                       FixedImagePixelType & fixedImageValue,
                       bool computeImageGradient,
-                      FixedImageGradientType & fixedImageGradient,
-                      ThreadIdType threadID) const
+                      FixedImageGradientType & fixedImageGradient ) const
 {
   pointIsValid = true;
   fixedImageValue = 0;
@@ -791,44 +729,15 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     return;
     }
 
-  if ( m_FixedInterpolatorIsBSpline )
+  // Check if mapped point is inside image buffer
+  pointIsValid = m_FixedInterpolator->IsInsideBuffer(mappedFixedPoint);
+  if ( pointIsValid )
     {
-    // Check if mapped point inside image buffer
-    pointIsValid =
-      m_FixedBSplineInterpolator->IsInsideBuffer( mappedFixedPoint );
-    if ( pointIsValid )
+    fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
+    if( computeImageGradient )
       {
-      if( computeImageGradient )
-        {
-        /* The assumption here is that calling EvaluateValueAndDerivative
-         * is faster than separately calling Evaluate and EvaluateDerivative,
-         * because of setup for the bspline evaluation. */
-        m_FixedBSplineInterpolator->EvaluateValueAndDerivative(
-                                                      mappedFixedPoint,
-                                                      fixedImageValue,
-                                                      fixedImageGradient,
-                                                      threadID);
-        }
-      else
-        {
-        fixedImageValue =
-          m_FixedBSplineInterpolator->Evaluate(mappedFixedPoint, threadID);
-        }
-      }
-    }
-  else
-    {
-    // Check if mapped point is inside image buffer
-    pointIsValid = m_FixedInterpolator->IsInsideBuffer(mappedFixedPoint);
-    if ( pointIsValid )
-      {
-      fixedImageValue = m_FixedInterpolator->Evaluate(mappedFixedPoint);
-      if( computeImageGradient )
-        {
-        this->ComputeFixedImageGradient(mappedFixedPoint,
-                                           fixedImageGradient,
-                                           threadID);
-        }
+      this->ComputeFixedImageGradient( mappedFixedPoint,
+                                       fixedImageGradient );
       }
     }
 
@@ -860,8 +769,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       bool & pointIsValid,
                       MovingImagePixelType & movingImageValue,
                       bool computeImageGradient,
-                      MovingImageGradientType & movingImageGradient,
-                      ThreadIdType threadID) const
+                      MovingImageGradientType & movingImageGradient ) const
 {
   pointIsValid = true;
   movingImageValue = 0;
@@ -888,46 +796,18 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     return;
     }
 
-  if ( m_MovingInterpolatorIsBSpline )
+  // Check if mapped point inside image buffer
+  pointIsValid = m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint);
+  if ( pointIsValid )
     {
-    // Check if mapped point inside image buffer
-    pointIsValid =
-      m_MovingBSplineInterpolator->IsInsideBuffer( mappedMovingPoint );
-    if ( pointIsValid )
+    movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
+    if( computeImageGradient )
       {
-      if( computeImageGradient )
-        {
-        /* The assumption here is that calling EvaluateValueAndDerivative
-         * is faster than separately calling Evaluate and EvaluateDerivative,
-         * because of setup for the bspline evaluation. */
-        m_MovingBSplineInterpolator->EvaluateValueAndDerivative(
-                                                      mappedMovingPoint,
-                                                      movingImageValue,
-                                                      movingImageGradient,
-                                                      threadID);
-        }
-      else
-        {
-        movingImageValue =
-          m_MovingBSplineInterpolator->Evaluate(mappedMovingPoint, threadID);
-        }
+      this->ComputeMovingImageGradient( mappedMovingPoint,
+                                        movingImageGradient );
       }
     }
-  else
-    {
-    // Check if mapped point inside image buffer
-    pointIsValid = m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint);
-    if ( pointIsValid )
-      {
-      movingImageValue = m_MovingInterpolator->Evaluate(mappedMovingPoint);
-      if( computeImageGradient )
-        {
-        this->ComputeMovingImageGradient(mappedMovingPoint,
-                                            movingImageGradient,
-                                            threadID);
-        }
-      }
-    }
+
   if( pointIsValid && computeImageGradient )
     {
     // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
@@ -947,31 +827,21 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeFixedImageGradient(
                               const FixedImagePointType & mappedPoint,
-                              FixedImageGradientType & gradient,
-                              ThreadIdType threadID) const
+                              FixedImageGradientType & gradient ) const
 {
-  if ( m_FixedInterpolatorIsBSpline )
+  if ( m_PrecomputeImageGradient )
     {
-    // Computed Fixed image gradient using derivative BSpline kernel.
-    gradient = m_FixedBSplineInterpolator->EvaluateDerivative(mappedPoint,
-                                                              threadID);
+    ContinuousIndex< double, FixedImageDimension > tempIndex;
+    m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
+                                                           tempIndex);
+    FixedImageIndexType mappedIndex;
+    mappedIndex.CopyWithRound(tempIndex);
+    gradient = m_FixedGaussianGradientImage->GetPixel(mappedIndex);
     }
   else
     {
-    if ( m_PrecomputeImageGradient )
-      {
-      ContinuousIndex< double, FixedImageDimension > tempIndex;
-      m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
-                                                             tempIndex);
-      FixedImageIndexType mappedIndex;
-      mappedIndex.CopyWithRound(tempIndex);
-      gradient = m_FixedGaussianGradientImage->GetPixel(mappedIndex);
-      }
-    else
-      {
-      // if not using the gradient image
-      gradient = m_FixedGradientCalculator->Evaluate(mappedPoint);
-      }
+    // if not using the gradient image
+    gradient = m_FixedGradientCalculator->Evaluate(mappedPoint);
     }
 }
 
@@ -983,31 +853,21 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeMovingImageGradient(
                               const MovingImagePointType & mappedPoint,
-                              MovingImageGradientType & gradient,
-                              ThreadIdType threadID) const
+                              MovingImageGradientType & gradient ) const
 {
-  if ( m_MovingInterpolatorIsBSpline )
+  if ( m_PrecomputeImageGradient )
     {
-    // Computed moving image gradient using derivative BSpline kernel.
-    gradient = m_MovingBSplineInterpolator->EvaluateDerivative(mappedPoint,
-                                                               threadID);
+    ContinuousIndex< double, MovingImageDimension > tempIndex;
+    m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
+                                                           tempIndex);
+    MovingImageIndexType mappedIndex;
+    mappedIndex.CopyWithRound(tempIndex);
+    gradient = m_MovingGaussianGradientImage->GetPixel(mappedIndex);
     }
   else
     {
-    if ( m_PrecomputeImageGradient )
-      {
-      ContinuousIndex< double, MovingImageDimension > tempIndex;
-      m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
-                                                             tempIndex);
-      MovingImageIndexType mappedIndex;
-      mappedIndex.CopyWithRound(tempIndex);
-      gradient = m_MovingGaussianGradientImage->GetPixel(mappedIndex);
-      }
-    else
-      {
-      // if not using the gradient image
-      gradient = m_MovingGradientCalculator->Evaluate(mappedPoint);
-      }
+    // if not using the gradient image
+    gradient = m_MovingGradientCalculator->Evaluate(mappedPoint);
     }
 }
 
@@ -1021,39 +881,16 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeFixedImageGradientAtIndex(
                               const VirtualIndexType & index,
-                              FixedImageGradientType & gradient,
-                              ThreadIdType threadID) const
+                              FixedImageGradientType & gradient ) const
 {
-  if ( m_FixedInterpolatorIsBSpline )
+  if ( m_PrecomputeImageGradient )
     {
-    // Computed Fixed image gradient using derivative BSpline kernel.
-//    gradient = m_FixedBSplineInterpolator->EvaluateDerivative(mappedPoint,
-//                                                              threadID);
-      //TODO: check if bspline interpolator can evalute at index
-      gradient = m_FixedBSplineInterpolator->EvaluateDerivativeAtContinuousIndex(index,
-                                                                    threadID);
-
+      gradient = m_FixedGaussianGradientImage->GetPixel(index);
     }
   else
     {
-    if ( m_PrecomputeImageGradient )
-      {
-//      ContinuousIndex< double, FixedImageDimension > tempIndex;
-//      m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
-//                                                             tempIndex);
-//      FixedImageIndexType mappedIndex;
-//      mappedIndex.CopyWithRound(tempIndex);
-//      gradient = m_FixedGaussianGradientImage->GetPixel(mappedIndex);
-        gradient = m_FixedGaussianGradientImage->GetPixel(index);
-
-
-        //
-      }
-    else
-      {
-      // if not using the gradient image
-      gradient = m_FixedGradientCalculator->EvaluateAtIndex(index);
-      }
+    // if not using the gradient image
+    gradient = m_FixedGradientCalculator->EvaluateAtIndex(index);
     }
 }
 
@@ -1065,29 +902,16 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeMovingImageGradientAtIndex(
                               const VirtualIndexType & index,
-                              MovingImageGradientType & gradient,
-                              ThreadIdType threadID) const
+                              MovingImageGradientType & gradient ) const
 {
-  if ( m_MovingInterpolatorIsBSpline )
+  if ( m_PrecomputeImageGradient )
     {
-//    // Computed moving image gradient using derivative BSpline kernel.
-//    gradient = m_MovingBSplineInterpolator->EvaluateDerivative(mappedPoint,
-//                                                               threadID);
-
-    gradient = m_MovingBSplineInterpolator->EvaluateDerivativeAtContinuousIndex(index,
-                                                                   threadID);
+    gradient = m_MovingGaussianGradientImage->GetPixel(index);
     }
   else
     {
-    if ( m_PrecomputeImageGradient )
-      {
-      gradient = m_MovingGaussianGradientImage->GetPixel(index);
-      }
-    else
-      {
-      // if not using the gradient image
-      gradient = m_MovingGradientCalculator->EvaluateAtIndex(index);
-      }
+    // if not using the gradient image
+    gradient = m_MovingGradientCalculator->EvaluateAtIndex(index);
     }
 }
 
@@ -1114,17 +938,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * We should try to skip this for efficiency. Will be possible if
    * ResampleImageFilter always returns the same image pointer after
    * its first update, or if it can be set to allocate output during init. */
-  if( m_FixedInterpolatorIsBSpline )
-    {
-    itkExceptionMacro(
-                "BSpline interpolators with pre-warping is not yet supported.");
-    }
-  else
-    {
-    /* No need to call Modified here on the calculators */
-    m_FixedGradientCalculator->SetInputImage( m_FixedWarpedImage );
-    m_MovingGradientCalculator->SetInputImage( m_MovingWarpedImage );
-    }
+  /* No need to call Modified here on the calculators */
+  m_FixedGradientCalculator->SetInputImage( m_FixedWarpedImage );
+  m_MovingGradientCalculator->SetInputImage( m_MovingWarpedImage );
 }
 
 /*

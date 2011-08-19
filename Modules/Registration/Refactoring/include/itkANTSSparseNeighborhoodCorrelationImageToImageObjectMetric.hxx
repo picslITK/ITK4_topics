@@ -185,14 +185,12 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             dataHolder->TransformAndEvaluateFixedPoint(
                     virtualIndex, virtualPoint,
                     mappedFixedPoint, pointIsValid, fixedImageValue,
-                    false /*compute gradient*/, fixedImageGradient,
-                    threadID);
+                    false /*compute gradient*/, fixedImageGradient);
             if (pointIsValid) {
                 dataHolder->TransformAndEvaluateMovingPoint(
                         virtualIndex, virtualPoint,
                         mappedMovingPoint, pointIsValid, movingImageValue,
-                        false /*compute gradient*/, movingImageGradient,
-                        threadID);
+                        false /*compute gradient*/, movingImageGradient);
             }
         } catch (ExceptionObject & exc) {
             //NOTE: there must be a cleaner way to do this:
