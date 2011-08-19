@@ -117,7 +117,7 @@ public:
 
   /**  Type of the derivative. */
   itkSuperclassTraitMacro( DerivativeType );
-  itkSuperclassTraitMacro( DerivativeSourceType );
+  itkSuperclassTraitMacro( GradientSourceType );
 
   typedef typename DerivativeType::ValueType           DerivativeValueType;
   typedef FixedArray<DerivativeValueType,

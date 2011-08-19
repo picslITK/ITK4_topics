@@ -45,118 +45,123 @@ ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage, TMovingImage,
  */
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::Initialize(void) throw (ExceptionObject) {
-    this->Superclass::Initialize();
+        TMovingImage, TVirtualImage>::Initialize(void) throw (ExceptionObject)
+{
+  this->Superclass::Initialize();
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::GetValueAndDerivative(MeasureType & value,
-        DerivativeType & derivative) {
+        DerivativeType & derivative)
+{
+  // This starts threading, and will iterate over virtual image region and
+  // call GetValueAndDerivativeProcessPoint.
+  this->GetValueAndDerivativeMultiThreadedInitiate(derivative);
 
-    // This starts threading, and will iterate over virtual image region and
-    // call GetValueAndDerivativeProcessPoint.
-    this->GetValueAndDerivativeMultiThreadedInitiate(derivative);
+  // Sums up results from each thread, and optionally averages them.
+  // Derivative results are written directly to \c derivative.
+  this->GetValueAndDerivativeMultiThreadedPostProcess(true /*doAverage*/);
 
-    // Sums up results from each thread, and optionally averages them.
-    // Derivative results are written directly to \c derivative.
-    this->GetValueAndDerivativeMultiThreadedPostProcess(true /*doAverage*/);
-
-    value = this->GetValueResult();
+  value = this->GetValueResult();
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::PrintSelf(std::ostream & os,
-        Indent indent) const {
-    Superclass::PrintSelf(os, indent);
-    os << indent << "Correlation window radius: " << m_Radius << std::endl;
+        Indent indent) const
+{
+  Superclass::PrintSelf(os, indent);
+  os << indent << "Correlation window radius: " << m_Radius << std::endl;
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
-void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback(
-        const ThreaderInputObjectType& virtualImageSubRegion,
-        ThreadIdType threadID, Superclass * dataHolderA) {
+void
+ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
+                                                    TMovingImage,
+                                                    TVirtualImage>
+::NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback(
+                      const ThreaderInputObjectType& virtualImageSubRegion,
+                      ThreadIdType threadID, Superclass * dataHolderA)
+{
+  Self *dataHolder = dynamic_cast<Self *>(dataHolderA);
 
-    Self *dataHolder = dynamic_cast<Self *>(dataHolderA);
-
-    VirtualPointType virtualPoint;
-    FixedOutputPointType mappedFixedPoint;
-    // FixedImagePixelType fixedImageValue;
-    FixedImageGradientType fixedImageGradient;
-    MovingOutputPointType mappedMovingPoint;
-    // MovingImagePixelType movingImageValue;
-    MovingImageGradientType movingImageGradient;
-    bool pointIsValid;
-    MeasureType metricValueResult;
-    MeasureType metricValueSum = 0;
+  VirtualPointType virtualPoint;
+  FixedOutputPointType mappedFixedPoint;
+  // FixedImagePixelType fixedImageValue;
+  FixedImageGradientType fixedImageGradient;
+  MovingOutputPointType mappedMovingPoint;
+  // MovingImagePixelType movingImageValue;
+  MovingImageGradientType movingImageGradient;
+  bool pointIsValid;
+  MeasureType metricValueResult;
+  MeasureType metricValueSum = 0;
 
 //    DerivativeType localDerivativeResult(
 //            dataHolder->GetNumberOfLocalParameters());
 
-    DerivativeType & localDerivativeResult = dataHolder->m_LocalDerivativesPerThread[threadID];
+  DerivativeType & localDerivativeResult = dataHolder->m_LocalDerivativesPerThread[threadID];
 
-    typedef Self MetricType;
+  typedef Self MetricType;
 
-    ScanningIteratorType scan_it;
-    ScanParaType scan_para;
-    ScanMemType scan_mem;
+  ScanningIteratorType scan_it;
+  ScanParaType scan_para;
+  ScanMemType scan_mem;
 
-    /* Create an iterator over the virtual sub region */
-    dataHolder->InitializeScanning(virtualImageSubRegion, scan_it, scan_mem,
-            scan_para, threadID);
+  /* Create an iterator over the virtual sub region */
+  dataHolder->InitializeScanning(virtualImageSubRegion, scan_it, scan_mem,
+          scan_para, threadID);
 
-    /* Iterate over the sub region */
-    scan_it.GoToBegin();
-    while (!scan_it.IsAtEnd()) {
-        /* Get the virtual point */
-        dataHolder->m_VirtualDomainImage->TransformIndexToPhysicalPoint(
-                scan_it.GetIndex(), virtualPoint);
+  /* Iterate over the sub region */
+  scan_it.GoToBegin();
+  while (!scan_it.IsAtEnd()) {
+      /* Get the virtual point */
+      dataHolder->m_VirtualDomainImage->TransformIndexToPhysicalPoint(
+              scan_it.GetIndex(), virtualPoint);
 
-        /* Call the user method in derived classes to do the specific
-         * calculations for value and derivative. */
-        try {
-            dataHolder->UpdateQueues(scan_it, scan_mem, scan_para, threadID);
-            pointIsValid = dataHolder->ComputeInformationFromQueues(scan_it,
-                    scan_mem, scan_para, threadID);
-            dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
-                    scan_para, localDerivativeResult, metricValueResult,
-                    threadID);
+      /* Call the user method in derived classes to do the specific
+       * calculations for value and derivative. */
+      try {
+          dataHolder->UpdateQueues(scan_it, scan_mem, scan_para, threadID);
+          pointIsValid = dataHolder->ComputeInformationFromQueues(scan_it,
+                  scan_mem, scan_para, threadID);
+          dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
+                  scan_para, localDerivativeResult, metricValueResult,
+                  threadID);
 
-        } catch (ExceptionObject & exc) {
-            //NOTE: there must be a cleaner way to do this:
-            std::string msg("Caught exception: \n");
-            msg += exc.what();
-            ExceptionObject err(__FILE__, __LINE__, msg);
-            throw err;
-        }
+      } catch (ExceptionObject & exc) {
+          //NOTE: there must be a cleaner way to do this:
+          std::string msg("Caught exception: \n");
+          msg += exc.what();
+          ExceptionObject err(__FILE__, __LINE__, msg);
+          throw err;
+      }
 
-        /* Assign the results */
-        if (pointIsValid) {
-            dataHolder->m_NumberOfValidPointsPerThread[threadID]++;
-            metricValueSum += metricValueResult;
-            /* Store the result. This depends on what type of
-             * transform is being used. */
-            dataHolder->StoreDerivativeResult(localDerivativeResult,
-                    scan_it.GetIndex(), threadID);
-        }
+      /* Assign the results */
+      if (pointIsValid) {
+          dataHolder->m_NumberOfValidPointsPerThread[threadID]++;
+          metricValueSum += metricValueResult;
+          /* Store the result. This depends on what type of
+           * transform is being used. */
+          dataHolder->StoreDerivativeResult(localDerivativeResult,
+                  scan_it.GetIndex(), threadID);
+      }
 
-        //next index
-        ++scan_it;
-    }
+      //next index
+      ++scan_it;
+  }
 
-    /* Store metric value result for this thread. */
-    dataHolder->m_MeasurePerThread[threadID] = metricValueSum;
-
+  /* Store metric value result for this thread. */
+  dataHolder->m_MeasurePerThread[threadID] = metricValueSum;
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::InitializeScanning(
         const ImageRegionType &scan_region, ScanningIteratorType &scan_it,
-        ScanMemType &scan_mem, ScanParaType &scan_para,
-        const ThreadIdType threadID) {
+        ScanMemType &, ScanParaType &scan_para,
+        const ThreadIdType )
+{
 
     scan_para.scan_region = scan_region;
     scan_para.I = this->m_FixedImage;
@@ -234,7 +239,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 //            if (0) {
              if (this->m_PreWarpImages) {
                 try {
-                    this->EvaluatePreWarpedImagesAtIndex(index, virtualPoint,
+                    this->EvaluatePreWarpedImagesAtIndex(index,
                             false, /* compute gradient */
                             fixedImageValue, movingImageValue,
                             fixedImageGradient, movingImageGradient,
@@ -357,7 +362,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 //        if (0) {
         if (this->m_PreWarpImages) {
             try {
-                this->EvaluatePreWarpedImagesAtIndex(index, virtualPoint, false, /* compute gradient */
+                this->EvaluatePreWarpedImagesAtIndex(index, false, /* compute gradient */
                 fixedImageValue, movingImageValue, fixedImageGradient,
                         movingImageGradient, pointIsValid, threadID);
                 //                    /* Get the point in moving and fixed space for use below */
@@ -455,7 +460,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ComputeInformationFromQueues(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &scan_para, const ThreadIdType threadID) {
+        const ScanParaType &, const ThreadIdType threadID) {
 
     // Test to see if there are any voxels we need to handle in the current
     // window.
@@ -528,7 +533,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 //    if (0) {
     if (this->m_PreWarpImages) {
         try {
-            this->EvaluatePreWarpedImagesAtIndex(oindex, virtualPoint, true, /* compute gradient */
+            this->EvaluatePreWarpedImagesAtIndex(oindex, true, /* compute gradient */
             fixedImageValue, movingImageValue, fixedImageGradient,
                     movingImageGradient, pointIsValid, threadID);
             //                    /* Get the point in moving and fixed space for use below */
@@ -599,8 +604,8 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ComputeMovingTransformDerivative(
-        const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &scan_para, DerivativeType &deriv,
+        const ScanningIteratorType &, ScanMemType &scan_mem,
+        const ScanParaType &, DerivativeType &deriv,
         MeasureType &local_cc, const ThreadIdType threadID) {
 
     MovingImageGradientType deriv_wrt_image;

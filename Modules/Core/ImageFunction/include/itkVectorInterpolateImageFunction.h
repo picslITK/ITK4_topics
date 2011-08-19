@@ -62,10 +62,6 @@ class ITK_EXPORT VectorInterpolateImageFunction:
     TCoordRep >
 {
 public:
-  /** Extract the vector dimension from the pixel template parameter. */
-  itkStaticConstMacro(Dimension, unsigned int,
-                      TInputImage::PixelType::Dimension);
-
   /** Dimension underlying input image. */
   itkStaticConstMacro(ImageDimension, unsigned int,
                       TInputImage::ImageDimension);

@@ -64,10 +64,10 @@ template < class TFixedImage, class TMovingImage, class TVirtualImage >
 bool
 DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::GetValueAndDerivativeProcessPoint(
-                    const VirtualPointType &           virtualPoint,
-                    const FixedImagePointType &        mappedFixedPoint,
+                    const VirtualPointType &,
+                    const FixedImagePointType &,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageGradientType &  fixedImageGradient,
+                    const FixedImageGradientType &,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
                     const MovingImageGradientType & movingImageGradient,

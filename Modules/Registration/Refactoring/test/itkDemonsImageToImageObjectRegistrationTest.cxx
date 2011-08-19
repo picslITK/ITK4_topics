@@ -30,7 +30,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDisplacementFieldTransform.h"
+#include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -41,6 +41,11 @@
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 // #include "itkMinimumMaximumImageCalculator.h"
 
@@ -138,11 +143,13 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
-  typedef DisplacementFieldTransform<double, Dimension>
-                                                    DisplacementTransformType;
+  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
+                                                    double, Dimension>
+                                                     DisplacementTransformType;
   DisplacementTransformType::Pointer displacementTransform =
                                               DisplacementTransformType::New();
-  typedef DisplacementTransformType::DisplacementFieldType DisplacementFieldType;
+  typedef DisplacementTransformType::DisplacementFieldType
+                                                         DisplacementFieldType;
   DisplacementFieldType::Pointer field = DisplacementFieldType::New();
 
   //set the field to be the same as the fixed image region, which will
@@ -159,7 +166,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothSigma( 6 );
+  displacementTransform->SetGaussianSmoothingSigma( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -267,7 +274,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
+  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;

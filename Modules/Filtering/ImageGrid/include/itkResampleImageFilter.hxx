@@ -752,13 +752,18 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     if ( outputPtr )
       {
       OutputImageRegionType outputRegion = outputPtr->GetRequestedRegion();
-      if( !this->m_Transform->CanUseTransformIndex( outputRegion,
+      /*
+        Disabled for now while working it out in another branch.
+
+        if( !this->m_Transform->CanUseTransformIndex( outputRegion,
                                                    outputPtr->GetOrigin(),
                                                    outputPtr->GetSpacing(),
                                                    outputPtr->GetDirection() ) )
         {
         return false;
         }
+      */
+      return false;
       }
     }
 

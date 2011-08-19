@@ -30,6 +30,11 @@
 
 #include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.h"
 
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
+
 /**
  * Test program for ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric,
  * using a synthectic image and initial displacement
@@ -126,7 +131,7 @@ void PrintImage(const ImagePointerType &image) {
 }
 
 int itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest(
-        int argc, char * argv[]) {
+        int, char **) {
 
 
 //    MultiThreader::SetGlobalMaximumNumberOfThreads(1);
@@ -134,15 +139,16 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest(
 
     const int ImageDimension = 2;
 
-    typedef itk::Image<double, ImageDimension> ImageType;
-    typedef ImageType::Pointer ImagePointerType;
-    typedef ImageType::RegionType RegionType;
+    typedef itk::Image<double, ImageDimension>  ImageType;
+    typedef ImageType::Pointer                  ImagePointerType;
+    typedef ImageType::RegionType               RegionType;
 
-    typedef itk::Vector<double, ImageDimension> VectorType;
-    typedef itk::Image<VectorType, ImageDimension> VectorImageType;
+    typedef itk::Vector<double, ImageDimension>     VectorType;
+    typedef itk::Image<VectorType, ImageDimension>  VectorImageType;
 
-    typedef itk::Transform<double, ImageDimension> TransformType;
-    typedef itk::IdentityTransform<double, ImageDimension> IdentityTransformType;
+    typedef itk::Transform<double, ImageDimension>      TransformType;
+    typedef itk::IdentityTransform<double, ImageDimension>
+                                                        IdentityTransformType;
     typedef itk::CompositeTransform<double, ImageDimension> CompositeTransformType;
     typedef itk::TranslationTransform<double, ImageDimension> TranslationTransformType;
     typedef itk::DisplacementFieldTransform<double, ImageDimension> DisplacementTransformType;
@@ -162,10 +168,7 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest(
     CompositeTransformType::Pointer transformFComp =
             CompositeTransformType::New();
 
-
-
     const unsigned int imageSize = 6;
-
 
     ImageType::SizeType size;
     size.Fill(imageSize);
@@ -261,13 +264,10 @@ int itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest(
 
     metric->SetNumberOfSampling(1000);
 
-
     metric->SetFixedImage(fixedImage);
     metric->SetMovingImage(movingImage);
 //  metric->SetFixedTransform(transformFComp);
 //  metric->SetMovingTransform(transformMComp);
-
-
 
     metric->SetFixedTransform(transformFId);
 //    metric->SetMovingTransform(transformMdisplacement);

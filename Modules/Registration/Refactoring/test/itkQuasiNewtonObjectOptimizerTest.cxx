@@ -29,7 +29,6 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"

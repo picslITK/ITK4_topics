@@ -134,7 +134,7 @@ typename PolyAffineTransform< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputVectorType
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformVector(const InputVectorType & vect) const
+::TransformVector(const InputVectorType &) const
 {
   itkExceptionMacro("TransformVector not yet implemented.");
   OutputVectorType output;
@@ -148,7 +148,7 @@ typename PolyAffineTransform< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputVnlVectorType
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformVector(const InputVnlVectorType & vect) const
+::TransformVector(const InputVnlVectorType &) const
 {
   itkExceptionMacro("TransformVector not yet implemented.");
   OutputVnlVectorType output;
@@ -162,7 +162,7 @@ typename PolyAffineTransform< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputCovariantVectorType
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformCovariantVector(const InputCovariantVectorType & vec) const
+::TransformCovariantVector(const InputCovariantVectorType &) const
 {
   itkExceptionMacro("TransformCovariantVector not yet implemented.");
   OutputCovariantVectorType result;     // Converted vector
@@ -346,25 +346,12 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 // Compute the Jacobian in one position
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
-const typename PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >::JacobianType &
-PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::GetJacobian(const InputPointType & p) const
-{
-  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
-  return this->m_Jacobian;
-
-}
-
-// Compute the Jacobian in one position, without setting values to m_Jacobian
-template< class TScalarType, unsigned int NInputDimensions,
-          unsigned int NOutputDimensions >
 void
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 ::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
 {
   //This will not reallocate memory if the dimensions are equal
   // to the matrix's current dimensions.
-
   j.SetSize( NOutputDimensions, this->GetNumberOfLocalParameters() );
   j.Fill(0.0);
 
@@ -388,8 +375,8 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 
   for ( t = 0; t < m_AtomTransformSet.size(); t++ )
     {
-    const typename AtomTransformType::JacobianType &atomJacobian
-      = m_AtomTransformSet[t]->GetJacobian(p);
+    typename AtomTransformType::JacobianType atomJacobian;
+    m_AtomTransformSet[t]->GetJacobianWithRespectToParameters(p, atomJacobian);
     for ( par1 = 0; par1 < m_AtomTransformSet[t]->GetNumberOfLocalParameters(); par1++ )
       {
       for ( d = 0; d < NOutputDimensions; d++ )

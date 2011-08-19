@@ -28,7 +28,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDisplacementFieldTransform.h"
+#include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -39,6 +39,11 @@
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 using namespace itk;
 
@@ -144,7 +149,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
 
   translationTransform->SetParameters(initial_translation);
 
-  typedef DisplacementFieldTransform<double, Dimension>
+  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<double, Dimension>
                                                     DisplacementTransformType;
   DisplacementTransformType::Pointer displacementTransform =
                                               DisplacementTransformType::New();
@@ -161,7 +166,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothSigma( 6 );
+  displacementTransform->SetGaussianSmoothingSigma( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -263,7 +268,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
+  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;

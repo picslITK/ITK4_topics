@@ -64,16 +64,16 @@ template < class TFixedImage, class TMovingImage, class TVirtualImage >
 bool
 DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::GetValueAndDerivativeProcessPoint(
-                    const VirtualPointType &           virtualPoint,
-                    const FixedImagePointType &        mappedFixedPoint,
+                    const VirtualPointType &,
+                    const FixedImagePointType &,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageGradientType &  fixedImageGradient,
+                    const FixedImageGradientType &,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
                     const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueReturn,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID)
+                    ThreadIdType )
 {
   //localDerivativeReturn.Fill(0); //see direct assignment below of sum
 

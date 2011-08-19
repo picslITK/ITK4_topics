@@ -126,7 +126,7 @@ DisplacementFieldTransform<TScalar, NDimensions>
 ::TransformIndex(const InputIndexType & index) const
 {
 
-  if( !this->m_DisplacemntField )
+  if( !this->m_DisplacementField )
     {
     itkExceptionMacro( "No deformation field is specified." );
     }

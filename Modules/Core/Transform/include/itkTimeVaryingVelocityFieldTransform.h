@@ -46,6 +46,7 @@ namespace itk
  * \author Brian Avants
  *
  * \ingroup Transforms
+ * \ingroup ITKTransform
  *
  * \wiki
  * \wikiexample{}
@@ -58,7 +59,7 @@ class ITK_EXPORT TimeVaryingVelocityFieldTransform :
 public:
   /** Standard class typedefs. */
   typedef TimeVaryingVelocityFieldTransform                 Self;
-  typedef DisplacementFieldTransform<TScalar, NDimensions>   Superclass;
+  typedef DisplacementFieldTransform<TScalar, NDimensions>  Superclass;
   typedef SmartPointer<Self>                                Pointer;
   typedef SmartPointer<const Self>                          ConstPointer;
 
@@ -123,10 +124,6 @@ public:
     ScalarType>                      TimeVaryingVelocityFieldInterpolatorType;
   typedef typename TimeVaryingVelocityFieldInterpolatorType::Pointer
                                      TimeVaryingVelocityFieldInterpolatorPointer;
-
-  /* Define tranform based upon ImageDirections of Displacement Field */
-  typedef typename Superclass::AffineTransformType   AffineTransformType;
-  typedef typename AffineTransformType::Pointer      AffineTransformPointer;
 
   /** Define the internal parameter helper used to access the field */
   typedef ImageVectorTransformParametersHelper

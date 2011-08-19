@@ -20,7 +20,7 @@
 #endif
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
-#include "itkDisplacementFieldTransform.h"
+#include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 #include "itkIdentityTransform.h"
 
 #include "itkIndex.h"
@@ -30,6 +30,11 @@
 #include "itkCommand.h"
 #include "vnl/vnl_math.h"
 #include "itkVectorCastImageFilter.h"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 /* This test uses simple test images with circles created at runtime.
  *  Modified from itkDemonsRegistrationFilterTest.
@@ -155,7 +160,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   FillWithCircle<ImageType>( fixedImage, center, radius, fgnd, bgnd );
 
   //create a displacement field transform
-  typedef itk::DisplacementFieldTransform<double, ImageDimension>
+  typedef itk::GaussianSmoothingOnUpdateDisplacementFieldTransform<double, ImageDimension>
                                                     DisplacementTransformType;
   DisplacementTransformType::Pointer displacementTransform =
                                               DisplacementTransformType::New();
@@ -176,7 +181,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothSigma( 1.0 );
+  displacementTransform->SetGaussianSmoothingSigma( 1.0 );
 
   //identity transform for fixed image
   typedef itk::IdentityTransform<double, ImageDimension> IdentityTransformType;
@@ -257,7 +262,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
   warper->SetInput( movingImage );
-  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
+  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
   warper->SetInterpolator( interpolator );
   warper->SetOutputSpacing( fixedImage->GetSpacing() );
   warper->SetOutputOrigin( fixedImage->GetOrigin() );

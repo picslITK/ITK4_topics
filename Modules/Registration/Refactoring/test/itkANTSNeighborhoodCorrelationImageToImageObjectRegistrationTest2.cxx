@@ -27,7 +27,7 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
-#include "itkDisplacementFieldTransform.h"
+#include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -39,6 +39,11 @@
 #include "itksys/SystemTools.hxx"
 #include "itkImageRegistrationMethodImageSource.h"
 #include "itkAffineTransform.h"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 using namespace itk;
 
@@ -141,7 +146,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
             TranslationTransformType::New();
     translationTransform->SetIdentity();
 
-    typedef DisplacementFieldTransform<double, Dimension> DisplacementTransformType;
+    typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<double, Dimension> DisplacementTransformType;
     DisplacementTransformType::Pointer displacementTransform =
             DisplacementTransformType::New();
     typedef DisplacementTransformType::DisplacementFieldType DisplacementFieldType;
@@ -157,7 +162,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
     field->FillBuffer(zeroVector);
     // Assign to transform
     displacementTransform->SetDisplacementField(field);
-    displacementTransform->SetGaussianSmoothSigma(6);
+    displacementTransform->SetGaussianSmoothingSigma(6);
 
     //identity transform for fixed image
     typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -280,7 +285,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
     warper->SetOutputOrigin(fixedImage->GetOrigin());
     warper->SetOutputDirection(fixedImage->GetDirection());
 
-    warper->SetDisplacementField(displacementTransform->GetDisplacementField());
+    warper->SetDeformationField(displacementTransform->GetDisplacementField());
 
 //  //write out the displacement field
 //  typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;

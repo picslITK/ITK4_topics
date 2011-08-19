@@ -20,6 +20,10 @@
 #include "itkDisplacementFieldTransform.h"
 #include "itkTranslationTransform.h"
 #include "vnl/vnl_math.h"
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 /*
  * This test creates synthetic images and verifies numerical results
@@ -82,16 +86,16 @@ public:
 
   /* Provide the worker routine to process each point */
   bool GetValueAndDerivativeProcessPoint(
-                    const VirtualPointType &           virtualPoint,
-                    const FixedImagePointType &        mappedFixedPoint,
+                    const VirtualPointType &,
+                    const FixedImagePointType &,
                     const FixedImagePixelType &        fixedImageValue,
                     const FixedImageGradientType &  fixedImageGradient,
-                    const MovingImagePointType &       mappedMovingPoint,
+                    const MovingImagePointType & ,
                     const MovingImagePixelType &       movingImageValue,
                     const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID)
+                    ThreadIdType )
   {
     /* Just return some test values that can verify proper mechanics */
     metricValueResult = fixedImageValue + movingImageValue;
@@ -161,7 +165,7 @@ public:
 protected:
   TestDerivedMetric(){};
   virtual ~TestDerivedMetric() {}
-  void PrintSelf(std::ostream& os, Indent indent) const {}
+  void PrintSelf(std::ostream&, Indent) const {}
 
 private:
   //purposely not implemented
@@ -330,7 +334,7 @@ int RunTest( TestMetricType::Pointer & metric,
 }//namespace
 
 ////////////////////////////////////////////////////////////
-int itkImageToImageObjectMetricTest(int argc, char * argv[])
+int itkImageToImageObjectMetricTest(int, char **)
 {
   int result = EXIT_SUCCESS;
 

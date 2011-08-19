@@ -402,9 +402,6 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_LocalDerivativesPerThread.resize( this->m_NumberOfThreads );
   /* Per-thread pre-allocated Jacobian objects for efficiency */
   this->m_MovingTransformJacobianPerThread.resize( this->m_NumberOfThreads );
-  /* Per-thread pre-allocated affine transform used by
-   * DisplacementFieldTransform for efficiency */
-  this->m_AffineTransformPerThread.resize( this->m_NumberOfThreads );
 
   /* This size always comes from the moving image */
   unsigned long globalDerivativeSize =
@@ -446,12 +443,6 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
        * that holds the result over a particular image region. */
         this->m_DerivativesPerThread[i].SetSize( globalDerivativeSize );
       }
-    /* Allocate affine transforms for use in DisplacementFieldTransform::
-     * TransformCovariantVector, to avoid repeated stack allocation */
-    /* TODO: remove this, not needed anymore */
-    typedef typename MovingDisplacementFieldTransformType::AffineTransformType
-                                                         AffineTransformType;
-    this->m_AffineTransformPerThread[i] = AffineTransformType::New();
     }
   /* This will be true until next call to Initialize */
   this->m_ThreadingMemoryHasBeenInitialized = true;
@@ -933,7 +924,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeFixedImageGradient(
                               const FixedImagePointType & mappedPoint,
                               FixedImageGradientType & gradient,
-                              ThreadIdType threadID) const
+                              ThreadIdType ) const
 {
 
 
@@ -963,7 +954,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeMovingImageGradient(
                               const MovingImagePointType & mappedPoint,
                               MovingImageGradientType & gradient,
-                              ThreadIdType threadID) const
+                              ThreadIdType ) const
 {
 
     if ( m_PrecomputeImageGradient )
