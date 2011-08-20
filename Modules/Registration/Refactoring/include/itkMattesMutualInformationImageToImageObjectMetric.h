@@ -84,16 +84,20 @@ public:
   /** Typedef for the joint PDF and marginal PDF are stored as ITK Images. */
   typedef Image<PDFValueType,1> MarginalPDFType;
   typedef typename MarginalPDFType::IndexType MarginalPDFIndexType;
+  typedef typename MarginalPDFType::PointType MarginalPDFPointType;
   typedef Image< PDFValueType, 2 >            JointPDFType;
+  typedef typename JointPDFType::PointType JointPDFPointType;
   itkGetConstReferenceMacro(JointPDF,typename JointPDFType::Pointer);
 
   itkSetClampMacro( NumberOfHistogramBins, SizeValueType,
                     5, NumericTraits< SizeValueType >::max() );
   itkGetConstReferenceMacro(NumberOfHistogramBins, SizeValueType);
   /** pdf interpolator */
-  typedef BSplineInterpolateImageFunction<JointPDFType,double> JointPDFInterpolatorType;
+//  typedef BSplineInterpolateImageFunction<JointPDFType,double> JointPDFInterpolatorType;
+  typedef LinearInterpolateImageFunction<JointPDFType,double> JointPDFInterpolatorType;
   typedef typename JointPDFInterpolatorType::Pointer JointPDFInterpolatorPointer;
-  typedef BSplineInterpolateImageFunction<MarginalPDFType,double> MarginalPDFInterpolatorType;
+//  typedef BSplineInterpolateImageFunction<MarginalPDFType,double> MarginalPDFInterpolatorType;
+  typedef LinearInterpolateImageFunction<MarginalPDFType,double> MarginalPDFInterpolatorType;
   typedef typename MarginalPDFInterpolatorType::Pointer MarginalPDFInterpolatorPointer;
 
   /** Initialize the metric. Make sure all essential inputs are plugged in. */
@@ -106,17 +110,6 @@ public:
    */
   void GetValueAndDerivative(MeasureType & value, DerivativeType & derivative);
 
-  /** Called by GetValueAndDerivative */
-  void ComputeJointPDFandMarginalPDFs();
-
-  /** Compute parzen window index. */
-  int ComputeParzenWindowIndex(double);
-
-  /** Compute the PDF Derivatives. */
-  void ComputePDFDerivatives(int pdfMovingIndex,
-                             const MovingImageGradientsType & movingImageGradientValue,
-                             double & cubicBSplineDerivativeValue,
-                             ThreadIdType threadID) const;
   /** Get the value */
   MeasureType GetValue();
 
@@ -125,6 +118,34 @@ protected:
   MattesMutualInformationImageToImageObjectMetric();
   virtual ~MattesMutualInformationImageToImageObjectMetric();
   void PrintSelf(std::ostream & os, Indent indent) const;
+
+  void ComputeJointPDFPoint( FixedImagePixelType fixedImageValue, MovingImagePixelType movingImageValue , JointPDFPointType* jointPDFpoint ) {
+    jointPDFpoint[0]=(fixedImageValue-this->m_FixedImageTrueMin)/(this->m_FixedImageTrueMax-this->m_FixedImageTrueMin);
+    jointPDFpoint[1]=(movingImageValue-this->m_MovingImageTrueMin)/(this->m_MovingImageTrueMax-this->m_MovingImageTrueMin);
+  }
+
+  double GetMovingImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID ) {
+    //    return m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->EvaluateDerivative(mind)[0];
+    MarginalPDFPointType  leftpoint=margPDFpoint;
+    leftpoint[0]-=this->m_JointPDFSpacing[0];
+    MarginalPDFPointType  rightpoint=margPDFpoint;
+    rightpoint[0]+=this->m_JointPDFSpacing[0];
+    double deriv=this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
+                 this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(leftpoint);
+    return deriv;
+  }
+
+  double GetJointPDFDerivative( JointPDFPointType jointPDFpoint , unsigned int threadID ) {
+    //    return this->m_ThreaderJointPDFInterpolator[threadID]->EvaluateDerivative( jointPDFpoint )[1];
+    JointPDFPointType  leftpoint=jointPDFpoint;
+    leftpoint[0]-=this->m_JointPDFSpacing[0];
+    JointPDFPointType  rightpoint=jointPDFpoint;
+    rightpoint[0]+=this->m_JointPDFSpacing[0];
+    double deriv=this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(rightpoint)-
+                 this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(leftpoint);
+    return deriv;
+  }
+
 
   /** Initiates multi-threading to evaluate the current metric value
    * and derivatives. */
@@ -172,6 +193,7 @@ private:
   typedef JointPDFType::PixelType             JointPDFValueType;
   typedef JointPDFType::RegionType            JointPDFRegionType;
   typedef JointPDFType::SizeType              JointPDFSizeType;
+  typedef JointPDFType::SpacingType           JointPDFSpacingType;
 
   /** Variables to define the marginal and joint histograms. */
   SizeValueType m_NumberOfHistogramBins;
@@ -193,12 +215,14 @@ private:
   typename CubicBSplineDerivativeFunctionType::Pointer   m_CubicBSplineDerivativeKernel;
 
   double m_JointPDFSum;
+  JointPDFSpacingType m_JointPDFSpacing;
 
   /** For threading */
   JointPDFInterpolatorPointer* m_ThreaderJointPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderFixedImageMarginalPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderMovingImageMarginalPDFInterpolator;
 
+  unsigned int m_Padding;
   /*
   JointPDFType::Pointer * m_ThreaderJointPDF;
   int *m_ThreaderJointPDFStartBin;
