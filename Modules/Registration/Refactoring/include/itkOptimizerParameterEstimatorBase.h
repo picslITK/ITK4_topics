@@ -57,19 +57,19 @@ public:
   itkTypeMacro( OptimizerParameterEstimatorBase, Object );
 
   /** Type of scales */
-  typedef Array< double > ScalesType;
+  typedef Array< double >     ScalesType;
   /** Type of paramters in optimizer */
-  typedef Array< double > ParametersType;
+  typedef Array< double >     ParametersType;
   /** Type of derivative of metric cost function */
-  typedef Array< double > DerivativeType;
+  typedef Array< double >     DerivativeType;
+  /** Type of Jacobian of transform */
+  typedef Array2D< double >   JacobianType;
 
   /** Estimate parameter scales and learning rate*/
-  virtual void EstimateScales(ParametersType parameters,
-    ScalesType &scales) = 0;
+  virtual void EstimateScales(ScalesType &scales) = 0;
 
   /** Compute the maximum voxel shift from the parameter change */
-  virtual double ComputeMaximumVoxelShift(ParametersType parameters,
-    ParametersType deltaParameters) = 0;
+  virtual double ComputeMaximumVoxelShift(ParametersType deltaParameters) = 0;
 
   virtual unsigned int GetImageDimension() = 0;
 

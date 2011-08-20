@@ -18,7 +18,7 @@
 
 /**
  * Test program for DemonImageToImageObjectMetric and
- * QuasiNewtonObjectOptimizer classes.
+ * GradientDescentObjectOptimizer classes.
  *
  * Perform a registration using user-supplied images.
  * No numerical verification is performed. Test passes as long
@@ -26,6 +26,7 @@
  */
 
 #include "itkDemonsImageToImageObjectMetric.h"
+#include "itkGradientDescentObjectOptimizer.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkOptimizerParameterEstimator.h"
 
@@ -48,8 +49,9 @@
 #include "itkVectorInterpolateImageFunction.h"
 #include "itkVectorLinearInterpolateImageFunction.h"
 
-//#include "itkMinimumMaximumImageCalculator.h"
+// #include "itkMinimumMaximumImageCalculator.h"
 
+using namespace itk;
 
 namespace{
 // The following class is used to support callbacks
@@ -74,19 +76,17 @@ public:
 };
 }
 
-using namespace itk;
-
 int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc < 4 || argc > 5)
+  if( argc < 4 || argc > 7)
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations] ";
-    //std::cerr << " [scalarScale] [learningRate] " << std::endl;
+    std::cerr << " [scalarScale] [learningRate] " << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
@@ -94,12 +94,14 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
-  //double scalarScale = 1.0;
-  //double learningRate = 0.1;
+  double scalarScale = 1.0;
+  double learningRate = 0.1;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
-
-  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
+  if( argc >= 6)
+    scalarScale = atof( argv[5] );
+  if( argc == 7 )
+    learningRate = atof( argv[6] );
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -143,11 +145,13 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
-  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<double, Dimension>
-                                                    DisplacementTransformType;
+  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
+                                                    double, Dimension>
+                                                     DisplacementTransformType;
   DisplacementTransformType::Pointer displacementTransform =
                                               DisplacementTransformType::New();
-  typedef DisplacementTransformType::DisplacementFieldType DisplacementFieldType;
+  typedef DisplacementTransformType::DisplacementFieldType
+                                                         DisplacementFieldType;
   DisplacementFieldType::Pointer field = DisplacementFieldType::New();
 
   //set the field to be the same as the fixed image region, which will
@@ -164,7 +168,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothingSigma( 3 );
+  displacementTransform->SetGaussianSmoothingSigma( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -195,6 +199,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   metric->Initialize();
 
   // Optimizer
+  //typedef GradientDescentObjectOptimizer  OptimizerType;
   typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
@@ -204,9 +209,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   //optimizer->SetUseScalarScale(true);
 
   // Testing optimizer parameter estimator
-  typedef itk::OptimizerParameterEstimator< MetricType,
-                                        IdentityTransformType,
-                                        DisplacementTransformType > OptimizerParameterEstimatorType;
+  typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);
@@ -217,8 +220,8 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            //<< "Scalar scale: " << scalarScale << std::endl
-            //<< "Learning rate: " << learningRate << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl
             << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
     {
@@ -291,7 +294,8 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   DisplacementWriterType::Pointer      displacementwriter =  DisplacementWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
-  std::string defout=outfilename + std::string("_def") + ext;
+  std::string name = itksys::SystemTools::GetFilenameWithoutExtension( outfilename );
+  std::string defout = name + std::string("_def") + ext;
   displacementwriter->SetFileName( defout.c_str() );
   displacementwriter->SetInput( displacementTransform->GetDisplacementField() );
   displacementwriter->Update();

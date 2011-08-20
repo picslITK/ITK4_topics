@@ -50,7 +50,7 @@ namespace itk
  *
  * \ingroup ITK-RegistrationCommon
  */
-template < class TMetric, class TFixedTransform, class TMovingTransform >
+template < class TMetric >
 class ITK_EXPORT OptimizerParameterEstimator : public OptimizerParameterEstimatorBase
 {
 public:
@@ -66,24 +66,24 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro( OptimizerParameterEstimator, OptimizerParameterEstimatorBase );
 
-  /** Type of the transform to initialize */
-  typedef TFixedTransform                           FixedTransformType;
-  typedef typename FixedTransformType::Pointer      FixedTransformPointer;
-
-  typedef TMovingTransform                          MovingTransformType;
-  typedef typename MovingTransformType::Pointer     MovingTransformPointer;
-
   typedef TMetric                                   MetricType;
   typedef typename MetricType::Pointer              MetricPointer;
 
-  /** Image Types to use in the initialization of the transform */
-  typedef typename TMetric::FixedImageType              FixedImageType;
-  typedef typename TMetric::MovingImageType             MovingImageType;
-  typedef typename TMetric::VirtualImageType            VirtualImageType;
+  /** Type of the transform to initialize */
+  typedef typename MetricType::FixedTransformType   FixedTransformType;
+  typedef typename FixedTransformType::Pointer      FixedTransformPointer;
 
-  typedef typename FixedImageType::ConstPointer   FixedImagePointer;
-  typedef typename MovingImageType::ConstPointer  MovingImagePointer;
-  typedef typename VirtualImageType::ConstPointer VirtualImagePointer;
+  typedef typename MetricType::MovingTransformType  MovingTransformType;
+  typedef typename MovingTransformType::Pointer     MovingTransformPointer;
+
+  /** Image Types to use in the initialization of the transform */
+  typedef typename TMetric::FixedImageType          FixedImageType;
+  typedef typename TMetric::MovingImageType         MovingImageType;
+  typedef typename TMetric::VirtualImageType        VirtualImageType;
+
+  typedef typename FixedImageType::ConstPointer     FixedImagePointer;
+  typedef typename MovingImageType::ConstPointer    MovingImagePointer;
+  typedef typename VirtualImageType::ConstPointer   VirtualImagePointer;
 
   /* Image dimension accessors */
   itkStaticConstMacro(FixedImageDimension, unsigned int,
@@ -98,18 +98,35 @@ public:
   /** Set the learning rate strategy */
   itkSetMacro(ScaleStrategy, ScaleStrategyType);
 
-  itkStaticConstMacro(ImageDimension, unsigned int,
-                      FixedImageType::ImageDimension);
+  //itkStaticConstMacro(ImageDimension, unsigned int,
+  //    ::itk::GetImageDimension<VirtualImageType>::ImageDimension);
 
-  typedef itk::ImageRegion< itkGetStaticConstMacro(ImageDimension) >
-                                                              ImageRegionType;
-  typedef itk::Size< itkGetStaticConstMacro( ImageDimension ) >   SizeType;
+  //typedef itk::ImageRegion< itkGetStaticConstMacro(ImageDimension) >
+  //                                                                ImageRegionType;
+  //typedef itk::Size< itkGetStaticConstMacro( ImageDimension ) >   SizeType;
 
   /** Standard coordinate point type for this class   */
-  typedef typename FixedImageType::PointType                      PointType;
+  //typedef typename VirtualImageType::PointType                    PointType;
 
   /** Index and Point typedef support. */
-  typedef itk::Index< itkGetStaticConstMacro( ImageDimension ) >  IndexType;
+  //typedef itk::Index< itkGetStaticConstMacro( ImageDimension ) >  IndexType;
+
+  typedef typename VirtualImageType::RegionType     VirtualRegionType;
+  typedef typename VirtualImageType::SizeType       VirtualSizeType;
+  typedef typename VirtualImageType::PointType      VirtualPointType;
+  typedef typename VirtualImageType::IndexType      VirtualIndexType;
+
+  typedef typename FixedImageType::PointType        FixedPointType;
+  typedef typename FixedImageType::IndexType        FixedIndexType;
+  typedef typename FixedImageType::PointValueType   FixedPointValueType;
+  typedef typename itk::ContinuousIndex< FixedPointValueType,
+          FixedImageType::ImageDimension >          FixedContinuousIndexType;
+
+  typedef typename MovingImageType::PointType       MovingPointType;
+  typedef typename MovingImageType::IndexType       MovingIndexType;
+  typedef typename MovingImageType::PointValueType  MovingPointValueType;
+  typedef typename itk::ContinuousIndex< MovingPointValueType,
+          MovingImageType::ImageDimension >         MovingContinuousIndexType;
 
   /** Set the metric used in the registration process */
   //itkSetConstObjectMacro(Metric, MetricType);
@@ -131,7 +148,7 @@ public:
   /** Set the fixed image used in the registration process */
   itkSetConstObjectMacro(FixedImage,  FixedImageType);
   /** Get the fixed Image. */
-  itkGetConstObjectMacro(FixedImage, FixedImageType);
+  itkGetConstObjectMacro(FixedImage,  FixedImageType);
 
   /** Set the moving image used in the registration process */
   itkSetConstObjectMacro(MovingImage, MovingImageType);
@@ -143,10 +160,10 @@ public:
   /** Get the virtual Image. */
   itkGetConstObjectMacro(VirtualImage, VirtualImageType);
 
-  /** Set the transform */
+  /** Set the fixed transform */
   itkSetObjectMacro(FixedTransform,  FixedTransformType);
-  /** Get the transform */
-  itkGetObjectMacro(MovingTransform, MovingTransformType);
+  /** Set the moving transform */
+  itkSetObjectMacro(MovingTransform, MovingTransformType);
 
   /** Set the order of L-norm */
   itkSetMacro(LNorm, int);
@@ -160,12 +177,11 @@ public:
   itkSetMacro(TransformForward, bool);
 
   /** Estimate parameter scales */
-  virtual void EstimateScales(ParametersType parameters, ScalesType &scales);
+  virtual void EstimateScales(ScalesType &scales);
 
   /** Compute the shift in voxels when deltaParameters is applied onto the
    * current parameters. */
-  virtual double ComputeMaximumVoxelShift(ParametersType parameters,
-                            ParametersType deltaParameters);
+  virtual double ComputeMaximumVoxelShift(ParametersType deltaParameters);
 
   virtual unsigned int GetImageDimension()
     {
@@ -185,33 +201,38 @@ protected:
   void SampleImageDomainRandomly();
 
   /** Compute the L-norm of a point */
-  double ComputeLNorm(Point<double, ImageDimension> point);
+  template< class TContinuousIndexType > double ComputeLNorm(TContinuousIndexType point);
 
   /** Set the sample points for computing pixel shifts */
   void SampleImageDomain();
 
-  void EstimateScalesFromMaximumShift(ParametersType parameters,
-                                      ScalesType &parameterScales);
-  template <class TTransform> void EstimateScalesFromJacobian(ParametersType parameters,
-                                  ScalesType &parameterScales);
+  TransformBase * GetTransform();
+  const Superclass::JacobianType & GetJacobian(VirtualPointType &point);
+
+  template< class TContinuousIndexType > void TransformPointToContinuousIndex(
+                              const VirtualPointType &point,
+                              TContinuousIndexType &mappedIndex);
+
+  void EstimateScalesFromMaximumShift(ScalesType &parameterScales);
+  void EstimateScalesFromJacobian(ScalesType &parameterScales);
+
   template <class TTransform> double ComputeTemplatedMaximumVoxelShift(
-                            ParametersType parameters,
-                            ParametersType deltaParameters);
+                              ParametersType deltaParameters);
 
 private:
   OptimizerParameterEstimator(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-  MetricPointer             m_Metric;
+  MetricPointer                 m_Metric;
 
-  FixedTransformPointer     m_FixedTransform;
-  MovingTransformPointer    m_MovingTransform;
+  FixedTransformPointer         m_FixedTransform;
+  MovingTransformPointer        m_MovingTransform;
 
-  FixedImagePointer   m_FixedImage;
-  MovingImagePointer  m_MovingImage;
-  VirtualImagePointer m_VirtualImage;
+  FixedImagePointer             m_FixedImage;
+  MovingImagePointer            m_MovingImage;
+  VirtualImagePointer           m_VirtualImage;
 
-  std::vector<PointType> m_ImageSamples;
+  std::vector<VirtualPointType> m_ImageSamples;
 
   /** Specify how to calculate the distance between two points */
   int m_LNorm;

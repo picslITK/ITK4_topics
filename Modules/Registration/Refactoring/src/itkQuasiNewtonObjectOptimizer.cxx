@@ -67,9 +67,11 @@ QuasiNewtonObjectOptimizer
   if ( ! this->m_Metric->HasLocalSupport() )
     {
     // initialize scales
+    //m_CurrentPosition = this->m_Metric->GetParameters();
     ScalesType scales(this->m_Metric->GetNumberOfParameters());
     //this->m_Metric->EstimateScales(true, scales);
-    m_OptimizerParameterEstimator->EstimateScales(this->m_Metric->GetParameters(), scales);
+    m_OptimizerParameterEstimator->EstimateScales(scales);
+    //m_CurrentPosition = this->m_Metric->GetParameters();
     this->SetScales(scales);
     std::cout << " Estimated scales = " << scales << std::endl;
     }
@@ -131,9 +133,13 @@ QuasiNewtonObjectOptimizer
     newtonStepException = true;
     }
 
-  //std::cout << "m_NewtonStep = " << m_NewtonStep << std::endl;
-  //std::cout << "m_Gradient = "   << m_Gradient << std::endl;
-
+  this->SetDebug(true);
+  if (this->GetDebug())
+    {
+    std::cout << "m_CurrentPosition(:," << 1+this->GetCurrentIteration() << ") = " << this->m_CurrentPosition << "';" << std::endl;
+    std::cout << "m_NewtonStep(:," << 1+this->GetCurrentIteration() << ") = " << m_NewtonStep << "';" << std::endl;
+    std::cout << "m_Gradient(:," << 1+this->GetCurrentIteration() << ") = " << m_Gradient << "';" << std::endl;
+    }
   /** Save for the next iteration */
   m_PreviousPosition = this->GetCurrentPosition();
   m_PreviousGradient = this->GetGradient();
@@ -153,15 +159,17 @@ QuasiNewtonObjectOptimizer
     {
     learningRate = this->EstimateLearningRate(gradientStep);
     this->SetLearningRate( learningRate );
-    //std::cout << "using gradient, learningRate = " << learningRate << std::endl;
-
+    if (this->GetDebug())
+      {
+      std::cout << "using gradient, learningRate = " << learningRate << std::endl;
+      }
     if ( learningRate == 0)
       {
       m_StopCondition = StepTooSmall;
-      m_StopConditionDescription << "Learning rate is zero after "
+      m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
-                                 << " iterations. This may be due to that"
-                                 << " the new step yields zero voxel shift.";
+                                 << " iterations due to that"
+                                 << " the new step is very small.";
       this->StopOptimization();
       return;
       }
@@ -173,15 +181,17 @@ QuasiNewtonObjectOptimizer
     learningRate = this->EstimateLearningRate(m_NewtonStep);
     learningRate = vnl_math_min(learningRate, 1.0);
     this->SetLearningRate( learningRate );
-    //std::cout << "using newton, learningRate = " << learningRate << std::endl;
-
+    if (this->GetDebug())
+      {
+      std::cout << "using newton, learningRate = " << learningRate << std::endl;
+      }
     if ( learningRate == 0)
       {
       m_StopCondition = StepTooSmall;
-      m_StopConditionDescription << "Learning rate is zero after "
+      m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
-                                 << " iterations. This may be due to that"
-                                 << " the new step yields little voxel shift.";
+                                 << " iterations due to that"
+                                 << " the new step is very small.";
       this->StopOptimization();
       return;
       }
@@ -504,12 +514,12 @@ double QuasiNewtonObjectOptimizer
   double shift, learningRate;
 
   //shift = this->m_Metric->ComputeMaximumVoxelShift(true, step);
-  shift = m_OptimizerParameterEstimator->ComputeMaximumVoxelShift(parameters, step);
+  shift = m_OptimizerParameterEstimator->ComputeMaximumVoxelShift(step);
 
   //initialize for the first time of executing EstimateLearningRate
   if (this->GetCurrentIteration() == 0 || m_MinimumVoxelShift == 0)
     {
-    m_MinimumVoxelShift = shift * 1e-3;
+    m_MinimumVoxelShift = shift * 1e-5;
     std::cout << " Initial learningRate = " << m_MaximumVoxelShift / shift << std::endl;
     }
 
