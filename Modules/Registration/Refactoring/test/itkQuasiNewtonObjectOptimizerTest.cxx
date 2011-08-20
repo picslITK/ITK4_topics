@@ -163,8 +163,9 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   matcher->Update();
   movingImage = matcher->GetOutput();
 
-  //create a displacement field transform
+  //create a deformation field transform
   typedef TranslationTransform<double, Dimension>
+  //typedef AffineTransform<double, Dimension>
                                                   TranslationTransformType;
   typedef TranslationTransformType::ParametersType
                                                   ParametersType;
@@ -217,9 +218,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   iterationCommand->SetOptimizer(  optimizer.GetPointer() );
 
   // Testing optimizer parameter estimator
-  typedef itk::OptimizerParameterEstimator< MetricType,
-                                        IdentityTransformType,
-                                        TranslationTransformType > OptimizerParameterEstimatorType;
+  typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);

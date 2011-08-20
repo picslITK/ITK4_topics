@@ -23,8 +23,8 @@
 namespace itk
 {
 
-template< class TMetric, class TFixedTransform, class TMovingTransform >
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
+template< class TMetric >
+OptimizerParameterEstimator< TMetric >
 ::OptimizerParameterEstimator()
 {
   // Euclidean distance
@@ -34,33 +34,41 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 
   m_ScaleStrategy = ScalesFromShift;
 
+  m_Metric = NULL;
+
 }
 
 /** Compute parameter scales */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
-::EstimateScales(ParametersType parameters,
-                 ScalesType &parameterScales)
+OptimizerParameterEstimator< TMetric >
+::EstimateScales(ScalesType &parameterScales)
 {
+  if ( m_Metric == (MetricPointer)NULL )
+    {
+    itkExceptionMacro(" OptimizerParameterEstimator: m_Metric == NULL.");
+    }
+
+  SetMovingTransform(const_cast<MovingTransformType *>(m_Metric->GetMovingTransform()));
+  SetFixedTransform(const_cast<FixedTransformType *>(m_Metric->GetFixedTransform()));
+
+  if (parameterScales.size() != this->GetTransform()->GetNumberOfParameters())
+    {
+    itkExceptionMacro(" The size of scales does not match that of transform parameters.");
+    }
+
+  this->SampleImageDomain();
 
   switch (m_ScaleStrategy)
     {
     case ScalesFromShift:
       {
-      this->EstimateScalesFromMaximumShift(parameters, parameterScales);
+      this->EstimateScalesFromMaximumShift(parameterScales);
       break;
       }
     case ScalesFromJacobian:
       {
-      if (m_TransformForward)
-        {
-        this->EstimateScalesFromJacobian<MovingTransformType>(parameters, parameterScales);
-        }
-      else
-        {
-        this->EstimateScalesFromJacobian<FixedTransformType>(parameters, parameterScales);
-        }
+      this->EstimateScalesFromJacobian(parameterScales);
       break;
       }
     default:
@@ -69,24 +77,65 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
       }
     }
 }
+template< class TMetric >
+TransformBase *
+OptimizerParameterEstimator< TMetric >
+::GetTransform()
+{
+  if (m_TransformForward)
+    {
+    return m_MovingTransform.GetPointer();
+    }
+  else
+    {
+    return m_FixedTransform.GetPointer();
+    }
+}
+
+template< class TMetric >
+template< class TContinuousIndexType >
+void
+OptimizerParameterEstimator< TMetric >
+::TransformPointToContinuousIndex(const VirtualPointType &point,
+                                  TContinuousIndexType &mappedIndex)
+{
+  if (this->m_TransformForward)
+    {
+    MovingPointType mappedPoint;
+    mappedPoint = m_MovingTransform->TransformPoint(point);
+    this->m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint, mappedIndex);
+    }
+  else
+    {
+    FixedPointType mappedPoint;
+    mappedPoint = m_FixedTransform->TransformPoint(point);
+    this->m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint, mappedIndex);
+    }
+}
+
+template< class TMetric >
+const typename OptimizerParameterEstimator< TMetric >::JacobianType &
+OptimizerParameterEstimator< TMetric >
+::GetJacobian(VirtualPointType &point)
+{
+  if (m_TransformForward)
+    {
+    return m_MovingTransform->GetJacobian(point);
+    }
+  else
+    {
+    return m_FixedTransform->GetJacobian(point);
+    }
+}
 
 /** Compute parameter scales */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
-::EstimateScalesFromMaximumShift(ParametersType parameters,
-                                 ScalesType &parameterScales)
+OptimizerParameterEstimator< TMetric >
+::EstimateScalesFromMaximumShift(ScalesType &parameterScales)
 {
   double maxShift;
-  unsigned int numPara = parameters.size();
-
-  if (parameterScales.size() != numPara)
-    {
-    itkExceptionMacro(" The size of scales does not match that of transform parameters.");
-    return;
-    }
-
-  this->SampleImageDomain();
+  unsigned int numPara = parameterScales.size();
 
   ParametersType deltaParameters(numPara);
   deltaParameters.Fill(0.0);
@@ -100,7 +149,7 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
   for (unsigned int i=0; i<numPara; i++)
     {
     deltaParameters[i] = 1;
-    maxShift = this->ComputeMaximumVoxelShift(parameters, deltaParameters);
+    maxShift = this->ComputeMaximumVoxelShift(deltaParameters);
     deltaParameters[i] = 0;
 
     parameterScales[i] = maxShift;
@@ -122,28 +171,29 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 }
 
 /** Compute parameter scales */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
-template< class TTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
-::EstimateScalesFromJacobian(ParametersType parameters,
-                             ScalesType &parameterScales)
+OptimizerParameterEstimator< TMetric >
+::EstimateScalesFromJacobian(ScalesType &parameterScales)
 {
-  typedef typename TTransform::Pointer TransformPointer;
-  TransformPointer transform = TTransform::New();
-  transform->SetParameters(parameters);
-
-  this->SampleImageDomain();
-
   unsigned int numPara = parameterScales.size();
   double normSquare;
   double *norms = new double[numPara];
+
   unsigned int numSamples = 0;
+  unsigned int dim;
 
   numSamples = m_ImageSamples.size();
+  if (m_TransformForward)
+    {
+    dim = MovingImageDimension;
+    }
+  else
+    {
+    dim = FixedImageDimension;
+    }
 
-  PointType point;
-  typename TTransform::JacobianType jacobian;
+  VirtualPointType point;
 
   for (unsigned int p=0; p<numPara; p++)
     {
@@ -154,12 +204,13 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
   for (unsigned int c=0; c<numSamples; c++)
     {
     point = m_ImageSamples[c];
-    jacobian = transform->GetJacobian(point);
+
+    const JacobianType &jacobian = this->GetJacobian(point);
 
     for (unsigned int p=0; p<numPara; p++)
       {
       normSquare = 0;
-      for (unsigned int d=0; d<ImageDimension; d++)
+      for (unsigned int d=0; d<dim; d++)
         {
         normSquare = normSquare + jacobian[d][p] * jacobian[d][p];
         }
@@ -175,9 +226,9 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 }
 
 /** Set the sample points for computing pixel shifts */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
+OptimizerParameterEstimator< TMetric >
 ::SampleImageDomain()
 {
   switch (m_ScaleStrategy)
@@ -202,9 +253,9 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 /**
  * Sample the physical coordinates of image in uniform random
  */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
+OptimizerParameterEstimator< TMetric >
 ::SampleImageDomainRandomly()
 {
 
@@ -220,8 +271,8 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
   randIter.SetNumberOfSamples( numSamples );
   randIter.GoToBegin();
 
-  PointType point;
-  IndexType index;
+  VirtualPointType point;
+  VirtualIndexType index;
 
   for (int i=0; i<numSamples; i++)
     {
@@ -235,26 +286,26 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 /**
  * Get the physical coordinates of image corners
  */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
+OptimizerParameterEstimator< TMetric >
 ::SampleWithCornerPoints()
 {
   VirtualImagePointer image = this->m_VirtualImage;
   m_ImageSamples.clear();
 
-  ImageRegionType region = image->GetLargestPossibleRegion();
-  IndexType firstCorner = region.GetIndex();
-  IndexType corner;
-  PointType point;
+  VirtualRegionType region = image->GetLargestPossibleRegion();
+  VirtualIndexType firstCorner = region.GetIndex();
+  VirtualIndexType corner;
+  VirtualPointType point;
 
-  SizeType size = region.GetSize();
-  int cornerNumber = 1 << ImageDimension; // 2^ImageDimension
+  VirtualSizeType size = region.GetSize();
+  int cornerNumber = 1 << VirtualImageDimension; // 2^ImageDimension
 
   for(int i=0; i<cornerNumber; i++)
     {
     int bit;
-    for (int d=0; d<ImageDimension; d++)
+    for (int d=0; d<VirtualImageDimension; d++)
       {
       bit = (int) (( i & (1 << d) ) != 0); // 0 or 1
       corner[d] = firstCorner[d] + bit * (size[d] - 1);
@@ -268,99 +319,111 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
 /**
  * Compute the maximum shift when one transform is changed to another
  */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 double
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
-::ComputeMaximumVoxelShift(ParametersType parameters,
-                           ParametersType deltaParameters)
+OptimizerParameterEstimator< TMetric >
+::ComputeMaximumVoxelShift(ParametersType deltaParameters)
 {
   double shift;
   if (m_TransformForward)
     {
-    shift = this->ComputeTemplatedMaximumVoxelShift<MovingTransformType>(parameters, deltaParameters);
+    shift = this->ComputeTemplatedMaximumVoxelShift<MovingTransformType>(deltaParameters);
     }
   else
     {
-    shift = this->ComputeTemplatedMaximumVoxelShift<FixedTransformType>(parameters, deltaParameters);
+    shift = this->ComputeTemplatedMaximumVoxelShift<FixedTransformType>(deltaParameters);
     }
   return shift;
 }
 
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 template< class TTransform >
 double
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
-::ComputeTemplatedMaximumVoxelShift(ParametersType parameters,
-                           ParametersType deltaParameters)
+OptimizerParameterEstimator< TMetric >
+::ComputeTemplatedMaximumVoxelShift(ParametersType deltaParameters)
 {
-  typedef typename TTransform::Pointer TransformPointer;
-
   double voxelShift = 0.0;
+  unsigned int dim;
+  if (m_TransformForward)
+    {
+    dim = MovingImageDimension;
+    }
+  else
+    {
+    dim = FixedImageDimension;
+    }
 
-  ParametersType oldParameters = parameters;
+  const ParametersType oldParameters = this->GetTransform()->GetParameters();
   ParametersType newParameters(oldParameters.size());
   for (unsigned int p=0; p<oldParameters.size(); p++)
     {
     newParameters[p] = oldParameters[p] + deltaParameters[p];
     }
-  TransformPointer oldTransform = TTransform::New();
-  TransformPointer newTransform = TTransform::New();
-  oldTransform->SetParameters(oldParameters);
-  newTransform->SetParameters(newParameters);
 
   double distance;
-  unsigned int numSamples = 0;
-  PointType point, oldMappedPoint, newMappedPoint;
+  unsigned int numSamples = m_ImageSamples.size();
 
-  ContinuousIndex<double, ImageDimension> oldMappedIndex, newMappedIndex;
-  ContinuousIndex<double, ImageDimension> diffIndex;
+  VirtualPointType point;
 
-  numSamples = m_ImageSamples.size();
+  typedef ContinuousIndex<double, TTransform::OutputSpaceDimension> ContinuousIndexType;
+
+  ContinuousIndexType newMappedIndex;
+  ContinuousIndexType diffIndex;
+
+  //store the old mapped indices to reduce calls to Transform::SetParameters()
+  ContinuousIndexType *oldMappedIndices = new ContinuousIndexType[numSamples];
 
   // find max shift by checking each sample point
+  // compute the indices mapped by the old transform
   for (unsigned int c=0; c<numSamples; c++)
     {
     point = this->m_ImageSamples[c];
-    oldMappedPoint = oldTransform->TransformPoint(point);
-    newMappedPoint = newTransform->TransformPoint(point);
+    this->TransformPointToContinuousIndex<ContinuousIndexType>(point, oldMappedIndices[c]);
+  } // end for numSamples
 
-    if (this->m_TransformForward)
+  // set the new parameters in the transform
+  this->GetTransform()->SetParameters(newParameters);
+
+  for (unsigned int c=0; c<numSamples; c++)
+    {
+    point = this->m_ImageSamples[c];
+    this->TransformPointToContinuousIndex<ContinuousIndexType>(point, newMappedIndex);
+
+    for (unsigned int d=0; d<dim; d++)
       {
-      this->m_MovingImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
-      this->m_MovingImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
-      }
-    else
-      {
-      this->m_FixedImage->TransformPhysicalPointToContinuousIndex(oldMappedPoint, oldMappedIndex);
-      this->m_FixedImage->TransformPhysicalPointToContinuousIndex(newMappedPoint, newMappedIndex);
-      }
-    for (unsigned int d=0; d<ImageDimension; d++)
-      {
-      diffIndex[d] = oldMappedIndex[d] - newMappedIndex[d];
+      diffIndex[d] = oldMappedIndices[c][d] - newMappedIndex[d];
       }
 
-    distance = ComputeLNorm(diffIndex);
+    distance = ComputeLNorm<ContinuousIndexType>(diffIndex);
     if ( voxelShift < distance )
       {
       voxelShift = distance;
       }
   } // end for numSamples
+
+  // restore the parameters in the transform
+  this->GetTransform()->SetParameters(oldParameters);
+
+  delete[] oldMappedIndices;
+
   return voxelShift;
 }
 
 /**
  * Compute the L-norm of a point
  */
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
+template< class TContinuousIndexType >
 double
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
-::ComputeLNorm(Point<double, ImageDimension> point)
+OptimizerParameterEstimator< TMetric >
+::ComputeLNorm(TContinuousIndexType point)
 {
   double distance = 0;
+  unsigned int dim = TContinuousIndexType::IndexDimension;
 
   if (m_LNorm == 2) // Euclidean distance
     {
-    for (unsigned int d=0; d<ImageDimension; d++)
+    for (unsigned int d=0; d<dim; d++)
       {
       distance += point[d] * point[d];
       }
@@ -368,14 +431,14 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
     }
   else if (m_LNorm == 1)
     {
-    for (unsigned int d=0; d<ImageDimension; d++)
+    for (unsigned int d=0; d<dim; d++)
       {
       distance += vcl_abs(point[d]);
       }
     }
   else if (m_LNorm == -1) //L-infinity norm
     {
-    for (unsigned int d=0; d<ImageDimension; d++)
+    for (unsigned int d=0; d<dim; d++)
       {
       if (distance < vcl_abs(point[d]))
         {
@@ -391,9 +454,9 @@ OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
   return distance;
 }
 
-template< class TMetric, class TFixedTransform, class TMovingTransform >
+template< class TMetric >
 void
-OptimizerParameterEstimator< TMetric, TFixedTransform, TMovingTransform >
+OptimizerParameterEstimator< TMetric >
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os,indent);
