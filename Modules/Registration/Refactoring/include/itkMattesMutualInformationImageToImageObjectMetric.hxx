@@ -52,7 +52,9 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   this->m_MovingImageBinSize=(0.0);
 
   this->m_JointPDFSum=(0.0);
-
+  this->m_ThreaderJointPDFInterpolator=NULL;
+  this->m_ThreaderMovingImageMarginalPDFInterpolator=NULL;
+  this->m_ThreaderFixedImageMarginalPDFInterpolator=NULL;
   // Threading variables
   //  this->m_ThreaderJointPDF=(NULL);
   //  this->m_ThreaderJointPDFStartBin=(NULL);
@@ -67,6 +69,19 @@ template <class TFixedImage, class TMovingImage, class TVirtualImage>
 MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 ::~MattesMutualInformationImageToImageObjectMetric()
 {
+  if ( this->m_ThreaderFixedImageMarginalPDFInterpolator != NULL )
+    {
+    delete[] m_ThreaderFixedImageMarginalPDFInterpolator;
+    }
+  if ( this->m_ThreaderMovingImageMarginalPDFInterpolator != NULL )
+    {
+    delete[] m_ThreaderMovingImageMarginalPDFInterpolator;
+    }
+  if ( this->m_ThreaderJointPDFInterpolator != NULL )
+    {
+    delete[] m_ThreaderJointPDFInterpolator;
+    }
+
   /*
   if ( this->m_FixedImageMarginalPDF != NULL )
     {
@@ -233,7 +248,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
    * window.
    *
    */
-  const int padding = 2;  // this will pad by 2 bins
+  const int padding = 0;  // this will pad by 0 bins
 
   this->m_FixedImageBinSize = ( this->m_FixedImageTrueMax - this->m_FixedImageTrueMin )
                         / static_cast< double >( this->m_NumberOfHistogramBins
@@ -318,6 +333,33 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   this->m_MovingImageMarginalPDF->Allocate();
   //  this->m_MarginalPDFBufferSize = marginalPDFSize[0] * sizeof( PDFValueType );
 
+   // Threaded data
+   if (this->m_ThreaderJointPDFInterpolator != NULL)
+    {
+    delete[] this->m_ThreaderJointPDFInterpolator;
+    }
+   this->m_ThreaderJointPDFInterpolator = new JointPDFInterpolatorPointer[this->GetNumberOfThreads() ];
+   if (this->m_ThreaderFixedImageMarginalPDFInterpolator != NULL)
+    {
+    delete[] this->m_ThreaderFixedImageMarginalPDFInterpolator;
+    }
+   this->m_ThreaderFixedImageMarginalPDFInterpolator = new MarginalPDFInterpolatorPointer[this->GetNumberOfThreads() ];
+
+   if (this->m_ThreaderMovingImageMarginalPDFInterpolator != NULL)
+    {
+    delete[] this->m_ThreaderMovingImageMarginalPDFInterpolator;
+    }
+   this->m_ThreaderMovingImageMarginalPDFInterpolator = new MarginalPDFInterpolatorPointer[this->GetNumberOfThreads() ];
+
+   for (ThreadIdType threadID = 0; threadID < this->GetNumberOfThreads(); threadID++)
+     {
+     this->m_ThreaderJointPDFInterpolator[threadID] = JointPDFInterpolatorType::New();
+     this->m_ThreaderJointPDFInterpolator[threadID]->SetInputImage(this->m_JointPDF);
+     this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID] = MarginalPDFInterpolatorType::New();
+     this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID]->SetInputImage(this->m_FixedImageMarginalPDF);
+     this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID] = MarginalPDFInterpolatorType::New();
+     this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->SetInputImage(this->m_MovingImageMarginalPDF);
+     }
 
   /*
    // Threaded data
@@ -344,15 +386,15 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
 ::ComputeParzenWindowIndex(double parzenWindowTerm )
 {
   int parzenWindowIndex = static_cast<int> (parzenWindowTerm);
-
+  unsigned int padding=0;
   // check that the extreme values are in valid bins
-  if (parzenWindowIndex < 2)
+  if (parzenWindowIndex < padding)
     {
-    parzenWindowIndex = 2;
+    parzenWindowIndex = 0;
     }
   else
     {
-    const int nindex = static_cast<int> (this->m_NumberOfHistogramBins) - 3;
+    const int nindex = static_cast<int> (this->m_NumberOfHistogramBins) - padding - 1;
     if (parzenWindowIndex > nindex)
       {
       parzenWindowIndex = nindex;
@@ -384,10 +426,10 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   typename Superclass::VirtualPointType            virtualPoint;
   typename Superclass::FixedOutputPointType        mappedFixedPoint;
   typename Superclass::FixedImagePixelType         fixedImageValue;
-  typename Superclass::FixedImageDerivativesType   fixedImageDerivatives;
+  FixedImageGradientsType   fixedImageGradients;
   typename Superclass::MovingOutputPointType       mappedMovingPoint;
   typename Superclass::MovingImagePixelType        movingImageValue;
-  typename Superclass::MovingImageDerivativesType  movingImageDerivatives;
+  MovingImageGradientsType  movingImageGradients;
   bool                        pointIsValid = false;
 
   /* Iterate over the sub region */
@@ -405,7 +447,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
                                               pointIsValid,
                                               fixedImageValue,
                                               false /*compute gradient*/,
-                                              fixedImageDerivatives,
+                                              fixedImageGradients,
                                               0 );
         if( pointIsValid )
           {
@@ -415,7 +457,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
                                                 pointIsValid,
                                                 movingImageValue,
                                                 false /*compute gradient*/,
-                                                movingImageDerivatives,
+                                                movingImageGradients,
                                                 0 );
           }
         }
@@ -533,15 +575,15 @@ template <class TFixedImage,class TMovingImage,class TVirtualImage>
 bool
 MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 ::GetValueAndDerivativeProcessPoint(
-                    const VirtualPointType &           itkNotUsed (virtualPoint),
-                    const FixedImagePointType &        itkNotUsed (mappedFixedPoint),
+                    const VirtualPointType &           virtualPoint,
+                    const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  itkNotUsed(fixedImageDerivatives),
-                    const MovingImagePointType &       itkNotUsed (mappedMovingPoint),
+                    const FixedImageGradientsType &  fixedImageGradients,
+                    const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
-                    MeasureType &                      itkNotUsed(metricValueResult),
-                    DerivativeType &                   itkNotUsed(localDerivativeReturn),
+                    const MovingImageGradientsType & movingImageGradients,
+                    MeasureType &                      metricValueReturn,
+                    DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID)
 {
   // check that the moving image sample is within the range of the true min
@@ -554,45 +596,47 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
     {
     return false;
     }
-  /*
-  // compute the fixed image parzen window index
-  double fixedImageParzenWindowTerm = fixedImageValue/this->m_FixedImageBinSize
-                                             - this->m_FixedImageNormalizedMin;
-  int fixedImageParzenWindowIndex
-                        = ComputeParzenWindowIndex( fixedImageParzenWindowTerm );
 
-  // increment the value in the fixed marginal pdf for the corresponding index
-  this->m_FixedImageMarginalPDF[fixedImageParzenWindowIndex]++;
+  /* Use a pre-allocated jacobian object for efficiency */
+  typename Superclass::MovingTransformJacobianType & jacobian =
+                            this->m_MovingTransformJacobianPerThread[threadID];
 
-  // compute the moving image parzen window index
-  double movingImageParzenWindowTerm = movingImageValue/this->m_MovingImageBinSize
-                                             - this->m_MovingImageNormalizedMin;
-  int movingImageParzenWindowIndex = ComputeParzenWindowIndex(movingImageParzenWindowTerm);
-  // go to the affected bin in the joint pdf
-  JointPDFValueType * pdfPtr;
+  /** For dense transforms, this returns identity */
+  this->m_MovingTransform->GetJacobianWithRespectToParameters(
+                                                            mappedMovingPoint,
+                                                            jacobian);
+  /** the scalingfactor is the MI specific scaling of the image gradient and jacobian terms */
+  double scalingfactor=0;
+  itk::ContinuousIndex< double, 2 > pdfind;
+  pdfind[1]=(fixedImageValue-this->m_FixedImageTrueMin)/(this->m_FixedImageTrueMax-this->m_FixedImageTrueMin);
+  pdfind[0]= (movingImageValue-this->m_MovingImageTrueMin)/(this->m_MovingImageTrueMax-this->m_MovingImageTrueMin);
+  double jointPDFValue=this->m_ThreaderJointPDFInterpolator[threadID]->EvaluateAtContinuousIndex(pdfind);
+  double dJPDF = 0; //this->m_ThreaderJointPDFInterpolator[threadID]->EvaluateDerivativeAtContinuousIndex( pdfind ))[1];
 
-  if ( threadID > 0 )
-    {
-    pdfPtr = this->m_ThreaderJointPDF[threadID - 1]->GetBufferPointer()
-             + ( fixedImageParzenWindowIndex
-                 * this->m_ThreaderJointPDF[threadID - 1]
-                 ->GetOffsetTable()[1] );
-    }
+  itk::ContinuousIndex< double, 1 > mind;
+  mind[0]=pdfind[0];
+  double movingImagePDFValue = m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->EvaluateAtContinuousIndex(mind);
+  double dMmPDF = m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->EvaluateDerivativeAtContinuousIndex(mind)[0];
 
-  else
-    {
-    pdfPtr = this->m_JointPDF->GetBufferPointer()
-             + (fixedImageParzenWindowIndex
-                * this->m_JointPDF->GetOffsetTable()[1]);
-    }
-  pdfPtr+= movingImageParzenWindowIndex;
+  double term1=0,term2=0,eps=1.e-12; // FIXME need a 'small value' generalization
+  if( jointPDFValue > eps &&  (movingImagePDFValue) > 0)
+  {
+    term1 = dJPDF/jointPDFValue;
+    term2 = dMmPDF/movingImagePDFValue;
+    scalingfactor =  (term1*(-1.0)+term2);
+  }  // end if-block to check non-zero bin contribution
+  else scalingfactor = 0;
 
-  // set the value to be the evaluated B-spline for the moving index.
-  double movingImageParzenWindowArg =
-          static_cast<double> (movingImageParzenWindowIndex)
-          - movingImageParzenWindowTerm;
-  *(pdfPtr) = this->m_CubicBSplineKernel->Evaluate (movingImageParzenWindowArg);
-  */
+  for ( unsigned int par = 0;
+          par < this->GetNumberOfLocalParameters(); par++ )
+  {
+    double sum = 0.0;
+    for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
+      {
+        sum += scalingfactor * jacobian(dim, par) * movingImageGradients[dim];
+      }
+    localDerivativeReturn[par] = sum;
+  }
   return true;
 }
 
@@ -627,7 +671,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 ::ComputePDFDerivatives(int & fixedImageParzenWindowIndex,
                         int & movingImageParzenWindowIndex,
                         const double & cubicBSplineDerivativeValue,
-                        const MovingImageDerivativesType & movingImageDerivatives,
+                        const MovingImageGradientsType & movingImageGradients,
                         ThreadIdType threadID)
 {
   // Update the bins for the current point
@@ -652,7 +696,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
       double innerProduct = 0.0;
       for ( unsigned int dim = 0; dim < Superclass::FixedImageDimension; dim++ )
         {
-        innerProduct += jacobian[dim][mu] * movingImageDerivatives[dim];
+        innerProduct += jacobian[dim][mu] * movingImageGradients[dim];
         }
 
       // Equation 24 of Thevenaz and Unser.

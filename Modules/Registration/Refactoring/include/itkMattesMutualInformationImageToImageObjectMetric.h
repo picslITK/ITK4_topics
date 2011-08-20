@@ -75,10 +75,10 @@ public:
   typedef typename Superclass::VirtualPointType            VirtualPointType;
   typedef typename Superclass::FixedImagePointType         FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType         FixedImagePixelType;
-  typedef typename Superclass::FixedImageDerivativesType   FixedImageDerivativesType;
+  typedef typename Superclass::FixedGradientPixelType   FixedImageGradientsType;
   typedef typename Superclass::MovingImagePointType        MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType        MovingImagePixelType;
-  typedef typename Superclass::MovingImageDerivativesType  MovingImageDerivativesType;
+  typedef typename Superclass::MovingGradientPixelType  MovingImageGradientsType;
   /** Value type of the PDF */
   typedef double PDFValueType;
   /** Typedef for the joint PDF and marginal PDF are stored as ITK Images. */
@@ -90,6 +90,11 @@ public:
   itkSetClampMacro( NumberOfHistogramBins, SizeValueType,
                     5, NumericTraits< SizeValueType >::max() );
   itkGetConstReferenceMacro(NumberOfHistogramBins, SizeValueType);
+  /** pdf interpolator */
+  typedef BSplineInterpolateImageFunction<JointPDFType,double> JointPDFInterpolatorType;
+  typedef typename JointPDFInterpolatorType::Pointer JointPDFInterpolatorPointer;
+  typedef BSplineInterpolateImageFunction<MarginalPDFType,double> MarginalPDFInterpolatorType;
+  typedef typename MarginalPDFInterpolatorType::Pointer MarginalPDFInterpolatorPointer;
 
   /** Initialize the metric. Make sure all essential inputs are plugged in. */
   virtual void Initialize() throw (itk::ExceptionObject);
@@ -109,7 +114,7 @@ public:
 
   /** Compute the PDF Derivatives. */
   void ComputePDFDerivatives(int pdfMovingIndex,
-                             const MovingImageDerivativesType & movingImageGradientValue,
+                             const MovingImageGradientsType & movingImageGradientValue,
                              double & cubicBSplineDerivativeValue,
                              ThreadIdType threadID) const;
   /** Get the value */
@@ -131,10 +136,10 @@ protected:
                     const VirtualPointType &           itkNotUsed(virtualPoint),
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageDerivativesType &  fixedImageDerivatives,
+                    const FixedImageGradientsType &  fixedImageGradients,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageDerivativesType & movingImageDerivatives,
+                    const MovingImageGradientsType & movingImageGradients,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
                     ThreadIdType                       threadID);
@@ -189,7 +194,12 @@ private:
 
   double m_JointPDFSum;
 
-  /** For threading
+  /** For threading */
+  JointPDFInterpolatorPointer* m_ThreaderJointPDFInterpolator;
+  MarginalPDFInterpolatorPointer* m_ThreaderFixedImageMarginalPDFInterpolator;
+  MarginalPDFInterpolatorPointer* m_ThreaderMovingImageMarginalPDFInterpolator;
+
+  /*
   JointPDFType::Pointer * m_ThreaderJointPDF;
   int *m_ThreaderJointPDFStartBin;
   int *m_ThreaderJointPDFEndBin;
