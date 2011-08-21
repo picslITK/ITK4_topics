@@ -89,6 +89,14 @@ public:
   typedef typename JointPDFType::PointType JointPDFPointType;
   itkGetConstReferenceMacro(JointPDF,typename JointPDFType::Pointer);
 
+  // Declare the type for the derivative calculation
+  typedef itk::GradientRecursiveGaussianImageFilter< JointPDFType >  JPDFGradientFilterType;
+  typedef typename JPDFGradientFilterType::OutputImageType JPDFGradientImageType;
+  typedef typename JPDFGradientImageType::Pointer JPDFGradientImagePointer;
+  typedef itk::GradientRecursiveGaussianImageFilter< MarginalPDFType >  MarginalGradientFilterType;
+  typedef typename MarginalGradientFilterType::OutputImageType MarginalGradientImageType;
+  typedef typename MarginalGradientImageType::Pointer MarginalGradientImagePointer;
+
   itkSetClampMacro( NumberOfHistogramBins, SizeValueType,
                     5, NumericTraits< SizeValueType >::max() );
   itkGetConstReferenceMacro(NumberOfHistogramBins, SizeValueType);
@@ -119,35 +127,76 @@ protected:
   virtual ~MattesMutualInformationImageToImageObjectMetric();
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  void ComputeJointPDFPoint( FixedImagePixelType fixedImageValue, MovingImagePixelType movingImageValue , JointPDFPointType& jointPDFpoint ) {
+  bool ComputeJointPDFPoint( FixedImagePixelType fixedImageValue, MovingImagePixelType movingImageValue , JointPDFPointType& jointPDFpoint , unsigned int threadID ) {
     double a=(fixedImageValue-this->m_FixedImageTrueMin)/(this->m_FixedImageTrueMax-this->m_FixedImageTrueMin);
     double b=(movingImageValue-this->m_MovingImageTrueMin)/(this->m_MovingImageTrueMax-this->m_MovingImageTrueMin);
     jointPDFpoint[0]=a;
     jointPDFpoint[1]=b;
+    return this->m_ThreaderJointPDFInterpolator[threadID]->IsInsideBuffer(jointPDFpoint );
+   }
+
+  inline double ComputeFixedImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID )
+  {
+    double offset=0.5*this->m_JointPDFSpacing[0];
+    double eps=this->m_JointPDFSpacing[0];
+    MarginalPDFPointType  leftpoint=margPDFpoint;
+    leftpoint[0]-=offset;
+    MarginalPDFPointType  rightpoint=margPDFpoint;
+    rightpoint[0]+=offset;
+    if (leftpoint[0] < eps ) leftpoint[0]=eps;
+    if (rightpoint[0] < eps ) rightpoint[0]=eps;
+    if (leftpoint[0] > 1 ) leftpoint[0]=1;
+    if (rightpoint[0] > 1  ) rightpoint[0]=1;
+    double delta=rightpoint[0]-leftpoint[0];
+    if ( delta > 0 ) {
+    double deriv=this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
+                 this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID]->Evaluate(leftpoint);
+    return deriv/delta;
+    }
+    else return 0;
   }
 
   inline double ComputeMovingImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID )
   {
-    double offset=0.1;
+    double offset=0.5*this->m_JointPDFSpacing[0];
+    double eps=this->m_JointPDFSpacing[0];
     MarginalPDFPointType  leftpoint=margPDFpoint;
-    leftpoint[0]-=this->m_JointPDFSpacing[0]*offset;
+    leftpoint[0]-=offset;
     MarginalPDFPointType  rightpoint=margPDFpoint;
-    rightpoint[0]+=this->m_JointPDFSpacing[0]*offset;
+    rightpoint[0]+=offset;
+    if (leftpoint[0] < eps ) leftpoint[0]=eps;
+    if (rightpoint[0] < eps ) rightpoint[0]=eps;
+    if (leftpoint[0] > 1-eps ) leftpoint[0]=1-eps;
+    if (rightpoint[0] > 1-eps  ) rightpoint[0]=1-eps;
+    double delta=rightpoint[0]-leftpoint[0];
+    if ( delta > 0 ) {
     double deriv=this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
                  this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(leftpoint);
-    return deriv/(this->m_JointPDFSpacing[0]*offset);
+    return deriv/delta;
+    }
+    else return 0;
   }
 
   inline double ComputeJointPDFDerivative( JointPDFPointType jointPDFpoint , unsigned int threadID , unsigned int ind  )
   {
-    double offset=0.1;
+    double offset=0.5*this->m_JointPDFSpacing[ind];
+    double eps=this->m_JointPDFSpacing[ind];
     JointPDFPointType  leftpoint=jointPDFpoint;
-    leftpoint[ind]-=this->m_JointPDFSpacing[ind]*offset;
+    leftpoint[ind]-=offset;
     JointPDFPointType  rightpoint=jointPDFpoint;
-    rightpoint[ind]+=this->m_JointPDFSpacing[ind]*offset;
-    double deriv=this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(rightpoint)-
-                 this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(leftpoint);
-    return deriv/(this->m_JointPDFSpacing[0]*offset);
+    rightpoint[ind]+=offset;
+    if (leftpoint[ind] < eps ) leftpoint[ind]=eps;
+    if (rightpoint[ind] < eps ) rightpoint[ind]=eps;
+    if (leftpoint[ind] > 1-eps ) leftpoint[ind]=1-eps;
+    if (rightpoint[ind] > 1-eps ) rightpoint[ind]=1-eps;
+    double delta=rightpoint[ind]-leftpoint[ind];
+    double deriv=0;
+    if ( delta > 0 ) {
+      deriv=this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(rightpoint)-
+            this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(leftpoint);
+      return deriv/delta;
+    }
+    else return deriv;
   }
 
 
@@ -173,7 +222,10 @@ protected:
    * value and derivative.*/
 //  virtual void GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage ); // use superclass
 
+  void EnforceJointHistogramBoundaryConditions();
+
 private:
+
 
   //purposely not implemented
   MattesMutualInformationImageToImageObjectMetric(const Self &);
@@ -219,7 +271,8 @@ private:
   MarginalPDFInterpolatorPointer* m_ThreaderMovingImageMarginalPDFInterpolator;
   double m_Log2;
   unsigned int m_Padding;
-
+  JPDFGradientImagePointer m_JPDFGradientImage;
+  MarginalGradientImagePointer m_MarginalGradientImage;
   /*
   JointPDFType::Pointer * m_ThreaderJointPDF;
   int *m_ThreaderJointPDFStartBin;
