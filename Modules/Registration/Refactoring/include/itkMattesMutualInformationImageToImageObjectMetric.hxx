@@ -296,6 +296,53 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 
 }
 
+
+
+/** Get the value and derivative */
+template <class TFixedImage, class TMovingImage, class TVirtualImage>
+void
+MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+::EnforceJointHistogramBoundaryConditions()
+{
+  typename JointPDFType::IndexType jind;
+  jind.Fill(0);
+  for (unsigned int i=0; i<this->m_NumberOfHistogramBins; i++) {
+    // first column
+    jind[0]=i;
+    jind[1]=this->m_Padding;
+    PDFValueType val=this->m_JointPDF->GetPixel(jind);
+    for (  int j=(int)this->m_Padding-1; j >= 0 ; j-- ) {
+      jind[1]=j;
+      this->m_JointPDF->SetPixel(jind,val);
+    }
+    // first row
+    jind[1]=i;
+    jind[0]=this->m_Padding;
+    val=this->m_JointPDF->GetPixel(jind);
+    for (  int j=(int)this->m_Padding-1; j >= 0 ; j-- ) {
+      jind[0]=j;
+      this->m_JointPDF->SetPixel(jind,val);
+    }
+    // last column
+    jind[0]=i;
+    jind[1]=this->m_NumberOfHistogramBins-this->m_Padding-1;
+    val=this->m_JointPDF->GetPixel(jind);
+    for ( unsigned int j=1; j <= this->m_Padding; j++  ) {
+      jind[1]=this->m_NumberOfHistogramBins-this->m_Padding-1+j;
+      this->m_JointPDF->SetPixel(jind,val);
+    }
+    // last row
+    jind[1]=i;
+    jind[0]=this->m_NumberOfHistogramBins-this->m_Padding-1;
+    val=this->m_JointPDF->GetPixel(jind);
+    for ( unsigned int j=1; j <= this->m_Padding; j++  ) {
+      jind[0]=this->m_NumberOfHistogramBins-this->m_Padding-1+j;
+      this->m_JointPDF->SetPixel(jind,val);
+    }
+  }
+
+}
+
 /** Get the value and derivative */
 template <class TFixedImage, class TMovingImage, class TVirtualImage>
 void
@@ -364,7 +411,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
         }
       /** add the paired intensity points to the joint histogram */
       JointPDFPointType jointPDFpoint;
-      this->ComputeJointPDFPoint(fixedImageValue,movingImageValue, jointPDFpoint);
+      this->ComputeJointPDFPoint(fixedImageValue,movingImageValue, jointPDFpoint,0);
       JointPDFIndexType  jointPDFIndex;
       jointPDFIndex.Fill(0);
       this->m_JointPDF->TransformPhysicalPointToIndex(jointPDFpoint,jointPDFIndex);
@@ -374,43 +421,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   }
 
   /** here we copy the edges of the joint histogram to the padded region */
-  typename JointPDFType::IndexType jind;
-  jind.Fill(0);
-  for (unsigned int i=0; i<this->m_NumberOfHistogramBins; i++) {
-    // first column
-    jind[0]=i;
-    jind[1]=this->m_Padding;
-    PDFValueType val=this->m_JointPDF->GetPixel(jind);
-    for (  int j=(int)this->m_Padding-1; j >= 0 ; j-- ) {
-      jind[1]=j;
-      this->m_JointPDF->SetPixel(jind,val);
-    }
-    // first row
-    jind[1]=i;
-    jind[0]=this->m_Padding;
-    val=this->m_JointPDF->GetPixel(jind);
-    for (  int j=(int)this->m_Padding-1; j >= 0 ; j-- ) {
-      jind[0]=j;
-      this->m_JointPDF->SetPixel(jind,val);
-    }
-    // last column
-    jind[0]=i;
-    jind[1]=this->m_NumberOfHistogramBins-this->m_Padding-1;
-    val=this->m_JointPDF->GetPixel(jind);
-    for ( unsigned int j=1; j <= this->m_Padding; j++  ) {
-      jind[1]=this->m_NumberOfHistogramBins-this->m_Padding-1+j;
-      this->m_JointPDF->SetPixel(jind,val);
-    }
-    // last row
-    jind[1]=i;
-    jind[0]=this->m_NumberOfHistogramBins-this->m_Padding-1;
-    val=this->m_JointPDF->GetPixel(jind);
-    for ( unsigned int j=1; j <= this->m_Padding; j++  ) {
-      jind[0]=this->m_NumberOfHistogramBins-this->m_Padding-1+j;
-      this->m_JointPDF->SetPixel(jind,val);
-    }
-  }
-
+  //  this->EnforceJointHistogramBoundaryConditions();
   bool smoothjh=true;
   /** we need this b/c we perform finite differences to estimate the derivatives of the JH and marginals */
   if (smoothjh)
@@ -418,13 +429,15 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
       typedef DiscreteGaussianImageFilter<JointPDFType,JointPDFType> dgtype;
       typename dgtype::Pointer dg=dgtype::New();
       dg->SetInput(this->m_JointPDF);
-      //      dg->SetVariance(this->m_JointPDFSpacing[0]*1.5);
-      dg->SetVariance(1.0);
+      dg->SetVariance(1.5);
       dg->SetUseImageSpacingOff();
+      //      dg->SetVariance(this->m_JointPDFSpacing[0]*1.5);
+      //      dg->SetUseImageSpacingOn();
       dg->SetMaximumError(.001f);
       dg->Update();
       this->m_JointPDF=dg->GetOutput();
     }
+  //  this->EnforceJointHistogramBoundaryConditions();
 
   /**
    * Normalize the PDFs, compute moving image marginal PDF
@@ -456,7 +469,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
     }
 
   /* debug code for writing out jh over iterations */
-  /*
   static int iter=0;
   typedef itk::ImageFileWriter<JointPDFType> writertype;
   std::string s;
@@ -469,7 +481,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   writer->SetInput( this->m_JointPDF );
   writer->Write();
   iter++;
-  */
+
   // Compute moving image marginal PDF by summing over fixed image bins.
   typedef ImageLinearIteratorWithIndex<JointPDFType> JointPDFLinearIterator;
   JointPDFLinearIterator linearIter( this->m_JointPDF, this->m_JointPDF->GetBufferedRegion() );
@@ -523,6 +535,21 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
     this->m_MovingImageMarginalPDF->SetPixel(  mind,this->m_MovingImageMarginalPDF->GetPixel(mind)/margsum );
   }
   */
+
+  /** get the gradient images */
+  /*  double sig=3*this->m_JointPDFSpacing[0];
+  typename JPDFGradientFilterType::Pointer filter = JPDFGradientFilterType::New();
+  filter->SetInput( this->m_JointPDF );
+  filter->SetSigma( sig );
+  filter->Update();
+  this->m_JPDFGradientImage = filter->GetOutput();
+  typename MarginalGradientFilterType::Pointer mfilter = MarginalGradientFilterType::New();
+  mfilter->SetInput( this->m_MovingImageMarginalPDF );
+  mfilter->SetSigma( sig );
+  mfilter->Update();
+  this->m_MarginalGradientImage = mfilter->GetOutput();
+  */
+
   // Multithreaded initiate and process sample
   std::cout <<" Mutual information value " << this->GetValue() << std::endl;
   this->GetValueAndDerivativeMultiThreadedInitiate( derivative );
@@ -563,8 +590,8 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
   double scalingfactor = 0; // for scaling the jacobian terms
 
   JointPDFPointType jointPDFpoint;
-  this->ComputeJointPDFPoint(fixedImageValue,movingImageValue, jointPDFpoint);
-
+  bool pointok=this->ComputeJointPDFPoint(fixedImageValue,movingImageValue, jointPDFpoint,threadID);
+  if ( !pointok ) return false;
   double jointPDFValue=this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(jointPDFpoint);
   unsigned int ind=1; //,ind2=0;
   double dJPDF = this->ComputeJointPDFDerivative( jointPDFpoint, threadID , ind );
@@ -575,17 +602,14 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
   double movingImagePDFValue = this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(mind);
   double dMmPDF = this->ComputeMovingImageMarginalPDFDerivative( mind , threadID );
 
-  double term1=0,term2=0,eps=1.e-16; // FIXME need a 'small value' generalization
-  //d/dx (log base 2 (x) = 1/(x ln (2))
-  if( jointPDFValue > eps &&  (movingImagePDFValue) > eps )
-  {
-    const double pRatio = vcl_log(jointPDFValue)-vcl_log(movingImagePDFValue);
-    term1 = dJPDF*pRatio*(-1.0);
-    if ( fabs(term1) > 1.e5 ) { term1=0; term2=0; } /**FIXME hack for numerical issue */
-    else term2 = this->m_Log2 * dMmPDF * jointPDFValue / movingImagePDFValue ;
-    scalingfactor =  (term1+term2);
-    //    std::cout << " scl " << scalingfactor << " term1 " << term1 << " term2 " << term2 << std::endl;
-  }  // end if-block to check non-zero bin contribution
+  double term1=0,term2=0,eps=1.e-16;
+  if( jointPDFValue > eps &&  (movingImagePDFValue) > 0 )
+    {
+      const double pRatio = vcl_log(jointPDFValue)-vcl_log(movingImagePDFValue);
+      term1 = dJPDF*pRatio;
+      term2 = vcl_log(2) * dMmPDF * jointPDFValue / movingImagePDFValue ;
+      scalingfactor =  (term1-term2);
+    }  // end if-block to check non-zero bin contribution
   else scalingfactor = 0;
 
   /* Use a pre-allocated jacobian object for efficiency */
