@@ -119,31 +119,35 @@ protected:
   virtual ~MattesMutualInformationImageToImageObjectMetric();
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  void ComputeJointPDFPoint( FixedImagePixelType fixedImageValue, MovingImagePixelType movingImageValue , JointPDFPointType* jointPDFpoint ) {
-    jointPDFpoint[0]=(fixedImageValue-this->m_FixedImageTrueMin)/(this->m_FixedImageTrueMax-this->m_FixedImageTrueMin);
-    jointPDFpoint[1]=(movingImageValue-this->m_MovingImageTrueMin)/(this->m_MovingImageTrueMax-this->m_MovingImageTrueMin);
+  void ComputeJointPDFPoint( FixedImagePixelType fixedImageValue, MovingImagePixelType movingImageValue , JointPDFPointType& jointPDFpoint ) {
+    double a=(fixedImageValue-this->m_FixedImageTrueMin)/(this->m_FixedImageTrueMax-this->m_FixedImageTrueMin);
+    double b=(movingImageValue-this->m_MovingImageTrueMin)/(this->m_MovingImageTrueMax-this->m_MovingImageTrueMin);
+    jointPDFpoint[0]=a;
+    jointPDFpoint[1]=b;
   }
 
-  double GetMovingImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID ) {
-    //    return m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->EvaluateDerivative(mind)[0];
+  inline double ComputeMovingImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID )
+  {
+    double offset=0.1;
     MarginalPDFPointType  leftpoint=margPDFpoint;
-    leftpoint[0]-=this->m_JointPDFSpacing[0];
+    leftpoint[0]-=this->m_JointPDFSpacing[0]*offset;
     MarginalPDFPointType  rightpoint=margPDFpoint;
-    rightpoint[0]+=this->m_JointPDFSpacing[0];
+    rightpoint[0]+=this->m_JointPDFSpacing[0]*offset;
     double deriv=this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
                  this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(leftpoint);
-    return deriv;
+    return deriv/(this->m_JointPDFSpacing[0]*offset);
   }
 
-  double GetJointPDFDerivative( JointPDFPointType jointPDFpoint , unsigned int threadID ) {
-    //    return this->m_ThreaderJointPDFInterpolator[threadID]->EvaluateDerivative( jointPDFpoint )[1];
+  inline double ComputeJointPDFDerivative( JointPDFPointType jointPDFpoint , unsigned int threadID , unsigned int ind  )
+  {
+    double offset=0.1;
     JointPDFPointType  leftpoint=jointPDFpoint;
-    leftpoint[0]-=this->m_JointPDFSpacing[0];
+    leftpoint[ind]-=this->m_JointPDFSpacing[ind]*offset;
     JointPDFPointType  rightpoint=jointPDFpoint;
-    rightpoint[0]+=this->m_JointPDFSpacing[0];
+    rightpoint[ind]+=this->m_JointPDFSpacing[ind]*offset;
     double deriv=this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(rightpoint)-
                  this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(leftpoint);
-    return deriv;
+    return deriv/(this->m_JointPDFSpacing[0]*offset);
   }
 
 
@@ -206,14 +210,6 @@ private:
   double        m_FixedImageBinSize;
   double        m_MovingImageBinSize;
 
-  /** Typedefs for BSpline kernel and derivative functions. */
-  typedef BSplineKernelFunction<3>           CubicBSplineFunctionType;
-  typedef BSplineDerivativeKernelFunction<3> CubicBSplineDerivativeFunctionType;
-
-  /** Cubic B-Spline kernels */
-  typename CubicBSplineFunctionType::Pointer             m_CubicBSplineKernel;
-  typename CubicBSplineDerivativeFunctionType::Pointer   m_CubicBSplineDerivativeKernel;
-
   double m_JointPDFSum;
   JointPDFSpacingType m_JointPDFSpacing;
 
@@ -221,14 +217,16 @@ private:
   JointPDFInterpolatorPointer* m_ThreaderJointPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderFixedImageMarginalPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderMovingImageMarginalPDFInterpolator;
-
+  double m_Log2;
   unsigned int m_Padding;
+
   /*
   JointPDFType::Pointer * m_ThreaderJointPDF;
   int *m_ThreaderJointPDFStartBin;
   int *m_ThreaderJointPDFEndBin;
   double *m_ThreaderJointPDFSum;
   */
+
 };
 
 } // end namespace itk

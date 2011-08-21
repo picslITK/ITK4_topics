@@ -32,7 +32,6 @@
 #include "itkTranslationTransform.h"
 #include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
-#include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
@@ -116,25 +115,11 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   fixedImageReader->SetFileName( argv[1] );
   movingImageReader->SetFileName( argv[2] );
 
-  //matching intensity histogram
-  typedef HistogramMatchingImageFilter<
-                                    MovingImageType,
-                                    MovingImageType >   MatchingFilterType;
-  MatchingFilterType::Pointer matcher = MatchingFilterType::New();
-
-  matcher->SetInput( movingImageReader->GetOutput() );
-  matcher->SetReferenceImage( fixedImageReader->GetOutput() );
-
-  matcher->SetNumberOfHistogramLevels( 256 );
-  matcher->SetNumberOfMatchPoints( 10 );
-  matcher->ThresholdAtMeanIntensityOn();
   //get the images
   fixedImageReader->Update();
   FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
   movingImageReader->Update();
-  matcher->Update();
-  MovingImageType::Pointer movingImage = matcher->GetOutput();
-  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
+  MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
   //create a displacement field transform
   typedef TranslationTransform<double, Dimension>
@@ -305,6 +290,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
 
   writer->Update();
 
+  std::cout << translationTransform->GetParameters() << std::endl;
   std::cout << "Test PASSED." << std::endl;
   return EXIT_SUCCESS;
 
