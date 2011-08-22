@@ -499,12 +499,19 @@ protected:
    * given the point, value and image derivative for both fixed and moving
    * spaces. The provided values have been calculated from \c virtualPoint,
    * which is provided in case it's needed.
-   * Must be overriden by derived classes to do anything meaningful.
+   * Must be overriden by derived classes.
    * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
    * that have passed bounds checking, and lie within any mask that may
    * be assigned.
-   * Results are returned in \c metricValueReturn and \c localDerivativeReturn,
-   * and will be processed by this base class.
+   * \c mappedFixedPixelValue, \c mappedFixedImageGradient,
+   * \c mappedMovingPixelValue, and \c mappedMovingImageGradient are
+   * provided for use by the derived class. Note however, that the
+   * mappedFixed* values are only calculated when
+   * \c m_GradientSource is set to either \c Fixed or \c Both, and
+   * similarly respectively for mappedMoving* values. Otherwise, the
+   * values are meaningless and should be ignored.
+   * Results are experected to be returned in \c metricValueReturn and
+   * \c localDerivativeReturn, and will be processed by this base class.
    * \c threadID may be used as needed, for example to access any per-thread
    * data cached during pre-processing by the derived class.
    * \warning The derived class should use \c m_NumberOfThreads from this base
@@ -512,20 +519,17 @@ protected:
    * assure that the same number of threads are used.
    * \warning  This is called from the threader, and thus must be thread-safe.
    */
-  virtual inline bool GetValueAndDerivativeProcessPoint(
-        const VirtualPointType &           itkNotUsed(virtualPoint),
-        const FixedImagePointType &        itkNotUsed(mappedFixedPoint),
-        const FixedImagePixelType &        itkNotUsed(mappedFixedPixelValue),
-        const FixedImageGradientType &  itkNotUsed(FixedImageGradient),
-        const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
-        const MovingImagePixelType &       itkNotUsed(mappedMovingPixelValue),
-        const MovingImageGradientType & itkNotUsed(mappedMovingImageGradient),
-        MeasureType &                      itkNotUsed(metricValueReturn),
-        DerivativeType &                   itkNotUsed(localDerivativeReturn),
-        ThreadIdType                       itkNotUsed(threadID) )
-    /* ImageToImageMetric had this method simply return false. But why not
-     * make it pure virtual ? */
-    {return false;}
+  virtual bool GetValueAndDerivativeProcessPoint(
+        const VirtualPointType &          itkNotUsed(virtualPoint),
+        const FixedImagePointType &       itkNotUsed(mappedFixedPoint),
+        const FixedImagePixelType &       itkNotUsed(mappedFixedPixelValue),
+        const FixedImageGradientType &    itkNotUsed(mappedFixedImageGradient),
+        const MovingImagePointType &      itkNotUsed(mappedMovingPoint),
+        const MovingImagePixelType &      itkNotUsed(mappedMovingPixelValue),
+        const MovingImageGradientType &   itkNotUsed(mappedMovingImageGradient),
+        MeasureType &                     itkNotUsed(metricValueReturn),
+        DerivativeType &                  itkNotUsed(localDerivativeReturn),
+        ThreadIdType                      itkNotUsed(threadID) ) = 0;
 
   /** Perform any initialization required before each evaluation of
    * value and derivative. This is distinct from Initialize, which
@@ -534,6 +538,36 @@ protected:
    * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
    * threading starts. */     //NOTE: make this private?
   virtual void InitializeForIteration(void);
+
+  /** Transform and evaluate a point into the virtual domain.
+   * This function also checks if mapped point is within the mask if
+   * one is set, and that is within the fixed image buffer, in which
+   * case \c pointIsValid will be true on return.
+   * \c mappedFixedPoint and \c mappedFixedPixelValue are  returned, and
+   * \c mappedFixedImageGradient is returned if \c computeImageGradient is set.
+   * All return values are in the virtual domain.
+   * \note It would be better for maintainence to have a single method
+   * that could work for either fixed or moving domains. However setting
+   * that up is complicated because dimensionality and pixel type may
+   * be different between the two. */
+  virtual void TransformAndEvaluateFixedPoint(
+                           const VirtualIndexType & index,
+                           const VirtualPointType & point,
+                           const bool computeImageGradient,
+                           FixedImagePointType & mappedFixedPoint,
+                           FixedImagePixelType & mappedFixedPixelValue,
+                           FixedImageGradientType & mappedFixedImageGradient,
+                           bool & pointIsValid ) const;
+
+  /** See TransformAndEvaluateFixedPoint. TODO. */
+  virtual void TransformAndEvaluateMovingPoint(
+                           const VirtualIndexType & index,
+                           const VirtualPointType & point,
+                           const bool computeImageGradient,
+                           MovingImagePointType & mappedMovingPoint,
+                           MovingImagePixelType & mappedMovingPixelValue,
+                           MovingImageGradientType & mappedMovingImageGradient,
+                           bool & pointIsValid ) const;
 
   /** Transform a point from VirtualImage domain to FixedImage domain.
    * This function also checks if mapped point is within the mask if
@@ -546,6 +580,7 @@ protected:
    * that could work for either fixed or moving domains. However setting
    * that up is complicated because dimensionality and pixel type may
    * be different between the two. */
+  /*
   virtual void TransformAndEvaluateFixedPoint(
                               const VirtualIndexType & index,
                               const VirtualPointType & point,
@@ -555,10 +590,10 @@ protected:
                               const bool computeImageGradient,
                               FixedImageGradientType & mappedFixedImageGradient )
                                                                         const;
-
+  */
   /** Transform a point from VirtualImage domain to MovingImage domain,
    * as is done in \c TransformAndEvaluateMovingPoint. */
-  virtual void TransformAndEvaluateMovingPoint(
+  /*virtual void TransformAndEvaluateMovingPoint(
                           const VirtualIndexType & index,
                           const VirtualPointType & point,
                           MovingImagePointType & mappedMovingPoint,
@@ -567,7 +602,7 @@ protected:
                           const bool computeImageGradient,
                           MovingImageGradientType & mappedMovingImageGradient )
                                                                           const;
-
+  */
   /** When using pre-warped images, this routine will return mapped
    * point, pixel value
    * and optionally the image gradient at a given \c index.
@@ -575,8 +610,8 @@ protected:
    * \c mappedFixedPoint and \c mappedFixedPixelValue are returned.
    * \c mappedFixedImageGradient is returned if \c computeImageGradient is true.
    * \c pointIsValid is returned true if the index is valid within a mask if
-   * one is set.
-   * \warning Use of masks with pre-warped images is not yet implemented. */
+   * one is set. */
+  /*
   virtual void TransformAndEvaluateWarpedFixedImageAtIndex(
                            const VirtualIndexType & index,
                            const VirtualPointType & point,
@@ -594,6 +629,7 @@ protected:
                            MovingImagePixelType & mappedMovingPixelValue,
                            MovingImageGradientType & mappedMovingImageGradient,
                            bool & pointIsValid ) const;
+  */
 
   /** Compute image derivatives at a point. */
   virtual void ComputeFixedImageGradient(
@@ -676,6 +712,15 @@ protected:
   /** Masks */
   FixedImageMaskConstPointer                  m_FixedImageMask;
   MovingImageMaskConstPointer                 m_MovingImageMask;
+
+  /** Flag to track if the fixed transform can be used by calling
+   * TransformIndex. Determine this during initialization and store
+   * result because the check can involve several comparisons. */
+  bool                                   m_FixedTransformCanUseTransformIndex;
+  /** Flag to track if the moving transform can be used by calling
+   * TransformIndex. Determine this during initialization and store
+   * result because the check can involve several comparisons. */
+  bool                                   m_MovingTransformCanUseTransformIndex;
 
   /** Metric value, stored after evaluating */
   MeasureType             m_Value;

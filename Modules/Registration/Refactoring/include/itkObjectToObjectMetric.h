@@ -80,20 +80,37 @@ public:
   typedef  Superclass::ParametersValueType  ParametersValueType;
 
   /** Source of the gradient (image gradients, in the case of
-   * image to image metrics). Defaults to Moving. */
+   * image to image metrics). */
   typedef enum  { Fixed=0, Moving, Both } GradientSourceType;
 
   /**
-   * Set source of derivative.  This variable allows the user to switch
+   * Set source of image gradient.  This variable allows the user to switch
    * between calculating the derivative with respect to the fixed
    * object or moving object.
-   */
+   * Defaults to Moving.
+   * This setting determines which image gradients are calculated by
+   * the base class and passed to derived classes. */
   itkSetMacro( GradientSource, GradientSourceType );
 
   /**
    * Get coordinate system type.
-   */
+   * See \c GetGradientSourceIncludesFixed and GetGradientSourceIncludesMoving
+   * for convenience methods. */
   itkGetConstMacro( GradientSource, GradientSourceType );
+
+  /** Return true of \c m_GradientSource is either \c Fixed or
+   * \c Both. Convenience method. */
+  bool GetGradientSourceIncludesFixed()
+  {
+    return m_GradientSource == Fixed || m_GradientSource == Both;
+  }
+
+  /** Return true of \c m_GradientSource is either \c Moving or
+   * \c Both. Convenience method. */
+  bool GetGradientSourceIncludesMoving()
+  {
+    return m_GradientSource == Moving || m_GradientSource == Both;
+  }
 
   /** Initialize the Metric by making sure that all the components
    *  are present and plugged together correctly     */
