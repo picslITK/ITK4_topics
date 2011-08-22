@@ -409,23 +409,26 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 // Output the deformation field as an image
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
-template< class TDeformationField >
+template< class TDisplacementField >
 void
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::OutputDeformationField(typename TDeformationField::Pointer deformationField) const
+::OutputDisplacementField(typename TDisplacementField::Pointer DisplacementField) const
 {
-  InputPointType point, sumPoint;
-  typename TDeformationField::PixelType displacement;
+  typedef typename TDisplacementField::IndexType      IndexType;
 
-  ImageRegionIteratorWithIndex< TDeformationField >
-      iter( deformationField, deformationField->GetLargestPossibleRegion() );
+  InputPointType point, sumPoint;
+  typename TDisplacementField::PixelType displacement;
+
+  ImageRegionIteratorWithIndex< TDisplacementField >
+      iter( DisplacementField, DisplacementField->GetLargestPossibleRegion() );
 
   /* Iterate over the region */
   iter.GoToBegin();
   while( !iter.IsAtEnd() )
     {
-    /* Get the point */
-    deformationField->TransformIndexToPhysicalPoint(iter.GetIndex(), point);
+    const IndexType &index = iter.GetIndex();
+    DisplacementField->TransformIndexToPhysicalPoint(index, point);
+
     sumPoint = this->TransformPoint( point );
     displacement = sumPoint - point;
     iter.Set( displacement );

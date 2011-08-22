@@ -419,11 +419,11 @@ protected:
   void PrintSelf( std::ostream& os, Indent indent ) const;
 
   /** The displacement field and its inverse (if it exists). */
-  typename DisplacementFieldType::Pointer      m_DisplacementField;
-  typename DisplacementFieldType::Pointer      m_InverseDisplacementField;
+  typename DisplacementFieldType::Pointer   m_DisplacementField;
+  typename DisplacementFieldType::Pointer   m_InverseDisplacementField;
 
   /** The interpolator. */
-  typename InterpolatorType::Pointer          m_Interpolator;
+  typename InterpolatorType::Pointer        m_Interpolator;
 
   /** Track when the displacement field was last set/assigned, as
    * distinct from when it may have had its contents modified. */

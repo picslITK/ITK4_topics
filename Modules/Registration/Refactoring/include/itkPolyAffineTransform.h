@@ -319,8 +319,8 @@ public:
     this->Modified();
   }
 
-  template< class TDeformationField > void
-    OutputDeformationField(typename TDeformationField::Pointer deformationField) const;
+  template< class TDisplacementField > void
+    OutputDisplacementField(typename TDisplacementField::Pointer DisplacementField) const;
 
 protected:
   /** Construct an PolyAffineTransform object

@@ -71,7 +71,13 @@ public:
 
   inline ScalarType GetWeight(const PointType point) const
   {
-    return 1.0 / m_Anchor.SquaredEuclideanDistanceTo( point );
+    return 1;
+
+    double squaredDistance = m_Anchor.SquaredEuclideanDistanceTo( point );
+    return 1.0 / (1 + squaredDistance);
+
+    //double sigma = 100;
+    //return vcl_exp( - squaredDistance / sigma / sigma );
   }
 
   /** Constructor */

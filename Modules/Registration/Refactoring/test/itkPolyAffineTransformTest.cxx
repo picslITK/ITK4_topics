@@ -24,7 +24,7 @@
 
 #include "itkMeanSquaresImageToImageObjectMetric.h"
 //#include "itkDemonsImageToImageObjectMetric.h"
-//#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
+#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkOptimizerParameterEstimator.h"
 
@@ -39,6 +39,11 @@
 #include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageRegistrationMethodImageSource.h"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -183,11 +188,17 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   AtomicTransformType::Pointer atomicTransform2 = AtomicTransformType::New();
   WeightFunctorType::Pointer weightFunc1 = WeightFunctorType::New();
   WeightFunctorType::Pointer weightFunc2 = WeightFunctorType::New();
-  weightFunc1->SetAnchor(atomicTransform1->GetCenter());
-  weightFunc2->SetAnchor(atomicTransform2->GetCenter());
+  //weightFunc1->SetAnchor(atomicTransform1->GetCenter());
+  //weightFunc2->SetAnchor(atomicTransform2->GetCenter());
+  FixedImageType::PointType anchor1, anchor2;
+  FixedImageType::RegionType anchorRegion = fixedImage->GetLargestPossibleRegion();
+  fixedImage->TransformIndexToPhysicalPoint(anchorRegion.GetIndex(), anchor1);
+  fixedImage->TransformIndexToPhysicalPoint(anchorRegion.GetIndex() + anchorRegion.GetSize(), anchor2);
+  weightFunc1->SetAnchor(anchor1);
+  weightFunc2->SetAnchor(anchor2);
 
   movingTransform->PushTransformWithWeight(atomicTransform1, weightFunc1);
-  movingTransform->PushTransformWithWeight(atomicTransform2, weightFunc2);
+  //movingTransform->PushTransformWithWeight(atomicTransform2, weightFunc2);
   movingTransform->SetIdentity();
 
   //identity transform for fixed image
@@ -197,10 +208,9 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  //  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
-  //                                                                  MetricType;
-
-  typedef MeanSquaresImageToImageObjectMetric<FixedImageType, MovingImageType>
+  //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType > MetricType;
+  //typedef MeanSquaresImageToImageObjectMetric<FixedImageType, MovingImageType> MetricType;
+  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
       MetricType;
 
   MetricType::Pointer metric = MetricType::New();
@@ -214,9 +224,9 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   metric->SetFixedTransform( identityTransform );
   metric->SetMovingTransform( movingTransform );
 
-  //Size<Dimension> radSize;
-  //radSize.Fill(2);
-  //metric->SetRadius(radSize);
+  Size<Dimension> radSize;
+  radSize.Fill(2);
+  metric->SetRadius(radSize);
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -299,32 +309,32 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
       }
     }
 
-  ////Output the polyaffine transform to a deformation field
-  //typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
-  //                                                  double, Dimension>
-  //                                                  DeformationTransformType;
-  //DeformationTransformType::Pointer deformationTransform =
-  //                                            DeformationTransformType::New();
-  //typedef DeformationTransformType::DisplacementFieldType DisplacementFieldType;
-  //DisplacementFieldType::Pointer field = DisplacementFieldType::New();
+  //Output the polyaffine transform to a deformation field
+  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
+                                                    double, Dimension>
+                                                    DeformationTransformType;
+  DeformationTransformType::Pointer deformationTransform =
+                                              DeformationTransformType::New();
+  typedef DeformationTransformType::DisplacementFieldType DisplacementFieldType;
+  DisplacementFieldType::Pointer field = DisplacementFieldType::New();
 
-  //field->SetRegions( fixedImage->GetLargestPossibleRegion() );
-  //field->Allocate();
-  //deformationTransform->SetDisplacementField( field );
+  field->SetRegions( fixedImage->GetLargestPossibleRegion() );
+  field->Allocate();
+  deformationTransform->SetDisplacementField( field );
 
-  //field->SetOrigin( fixedImage->GetOrigin() );
-  //field->SetSpacing( fixedImage->GetSpacing() );
-  //field->SetDirection( fixedImage->GetDirection() );
+  field->SetOrigin( fixedImage->GetOrigin() );
+  field->SetSpacing( fixedImage->GetSpacing() );
+  field->SetDirection( fixedImage->GetDirection() );
 
-  //movingTransform->OutputDisplacementField< DisplacementFieldType >(field);
+  movingTransform->OutputDisplacementField< DisplacementFieldType >(field);
 
-  ////Write out the deformation field
-  //typedef ImageFileWriter< DisplacementFieldType >  DeformationWriterType;
-  //DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
-  //std::string defout( "tmp_def.nii.gz" );
-  //deformationwriter->SetFileName( defout.c_str() );
-  //deformationwriter->SetInput( deformationTransform->GetDisplacementField() );
-  //deformationwriter->Update();
+  //Write out the deformation field
+  typedef ImageFileWriter< DisplacementFieldType >  DeformationWriterType;
+  DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
+  std::string defout( "tmpdef.mha" );
+  deformationwriter->SetFileName( defout.c_str() );
+  deformationwriter->SetInput( deformationTransform->GetDisplacementField() );
+  deformationwriter->Update();
 
   if( !pass )
     {

@@ -164,8 +164,8 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   movingImage = matcher->GetOutput();
 
   //create a deformation field transform
-  typedef TranslationTransform<double, Dimension>
-  //typedef AffineTransform<double, Dimension>
+  //typedef TranslationTransform<double, Dimension>
+  typedef AffineTransform<double, Dimension>
                                                   TranslationTransformType;
   typedef TranslationTransformType::ParametersType
                                                   ParametersType;
@@ -205,11 +205,16 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   metric->Initialize();
 
   // Optimizer
-  //typedef GradientDescentObjectOptimizer  OptimizerType;
-  typedef QuasiNewtonObjectOptimizer  OptimizerType;
+  typedef GradientDescentObjectOptimizer  OptimizerType;
+  //typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetNumberOfIterations( numberOfIterations );
+  ParametersType scales(6);
+  for (int s=0; s<4; s++) scales[s] = 9801;
+  for (int s=4; s<6; s++) scales[s] = 1;
+  optimizer->SetScales( scales );
+  optimizer->SetLearningRate( 1086.76 );
 
   // Instantiate an Observer to report the progress of the Optimization
   typedef itk::CommandIterationUpdate<
@@ -224,7 +229,7 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   parameterEstimator->SetMetric(metric);
   parameterEstimator->SetTransformForward(true);
   parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
-  optimizer->SetOptimizerParameterEstimator( parameterEstimator );
+  //optimizer->SetOptimizerParameterEstimator( parameterEstimator );
   // Estimating optimizer parameters done
 
   std::cout << "Start optimization..." << std::endl
