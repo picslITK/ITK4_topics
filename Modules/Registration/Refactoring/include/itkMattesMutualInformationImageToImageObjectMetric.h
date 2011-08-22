@@ -166,8 +166,8 @@ protected:
     rightpoint[0]+=offset;
     if (leftpoint[0] < eps ) leftpoint[0]=eps;
     if (rightpoint[0] < eps ) rightpoint[0]=eps;
-    if (leftpoint[0] > 1-eps ) leftpoint[0]=1-eps;
-    if (rightpoint[0] > 1-eps  ) rightpoint[0]=1-eps;
+    if (leftpoint[0] > 1 ) leftpoint[0]=1;
+    if (rightpoint[0] > 1  ) rightpoint[0]=1;
     double delta=rightpoint[0]-leftpoint[0];
     if ( delta > 0 ) {
     double deriv=this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
@@ -187,8 +187,8 @@ protected:
     rightpoint[ind]+=offset;
     if (leftpoint[ind] < eps ) leftpoint[ind]=eps;
     if (rightpoint[ind] < eps ) rightpoint[ind]=eps;
-    if (leftpoint[ind] > 1-eps ) leftpoint[ind]=1-eps;
-    if (rightpoint[ind] > 1-eps ) rightpoint[ind]=1-eps;
+    if (leftpoint[ind] > 1 ) leftpoint[ind]=1;
+    if (rightpoint[ind] > 1 ) rightpoint[ind]=1;
     double delta=rightpoint[ind]-leftpoint[ind];
     double deriv=0;
     if ( delta > 0 ) {
