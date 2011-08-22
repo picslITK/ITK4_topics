@@ -55,6 +55,8 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   this->GetValueAndDerivativeMultiThreadedPostProcess( true /*doAverage*/ );
 
   value = this->GetValueResult();
+
+  std::cout << "Demons val: " << value << " deriv: " << derivative << std::endl;
 }
 
 /** This function computes the local voxel-wise contribution of

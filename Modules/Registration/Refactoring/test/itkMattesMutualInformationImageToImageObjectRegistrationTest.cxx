@@ -171,15 +171,21 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( displacementTransform );
+//  metric->SetMovingTransform( displacementTransform );
   metric->SetNumberOfHistogramBins(32);
-  //  metric->SetMovingTransform( translationTransform );
+  metric->SetMovingTransform( translationTransform );
+  std::cout << "Moving Transform: "
+            << metric->GetMovingTransform()->GetNameOfClass()
+            << std::endl;
 
   metric->SetPreWarpImages( false );
   metric->SetPrecomputeImageGradient( false );
+  metric->SetNumberOfThreads( 2 );
 
   //Initialize the metric to prepare for use
   metric->Initialize();
+  std::cout << "Metric # of threads: " << metric->GetNumberOfThreads()
+            << std::endl;
 
   // Optimizer
   typedef GradientDescentObjectOptimizer  OptimizerType;

@@ -539,8 +539,11 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   this->m_Value=this->GetValue();
   std::cout <<" Mutual information value " << this->m_Value << std::endl;
   this->GetValueAndDerivativeMultiThreadedInitiate( derivative );
+
   // Post processing
   this->GetValueAndDerivativeMultiThreadedPostProcess( true /*doAverage*/ );
+
+  std::cout <<"  deriv: " << derivative << std::endl;
 
 }
 

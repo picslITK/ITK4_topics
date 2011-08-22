@@ -186,10 +186,13 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( displacementTransform );
-  //  metric->SetMovingTransform( translationTransform );
+  //metric->SetMovingTransform( displacementTransform );
+  metric->SetMovingTransform( translationTransform );
+  std::cout << "Moving Transform: "
+            << metric->GetMovingTransform()->GetNameOfClass()
+            << std::endl;
 
-  metric->SetPreWarpImages( true );
+  metric->SetPreWarpImages( false );
   metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
   //metric->SetPrecomputeImageGradient( false );
 
