@@ -42,8 +42,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 
   // Initialize histogram properties
   this->m_NumberOfHistogramBins=50;
-  this->m_MovingImageNormalizedMin=0.0;
-  this->m_FixedImageNormalizedMin=0.0;
   this->m_FixedImageTrueMin=(0.0);
   this->m_FixedImageTrueMax=(0.0);
   this->m_MovingImageTrueMin=(0.0);
@@ -96,10 +94,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
 
   os << indent << "NumberOfHistogramBins: ";
   os << this->m_NumberOfHistogramBins << std::endl;
-  os << indent << "FixedImageNormalizedMin: ";
-  os << this->m_FixedImageNormalizedMin << std::endl;
-  os << indent << "MovingImageNormalizedMin: ";
-  os << this->m_MovingImageNormalizedMin << std::endl;
   os << indent << "MovingImageTrueMin: ";
   os << this->m_MovingImageTrueMin << std::endl;
   os << indent << "MovingImageTrueMax: ";
@@ -225,7 +219,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   origin[1]=origin[0];
   this->m_JointPDF->SetOrigin(origin);
   this->m_JointPDF->Allocate();
-  this->m_JointPDFBufferSize = jointPDFSize[0] * jointPDFSize[1] * sizeof( PDFValueType );
 
   // do the same thing for the marginal pdfs
   this->m_FixedImageMarginalPDF = MarginalPDFType::New();
@@ -540,9 +533,11 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   writer->SetInput( this->m_JointPDF );
   writer->Write();
   iter++;
-*/
+  */
+
   // Multithreaded initiate and process sample
-  std::cout <<" Mutual information value " << this->GetValue() << std::endl;
+  this->m_Value=this->GetValue();
+  std::cout <<" Mutual information value " << this->m_Value << std::endl;
   this->GetValueAndDerivativeMultiThreadedInitiate( derivative );
   // Post processing
   this->GetValueAndDerivativeMultiThreadedPostProcess( true /*doAverage*/ );
@@ -576,7 +571,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
     {
     return false;
     }
-
   /** the scalingfactor is the MI specific scaling of the image gradient and jacobian terms */
   double scalingfactor = 0; // for scaling the jacobian terms
 
@@ -594,7 +588,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
   double dMmPDF = this->ComputeMovingImageMarginalPDFDerivative( mind , threadID );
 
   double term1=0,term2=0,eps=1.e-16;
-  if( jointPDFValue > eps &&  (movingImagePDFValue) > 0 )
+  if( jointPDFValue > eps &&  (movingImagePDFValue) > eps )
     {
       const double pRatio = vcl_log(jointPDFValue)-vcl_log(movingImagePDFValue);
       term1 = dJPDF*pRatio;
@@ -634,12 +628,11 @@ typename MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImag
 MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 ::GetValue()
 {
-     /**
-1- The padding is lowered to 0 in this implementation.
+/**
+1- The padding is 2 in this implementation.
 2- The MI energy is bounded in the range of [0  min(H(x),H(y))].
-3- The Natural logarithm is changed to log2.
-4- The ComputeMutualInformation() iterator range should cover the entire PDF.
-5- The normalization is done based on NumberOfHistogramBins-1 instead of NumberOfHistogramBins. */
+3- The ComputeMutualInformation() iterator range should cover the entire PDF.
+4- The normalization is done based on NumberOfHistogramBins-1 instead of NumberOfHistogramBins. */
   double px,py,pxy;
   double total_mi = 0;
   double local_mi;

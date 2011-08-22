@@ -29,14 +29,7 @@ namespace itk
  * registered using the method of Mattes et al.
  *
  * References:
- * [1] "Nonrigid multimodality image registration"
- *      D. Mattes, D. R. Haynor, H. Vesselle, T. Lewellen and W. Eubank
- *      Medical Imaging 2001: Image Processing, 2001, pp. 1609-1620.
- * [2] "PET-CT Image Registration in the Chest Using Free-form Deformations"
- *      D. Mattes, D. R. Haynor, H. Vesselle, T. Lewellen and W. Eubank
- *      IEEE Transactions in Medical Imaging. Vol.22, No.1,
-        January 2003. pp.120-128.
- * [3] "Optimization of Mutual Information for MultiResolution Image
+ * [1] "Optimization of Mutual Information for MultiResolution Image
  *      Registration"
  *      P. Thevenaz and M. Unser
  *      IEEE Transactions in Image Processing, 9(12) December 2000.
@@ -241,9 +234,6 @@ private:
   /** The joint PDF and PDF derivatives. */
   typename JointPDFType::Pointer            m_JointPDF;
 
-  /** Buffer sizes of the PDF and PDF derivatives */
-  SizeValueType m_JointPDFBufferSize;
-
   /** Joint PDF types */
   typedef JointPDFType::IndexType             JointPDFIndexType;
   typedef JointPDFType::PixelType             JointPDFValueType;
@@ -253,8 +243,6 @@ private:
 
   /** Variables to define the marginal and joint histograms. */
   SizeValueType m_NumberOfHistogramBins;
-  double        m_MovingImageNormalizedMin;
-  double        m_FixedImageNormalizedMin;
   double        m_FixedImageTrueMin;
   double        m_FixedImageTrueMax;
   double        m_MovingImageTrueMin;
