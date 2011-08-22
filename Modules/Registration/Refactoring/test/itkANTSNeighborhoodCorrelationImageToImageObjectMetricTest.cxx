@@ -131,7 +131,7 @@ void PrintImage(const ImagePointerType &image) {
     return;
 }
 
-int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest( int, char **)
+int itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest( int, char ** const )
 {
 
 //    MultiThreader::SetGlobalMaximumNumberOfThreads(1);

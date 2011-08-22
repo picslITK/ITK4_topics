@@ -38,7 +38,7 @@
 
 using namespace itk;
 
-int itkDemonsImageToImageObjectMetricTest(int, char **)
+int itkDemonsImageToImageObjectMetricTest(int, char ** const)
 {
 
   const unsigned int imageSize = 5;
