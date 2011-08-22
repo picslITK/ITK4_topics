@@ -39,7 +39,7 @@
 
 using namespace itk;
 
-int itkDemonsVectorImageToVectorImageObjectMetricTest(int, char **)
+int itkDemonsVectorImageToVectorImageObjectMetricTest(int, char ** const)
 {
 
   const unsigned int imageSize = 5;

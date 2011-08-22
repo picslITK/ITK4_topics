@@ -15,8 +15,8 @@
 
 =========================================================================*/
 
-#ifndef __itkMattesMutualInformationImageToImageObjectMetric_txx
-#define __itkMattesMutualInformationImageToImageObjectMetric__txx
+#ifndef __itkMattesMutualInformationImageToImageObjectMetric_hxx
+#define __itkMattesMutualInformationImageToImageObjectMetric_hxx
 
 #include "itkMattesMutualInformationImageToImageObjectMetric.h"
 #include "itkImageRandomConstIteratorWithIndex.h"
@@ -225,8 +225,8 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   this->m_MovingImageMarginalPDF = MarginalPDFType::New();
 
   // Instantiate a region, index, size
-  typedef typename MarginalPDFType::RegionType MarginalPDFRegionType;
-  typedef typename MarginalPDFType::SizeType MarginalPDFSizeType;
+  typedef typename MarginalPDFType::RegionType  MarginalPDFRegionType;
+  typedef typename MarginalPDFType::SizeType    MarginalPDFSizeType;
   MarginalPDFRegionType marginalPDFRegion;
   MarginalPDFIndexType  marginalPDFIndex;
   MarginalPDFSizeType   marginalPDFSize;
@@ -290,7 +290,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 }
 
 
-
 /** Get the value and derivative */
 template <class TFixedImage, class TMovingImage, class TVirtualImage>
 void
@@ -304,7 +303,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
     jind[0]=i;
     jind[1]=this->m_Padding;
     PDFValueType val=this->m_JointPDF->GetPixel(jind);
-    for (  int j=(int)this->m_Padding-1; j >= 0 ; j-- ) {
+    for (  int j=(int)this->m_Padding-1; j >= 0; j-- ) {
       jind[1]=j;
       this->m_JointPDF->SetPixel(jind,val);
     }
@@ -312,7 +311,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
     jind[1]=i;
     jind[0]=this->m_Padding;
     val=this->m_JointPDF->GetPixel(jind);
-    for (  int j=(int)this->m_Padding-1; j >= 0 ; j-- ) {
+    for (  int j=(int)this->m_Padding-1; j >= 0; j-- ) {
       jind[0]=j;
       this->m_JointPDF->SetPixel(jind,val);
     }
@@ -449,8 +448,8 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   bool smoothjh=true;
   if (smoothjh)
     {
-      typedef DiscreteGaussianImageFilter<JointPDFType,JointPDFType> dgtype;
-      typename dgtype::Pointer dg=dgtype::New();
+      typedef DiscreteGaussianImageFilter<JointPDFType,JointPDFType> DgType;
+      typename DgType::Pointer dg=DgType::New();
       dg->SetInput(this->m_JointPDF);
       dg->SetVariance(1.5);
       dg->SetUseImageSpacingOff();
@@ -592,7 +591,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
     {
       const double pRatio = vcl_log(jointPDFValue)-vcl_log(movingImagePDFValue);
       term1 = dJPDF*pRatio;
-      term2 = vcl_log(2) * dMmPDF * jointPDFValue / movingImagePDFValue ;
+      term2 = vcl_log(2.0) * dMmPDF * jointPDFValue / movingImagePDFValue;
       scalingfactor =  (term2-term1);
     }  // end if-block to check non-zero bin contribution
   else scalingfactor = 0;
@@ -618,7 +617,6 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
   }
   return true;
 }
-
 
 
 // Get the value

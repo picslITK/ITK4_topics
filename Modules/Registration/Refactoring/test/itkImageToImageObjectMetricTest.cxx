@@ -334,7 +334,7 @@ int RunTest( TestMetricType::Pointer & metric,
 }//namespace
 
 ////////////////////////////////////////////////////////////
-int itkImageToImageObjectMetricTest(int, char **)
+int itkImageToImageObjectMetricTest(int, char ** const)
 {
   int result = EXIT_SUCCESS;
 

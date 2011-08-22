@@ -15,8 +15,8 @@
 
 =========================================================================*/
 
-#ifndef __itkMattesMutualInformationImageToImageObjectMetric__h
-#define __itkMattesMutualInformationImageToImageObjectMetric__h
+#ifndef __itkMattesMutualInformationImageToImageObjectMetric_h
+#define __itkMattesMutualInformationImageToImageObjectMetric_h
 
 #include "itkImageToImageObjectMetric.h"
 #include "itkImage.h"
@@ -68,18 +68,18 @@ public:
   typedef typename Superclass::VirtualPointType            VirtualPointType;
   typedef typename Superclass::FixedImagePointType         FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType         FixedImagePixelType;
-  typedef typename Superclass::FixedGradientPixelType   FixedImageGradientsType;
+  typedef typename Superclass::FixedGradientPixelType      FixedImageGradientsType;
   typedef typename Superclass::MovingImagePointType        MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType        MovingImagePixelType;
-  typedef typename Superclass::MovingGradientPixelType  MovingImageGradientsType;
+  typedef typename Superclass::MovingGradientPixelType     MovingImageGradientsType;
   /** Value type of the PDF */
   typedef double PDFValueType;
   /** Typedef for the joint PDF and marginal PDF are stored as ITK Images. */
-  typedef Image<PDFValueType,1> MarginalPDFType;
+  typedef Image<PDFValueType,1>               MarginalPDFType;
   typedef typename MarginalPDFType::IndexType MarginalPDFIndexType;
   typedef typename MarginalPDFType::PointType MarginalPDFPointType;
   typedef Image< PDFValueType, 2 >            JointPDFType;
-  typedef typename JointPDFType::PointType JointPDFPointType;
+  typedef typename JointPDFType::PointType    JointPDFPointType;
   itkGetConstReferenceMacro(JointPDF,typename JointPDFType::Pointer);
 
   // Declare the type for the derivative calculation
@@ -133,13 +133,13 @@ protected:
     double offset=0.5*this->m_JointPDFSpacing[0];
     double eps=this->m_JointPDFSpacing[0];
     MarginalPDFPointType  leftpoint=margPDFpoint;
-    leftpoint[0]-=offset;
+    leftpoint[0] -= offset;
     MarginalPDFPointType  rightpoint=margPDFpoint;
-    rightpoint[0]+=offset;
-    if (leftpoint[0] < eps ) leftpoint[0]=eps;
-    if (rightpoint[0] < eps ) rightpoint[0]=eps;
-    if (leftpoint[0] > 1 ) leftpoint[0]=1;
-    if (rightpoint[0] > 1  ) rightpoint[0]=1;
+    rightpoint[0] += offset;
+    if (leftpoint[0] < eps ) leftpoint[0] = eps;
+    if (rightpoint[0] < eps ) rightpoint[0] = eps;
+    if (leftpoint[0] > 1 ) leftpoint[0] = 1;
+    if (rightpoint[0] > 1  ) rightpoint[0] = 1;
     double delta=rightpoint[0]-leftpoint[0];
     if ( delta > 0 ) {
     double deriv=this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
@@ -154,9 +154,9 @@ protected:
     double offset=0.5*this->m_JointPDFSpacing[0];
     double eps=this->m_JointPDFSpacing[0];
     MarginalPDFPointType  leftpoint=margPDFpoint;
-    leftpoint[0]-=offset;
+    leftpoint[0] -= offset;
     MarginalPDFPointType  rightpoint=margPDFpoint;
-    rightpoint[0]+=offset;
+    rightpoint[0] += offset;
     if (leftpoint[0] < eps ) leftpoint[0]=eps;
     if (rightpoint[0] < eps ) rightpoint[0]=eps;
     if (leftpoint[0] > 1 ) leftpoint[0]=1;
@@ -175,9 +175,9 @@ protected:
     double offset=0.5*this->m_JointPDFSpacing[ind];
     double eps=this->m_JointPDFSpacing[ind];
     JointPDFPointType  leftpoint=jointPDFpoint;
-    leftpoint[ind]-=offset;
+    leftpoint[ind] -= offset;
     JointPDFPointType  rightpoint=jointPDFpoint;
-    rightpoint[ind]+=offset;
+    rightpoint[ind] += offset;
     if (leftpoint[ind] < eps ) leftpoint[ind]=eps;
     if (rightpoint[ind] < eps ) rightpoint[ind]=eps;
     if (leftpoint[ind] > 1 ) leftpoint[ind]=1;
@@ -195,8 +195,8 @@ protected:
 
   /** Initiates multi-threading to evaluate the current metric value
    * and derivatives. */
-//  virtual void GetValueAndDerivativeMultiThreadedInitiate( DerivativeType &
-//							   derivativeReturn ) // use superclass
+  //  virtual void GetValueAndDerivativeMultiThreadedInitiate( DerivativeType &
+  //          derivativeReturn ) // use superclass
 
   /* Provide the worker routine to process each point */
   bool GetValueAndDerivativeProcessPoint(
@@ -250,17 +250,19 @@ private:
   double        m_FixedImageBinSize;
   double        m_MovingImageBinSize;
 
-  double m_JointPDFSum;
+  double              m_JointPDFSum;
   JointPDFSpacingType m_JointPDFSpacing;
 
   /** For threading */
-  JointPDFInterpolatorPointer* m_ThreaderJointPDFInterpolator;
+  JointPDFInterpolatorPointer*    m_ThreaderJointPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderFixedImageMarginalPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderMovingImageMarginalPDFInterpolator;
-  double m_Log2;
-  unsigned int m_Padding;
-  JPDFGradientImagePointer m_JPDFGradientImage;
-  MarginalGradientImagePointer m_MarginalGradientImage;
+
+  double        m_Log2;
+  unsigned int  m_Padding;
+
+  JPDFGradientImagePointer      m_JPDFGradientImage;
+  MarginalGradientImagePointer  m_MarginalGradientImage;
   /*
   JointPDFType::Pointer * m_ThreaderJointPDF;
   int *m_ThreaderJointPDFStartBin;
@@ -277,8 +279,6 @@ private:
 #endif
 
 #endif
-
-
 
 
 /*
