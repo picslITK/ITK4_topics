@@ -35,7 +35,7 @@
 
 using namespace itk;
 
-int itkMattesMutualInformationImageToImageObjectMetricTest( int argc, char * argv[] )
+int itkMattesMutualInformationImageToImageObjectMetricTest( int , char * argv[] )
 {
 
   const unsigned int imageSize = 10;

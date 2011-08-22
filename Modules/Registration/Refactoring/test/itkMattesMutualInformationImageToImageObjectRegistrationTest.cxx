@@ -27,19 +27,23 @@
 
 #include "itkMattesMutualInformationImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
+#include "itkQuasiNewtonObjectOptimizer.h"
+#include "itkOptimizerParameterEstimator.h"
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
+#include "itkAffineTransform.h"
+#include "itkCompositeTransform.h"
 #include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
 #include "itkCastImageFilter.h"
-#include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+#include "itkResampleImageFilter.h"
 
 //These two are needed as long as we're using fwd-declarations in
 //DisplacementFieldTransfor:
@@ -121,12 +125,31 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   movingImageReader->Update();
   MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
+  /** define a resample filter that will ultimately be used to deform the image */
+  typedef itk::ResampleImageFilter<
+                            MovingImageType,
+                            FixedImageType >    ResampleFilterType;
+  ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+
+  /** create a composite transform holder for other transforms  */
+  typedef itk::CompositeTransform<double, Dimension>  CompositeType;
+  typedef CompositeType::ScalarType                     ScalarType;
+  CompositeType::Pointer compositeTransform = CompositeType::New();
+
   //create a displacement field transform
   typedef TranslationTransform<double, Dimension>
                                                     TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
+
+  typedef AffineTransform<double, Dimension>
+                                                    AffineTransformType;
+  AffineTransformType::Pointer affineTransform =
+                                                  AffineTransformType::New();
+  affineTransform->SetIdentity();
+  std::cout << affineTransform->GetParameters() << std::endl;
 
   typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
                                                     double, Dimension>
@@ -170,10 +193,12 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   metric->SetVirtualDomainImage( fixedImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( displacementTransform );
   metric->SetNumberOfHistogramBins(32);
-  //  metric->SetMovingTransform( translationTransform );
+  metric->SetFixedTransform( identityTransform );
+  compositeTransform->AddTransform( translationTransform );
+  compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
+  compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
+  metric->SetMovingTransform( compositeTransform );
 
   metric->SetPreWarpImages( false );
   metric->SetPrecomputeImageGradient( false );
@@ -181,7 +206,74 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   //Initialize the metric to prepare for use
   metric->Initialize();
 
+
+  typedef GradientDescentObjectOptimizer  OptimizerType0;
+  OptimizerType0::Pointer  optimizer0 = OptimizerType0::New();
+  optimizer0->SetMetric( metric );
+  optimizer0->SetLearningRate( learningRate );
+  optimizer0->SetNumberOfIterations( numberOfIterations );
+  optimizer0->SetScalarScale( scalarScale );
+  optimizer0->SetUseScalarScale(true);
+
+  std::cout << "Start optimization..." << std::endl
+            << "Number of iterations: " << numberOfIterations << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl
+            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+  try
+    {
+    optimizer0->StartOptimization();
+    }
+  catch( ExceptionObject & e )
+    {
+    std::cout << "Exception thrown ! " << std::endl;
+    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << e.GetLocation() << std::endl;
+    std::cout << e.GetDescription() << std::endl;
+    std::cout << e.what()    << std::endl;
+    std::cout << "Test FAILED." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  /*
+  // Optimizer with parameter estimator
+  typedef QuasiNewtonObjectOptimizer  QOptimizerType;
+  QOptimizerType::Pointer  qoptimizer = QOptimizerType::New();
+  qoptimizer->SetMetric( metric );
+  qoptimizer->SetNumberOfIterations( numberOfIterations );
+  typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
+  OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
+  parameterEstimator->SetMetric(metric);
+  parameterEstimator->SetTransformForward(true);
+  parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
+  qoptimizer->SetOptimizerParameterEstimator( parameterEstimator );
+
+
+  std::cout << "Start optimization..." << std::endl
+            << "Number of iterations: " << numberOfIterations << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl
+            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+  try
+    {
+    qoptimizer->StartOptimization();
+    }
+  catch( ExceptionObject & e )
+    {
+    std::cout << "Exception thrown ! " << std::endl;
+    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << e.GetLocation() << std::endl;
+    std::cout << e.GetDescription() << std::endl;
+    std::cout << e.what()    << std::endl;
+    std::cout << "Test FAILED." << std::endl;
+    return EXIT_FAILURE;
+    }
+  */
+  // now add the displacement field to the composite transform
+  compositeTransform->AddTransform( displacementTransform );
+  compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   // Optimizer
+  metric->Initialize();
   typedef GradientDescentObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
@@ -210,57 +302,25 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     return EXIT_FAILURE;
     }
 
-  std::cout << "...finished. " << std::endl
-            << "StopCondition: " << optimizer->GetStopConditionDescription()
-            << std::endl
-            << "Metric: NumberOfValidPoints: "
-            << metric->GetNumberOfValidPoints()
-            << std::endl;
+
+
+  std::cout << "...finished. " << std::endl;
 
   field = displacementTransform->GetDisplacementField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DisplacementFieldType > it( field, field->GetLargestPossibleRegion() );
-  /* print out a few displacement field vectors */
-  /*std::cout
-      << "First few elements of first few rows of final displacement field:"
-      << std::endl;
-  for(unsigned int i=0; i< 5; i++ )
-    {
-     for(unsigned int j=0; j< 5; j++ )
-      {
-      DisplacementFieldType::IndexType index;
-      index[0] = i;
-      index[1] = j;
-      it.SetIndex(index);
-      std::cout << it.Value() << " ";
-      }
-    std::cout << std::endl;
-    }
-  */
 
-  //
-  // results
-  //
-  //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
   //warp the image with the displacement field
-  typedef WarpImageFilter<
-                          MovingImageType,
-                          MovingImageType,
-                          DisplacementFieldType  >     WarperType;
-  typedef LinearInterpolateImageFunction<
-                                   MovingImageType,
-                                   double          >  InterpolatorType;
-  InterpolatorType::Pointer interpolator = InterpolatorType::New();
-  WarperType::Pointer warper = WarperType::New();
-  warper->SetInput( movingImage );
-  warper->SetInterpolator( interpolator );
-  warper->SetOutputSpacing( fixedImage->GetSpacing() );
-  warper->SetOutputOrigin( fixedImage->GetOrigin() );
-  warper->SetOutputDirection( fixedImage->GetDirection() );
-
-  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
-
+  resample->SetTransform( displacementTransform );
+  resample->SetTransform( affineTransform );
+  resample->SetTransform( compositeTransform );
+  resample->SetInput( movingImageReader->GetOutput() );
+  resample->SetSize(    fixedImage->GetLargestPossibleRegion().GetSize() );
+  resample->SetOutputOrigin(  fixedImage->GetOrigin() );
+  resample->SetOutputSpacing( fixedImage->GetSpacing() );
+  resample->SetOutputDirection( fixedImage->GetDirection() );
+  resample->SetDefaultPixelValue( 0 );
+  resample->Update();
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
   DisplacementWriterType::Pointer      displacementwriter =  DisplacementWriterType::New();
@@ -279,18 +339,14 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
                         MovingImageType,
                         OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
-
   WriterType::Pointer      writer =  WriterType::New();
   CastFilterType::Pointer  caster =  CastFilterType::New();
-
   writer->SetFileName( argv[3] );
-
-  caster->SetInput( warper->GetOutput() );
+  caster->SetInput( resample->GetOutput() );
   writer->SetInput( caster->GetOutput() );
-
   writer->Update();
 
-  std::cout << translationTransform->GetParameters() << std::endl;
+  std::cout << affineTransform->GetParameters() << std::endl;
   std::cout << "Test PASSED." << std::endl;
   return EXIT_SUCCESS;
 

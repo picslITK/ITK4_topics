@@ -91,6 +91,108 @@ typename CompositeTransform<TScalar, NDimensions>
  }
 
 /**
+ * Transform  vector
+ */
+template
+<class TScalar, unsigned int NDimensions>
+typename CompositeTransform<TScalar, NDimensions>
+::OutputVectorType
+ CompositeTransform<TScalar, NDimensions>
+::TransformVector( const InputVectorType& inputVec ) const
+ {
+    OutputVectorType outputVec( inputVec );
+    typename TransformQueueType::const_iterator it;
+    /* Apply in reverse queue order.  */
+    it = this->m_TransformQueue.end();
+    do
+    {
+        it--;
+        outputVec = (*it)->TransformVector( outputVec );
+    }
+    while (it != this->m_TransformQueue.begin() );
+
+    return outputVec;
+ }
+
+/**
+ * Transform  vector
+ */
+template
+<class TScalar, unsigned int NDimensions>
+typename CompositeTransform<TScalar, NDimensions>
+::OutputVnlVectorType
+ CompositeTransform<TScalar, NDimensions>
+::TransformVector( const InputVnlVectorType& inputVec ) const
+ {
+    OutputVnlVectorType outputVec( inputVec );
+    typename TransformQueueType::const_iterator it;
+    /* Apply in reverse queue order.  */
+    it = this->m_TransformQueue.end();
+    do
+    {
+        it--;
+        outputVec = (*it)->TransformVector( outputVec );
+    }
+    while (it != this->m_TransformQueue.begin() );
+
+    return outputVec;
+ }
+
+
+/**
+ * Transform covariant vector
+ */
+template
+<class TScalar, unsigned int NDimensions>
+typename CompositeTransform<TScalar, NDimensions>
+::OutputCovariantVectorType
+ CompositeTransform<TScalar, NDimensions>
+::TransformCovariantVector( const InputCovariantVectorType& inputVec , const InputPointType& inputPoint ) const
+ {
+    OutputCovariantVectorType outputVec( inputVec );
+    OutputPointType outputPoint( inputPoint );
+    typename TransformQueueType::const_iterator it;
+    /* Apply in reverse queue order.  */
+    it = this->m_TransformQueue.end();
+    do
+    {
+        it--;
+        outputVec = (*it)->TransformCovariantVector( outputVec , outputPoint );
+    }
+    while (it != this->m_TransformQueue.begin() );
+
+    return outputVec;
+ }
+
+/**
+ * Transform covariant vector
+ */
+template
+<class TScalar, unsigned int NDimensions>
+typename CompositeTransform<TScalar, NDimensions>
+::OutputPointType
+ CompositeTransform<TScalar, NDimensions>
+::TransformIndex( const InputIndexType& inputIndex ) const
+ {
+    OutputPointType outputPoint;
+    typename TransformQueueType::const_iterator it;
+    /* Apply in reverse queue order.  */
+    it = this->m_TransformQueue.end();
+    it--;
+    outputPoint = (*it)->TransformIndex( inputIndex );
+    if ( it !=  this->m_TransformQueue.begin() )
+      {
+        while (it != this->m_TransformQueue.begin() )
+        {
+          it--;
+          outputPoint = (*it)->TransformPoint( outputPoint );
+        }
+      }
+    return outputPoint;
+ }
+
+
+/**
  * return an inverse transformation
  */
 template
