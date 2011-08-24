@@ -63,7 +63,7 @@ GradientDescentObjectOptimizer
   m_Stop = false;
   while( ! m_Stop )
     {
-    /* Compute value/derivative, using threader. */
+    /* Compute metric value/derivative. */
     try
       {
       /* m_Gradient will be sized as needed by metric. If it's already
@@ -73,7 +73,7 @@ GradientDescentObjectOptimizer
     catch ( ExceptionObject & err )
       {
       m_StopCondition = MetricError;
-      m_StopConditionDescription << "Metric error";
+      m_StopConditionDescription << "Metric error during optimization";
       this->StopOptimization();
 
       // Pass exception to caller

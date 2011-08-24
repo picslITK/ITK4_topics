@@ -10,6 +10,8 @@ itk_module(ITKRegistrationRefactoring
     ITKImageGradient
     ITKImageFeature
     ITKFiniteDifference
+    ITKHighDimensionalOptimizers
+    ITKHighDimensionalMetrics
   TEST_DEPENDS
     ITKTestKernel
 )

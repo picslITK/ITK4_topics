@@ -24,7 +24,7 @@
 namespace itk
 {
 /** \class ObjectToObjectOptimizerBase
- * \brief Abstract base for object-to-object metric optimizers.
+ * \brief Abstract base for object-to-object optimizers.
  *
  * The goal of this optimizer hierarchy is to work with metrics
  * of any type, i.e. working with any kind of object, such as
@@ -38,17 +38,19 @@ namespace itk
  * being optimized.
  *
  * A \c ScalarScale value can be set instead of an array of parameter
- * scales. A single scalar scale value is useful for
+ * scales. A single scalar scale value is useful for memory-efficient
+ * uniform scaling of a dense transform (e.g. DisplacementFieldTransform).
+ * Note that \c SetUseScalarScale must be called to enable this option.
+ *
+ * \c SetScales allows setting of a per-parameter scaling array.
  *
  * Threading of some optimizer operations may be handled within
  * derived classes, for example in GradientDescentOptimizer.
  *
- * Derived classes must override StartOptimization, which is called
- * to initialize and run the optimization.
+ * Derived classes must override StartOptimization, and then call
+ * this base class version to perform common initializations.
  *
- * TODO: Remove implementation code out of header file.
- *
- * \ingroup ITKRegistrationRefactoring
+ * \ingroup ITKHighDimensionalOptimizers
  */
 
 class ITK_EXPORT ObjectToObjectOptimizerBase : public Object
@@ -130,7 +132,7 @@ public:
 
   /** Run the optimization.
    * \note Derived classes must override and call this supercall method, then
-   * perform any additional initialization, and call \c ResumeOptimization. */
+   * perform any additional initialization before performing optimization. */
   virtual void StartOptimization()
   {
     /* Validate some settings */

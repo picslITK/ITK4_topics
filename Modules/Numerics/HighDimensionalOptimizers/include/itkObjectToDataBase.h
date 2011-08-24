@@ -32,7 +32,7 @@ namespace itk
  * The class is templated over the type of object over which threading
  * is performed, e.g. an image region. And it is templated over the
  * type of the data holder. The data holder is supplied to the threading
- * callback for the user, i.e. user data.
+ * callback for the user, i.e. as user data.
  *
  * SplitRequestedObject is a method to split the object into
  * non-overlapping pieces for threading. Must be overridden by derived
