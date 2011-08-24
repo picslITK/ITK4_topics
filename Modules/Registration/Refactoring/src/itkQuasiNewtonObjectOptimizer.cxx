@@ -46,6 +46,12 @@ QuasiNewtonObjectOptimizer
 
   m_LocalHessian = NULL;
   m_LocalHessianInverse = NULL;
+
+  m_LineSearchEnabled = false;
+  m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
+
+  this->SetDebug(false);
+
 }
 
 void
@@ -64,16 +70,28 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("StartOptimization");
 
+  if (m_OptimizerParameterEstimator.IsNotNull())
+    {
+    m_LineSearchEnabled = false;
+    }
+  else
+    {
+    m_LineSearchEnabled = true;
+    }
+
   if ( ! this->m_Metric->HasLocalSupport() )
     {
-    // initialize scales
-    //m_CurrentPosition = this->m_Metric->GetParameters();
-    ScalesType scales(this->m_Metric->GetNumberOfParameters());
-    //this->m_Metric->EstimateScales(true, scales);
-    m_OptimizerParameterEstimator->EstimateScales(scales);
-    //m_CurrentPosition = this->m_Metric->GetParameters();
-    this->SetScales(scales);
-    std::cout << " Estimated scales = " << scales << std::endl;
+    if (m_OptimizerParameterEstimator.IsNotNull())
+      {
+      // initialize scales
+      //m_CurrentPosition = this->m_Metric->GetParameters();
+      ScalesType scales(this->m_Metric->GetNumberOfParameters());
+      //this->m_Metric->EstimateScales(true, scales);
+      m_OptimizerParameterEstimator->EstimateScales(scales);
+      //m_CurrentPosition = this->m_Metric->GetParameters();
+      this->SetScales(scales);
+      std::cout << " Estimated scales = " << scales << std::endl;
+      }
     }
   else
     {
@@ -100,6 +118,10 @@ QuasiNewtonObjectOptimizer
 
   if ( this->m_Metric->HasLocalSupport() )
     {
+    if (m_OptimizerParameterEstimator.IsNull())
+      {
+      itkExceptionMacro("m_OptimizerParameterEstimator == NULL");
+      }
     AdvanceOneLocalStep();
     return;
     }
@@ -133,7 +155,6 @@ QuasiNewtonObjectOptimizer
     newtonStepException = true;
     }
 
-  this->SetDebug(true);
   if (this->GetDebug())
     {
     std::cout << "m_CurrentPosition(:," << 1+this->GetCurrentIteration() << ") = " << this->m_CurrentPosition << "';" << std::endl;
@@ -178,33 +199,72 @@ QuasiNewtonObjectOptimizer
   else
     {
     // Now a Newton step is on the consistent direction of a gradient step
-    learningRate = this->EstimateLearningRate(m_NewtonStep);
-    learningRate = vnl_math_min(learningRate, 1.0);
-    this->SetLearningRate( learningRate );
-    if (this->GetDebug())
+    if ( m_LineSearchEnabled )
       {
-      std::cout << "using newton, learningRate = " << learningRate << std::endl;
+      this->AdvanceWithLineSearch();
       }
-    if ( learningRate == 0)
+    else
       {
-      m_StopCondition = StepTooSmall;
-      m_StopConditionDescription << "Optimization stops after "
-                                 << this->GetCurrentIteration()
-                                 << " iterations due to that"
-                                 << " the new step is very small.";
-      this->StopOptimization();
-      return;
-      }
+      learningRate = this->EstimateLearningRate(m_NewtonStep);
+      learningRate = vnl_math_min(learningRate, 1.0);
+      this->SetLearningRate( learningRate );
+      if (this->GetDebug())
+        {
+        std::cout << "using newton, learningRate = " << learningRate << std::endl;
+        }
 
-    DerivativeType step(spaceDimension);
-    for ( unsigned int j = 0; j < spaceDimension; j++ )
-      {
-      step[j] = this->m_LearningRate * this->m_NewtonStep[j];
-      }
-    this->m_Metric->UpdateTransformParameters( step );
+      if ( learningRate == 0)
+        {
+        m_StopCondition = StepTooSmall;
+        m_StopConditionDescription << "Optimization stops after "
+                                   << this->GetCurrentIteration()
+                                   << " iterations due to that"
+                                   << " the new step is very small.";
+        this->StopOptimization();
+        return;
+        }
 
-    this->InvokeEvent( IterationEvent() );
+      DerivativeType step(spaceDimension);
+      for ( unsigned int j = 0; j < spaceDimension; j++ )
+        {
+        step[j] = this->m_LearningRate * this->m_NewtonStep[j];
+        }
+      this->m_Metric->UpdateTransformParameters( step );
+
+      this->InvokeEvent( IterationEvent() );
+      } // without line search
+    } // using newton step
+}
+
+/*************************************************
+ * Do backtracking line search on the Newton direction
+ *************************************************/
+void QuasiNewtonObjectOptimizer
+::AdvanceWithLineSearch()
+{
+  double direction = 1.0; //maximizing
+
+  double t = 1.0, beta = 0.75;
+  double c1 = 1e-4; //c2 = 0.9;
+  unsigned int MaxSearch = 20;
+
+  double oldValue = this->GetValue();
+  double stepChange = inner_product(m_NewtonStep, m_Gradient);
+
+  for (unsigned int searchCount = 0; searchCount < MaxSearch; searchCount++)
+    {
+    this->m_Metric->UpdateTransformParameters( m_NewtonStep );
+    this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+
+    if ((this->m_Value - (oldValue + c1 * t * stepChange)) * direction >= 0)
+      {
+      break;
+      }
+    t *= beta;
     }
+
+  this->InvokeEvent( IterationEvent() );
+
 }
 
 /**
@@ -276,7 +336,6 @@ QuasiNewtonObjectOptimizer
   double newtonLearningRate   = 100*m_MaximumVoxelShift / maxNewtonStep;
   newtonLearningRate = vnl_math_min(newtonLearningRate, 1.0);
 
-  //this->SetDebug(true);
   if (this->GetDebug())
     {
     std::cout << "Iteration = " << this->GetCurrentIteration() << std::endl;
@@ -507,13 +566,17 @@ void QuasiNewtonObjectOptimizer
 double QuasiNewtonObjectOptimizer
 ::EstimateLearningRate(ParametersType step)
 {
+  if (m_OptimizerParameterEstimator.IsNull())
+    {
+    return 1;
+    }
+
   ParametersType parameters = this->GetCurrentPosition();
 
   ScalesType     scales = this->GetScales();
 
   double shift, learningRate;
 
-  //shift = this->m_Metric->ComputeMaximumVoxelShift(true, step);
   shift = m_OptimizerParameterEstimator->ComputeMaximumVoxelShift(step);
 
   //initialize for the first time of executing EstimateLearningRate

@@ -86,6 +86,7 @@ public:
 
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
+  void AdvanceWithLineSearch();
 
   /** Advance one step following the Quasi-Newton direction
    * if the transform has local support. */
@@ -94,6 +95,7 @@ public:
 protected:
 
   OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
+  bool                                    m_LineSearchEnabled;
 
   /** The gradient in the previous step */
   ParametersType  m_PreviousPosition;

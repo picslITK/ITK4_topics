@@ -1,299 +1,223 @@
 /*=========================================================================
-*
-*  Copyright Insight Software Consortium
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*         http://www.apache.org/licenses/LICENSE-2.0.txt
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*=========================================================================*/
-/**
- * Test program for DemonImageToImageObjectMetric and
- * GradientDescentObjectOptimizer classes.
  *
- * Tests are disabled since it requires some image files as input.
- */
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4786 )
+#endif
 
-//#include "itkDemonsImageToImageObjectMetric.h"
-#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
+#include "itkObjectToObjectMetric.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
-#include "itkOptimizerParameterEstimator.h"
-
-#include "itkIdentityTransform.h"
-#include "itkTranslationTransform.h"
-
-#include "itkHistogramMatchingImageFilter.h"
-#include "itkCastImageFilter.h"
-#include "itkWarpImageFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkImageRegistrationMethodImageSource.h"
-
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkCommand.h"
-#include "itksys/SystemTools.hxx"
-
-namespace{
-// The following class is used to support callbacks
-// on the filter in the pipeline that follows later
-template<typename TRegistration>
-class ShowProgressObject
-{
-public:
-  ShowProgressObject(TRegistration* o)
-    {m_Process = o;}
-  void ShowProgress()
-    {
-    std::cout << "Progress: " << m_Process->GetProgress() << "  ";
-    std::cout << "Iter: " << m_Process->GetElapsedIterations() << "  ";
-    std::cout << "Metric: "   << m_Process->GetMetric()   << "  ";
-    std::cout << "RMSChange: " << m_Process->GetRMSChange() << "  ";
-    std::cout << std::endl;
-    if ( m_Process->GetElapsedIterations() == 10 )
-      { m_Process->StopRegistration(); }
-    }
-  typename TRegistration::Pointer m_Process;
-};
-}
+#include "vnl/vnl_math.h"
 
 using namespace itk;
 
-int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
+namespace {
+/**
+ *  \class BananaMetric for test
+ *
+ *  The objective function is Rosenbrock's Function, which has a banana shape.
+ *
+ *  f(x) = 100*(y-x*x)^2+(1-x)^2
+ *
+ *  The Quasi-Newton method for this function shape is much faster than a standard
+ *  Gradient Descent method.
+ *
+ */
+class BananaMetric : public itk::ObjectToObjectMetric
 {
+public:
 
-  if( argc >= 2 && (argc < 4 || argc > 5))
-    {
-    std::cerr << "Missing Parameters " << std::endl;
-    std::cerr << "Usage: " << argv[0];
-    std::cerr << " [fixedImageFile movingImageFile ";
-    std::cerr << " outputImageFile] ";
-    std::cerr << " [numberOfIterations=10] ";
-    //std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
-    return EXIT_FAILURE;
-    }
-  std::cout << argc << std::endl;
-  unsigned int numberOfIterations = 100;
-  //double scalarScale = 1.0;
-  //double learningRate = 100;
-  //if( argc >= 7 )
-  //  {
-  //  numberOfIterations = atoi( argv[4] );
-  //  scalarScale = atof( argv[5] );
-  //  learningRate = atof( argv[6] );
-  //  }
+  typedef BananaMetric                    Self;
+  typedef itk::ObjectToObjectMetric       Superclass;
+  typedef itk::SmartPointer<Self>         Pointer;
+  typedef itk::SmartPointer<const Self>   ConstPointer;
+  itkNewMacro( Self );
+  itkTypeMacro( BananaMetric, ObjectToObjectMetric );
 
-  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
+  enum { SpaceDimension=2 };
 
-  const unsigned int Dimension = 2;
-  typedef double PixelType; //I assume png is unsigned short
+  typedef Superclass::ParametersType        ParametersType;
+  typedef Superclass::ParametersValueType   ParametersValueType;
+  typedef Superclass::DerivativeType        DerivativeType;
+  typedef Superclass::MeasureType           MeasureType;
 
-  // Fixed Image Type
-  typedef itk::Image<PixelType,Dimension>               FixedImageType;
+  BananaMetric()
+  {
+    m_Parameters.SetSize( SpaceDimension );
+    m_Parameters.Fill( 0 );
+  }
 
-  // Moving Image Type
-  typedef itk::Image<PixelType,Dimension>               MovingImageType;
+  void Initialize(void) throw ( itk::ExceptionObject ) {}
 
-  // Size Type
-  typedef MovingImageType::SizeType                 SizeType;
+  void GetValueAndDerivative( MeasureType & value,
+                              DerivativeType & derivative )
+  {
+    if( derivative.Size() != 2 )
+      derivative.SetSize(2);
 
+    double x = m_Parameters[0];
+    double y = m_Parameters[1];
 
-  // ImageSource
-  typedef itk::testhelper::ImageRegistrationMethodImageSource<
-                                  FixedImageType::PixelType,
-                                  MovingImageType::PixelType,
-                                  Dimension >         ImageSourceType;
+    std::cout << "GetValueAndDerivative(";
+    std::cout << x << " ";
+    std::cout << y << ") = " << std::endl;
 
-  FixedImageType::ConstPointer    fixedImage;
-  MovingImageType::ConstPointer   movingImage;
-  ImageSourceType::Pointer        imageSource;
+    double u = y-x*x;
+    double v = 1-x;
+    value = 100*u*u+v*v;
+    value = -value; //for maximization
 
-  // Use image files as data for manual testing
-  if( argc > 3 )
-    {
-    typedef itk::ImageFileReader< FixedImageType  > FixedImageReaderType;
-    typedef itk::ImageFileReader< MovingImageType > MovingImageReaderType;
+    std::cout << "value: " << value << std::endl;
 
-    FixedImageReaderType::Pointer fixedImageReader   = FixedImageReaderType::New();
-    MovingImageReaderType::Pointer movingImageReader = MovingImageReaderType::New();
+    /* The optimizer simply takes the derivative from the metric
+     * and adds it to the transform after scaling. So instead of
+     * setting a 'minimize' option in the gradient, we return
+     * a minimizing derivative. */
+    derivative[0] = 200*u*(-2*x) + 2*v*(-1);
+    derivative[1] = 200*u;
+    derivative[0] = -derivative[0]; //for maximization
+    derivative[1] = -derivative[1];
 
-    fixedImageReader->SetFileName( argv[2] );
-    movingImageReader->SetFileName( argv[3] );
-    fixedImageReader->Update();
-    movingImageReader->Update();
+    std::cout << "derivative: " << derivative << std::endl;
+  }
 
-    fixedImage  = fixedImageReader->GetOutput();
-    movingImage = movingImageReader->GetOutput();
+  MeasureType  GetValue()
+  {
+    return 0.0;
+  }
 
-    }
-  else // Use imageSource to generate testing data
-    {
-    imageSource   = ImageSourceType::New();
+  void UpdateTransformParameters( DerivativeType & update, ParametersValueType )
+  {
+    m_Parameters += update;
+  }
 
-    SizeType size;
-    size[0] = 100;
-    size[1] = 100;
+  unsigned int GetNumberOfParameters(void) const
+  {
+    return SpaceDimension;
+  }
 
-    imageSource->GenerateImages( size );
+  unsigned int GetNumberOfLocalParameters() const
+  {
+    return SpaceDimension;
+  }
 
-    fixedImage    = imageSource->GetFixedImage();
-    movingImage   = imageSource->GetMovingImage();
-    }
+  bool HasLocalSupport() const
+  {
+    return false;
+  }
 
-  //matching intensity histogram
-  typedef HistogramMatchingImageFilter<
-                                    MovingImageType,
-                                    MovingImageType >   MatchingFilterType;
-  MatchingFilterType::Pointer matcher = MatchingFilterType::New();
+  /* These Set/Get methods are only needed for this test derivation that
+   * isn't using a transform */
+  void SetParameters( ParametersType & parameters )
+  {
+    m_Parameters = parameters;
+  }
 
-  matcher->SetInput( movingImage );
-  matcher->SetReferenceImage( fixedImage );
+  const ParametersType & GetParameters() const
+  {
+    return m_Parameters;
+  }
 
-  matcher->SetNumberOfHistogramLevels( 256 );
-  matcher->SetNumberOfMatchPoints( 10 );
-  matcher->ThresholdAtMeanIntensityOn();
+private:
 
-  matcher->Update();
-  movingImage = matcher->GetOutput();
+  ParametersType m_Parameters;
+};
 
-  //create a deformation field transform
-  //typedef TranslationTransform<double, Dimension>
-  typedef AffineTransform<double, Dimension>
-                                                  TranslationTransformType;
-  typedef TranslationTransformType::ParametersType
-                                                  ParametersType;
-  TranslationTransformType::Pointer translationTransform =
-                                                  TranslationTransformType::New();
-  translationTransform->SetIdentity();
+}//namespace
 
-  //identity transform for fixed image
-  typedef IdentityTransform<double, Dimension>    IdentityTransformType;
-  IdentityTransformType::Pointer identityTransform =
-                                                  IdentityTransformType::New();
-  identityTransform->SetIdentity();
+int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
+{
+  std::cout << "Gradient Descent Object Optimizer Test ";
+  std::cout << std::endl << std::endl;
 
-  // The metric
-  //  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
-  //                                                                  MetricType;
+  typedef  itk::QuasiNewtonObjectOptimizer      OptimizerType;
 
-  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
-      MetricType;
+  typedef OptimizerType::ScalesType             ScalesType;
 
-  MetricType::Pointer metric = MetricType::New();
+  // Declaration of a itkOptimizer
+  OptimizerType::Pointer  itkOptimizer = OptimizerType::New();
 
-  // Assign images and transforms.
-  // By not setting a virtual domain image or virtual domain settings,
-  // the metric will use the fixed image for the virtual domain.
-  metric->SetVirtualDomainImage( const_cast<FixedImageType *>(fixedImage.GetPointer()) );
-  metric->SetFixedImage( fixedImage );
-  metric->SetMovingImage( movingImage );
-  metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( translationTransform );
+  // Declaration of the Metric
+  BananaMetric::Pointer metric = BananaMetric::New();
 
-  Size<Dimension> radSize;
-  radSize.Fill(2);
-  metric->SetRadius(radSize);
+  itkOptimizer->SetMetric( metric );
 
-  //Initialize the metric to prepare for use
-  metric->Initialize();
+  typedef BananaMetric::ParametersType    ParametersType;
 
-  // Optimizer
-  typedef GradientDescentObjectOptimizer  OptimizerType;
-  //typedef QuasiNewtonObjectOptimizer  OptimizerType;
-  OptimizerType::Pointer  optimizer = OptimizerType::New();
-  optimizer->SetMetric( metric );
-  optimizer->SetNumberOfIterations( numberOfIterations );
-  ParametersType scales(6);
-  for (int s=0; s<4; s++) scales[s] = 9801;
-  for (int s=4; s<6; s++) scales[s] = 1;
-  optimizer->SetScales( scales );
-  optimizer->SetLearningRate( 1086.76 );
+  const unsigned int spaceDimension =
+                      metric->GetNumberOfParameters();
 
-  // Instantiate an Observer to report the progress of the Optimization
-  typedef itk::CommandIterationUpdate<
-                                    OptimizerType >      CommandIterationType;
-  CommandIterationType::Pointer iterationCommand = CommandIterationType::New();
-  iterationCommand->SetOptimizer(  optimizer.GetPointer() );
+  // We start not so far from  | 2 -2 |
+  ParametersType  initialPosition( spaceDimension );
 
-  // Testing optimizer parameter estimator
-  typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
-  OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
+  initialPosition[0] =  100;
+  initialPosition[1] = -100;
+  metric->SetParameters( initialPosition );
 
-  parameterEstimator->SetMetric(metric);
-  parameterEstimator->SetTransformForward(true);
-  parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
-  //optimizer->SetOptimizerParameterEstimator( parameterEstimator );
-  // Estimating optimizer parameters done
+  //itkOptimizer->SetLearningRate( 0.1 );
+  itkOptimizer->SetNumberOfIterations( 50 );
 
-  std::cout << "Start optimization..." << std::endl
-            << "Number of iterations: " << numberOfIterations << std::endl;
-            //<< "Scalar scale: " << scalarScale << std::endl
-            //<< "Learning rate: " << learningRate << std::endl;
   try
     {
-    optimizer->StartOptimization();
+    itkOptimizer->StartOptimization();
     }
-  catch( ExceptionObject & e )
+  catch( itk::ExceptionObject & e )
     {
     std::cout << "Exception thrown ! " << std::endl;
-    std::cout << "An error ocurred during Optimization:" << std::endl;
-    std::cout << e.GetLocation() << std::endl;
-    std::cout << e.GetDescription() << std::endl;
-    std::cout << e.what()    << std::endl;
+    std::cout << "An error ocurred during Optimization" << std::endl;
+    std::cout << "Location    = " << e.GetLocation()    << std::endl;
+    std::cout << "Description = " << e.GetDescription() << std::endl;
     return EXIT_FAILURE;
     }
 
-  std::cout << "...finished. " << std::endl
-            << "StopCondition: " << optimizer->GetStopConditionDescription()
-            << std::endl
-            << "Metric: NumberOfValidPoints: "
-            << metric->GetNumberOfValidPoints()
-            << std::endl;
+  ParametersType finalPosition = metric->GetParameters();
+  std::cout << "Solution        = (";
+  std::cout << finalPosition[0] << ",";
+  std::cout << finalPosition[1] << ")" << std::endl;
 
   //
-  // results
+  // check results to see if it is within range
   //
-  ParametersType actualParameters = imageSource->GetActualParameters();
-  ParametersType finalParameters  = translationTransform->GetParameters();
-
-  const unsigned int numbeOfParameters = actualParameters.Size();
-
-  // We know that for the Affine transform the Translation parameters are at
-  // the end of the list of parameters.
-  const unsigned int offsetOrder = finalParameters.Size()-actualParameters.Size();
-
-  const double tolerance = 1.0;  // equivalent to 1 pixel.
-  std::cout << "Estimated scales = " << optimizer->GetScales() << std::endl;
-  std::cout << "finalParameters = " << finalParameters << std::endl;
-  std::cout << "actualParameters = " << actualParameters << std::endl;
-
   bool pass = true;
-  for(unsigned int i=0; i<numbeOfParameters; i++)
+  double trueParameters[2] = { 10, -1 };
+  for( unsigned int j = 0; j < 2; j++ )
     {
-    // the parameters are negated in order to get the inverse transformation.
-    // this only works for comparing translation parameters....
-    std::cout << finalParameters[i+offsetOrder] << " == " << -actualParameters[i] << std::endl;
-    if( vnl_math_abs ( finalParameters[i+offsetOrder] - (-actualParameters[i]) ) > tolerance )
-      {
-      std::cout << "Tolerance exceeded at component " << i << std::endl;
+    if( vnl_math_abs( finalPosition[j] - trueParameters[j] ) > 0.01 )
       pass = false;
-      }
     }
+
+  // Exercise various member functions.
+  std::cout << "LearningRate: " << itkOptimizer->GetLearningRate();
+  std::cout << std::endl;
+  std::cout << "NumberOfIterations: " << itkOptimizer->GetNumberOfIterations();
+  std::cout << std::endl;
+
+  itkOptimizer->Print( std::cout );
+  std::cout << "Stop description   = "
+            << itkOptimizer->GetStopConditionDescription() << std::endl;
 
   if( !pass )
     {
-    std::cout << "Test FAILED." << std::endl;
+    std::cout << "Test failed." << std::endl;
     return EXIT_FAILURE;
     }
 
-  std::cout << "Test PASSED." << std::endl;
-
+  std::cout << "Test passed." << std::endl;
   return EXIT_SUCCESS;
+
+
 }
