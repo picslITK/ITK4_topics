@@ -137,6 +137,10 @@ QuasiNewtonObjectOptimizer
   bool   newtonStepException = false;
 
   this->m_CurrentPosition = this->m_Metric->GetParameters();
+  if ( this->m_Gradient[0] != this->m_Gradient[0] ) //checking NaN
+    {
+    itkExceptionMacro("Gradient is undefined");
+    }
 
   if (this->GetCurrentIteration() == 0)
     {
@@ -162,6 +166,7 @@ QuasiNewtonObjectOptimizer
   if (this->GetDebug())
     {
     std::cout << "m_CurrentPosition(:," << 1+this->GetCurrentIteration() << ") = " << this->m_CurrentPosition << "';" << std::endl;
+    std::cout << "m_Value(" << 1+this->GetCurrentIteration() << ") = " << this->GetValue() << ";" << std::endl;
     std::cout << "m_NewtonStep(:," << 1+this->GetCurrentIteration() << ") = " << m_NewtonStep << "';" << std::endl;
     std::cout << "m_Gradient(:," << 1+this->GetCurrentIteration() << ") = " << m_Gradient << "';" << std::endl;
     }
