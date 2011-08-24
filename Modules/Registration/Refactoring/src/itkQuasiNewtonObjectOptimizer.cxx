@@ -50,7 +50,7 @@ QuasiNewtonObjectOptimizer
   m_LineSearchEnabled = false;
   m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
 
-  this->SetDebug(false);
+  this->SetDebug(true);
 
 }
 
@@ -84,9 +84,13 @@ QuasiNewtonObjectOptimizer
     if (m_OptimizerParameterEstimator.IsNotNull())
       {
       // initialize scales
-      //m_CurrentPosition = this->m_Metric->GetParameters();
+      m_CurrentPosition = this->m_Metric->GetParameters();
+      if (m_CurrentPosition[0] != m_CurrentPosition[0]) //checking NaN or #IND
+        {
+        itkExceptionMacro("QuasiNewtonObjectOptimizer: metric parameters are not defined.");
+        }
       ScalesType scales(this->m_Metric->GetNumberOfParameters());
-      //this->m_Metric->EstimateScales(true, scales);
+
       m_OptimizerParameterEstimator->EstimateScales(scales);
       //m_CurrentPosition = this->m_Metric->GetParameters();
       this->SetScales(scales);

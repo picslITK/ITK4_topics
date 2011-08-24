@@ -152,11 +152,20 @@ OptimizerParameterEstimator< TMetric >
     maxShift = this->ComputeMaximumVoxelShift(deltaParameters);
     deltaParameters[i] = 0;
 
+    if (maxShift != maxShift)
+    {
+    itkExceptionMacro("OptimizerParameterEstimator: maximum voxel shift is undefined with current parameters.");
+    }
+
     parameterScales[i] = maxShift;
     if ( maxShift != 0 && maxShift < minNonZeroShift )
       {
       minNonZeroShift = maxShift;
       }
+    }
+    if (minNonZeroShift == NumericTraits<double>::max())
+    {
+    itkExceptionMacro("OptimizerParameterEstimator: any change in the parameters yields zero voxel shift. Nothing could be optimized.");
     }
 
   for (unsigned int i=0; i<numPara; i++)
