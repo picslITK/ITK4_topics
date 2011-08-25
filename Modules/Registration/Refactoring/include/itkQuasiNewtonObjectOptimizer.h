@@ -84,6 +84,10 @@ public:
   /** Start and run the optimization */
   virtual void StartOptimization();
 
+  /** Resume the optimization. Can be called after StopOptimization to
+   * resume. The bulk of the optimization work loop is here. */
+  virtual void ResumeOptimization();
+
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
   void AdvanceWithLineSearch();
@@ -94,16 +98,20 @@ public:
 
 protected:
 
+  /** The helper object to estimate the learning rate and scales */
   OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
-  bool                                    m_LineSearchEnabled;
+  double                                  m_MaximumVoxelShift;
+
+  /** Switch for doing line search */
+  bool            m_LineSearchEnabled;
+
+  /** A flag to show if GetValueAndDerivate() is evaluated after applying a change.
+   *  This happens when line search is done. */
+  bool            m_ValueAndDerivateEvaluated;
 
   /** The gradient in the previous step */
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
-
-  // Reference to current position
-  // Use reference to save memory copy
-  //ParametersType& m_CurrentPositionRef;
 
   /** The Quasi-Newton step */
   ParametersType  m_NewtonStep;
@@ -115,8 +123,6 @@ protected:
   /** The Hessian with local support */
   LocalHessianType  *m_LocalHessian;
   LocalHessianType  *m_LocalHessianInverse;
-
-  //bool            m_LineSearchEnabled;
 
   /** Do line search on the direction of the Newton step */
   //void LineSearch();
@@ -134,12 +140,6 @@ protected:
 
   /** Estimate the Hessian with BFGS method with local support. */
   void EstimateLocalHessian();
-
-  double                        m_MaximumVoxelShift;
-  double                        m_MinimumVoxelShift;
-
-  //StopConditionType             m_StopCondition;
-  //std::ostringstream            m_StopConditionDescription;
 
   /** Function to compute the learning rate. */
   virtual double EstimateLearningRate(ParametersType step);

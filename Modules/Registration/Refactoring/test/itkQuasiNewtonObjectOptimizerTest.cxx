@@ -66,22 +66,18 @@ public:
   void GetValueAndDerivative( MeasureType & value,
                               DerivativeType & derivative )
   {
+    this->SetDebug(false);
+
     if( derivative.Size() != 2 )
       derivative.SetSize(2);
 
     double x = m_Parameters[0];
     double y = m_Parameters[1];
 
-    std::cout << "GetValueAndDerivative(";
-    std::cout << x << " ";
-    std::cout << y << ") = " << std::endl;
-
     double u = y-x*x;
     double v = 1-x;
     value = 100*u*u+v*v;
     value = -value; //for maximization
-
-    std::cout << "value: " << value << std::endl;
 
     /* The optimizer simply takes the derivative from the metric
      * and adds it to the transform after scaling. So instead of
@@ -92,7 +88,14 @@ public:
     derivative[0] = -derivative[0]; //for maximization
     derivative[1] = -derivative[1];
 
-    std::cout << "derivative: " << derivative << std::endl;
+    if (this->GetDebug())
+      {
+      std::cout << "--GetValueAndDerivative(";
+      std::cout << x << " ";
+      std::cout << y << ") = " << std::endl;
+      std::cout << "--value: " << value << std::endl;
+      std::cout << "--derivative: " << derivative << std::endl;
+      }
   }
 
   MeasureType  GetValue()
@@ -161,15 +164,14 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
   const unsigned int spaceDimension =
                       metric->GetNumberOfParameters();
 
-  // We start not so far from  | 2 -2 |
   ParametersType  initialPosition( spaceDimension );
 
-  initialPosition[0] =  100;
-  initialPosition[1] = -100;
+  initialPosition[0] = 10;//-200;
+  initialPosition[1] = -50;
   metric->SetParameters( initialPosition );
 
   //itkOptimizer->SetLearningRate( 0.1 );
-  itkOptimizer->SetNumberOfIterations( 50 );
+  itkOptimizer->SetNumberOfIterations( 200 );
 
   try
     {
@@ -193,7 +195,7 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
   // check results to see if it is within range
   //
   bool pass = true;
-  double trueParameters[2] = { 10, -1 };
+  double trueParameters[2] = { 1, 1 };
   for( unsigned int j = 0; j < 2; j++ )
     {
     if( vnl_math_abs( finalPosition[j] - trueParameters[j] ) > 0.01 )
