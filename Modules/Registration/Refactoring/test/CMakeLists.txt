@@ -3,14 +3,10 @@ set(ITKRegistrationRefactoringTests
 # itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
-  itkArray1DToDataTest.cxx
-  itkObjectToObjectOptimizerBaseTest.cxx
-  itkObjectToObjectMetricTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
-  itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
- itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
+  itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
@@ -56,13 +52,6 @@ itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
 itk_add_test(NAME itkArray1DToDataTest
          COMMAND ITKRegistrationRefactoringTestDriver itkArray1DToDataTest)
 
-itk_add_test(NAME itkObjectToObjectOptimizerBaseTest
-         COMMAND ITKRegistrationRefactoringTestDriver
-         itkObjectToObjectOptimizerBaseTest)
-
-itk_add_test(NAME itkObjectToObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver itkObjectToObjectMetricTest)
-
 itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
@@ -70,10 +59,6 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest)
-
-itk_add_test(NAME itkGradientDescentObjectOptimizerTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkGradientDescentObjectOptimizerTest)
 
 # NOTE - this is waiting for new testing data images to be added
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest

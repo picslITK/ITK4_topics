@@ -1,6 +1,4 @@
 set(ITKRegistrationRefactoring_SRC
-itkGradientDescentObjectOptimizerBase.cxx
-itkGradientDescentObjectOptimizer.cxx
 itkQuasiNewtonObjectOptimizer.cxx
 )
 

@@ -45,29 +45,29 @@ public:
                                 ThreadIdType threadId,
                                 Self *holder )
   {
-    if( threadId >= holder->m_numberOfThreads )
+    if( threadId >= holder->m_NumberOfThreads )
       {
       holder->m_GotMoreThreadsThanExpected = true;
       return;
       }
-    holder->m_rangeInCallback[threadId] = rangeForThread;
+    holder->m_RangeInCallback[threadId] = rangeForThread;
   }
 
   void Init(ThreadIdType numberOfThreads)
   {
     m_GotMoreThreadsThanExpected = false;
-    m_rangeInCallback.resize(numberOfThreads);
+    m_RangeInCallback.resize(numberOfThreads);
     IndexRangeType emptyRange;
     emptyRange.Fill(-1);
-    for(ThreadIdType i=0; i<m_rangeInCallback.size(); i++)
+    for(ThreadIdType i=0; i<m_RangeInCallback.size(); i++)
       {
-      m_rangeInCallback[i] = emptyRange;
+      m_RangeInCallback[i] = emptyRange;
       }
   }
 
   bool                         m_GotMoreThreadsThanExpected;
-  std::vector<IndexRangeType>  m_rangeInCallback;
-  ThreadIdType                 m_numberOfThreads;
+  std::vector<IndexRangeType>  m_RangeInCallback;
+  ThreadIdType                 m_NumberOfThreads;
 
 };
 
@@ -90,7 +90,7 @@ int RunTest( Array1DToDataType::Pointer& threader, ThreadIdType numberOfThreads,
               << threader->GetNumberOfThreads() << std::endl;
     return EXIT_FAILURE;
     }
-  holder.m_numberOfThreads = numberOfThreads;
+  holder.m_NumberOfThreads = numberOfThreads;
 
   /* Reset the holder */
   holder.Init( numberOfThreads );
@@ -117,7 +117,7 @@ int RunTest( Array1DToDataType::Pointer& threader, ThreadIdType numberOfThreads,
   IndexRangeType::IndexValueType previousEndIndex = -1;
   for( ThreadIdType i=0; i < threader->GetNumberOfThreadsUsed(); i++ )
     {
-    IndexRangeType subRange = holder.m_rangeInCallback[i];
+    IndexRangeType subRange = holder.m_RangeInCallback[i];
     /* Check that the sub range was assigned something at all */
     if( subRange[0] == -1 ||
         subRange[1] == -1 )

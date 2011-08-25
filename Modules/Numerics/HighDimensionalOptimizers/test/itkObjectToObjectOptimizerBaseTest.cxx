@@ -20,17 +20,75 @@
 #endif
 
 #include "itkObjectToObjectOptimizerBase.h"
-#include "itkDemonsImageToImageObjectMetric.h"
+#include "itkObjectToObjectMetric.h"
+#include "itkImage.h"
 
 using namespace itk;
 
 namespace{
 
-const int ImageDimension = 2;
-typedef itk::Image<double, ImageDimension>                    ImageType;
-typedef ImageType::Pointer                                    ImagePointerType;
+/* Create a simple metric to use for testing here. */
+template< class TFixedObject,  class TMovingObject >
+class ITK_EXPORT ObjectToObjectMetricSurrogate:
+  public itk::ObjectToObjectMetric
+{
+public:
+  /** Standard class typedefs. */
+  typedef ObjectToObjectMetricSurrogate                           Self;
+  typedef itk::ObjectToObjectMetric                               Superclass;
+  typedef itk::SmartPointer< Self >                               Pointer;
+  typedef itk::SmartPointer< const Self >                         ConstPointer;
 
-/* Define a simple derived class. */
+  typedef typename Superclass::MeasureType          MeasureType;
+  typedef typename Superclass::DerivativeType       DerivativeType;
+  typedef typename Superclass::ParametersType       ParametersType;
+  typedef typename Superclass::ParametersValueType  ParametersValueType;
+
+  itkTypeMacro(ObjectToObjectMetricSurrogate, ObjectToObjectMetric);
+
+  itkNewMacro(Self);
+
+  // Pure virtual functions that all Metrics must provide
+  unsigned int GetNumberOfParameters() const { return 5; }
+  MeasureType GetValue()
+    {
+    return 1.0;
+    }
+  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative )
+    {
+    value = 1.0; derivative.Fill(0.0);
+    }
+
+  unsigned int GetNumberOfLocalParameters() const
+  { return 0; }
+
+  bool HasLocalSupport() const
+  { return false; }
+
+  void UpdateTransformParameters( DerivativeType &, ParametersValueType ) {}
+
+  const ParametersType & GetParameters() const
+  { return m_Parameters; }
+
+  void Initialize(void) throw ( itk::ExceptionObject ) {}
+
+  void PrintSelf(std::ostream& os, itk::Indent indent) const
+  { Superclass::PrintSelf( os, indent ); }
+
+  ParametersType  m_Parameters;
+
+private:
+  ObjectToObjectMetricSurrogate() {}
+  ~ObjectToObjectMetricSurrogate() {}
+};
+
+/* global defines */
+const int ImageDimension = 2;
+typedef Image<double, ImageDimension>                    ImageType;
+typedef ImageType::Pointer                               ImagePointerType;
+
+/* Define a simple derived optimizer class.
+ * \class TestOptimizer - must satisfy KWStyle! */
 class TestOptimizer
   : public ObjectToObjectOptimizerBase
 {
@@ -61,7 +119,7 @@ public:
  */
 int itkObjectToObjectOptimizerBaseTest(int , char* [])
 {
-  typedef DemonsImageToImageObjectMetric<ImageType,ImageType>   MetricType;
+  typedef ObjectToObjectMetricSurrogate<ImageType,ImageType>   MetricType;
   MetricType::Pointer metric = MetricType::New();
   TestOptimizer::Pointer optimizer = TestOptimizer::New();
 
