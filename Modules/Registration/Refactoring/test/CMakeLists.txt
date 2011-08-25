@@ -49,9 +49,6 @@ itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkDemonsVectorImageToVectorImageObjectMetricTest)
 
-itk_add_test(NAME itkArray1DToDataTest
-         COMMAND ITKRegistrationRefactoringTestDriver itkArray1DToDataTest)
-
 itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkImageToImageObjectMetricTest)
