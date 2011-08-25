@@ -51,6 +51,14 @@ public:
       return;
       }
     holder->m_rangeInCallback[threadId] = rangeForThread;
+    
+    if( holder->m_DoRoundingTest )
+      {
+      for( unsigned int i = rangeForThread[0]; i <= rangeForThread[1]; i++ )
+        {
+        holder->m_RoundingTestResultPerThread[threadId] += 1.0/i;
+        }
+      }
   }
 
   void Init(ThreadIdType numberOfThreads)
@@ -63,11 +71,33 @@ public:
       {
       m_rangeInCallback[i] = emptyRange;
       }
+    m_RoundingTestResultPerThread.resize(numberOfThreads);
+    for(ThreadIdType i=0; i<numberOfThreads; i++)
+      {
+      m_RoundingTestResultPerThread[i] = 0;
+      }
+  }
+
+  void SetDoRoundingTest( bool doit )
+  {
+    m_DoRoundingTest = doit;
+  }
+
+  double GetRoundingTestResult()
+  {
+    double result = 0;
+    for(ThreadIdType i=0; i<this->m_numberOfThreads; i++)
+      {
+      result += m_RoundingTestResultPerThread[i];
+      }
+    return result;
   }
 
   bool                         m_GotMoreThreadsThanExpected;
   std::vector<IndexRangeType>  m_rangeInCallback;
   ThreadIdType                 m_numberOfThreads;
+  bool                         m_DoRoundingTest;
+  std::vector<double>          m_RoundingTestResultPerThread;
 
 };
 
@@ -75,11 +105,15 @@ public:
  * Run the actually test
  */
 int RunTest( Array1DToDataType::Pointer& threader, ThreadIdType numberOfThreads,
-              IndexRangeType& fullRange, HolderClass& holder)
+              IndexRangeType& fullRange, HolderClass& holder,
+              bool doRoundingTest = false)
 {
-  std::cout << "Testing with " << numberOfThreads
+  if( !doRoundingTest )
+    {
+    std::cout << "Testing with " << numberOfThreads
             << " threads and range " << fullRange << "..." << std::endl;
-
+    }
+    
   /* Try to set the requested number of threads */
   threader->SetNumberOfThreads( numberOfThreads );
   if( threader->GetNumberOfThreads() != numberOfThreads )
@@ -98,6 +132,8 @@ int RunTest( Array1DToDataType::Pointer& threader, ThreadIdType numberOfThreads,
   /* Tell the threader the whole range over which to split and thread */
   threader->SetOverallIndexRange( fullRange );
 
+  holder.SetDoRoundingTest( doRoundingTest );
+  
   /* Run the threader */
   threader->GenerateData();
 
@@ -109,9 +145,12 @@ int RunTest( Array1DToDataType::Pointer& threader, ThreadIdType numberOfThreads,
     }
 
   /* Did we use as many threads as requested? */
-  std::cout << "requested numberOfThreads: " << numberOfThreads << std::endl
+  if( !doRoundingTest )
+    {
+    std::cout << "requested numberOfThreads: " << numberOfThreads << std::endl
             << "actual: threader->GetNumberOfThreadsUsed(): "
             << threader->GetNumberOfThreadsUsed() << std::endl;
+    }
 
   /* Check the results */
   IndexRangeType::IndexValueType previousEndIndex = -1;
@@ -266,5 +305,25 @@ int itkArray1DToDataTest(int , char* [])
     result = EXIT_FAILURE;
     }
 
+  /* Test rounding */
+  std::cout << "vcl_numeric_limits<double>::epsilon(): "
+            << vcl_numeric_limits<double>::epsilon() << std::endl;
+  std::cout << "rounding results: " << std::endl;
+  std::cout << "#threads\tresult\tdiff" << std::endl;
+  double reference = 0;
+  for( ThreadIdType n=1; n <= 50; n++ )
+    {
+    fullRange[0] = 1;
+    fullRange[1] = 1000;
+    numberOfThreads = 1;
+    if( RunTest( threader, n, fullRange, holder, true )
+          != EXIT_SUCCESS )
+      { result = EXIT_FAILURE; }
+    double rounding = holder.GetRoundingTestResult();
+    if( n == 1 )
+      reference = rounding;
+    std::cout << n << "\t" << rounding << "\t" << rounding-reference << std::endl;
+    }
+    
   return result;
 }
