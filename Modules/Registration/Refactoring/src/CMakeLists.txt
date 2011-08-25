@@ -1,11 +1,11 @@
 set(ITKRegistrationRefactoring_SRC
-itkGradientDescentObjectOptimizerBase.cxx
-itkGradientDescentObjectOptimizer.cxx
 itkQuasiNewtonObjectOptimizer.cxx
 )
 
 add_library(ITKRegistrationRefactoring ${ITKRegistrationRefactoring_SRC})
 target_link_libraries(ITKRegistrationRefactoring
+  ${ITKHighDimensionalOptimizers_LIBRARIES}
+  ${ITKHighDimensionalMetrics_LIBRARIES}
   ${ITKRegistrationCommon_LIBRARIES}
   ${ITKOptimizers_LIBRARIES}
   ${ITKImageIntensity_LIBRARIES}

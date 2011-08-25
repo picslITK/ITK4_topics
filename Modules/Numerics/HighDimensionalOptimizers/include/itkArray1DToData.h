@@ -54,6 +54,8 @@
  * \ingroup ITKRegistrationRefactoring
  */
 
+using namespace itk;
+
 namespace
 {
   typedef itk::Index<2>                      TIndexRange;

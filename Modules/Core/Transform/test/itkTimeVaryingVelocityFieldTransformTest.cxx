@@ -24,6 +24,11 @@
 #include "itkTimeVaryingVelocityFieldTransform.h"
 #include "itkVector.h"
 
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
+
 int itkTimeVaryingVelocityFieldTransformTest( int, char* [] )
 {
   typedef itk::Vector<double, 3>    VectorType;
