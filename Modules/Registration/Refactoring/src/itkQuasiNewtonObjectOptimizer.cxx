@@ -39,7 +39,8 @@ QuasiNewtonObjectOptimizer
   itkDebugMacro("Constructor");
 
   m_MaximumVoxelShift = 1.0;
-  m_MinimumGradientNorm = 1e-10;
+  m_MinimumGradientNorm = 1e-20;
+  m_MinimumValueChange = 1e-20;
 
   m_LocalHessian = NULL;
   m_LocalHessianInverse = NULL;
@@ -47,7 +48,7 @@ QuasiNewtonObjectOptimizer
   m_LineSearchEnabled = true;
   m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
 
-  this->SetDebug(false);
+  this->SetDebug(true);
 
 }
 
@@ -490,16 +491,16 @@ double QuasiNewtonObjectOptimizer
   double f2, g2;
   double flow, glow;
 
-  double tempValue;
+  double tempValue, oldValue = f0;
 
   ParametersType tempPosition(spaceDimension);
   ParametersType deltaPosition(spaceDimension);
   DerivativeType tempGradient(spaceDimension);
 
-  //if (m_CurrentIteration >= 201)
-  //  int tmpdbg = 0;
+  int loop = 0;
   while (true)
     {
+    loop++;
     t2 = (tlow + thigh) / 2.0;
 
     tempPosition = this->m_Metric->GetParameters();
@@ -509,6 +510,13 @@ double QuasiNewtonObjectOptimizer
     this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
     m_CurrentIteration++;
 
+    if (this->GetDebug())
+      {
+      std::cout << "LineSearchZoom: position=" << initPosition + t2 * direction << std::endl;
+      std::cout << "LineSearchZoom: m_Value=" << this->m_Value << std::endl;
+      std::cout << "LineSearchZoom: m_Gradient=" << this->m_Gradient << std::endl;
+      }
+
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
@@ -516,7 +524,7 @@ double QuasiNewtonObjectOptimizer
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
-                                 << " the gradient is too small in line search.";
+                                 << " the gradient is too small in Wolfe line search.";
       this->StopOptimization();
 
       topt = t2;
@@ -525,6 +533,21 @@ double QuasiNewtonObjectOptimizer
 
     f2 = optimalDirection * this->m_Value;
     g2 = optimalDirection * inner_product(direction, this->m_Gradient);
+
+    if (loop >= 2 && vcl_abs(oldValue - f2) < m_MinimumValueChange)
+      {
+      m_StopCondition = StepTooSmall;
+      m_StopConditionDescription << "Optimization stops after "
+                                 << this->GetCurrentIteration()
+                                 << " iterations since"
+                                 << " the value change is too small in Wolfe line search.";
+      this->StopOptimization();
+
+      topt = t2;
+      return topt;
+      }
+
+    oldValue = f2;
 
     if ( f2 > f0 + c1 * t2 * g0 )
       {
@@ -574,7 +597,7 @@ double QuasiNewtonObjectOptimizer
       {
       m_StopConditionDescription << "Maximum number of iterations ("
                                  << m_NumberOfIterations
-                               << ") exceeded in line search zoom. ";
+                               << ") exceeded in Wolfe line search. ";
       m_StopCondition = MaximumNumberOfIterations;
       this->StopOptimization();
 

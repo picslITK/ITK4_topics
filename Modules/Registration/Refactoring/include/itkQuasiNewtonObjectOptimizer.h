@@ -108,6 +108,7 @@ protected:
   OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
   double                                  m_MaximumVoxelShift;
   double                                  m_MinimumGradientNorm;
+  double                                  m_MinimumValueChange;
 
   /** Switch for doing line search */
   bool            m_LineSearchEnabled;
