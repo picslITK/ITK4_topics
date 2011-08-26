@@ -78,7 +78,7 @@ QuasiNewtonObjectOptimizer
       ScalesType scales(this->m_Metric->GetNumberOfParameters());
 
       m_OptimizerParameterEstimator->EstimateScales(scales);
-      //m_CurrentPosition = this->m_Metric->GetParameters();
+
       this->SetScales(scales);
       std::cout << " Estimated scales = " << scales << std::endl;
       }
@@ -194,6 +194,7 @@ QuasiNewtonObjectOptimizer
 
   try
     {
+    //Estimate Quasi-Newton step
     this->EstimateNewtonStep();
     }
   catch ( ExceptionObject & )
@@ -244,9 +245,11 @@ QuasiNewtonObjectOptimizer
 
     if ( m_LineSearchEnabled )
       {
-      //this->AdvanceWithSimpleLineSearch(gradientStep, learningRate);
       this->AdvanceWithStrongWolfeLineSearch(gradientStep, learningRate);
       this->m_ValueAndDerivateEvaluated = true;
+
+      //m_CurrentIteration was added in line search for parameter changes.
+      //it is decreased here and will be added in the end of ResumeOptimization.
       m_CurrentIteration--;
       }
     else
@@ -282,9 +285,11 @@ QuasiNewtonObjectOptimizer
 
     if ( m_LineSearchEnabled )
       {
-      //this->AdvanceWithSimpleLineSearch(m_NewtonStep, learningRate);
       this->AdvanceWithStrongWolfeLineSearch(m_NewtonStep, learningRate);
       this->m_ValueAndDerivateEvaluated = true;
+
+      //m_CurrentIteration was added in line search for parameter changes.
+      //it is decreased here and will be added in the end of ResumeOptimization.
       m_CurrentIteration--;
       }
     else
@@ -307,9 +312,9 @@ QuasiNewtonObjectOptimizer
     } // using newton step
 }
 
-/*************************************************
- * Do line search on a direction with strong Wolfe's conditions
- *************************************************/
+/** Do line search on a direction with strong Wolfe's conditions.
+ * The line search algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, on * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
+ */
 double QuasiNewtonObjectOptimizer
 ::AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize)
 {
@@ -401,9 +406,9 @@ double QuasiNewtonObjectOptimizer
 
 }
 
-/*************************************************
- * Do zoom search on a direction with strong Wolfe's conditions
- *************************************************/
+/** Do zoom search on a direction with strong Wolfe's conditions.
+ * The zoom algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, on * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
+ */
 double QuasiNewtonObjectOptimizer
 ::LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh)
 {
@@ -538,7 +543,7 @@ double QuasiNewtonObjectOptimizer
     } //while
 }
 
-/** Estimate Hessian step */
+/** Estimate the quasi-newton step */
 void QuasiNewtonObjectOptimizer
 ::EstimateNewtonStep()
 {
@@ -573,7 +578,9 @@ void QuasiNewtonObjectOptimizer
     }
 }
 
-/** Estimate Hessian matrix */
+/** Estimate Hessian matrix with BFGS method described
+ *  at http://en.wikipedia.org/wiki/BFGS_method
+ */
 void QuasiNewtonObjectOptimizer
 ::EstimateHessian()
 {
@@ -618,7 +625,7 @@ void QuasiNewtonObjectOptimizer
     }
 }
 
-/** Compute learning late from voxel shift*/
+/** Compute the learning late from voxel shift*/
 double QuasiNewtonObjectOptimizer
 ::EstimateLearningRate(ParametersType step)
 {

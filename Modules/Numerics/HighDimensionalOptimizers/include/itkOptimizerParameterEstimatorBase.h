@@ -28,16 +28,16 @@ namespace itk
 {
 
 /** \class OptimizerParameterEstimatorBase
- *  \brief OptimizerParameterEstimatorBase is a helper class intended to estimate the scales
- * and the maximum voxel shift in optimizers of image registration.
+ *  \brief OptimizerParameterEstimatorBase is a base class to offer some
+ * empty methods to estimate the scales and the maximum voxel shift in
+ * optimizers of image registration.
  *
  * The estimation requires information about images and transform that are
  * usually not available in general optimizers that are not limited to
  * image registration. Therefore we create a separate helper class for the
  * specific type of optimization.
  *
- * This is an abstract class to be implemented with different estimation
- * strategies. An example of subclass is itkOptimizerParameterEstimator.
+ * An example of subclass is itkOptimizerParameterEstimator.
  *
  * \ingroup ITKHighDimensionalOptimizers
  */

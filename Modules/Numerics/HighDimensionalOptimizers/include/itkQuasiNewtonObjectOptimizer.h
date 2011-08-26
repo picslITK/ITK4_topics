@@ -34,16 +34,18 @@ namespace itk
  * \brief Implement a Quasi-Newton optimizer with BFGS Hessian estimation.
  *
  * Second order approximation of the cost function is usually more efficient
- * since it estimates the descent or ascent step more precisely. However, the
+ * since it estimates the descent or ascent direction more precisely. However,
  * computation of Hessian is usually expensive or unavailable. Alternatively
  * Quasi-Newton methods can estimate a Hessian from the gradients of previous
  * steps. A commonly used Quasi-Newton method is BFGS.
  *
- * It uses BFGS method to calcute a Quasi-Newton step. The Wolfe's line
- * search is implemented and enabled by default. The voxel shift is used to
- * estimate the maximum step sizes.
+ * Here BFGS method is used to calcute a Quasi-Newton step. The line search
+ * is implemented using Strong Wolfe's Conditions.
  *
- * The line search algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, at * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
+ * If a helper object of OptimizerParameterEstimatorBase is set, it is used
+ * to estimate the maximum step size in line search.
+ *
+ * The line search algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, on * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
  *
  * \ingroup ITKHighDimensionalOptimizers
  */
@@ -93,8 +95,14 @@ protected:
 
   /** The helper object to estimate the learning rate and scales */
   OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
+
+  /** m_MaximumVoxelShift is used  to estimated the largest step size */
   double                                  m_MaximumVoxelShift;
+
+  /** m_MinimumGradientNorm is used to stop optimization at a very small gradient */
   double                                  m_MinimumGradientNorm;
+
+  /** m_MinimumGradientNorm is used to stop optimization at a very small value change */
   double                                  m_MinimumValueChange;
 
   /** Switch for doing line search */
@@ -111,7 +119,7 @@ protected:
   /** The Quasi-Newton step */
   ParametersType  m_NewtonStep;
 
-  /** The Hessian estimated by a Quasi-Newton method */
+  /** The Hessian and its inverse estimated by a Quasi-Newton method */
   HessianType     m_Hessian;
   HessianType     m_HessianInverse;
 
