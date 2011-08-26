@@ -233,7 +233,7 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
 
   // Optimizer
   //typedef GradientDescentObjectOptimizer  OptimizerType;
-  typedef QuasiNewtonObjectOptimizer  OptimizerType;
+  typedef itk::QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetNumberOfIterations( numberOfIterations );

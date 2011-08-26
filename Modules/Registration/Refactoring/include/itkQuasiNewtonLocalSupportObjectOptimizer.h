@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkQuasiNewtonObjectOptimizer_h
-#define __itkQuasiNewtonObjectOptimizer_h
+#ifndef __itkQuasiNewtonLocalSupportObjectOptimizer_h
+#define __itkQuasiNewtonLocalSupportObjectOptimizer_h
 
 #include "vnl/vnl_math.h"
 #include "vnl/vnl_vector_fixed.h"
@@ -25,13 +25,13 @@
 
 #include "itkIntTypes.h"
 #include "itkGradientDescentObjectOptimizer.h"
-#include "itkImageToImageObjectMetric.h"
+//#include "itkImageToImageObjectMetric.h"
 #include "itkOptimizerParameterEstimatorBase.h"
 #include <string>
 
 namespace itk
 {
-/** \class QuasiNewtonObjectOptimizer
+/** \class QuasiNewtonLocalSupportObjectOptimizer
  * \brief Implement a Quasi-Newton optimizer with BFGS Hessian estimation.
  *
  * Second order approximation of the cost function is usually more efficient
@@ -50,21 +50,21 @@ namespace itk
  *
  * \ingroup ITKRegistrationRefactoring
  */
-class ITK_EXPORT QuasiNewtonObjectOptimizer:
+class ITK_EXPORT QuasiNewtonLocalSupportObjectOptimizer:
   public GradientDescentObjectOptimizer
 {
 public:
   /** Standard class typedefs. */
-  typedef QuasiNewtonObjectOptimizer        Self;
-  typedef GradientDescentObjectOptimizer    Superclass;
-  typedef SmartPointer< Self >              Pointer;
-  typedef SmartPointer< const Self >        ConstPointer;
+  typedef QuasiNewtonLocalSupportObjectOptimizer        Self;
+  typedef GradientDescentObjectOptimizer                Superclass;
+  typedef SmartPointer< Self >                          Pointer;
+  typedef SmartPointer< const Self >                    ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(QuasiNewtonObjectOptimizer, AutomaticGradientDescentOptimizer);
+  itkTypeMacro(QuasiNewtonLocalSupportObjectOptimizer, AutomaticGradientDescentOptimizer);
 
   /** Metric function type */
   //typedef ImageToImageObjectMetric                  ImageMetricType;
@@ -93,10 +93,6 @@ public:
 
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
-
-  void AdvanceWithSimpleLineSearch(ParametersType direction, double maxStepSize);
-  double AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize);
-  double LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh);
 
   /** Advance one step following the Quasi-Newton direction
    * if the transform has local support. */
@@ -136,13 +132,6 @@ protected:
   //void LineSearch();
 
   /** Estimate the Newton step that minimizes the local 2nd
-   * order approximation */
-  void EstimateNewtonStep();
-
-  /** Estimate the Hessian with BFGS method */
-  void EstimateHessian();
-
-  /** Estimate the Newton step that minimizes the local 2nd
    * order approximation with local support. */
   void EstimateLocalNewtonStep();
 
@@ -157,8 +146,8 @@ protected:
                               ParametersType lastStep,
                               ParametersType thisStep) const;
 
-  QuasiNewtonObjectOptimizer();
-  virtual ~QuasiNewtonObjectOptimizer()
+  QuasiNewtonLocalSupportObjectOptimizer();
+  virtual ~QuasiNewtonLocalSupportObjectOptimizer()
     {
     if (m_LocalHessian)
       {
@@ -175,7 +164,7 @@ protected:
   //OptimizerHelper::Pointer    m_OptimizerHelper;
 
 private:
-  QuasiNewtonObjectOptimizer(const Self &);     //purposely not implemented
+  QuasiNewtonLocalSupportObjectOptimizer(const Self &);     //purposely not implemented
   void operator=(const Self &);           //purposely not implemented
 
 };

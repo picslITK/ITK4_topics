@@ -1,3 +1,3 @@
 project(ITKRegistrationRefactoring)
-set(ITKRegistrationRefactoring_LIBRARIES ITKRegistrationRefactoring)
+set(ITKRegistrationRefactoring_LIBRARIES ITKRegistrationRefactoring ITKHighDimensionalOptimizers)
 itk_module_impl()

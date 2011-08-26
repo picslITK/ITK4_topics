@@ -20,6 +20,7 @@
 
 #include "itkObject.h"
 #include "itkObjectFactory.h"
+#include "itkArray2D.h"
 
 #include <iostream>
 
@@ -38,8 +39,7 @@ namespace itk
  * This is an abstract class to be implemented with different estimation
  * strategies. An example of subclass is itkOptimizerParameterEstimator.
  *
- * \ingroup Numerics Optimizers
- * \ingroup ITK-Optimizers
+ * \ingroup ITKHighDimensionalOptimizers
  */
 class ITK_EXPORT OptimizerParameterEstimatorBase : public Object
 {

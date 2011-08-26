@@ -27,7 +27,7 @@ using namespace itk;
 
 namespace {
 /**
- *  \class BananaMetric for test
+ *  \class RosenbrockMetric for test
  *
  *  The objective function is Rosenbrock's Function, which has a banana shape.
  *
@@ -37,16 +37,16 @@ namespace {
  *  Gradient Descent method.
  *
  */
-class BananaMetric : public itk::ObjectToObjectMetric
+class RosenbrockMetric : public itk::ObjectToObjectMetric
 {
 public:
 
-  typedef BananaMetric                    Self;
+  typedef RosenbrockMetric                Self;
   typedef itk::ObjectToObjectMetric       Superclass;
   typedef itk::SmartPointer<Self>         Pointer;
   typedef itk::SmartPointer<const Self>   ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( BananaMetric, ObjectToObjectMetric );
+  itkTypeMacro( RosenbrockMetric, ObjectToObjectMetric );
 
   enum { SpaceDimension=2 };
 
@@ -55,7 +55,7 @@ public:
   typedef Superclass::DerivativeType        DerivativeType;
   typedef Superclass::MeasureType           MeasureType;
 
-  BananaMetric()
+  RosenbrockMetric()
   {
     m_Parameters.SetSize( SpaceDimension );
     m_Parameters.Fill( 0 );
@@ -66,7 +66,7 @@ public:
   void GetValueAndDerivative( MeasureType & value,
                               DerivativeType & derivative )
   {
-    this->SetDebug(false);
+    this->SetDebug(true);
 
     if( derivative.Size() != 2 )
       derivative.SetSize(2);
@@ -144,7 +144,7 @@ private:
 
 int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
 {
-  std::cout << "Quasi-Newton Object Optimizer Test ";
+  std::cout << "QuasiNewtonObjectOptimizer Test ";
   std::cout << std::endl << std::endl;
 
   typedef  itk::QuasiNewtonObjectOptimizer      OptimizerType;
@@ -155,11 +155,11 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
   OptimizerType::Pointer  itkOptimizer = OptimizerType::New();
 
   // Declaration of the Metric
-  BananaMetric::Pointer metric = BananaMetric::New();
+  RosenbrockMetric::Pointer metric = RosenbrockMetric::New();
 
   itkOptimizer->SetMetric( metric );
 
-  typedef BananaMetric::ParametersType    ParametersType;
+  typedef RosenbrockMetric::ParametersType    ParametersType;
 
   const unsigned int spaceDimension =
                       metric->GetNumberOfParameters();
@@ -187,9 +187,10 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
     }
 
   ParametersType finalPosition = metric->GetParameters();
-  std::cout << "Solution        = (";
+  std::cout << std::endl;
+  std::cout << "Solution        = [";
   std::cout << finalPosition[0] << ",";
-  std::cout << finalPosition[1] << ")" << std::endl;
+  std::cout << finalPosition[1] << "]" << std::endl;
 
   //
   // check results to see if it is within range
@@ -202,15 +203,12 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
       pass = false;
     }
 
-  // Exercise various member functions.
-  std::cout << "LearningRate: " << itkOptimizer->GetLearningRate();
-  std::cout << std::endl;
-  std::cout << "NumberOfIterations: " << itkOptimizer->GetNumberOfIterations();
+  std::cout << "MaximumNumberOfIterations: " << itkOptimizer->GetNumberOfIterations();
   std::cout << std::endl;
 
   itkOptimizer->Print( std::cout );
-  std::cout << "Stop description   = "
-            << itkOptimizer->GetStopConditionDescription() << std::endl;
+  std::cout << "Stop description = "
+            << itkOptimizer->GetStopConditionDescription() << std::endl << std::endl;
 
   if( !pass )
     {

@@ -27,7 +27,7 @@
 
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
-#include "itkQuasiNewtonObjectOptimizer.h"
+#include "itkQuasiNewtonLocalSupportObjectOptimizer.h"
 #include "itkOptimizerParameterEstimator.h"
 
 #include "itkIdentityTransform.h"
@@ -200,7 +200,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
 
   // Optimizer
   //typedef GradientDescentObjectOptimizer  OptimizerType;
-  typedef QuasiNewtonObjectOptimizer  OptimizerType;
+  typedef QuasiNewtonLocalSupportObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   //optimizer->SetLearningRate( learningRate );
