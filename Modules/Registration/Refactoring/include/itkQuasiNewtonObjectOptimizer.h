@@ -81,6 +81,9 @@ public:
   itkSetObjectMacro(OptimizerParameterEstimator, OptimizerParameterEstimatorBase);
   itkGetObjectMacro(OptimizerParameterEstimator, OptimizerParameterEstimatorBase);
 
+  /** Set the flag for line search */
+  itkSetMacro(LineSearchEnabled, bool);
+
   /** Start and run the optimization */
   virtual void StartOptimization();
 
@@ -90,7 +93,10 @@ public:
 
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
-  void AdvanceWithLineSearch();
+
+  void AdvanceWithSimpleLineSearch(ParametersType direction, double maxStepSize);
+  double AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize);
+  double LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh);
 
   /** Advance one step following the Quasi-Newton direction
    * if the transform has local support. */
@@ -101,6 +107,7 @@ protected:
   /** The helper object to estimate the learning rate and scales */
   OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
   double                                  m_MaximumVoxelShift;
+  double                                  m_MinimumGradientNorm;
 
   /** Switch for doing line search */
   bool            m_LineSearchEnabled;
