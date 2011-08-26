@@ -90,11 +90,11 @@ public:
 
     if (this->GetDebug())
       {
-      std::cout << "--GetValueAndDerivative(";
+      std::cout << "GetValueAndDerivative(";
       std::cout << x << " ";
-      std::cout << y << ") = " << std::endl;
-      std::cout << "--value: " << value << std::endl;
-      std::cout << "--derivative: " << derivative << std::endl;
+      std::cout << y << ") returns " << std::endl;
+      std::cout << "  value: " << value << std::endl;
+      std::cout << "  derivative: " << derivative << std::endl;
       }
   }
 
