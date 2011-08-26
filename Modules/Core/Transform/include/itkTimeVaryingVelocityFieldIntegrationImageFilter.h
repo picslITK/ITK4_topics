@@ -20,10 +20,16 @@
 
 #include "itkImageToImageFilter.h"
 
-#include "itkVectorInterpolateImageFunction.h"
+//#include "itkVectorInterpolateImageFunction.h"
 
 namespace itk
 {
+
+/* Forward-declaration to avoid including the header file that would
+ * introduce a circular dependency in the Transform module. */
+template< class TInputImage, class TCoordRep >
+class VectorInterpolateImageFunction;
+
 /**
  * \class TimeVaryingVelocityFieldIntegrationImageFilter
  * \brief Integrate a time-varying velocity field using 4th order Runge-Kutta.

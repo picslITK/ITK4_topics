@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkQuasiNewtonObjectOptimizer_h
-#define __itkQuasiNewtonObjectOptimizer_h
+#ifndef __itkQuasiNewtonLocalSupportObjectOptimizer_h
+#define __itkQuasiNewtonLocalSupportObjectOptimizer_h
 
 #include "vnl/vnl_math.h"
 #include "vnl/vnl_vector_fixed.h"
@@ -25,13 +25,13 @@
 
 #include "itkIntTypes.h"
 #include "itkGradientDescentObjectOptimizer.h"
-#include "itkImageToImageObjectMetric.h"
+//#include "itkImageToImageObjectMetric.h"
 #include "itkOptimizerParameterEstimatorBase.h"
 #include <string>
 
 namespace itk
 {
-/** \class QuasiNewtonObjectOptimizer
+/** \class QuasiNewtonLocalSupportObjectOptimizer
  * \brief Implement a Quasi-Newton optimizer with BFGS Hessian estimation.
  *
  * Second order approximation of the cost function is usually more efficient
@@ -50,21 +50,21 @@ namespace itk
  *
  * \ingroup ITKRegistrationRefactoring
  */
-class ITK_EXPORT QuasiNewtonObjectOptimizer:
+class ITK_EXPORT QuasiNewtonLocalSupportObjectOptimizer:
   public GradientDescentObjectOptimizer
 {
 public:
   /** Standard class typedefs. */
-  typedef QuasiNewtonObjectOptimizer        Self;
-  typedef GradientDescentObjectOptimizer    Superclass;
-  typedef SmartPointer< Self >              Pointer;
-  typedef SmartPointer< const Self >        ConstPointer;
+  typedef QuasiNewtonLocalSupportObjectOptimizer        Self;
+  typedef GradientDescentObjectOptimizer                Superclass;
+  typedef SmartPointer< Self >                          Pointer;
+  typedef SmartPointer< const Self >                    ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(QuasiNewtonObjectOptimizer, AutomaticGradientDescentOptimizer);
+  itkTypeMacro(QuasiNewtonLocalSupportObjectOptimizer, AutomaticGradientDescentOptimizer);
 
   /** Metric function type */
   //typedef ImageToImageObjectMetric                  ImageMetricType;
@@ -81,8 +81,15 @@ public:
   itkSetObjectMacro(OptimizerParameterEstimator, OptimizerParameterEstimatorBase);
   itkGetObjectMacro(OptimizerParameterEstimator, OptimizerParameterEstimatorBase);
 
+  /** Set the flag for line search */
+  itkSetMacro(LineSearchEnabled, bool);
+
   /** Start and run the optimization */
   virtual void StartOptimization();
+
+  /** Resume the optimization. Can be called after StopOptimization to
+   * resume. The bulk of the optimization work loop is here. */
+  virtual void ResumeOptimization();
 
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
@@ -93,15 +100,22 @@ public:
 
 protected:
 
+  /** The helper object to estimate the learning rate and scales */
   OptimizerParameterEstimatorBasePointer  m_OptimizerParameterEstimator;
+  double                                  m_MaximumVoxelShift;
+  double                                  m_MinimumGradientNorm;
+  double                                  m_MinimumValueChange;
+
+  /** Switch for doing line search */
+  bool            m_LineSearchEnabled;
+
+  /** A flag to show if GetValueAndDerivate() is evaluated after applying a change.
+   *  This happens when line search is done. */
+  bool            m_ValueAndDerivateEvaluated;
 
   /** The gradient in the previous step */
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
-
-  // Reference to current position
-  // Use reference to save memory copy
-  //ParametersType& m_CurrentPositionRef;
 
   /** The Quasi-Newton step */
   ParametersType  m_NewtonStep;
@@ -114,17 +128,8 @@ protected:
   LocalHessianType  *m_LocalHessian;
   LocalHessianType  *m_LocalHessianInverse;
 
-  //bool            m_LineSearchEnabled;
-
   /** Do line search on the direction of the Newton step */
   //void LineSearch();
-
-  /** Estimate the Newton step that minimizes the local 2nd
-   * order approximation */
-  void EstimateNewtonStep();
-
-  /** Estimate the Hessian with BFGS method */
-  void EstimateHessian();
 
   /** Estimate the Newton step that minimizes the local 2nd
    * order approximation with local support. */
@@ -132,12 +137,6 @@ protected:
 
   /** Estimate the Hessian with BFGS method with local support. */
   void EstimateLocalHessian();
-
-  double                        m_MaximumVoxelShift;
-  double                        m_MinimumVoxelShift;
-
-  //StopConditionType             m_StopCondition;
-  //std::ostringstream            m_StopConditionDescription;
 
   /** Function to compute the learning rate. */
   virtual double EstimateLearningRate(ParametersType step);
@@ -147,8 +146,8 @@ protected:
                               ParametersType lastStep,
                               ParametersType thisStep) const;
 
-  QuasiNewtonObjectOptimizer();
-  virtual ~QuasiNewtonObjectOptimizer()
+  QuasiNewtonLocalSupportObjectOptimizer();
+  virtual ~QuasiNewtonLocalSupportObjectOptimizer()
     {
     if (m_LocalHessian)
       {
@@ -165,7 +164,7 @@ protected:
   //OptimizerHelper::Pointer    m_OptimizerHelper;
 
 private:
-  QuasiNewtonObjectOptimizer(const Self &);     //purposely not implemented
+  QuasiNewtonLocalSupportObjectOptimizer(const Self &);     //purposely not implemented
   void operator=(const Self &);           //purposely not implemented
 
 };

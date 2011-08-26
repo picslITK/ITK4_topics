@@ -21,7 +21,7 @@
 #include "itkTimeVaryingVelocityFieldTransform.h"
 
 #include "itkTimeVaryingVelocityFieldIntegrationImageFilter.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
+//#include "itkVectorLinearInterpolateImageFunction.h"
 
 namespace itk
 {
@@ -47,12 +47,12 @@ TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
 
   // After assigning this, parameters will manage this deleting when appropriate.
   this->m_Parameters.SetHelper( helper );
-
-  typedef VectorLinearInterpolateImageFunction
-    <TimeVaryingVelocityFieldType, ScalarType> DefaultInterpolatorType;
-  typename DefaultInterpolatorType::Pointer interpolator
-    = DefaultInterpolatorType::New();
-  this->m_TimeVaryingVelocityFieldInterpolator = interpolator;
+  std::cout <<" WARNING!! interpolator is not set ---- waiting until module situation is fixed !! " <<std::endl;
+  //  typedef VectorLinearInterpolateImageFunction
+  //    <TimeVaryingVelocityFieldType, ScalarType> DefaultInterpolatorType;
+  //  typename DefaultInterpolatorType::Pointer interpolator
+  //   = DefaultInterpolatorType::New();
+  // this->m_TimeVaryingVelocityFieldInterpolator = interpolator;
 }
 
 /**

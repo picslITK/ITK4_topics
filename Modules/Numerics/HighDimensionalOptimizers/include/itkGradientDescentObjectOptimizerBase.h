@@ -25,12 +25,14 @@
 namespace itk
 {
 /** \class GradientDescentObjectOptimizerBase
- *  \brief Base class for gradient descent optimizers.
+ *  \brief Abstract base class for gradient descent-style optimizers.
  *
- *  Gradient modification is threaded in \c ModifyGradient.
- *  Derived classes must override \c ModifyGradientOverSubRange.
+ * Gradient modification is threaded in \c ModifyGradient.
  *
- * \ingroup ITKRegistrationRefactoring
+ * Derived classes must override \c ModifyGradientOverSubRange
+ * and \c ResumeOptimization.
+ *
+ * \ingroup ITKHighDimensionalOptimizers
  */
 
 class ITK_EXPORT GradientDescentObjectOptimizerBase
@@ -72,6 +74,7 @@ public:
 
   /** Threader for gradient update */
   typedef Array1DToData<Self>                       ModifyGradientThreaderType;
+  /** Type of index range for threading */
   typedef ModifyGradientThreaderType::IndexRangeType  IndexRangeType;
 
   /** Get the most recent gradient values. */
@@ -151,7 +154,7 @@ private:
   static void ModifyGradientThreaded(
                                   const IndexRangeType& rangeForThread,
                                   ThreadIdType threadId,
-                                  Self *inHolder );
+                                  Self *holder );
 
   /** Threader for grandient modification */
   ModifyGradientThreaderType::Pointer      m_ModifyGradientThreader;

@@ -25,24 +25,28 @@
  * as no exception occurs.
  */
 
+#include "itkMattesMutualInformationImageToImageObjectMetric.h"
+#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkDemonsImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
-#include "itkQuasiNewtonLocalSupportObjectOptimizer.h"
+#include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkOptimizerParameterEstimator.h"
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
+#include "itkAffineTransform.h"
+#include "itkEuler2DTransform.h"
+#include "itkCompositeTransform.h"
 #include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
-#include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
-#include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+#include "itkResampleImageFilter.h"
 
 //These two are needed as long as we're using fwd-declarations in
 //DisplacementFieldTransfor:
@@ -76,7 +80,7 @@ public:
 };
 }
 
-int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
+int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
 
   if( argc < 4 || argc > 7)
@@ -102,6 +106,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
     scalarScale = atof( argv[5] );
   if( argc == 7 )
     learningRate = atof( argv[6] );
+  std::cout << " iterations "<< numberOfIterations << " scale " << scalarScale << " learningRate "<<learningRate << std::endl;
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -118,33 +123,31 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   fixedImageReader->SetFileName( argv[1] );
   movingImageReader->SetFileName( argv[2] );
 
-  //matching intensity histogram
-  typedef HistogramMatchingImageFilter<
-                                    MovingImageType,
-                                    MovingImageType >   MatchingFilterType;
-  MatchingFilterType::Pointer matcher = MatchingFilterType::New();
-
-  matcher->SetInput( movingImageReader->GetOutput() );
-  matcher->SetReferenceImage( fixedImageReader->GetOutput() );
-
-  matcher->SetNumberOfHistogramLevels( 256 );
-  matcher->SetNumberOfMatchPoints( 10 );
-  matcher->ThresholdAtMeanIntensityOn();
   //get the images
   fixedImageReader->Update();
   FixedImageType::Pointer  fixedImage = fixedImageReader->GetOutput();
   movingImageReader->Update();
-  matcher->Update();
-  MovingImageType::Pointer movingImage = matcher->GetOutput();
-  // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
+  MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
-  //create a displacement field transform
-  typedef TranslationTransform<double, Dimension>
-                                                    TranslationTransformType;
-  TranslationTransformType::Pointer translationTransform =
-                                                  TranslationTransformType::New();
-  translationTransform->SetIdentity();
+  /** define a resample filter that will ultimately be used to deform the image */
+  typedef itk::ResampleImageFilter<
+                            MovingImageType,
+                            FixedImageType >    ResampleFilterType;
+  ResampleFilterType::Pointer resample = ResampleFilterType::New();
 
+
+  /** create a composite transform holder for other transforms  */
+  typedef itk::CompositeTransform<double, Dimension>  CompositeType;
+  typedef CompositeType::ScalarType                     ScalarType;
+  CompositeType::Pointer compositeTransform = CompositeType::New();
+
+  //create an affine transform
+  typedef AffineTransform<double, Dimension>
+  //  typedef Euler2DTransform<double>
+                                                    AffineTransformType;
+  AffineTransformType::Pointer affineTransform = AffineTransformType::New();
+  affineTransform->SetIdentity();
+  std::cout <<" affineTransform params " << affineTransform->GetParameters() << std::endl;
   typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
                                                     double, Dimension>
                                                      DisplacementTransformType;
@@ -168,7 +171,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothingSigma( 6 );
+  displacementTransform->SetGaussianSmoothingSigma( 1 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -177,9 +180,13 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
+  typedef MattesMutualInformationImageToImageObjectMetric < FixedImageType, MovingImageType >
+    //  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric < FixedImageType, MovingImageType >
+    //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
+  Size<Dimension> radSize;
+  radSize.Fill(2);
 
   // Assign images and transforms.
   // By not setting a virtual domain image or virtual domain settings,
@@ -187,36 +194,93 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   metric->SetVirtualDomainImage( fixedImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
+  //  metric->SetNumberOfHistogramBins(32);
+  //metric->SetRadius(radSize);//antscc
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( displacementTransform );
-  //  metric->SetMovingTransform( translationTransform );
-
-  metric->SetPreWarpImages( true );
-  metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
-  //metric->SetPrecomputeImageGradient( false );
-
-  //Initialize the metric to prepare for use
+  compositeTransform->AddTransform( affineTransform );
+  compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
+  compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
+  metric->SetMovingTransform( compositeTransform );
+  metric->SetPreWarpImages( false );
+  metric->SetPrecomputeImageGradient( false );
   metric->Initialize();
 
-  // Optimizer
-  //typedef GradientDescentObjectOptimizer  OptimizerType;
-  typedef QuasiNewtonLocalSupportObjectOptimizer  OptimizerType;
-  OptimizerType::Pointer  optimizer = OptimizerType::New();
-  optimizer->SetMetric( metric );
-  //optimizer->SetLearningRate( learningRate );
-  optimizer->SetNumberOfIterations( numberOfIterations );
-  //optimizer->SetScalarScale( scalarScale );
-  //optimizer->SetUseScalarScale(true);
+  typedef GradientDescentObjectOptimizer  OptimizerType0;
+  OptimizerType0::Pointer  optimizer0 = OptimizerType0::New();
+  unsigned int nthreads=itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
+  metric->SetNumberOfThreads(nthreads);
+  optimizer0->SetNumberOfThreads(nthreads);
+  optimizer0->SetMetric( metric );
+  optimizer0->SetLearningRate( learningRate );
+  optimizer0->SetNumberOfIterations( numberOfIterations );
+  optimizer0->SetScalarScale( scalarScale );
+  optimizer0->SetUseScalarScale(true);
 
-  // Testing optimizer parameter estimator
+  std::cout << " start test of " << nthreads << " threads "<< std::endl;
+  // now optimize both
+  try
+    {
+    optimizer0->StartOptimization();
+    }
+  catch( ExceptionObject & e )
+    {
+    std::cout << "Exception thrown ! " << std::endl;
+    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << e.GetLocation() << std::endl;
+    std::cout << e.GetDescription() << std::endl;
+    std::cout << e.what()    << std::endl;
+    std::cout << "Test FAILED." << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::cout << " parameters "  << std::endl;
+  std::cout <<  compositeTransform->GetParameters() << std::endl;
+
+  /*
+  // Optimizer with parameter estimator
+  typedef QuasiNewtonObjectOptimizer  QOptimizerType;
+  QOptimizerType::Pointer  qoptimizer = QOptimizerType::New();
+  qoptimizer->SetMetric( metric );
+  qoptimizer->SetNumberOfIterations( numberOfIterations );
   typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
-
   parameterEstimator->SetMetric(metric);
   parameterEstimator->SetTransformForward(true);
   parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
-  optimizer->SetOptimizerParameterEstimator( parameterEstimator );
-  // Estimating optimizer parameters done
+  qoptimizer->SetOptimizerParameterEstimator( parameterEstimator );
+
+
+  std::cout << "Start optimization..." << std::endl
+            << "Number of iterations: " << numberOfIterations << std::endl
+            << "Scalar scale: " << scalarScale << std::endl
+            << "Learning rate: " << learningRate << std::endl
+            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+  try
+    {
+    qoptimizer->StartOptimization();
+    }
+  catch( ExceptionObject & e )
+    {
+    std::cout << "Exception thrown ! " << std::endl;
+    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << e.GetLocation() << std::endl;
+    std::cout << e.GetDescription() << std::endl;
+    std::cout << e.what()    << std::endl;
+    std::cout << "Test FAILED." << std::endl;
+    return EXIT_FAILURE;
+    }
+  // now add the displacement field to the composite transform
+  compositeTransform->AddTransform( displacementTransform );
+  compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
+  // Optimizer
+  metric->Initialize();
+  typedef GradientDescentObjectOptimizer  OptimizerType;
+  OptimizerType::Pointer  optimizer = OptimizerType::New();
+  optimizer->SetMetric( metric );
+  optimizer->SetLearningRate( learningRate );
+  optimizer->SetNumberOfIterations( numberOfIterations );
+  optimizer->SetScalarScale( scalarScale );
+  optimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
@@ -238,57 +302,22 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
     return EXIT_FAILURE;
     }
 
-  std::cout << "...finished. " << std::endl
-            << "StopCondition: " << optimizer->GetStopConditionDescription()
-            << std::endl
-            << "Metric: NumberOfValidPoints: "
-            << metric->GetNumberOfValidPoints()
-            << std::endl;
-
   field = displacementTransform->GetDisplacementField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DisplacementFieldType > it( field, field->GetLargestPossibleRegion() );
-  /* print out a few displacement field vectors */
-  /*std::cout
-      << "First few elements of first few rows of final displacement field:"
-      << std::endl;
-  for(unsigned int i=0; i< 5; i++ )
-    {
-     for(unsigned int j=0; j< 5; j++ )
-      {
-      DisplacementFieldType::IndexType index;
-      index[0] = i;
-      index[1] = j;
-      it.SetIndex(index);
-      std::cout << it.Value() << " ";
-      }
-    std::cout << std::endl;
-    }
-  */
+*/
+  std::cout << "...finished. " << std::endl;
 
-  //
-  // results
-  //
-  //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
+
   //warp the image with the displacement field
-  typedef WarpImageFilter<
-                          MovingImageType,
-                          MovingImageType,
-                          DisplacementFieldType  >     WarperType;
-  typedef LinearInterpolateImageFunction<
-                                   MovingImageType,
-                                   double          >  InterpolatorType;
-  InterpolatorType::Pointer interpolator = InterpolatorType::New();
-  WarperType::Pointer warper = WarperType::New();
-  warper->SetInput( movingImage );
-  warper->SetInterpolator( interpolator );
-  warper->SetOutputSpacing( fixedImage->GetSpacing() );
-  warper->SetOutputOrigin( fixedImage->GetOrigin() );
-  warper->SetOutputDirection( fixedImage->GetDirection() );
-
-  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
-
+  resample->SetTransform( compositeTransform );
+  resample->SetInput( movingImageReader->GetOutput() );
+  resample->SetSize(    fixedImage->GetLargestPossibleRegion().GetSize() );
+  resample->SetOutputOrigin(  fixedImage->GetOrigin() );
+  resample->SetOutputSpacing( fixedImage->GetSpacing() );
+  resample->SetOutputDirection( fixedImage->GetDirection() );
+  resample->SetDefaultPixelValue( 0 );
+  resample->Update();
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
   DisplacementWriterType::Pointer      displacementwriter =  DisplacementWriterType::New();
@@ -307,18 +336,14 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
                         MovingImageType,
                         OutputImageType >     CastFilterType;
   typedef ImageFileWriter< OutputImageType >  WriterType;
-
   WriterType::Pointer      writer =  WriterType::New();
   CastFilterType::Pointer  caster =  CastFilterType::New();
-
   writer->SetFileName( argv[3] );
-
-  caster->SetInput( warper->GetOutput() );
+  caster->SetInput( resample->GetOutput() );
   writer->SetInput( caster->GetOutput() );
-
   writer->Update();
 
-  std::cout << "Test PASSED." << std::endl;
+  std::cout << "Test PASSED." << affineTransform->GetParameters() << std::endl;
   return EXIT_SUCCESS;
 
 }

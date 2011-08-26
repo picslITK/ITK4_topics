@@ -3,12 +3,8 @@ set(ITKRegistrationRefactoringTests
 # itkTransformVirtualDomainCalculatorTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
-  itkArray1DToDataTest.cxx
-  itkObjectToObjectOptimizerBaseTest.cxx
-  itkObjectToObjectMetricTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
-  itkGradientDescentObjectOptimizerTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
  itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
@@ -44,19 +40,13 @@ itk_add_test(NAME itkMattesMutualInformationImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkMattesMutualInformationImageToImageObjectMetricTest)
 
+itk_add_test(NAME itkMattesMutualInformationImageToImageObjectRegistrationTest
+      COMMAND ITKRegistrationRefactoringTestDriver
+      itkMattesMutualInformationImageToImageObjectRegistrationTest)
+
 itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkDemonsVectorImageToVectorImageObjectMetricTest)
-
-itk_add_test(NAME itkArray1DToDataTest
-         COMMAND ITKRegistrationRefactoringTestDriver itkArray1DToDataTest)
-
-itk_add_test(NAME itkObjectToObjectOptimizerBaseTest
-         COMMAND ITKRegistrationRefactoringTestDriver
-         itkObjectToObjectOptimizerBaseTest)
-
-itk_add_test(NAME itkObjectToObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver itkObjectToObjectMetricTest)
 
 itk_add_test(NAME itkImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
@@ -65,10 +55,6 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest)
-
-itk_add_test(NAME itkGradientDescentObjectOptimizerTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkGradientDescentObjectOptimizerTest)
 
 # NOTE - this is waiting for new testing data images to be added
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest
@@ -103,13 +89,13 @@ itk_add_test(NAME itkQuasiNewtonDemonsRegistrationTest
       ${TEMP}/QNDemonsOutput.nii
       )
 
-#itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
-#      COMMAND ITKRegistrationRefactoringTestDriver
-#      itkQuasiNewtonObjectOptimizerTest
-#      ${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
-#      ${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
-#      ${TEMP}/QNOptOutput.nii
-#      )
+itk_add_test(NAME itkQuasiNewtonRegistrationTest
+      COMMAND ITKRegistrationRefactoringTestDriver
+      itkQuasiNewtonRegistrationTest
+      #${ITK_SOURCE_DIR}/Examples/Data/r62slice.nii
+      #${ITK_SOURCE_DIR}/Examples/Data/r85slice.nii
+      #${TEMP}/QNOptOutput.nii
+      )
 
 itk_add_test(NAME itkPolyAffineTransformTest
       COMMAND ITKRegistrationRefactoringTestDriver

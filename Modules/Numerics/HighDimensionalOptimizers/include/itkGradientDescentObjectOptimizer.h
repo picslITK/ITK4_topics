@@ -26,6 +26,18 @@ namespace itk
 /** \class GradientDescentObjectOptimizer
  *  \brief Gradient descent optimizer.
  *
+ * GradientDescentOptimizer implements a simple gradient descent optimizer.
+ * At each iteration the current position is updated according to
+ *
+ * \f[
+ *        p_{n+1} = p_n
+ *                + \mbox{learningRate}
+                  \, \frac{\partial f(p_n) }{\partial p_n}
+ * \f]
+ *
+ * The user can scale each component of the df / dp
+ * but setting a scaling vector using method SetScales().
+ *
  * \note Unlike the previous version of GradientDescentOptimizer, this version
  * does not have a "maximize/minimize" option to modify the effect of the metric
  * derivative.

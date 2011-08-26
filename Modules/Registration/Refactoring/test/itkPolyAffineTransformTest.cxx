@@ -22,6 +22,7 @@
  * Tests are disabled since it requires some image files as input.
  */
 
+#include "itkMeanSquaresImageToImageObjectMetric.h"
 //#include "itkDemonsImageToImageObjectMetric.h"
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
@@ -29,13 +30,20 @@
 
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
+#include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 #include "itkPolyAffineTransform.h"
+#include "itkPolyAffineWeightFunctor.h"
 
 #include "itkHistogramMatchingImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageRegistrationMethodImageSource.h"
+
+//These two are needed as long as we're using fwd-declarations in
+//DisplacementFieldTransfor:
+#include "itkVectorInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -164,9 +172,11 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   matcher->Update();
   movingImage = matcher->GetOutput();
 
-  //create a displacement field transform
-  typedef MatrixOffsetTransformBase<double, Dimension, Dimension>
-                                                  AtomTransformType;
+  //create a deformation field transform
+  typedef AffineTransform<double, Dimension>
+                                                  AtomicTransformType;
+  typedef PolyAffineWeightFunctor<double, Dimension>
+                                                  WeightFunctorType;
 
   typedef PolyAffineTransform<double, Dimension, Dimension>
                                                   MovingTransformType;
@@ -174,10 +184,21 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
                                                   ParametersType;
   MovingTransformType::Pointer movingTransform =
                                                   MovingTransformType::New();
-  AtomTransformType::Pointer atomTransform1 = AtomTransformType::New();
-  //AtomTransformType::Pointer atomTransform2 = AtomTransformType::New();
-  movingTransform->AddAtomTransform(atomTransform1);
-  //movingTransform->AddAtomTransform(atomTransform2);
+  AtomicTransformType::Pointer atomicTransform1 = AtomicTransformType::New();
+  AtomicTransformType::Pointer atomicTransform2 = AtomicTransformType::New();
+  WeightFunctorType::Pointer weightFunc1 = WeightFunctorType::New();
+  WeightFunctorType::Pointer weightFunc2 = WeightFunctorType::New();
+  //weightFunc1->SetAnchor(atomicTransform1->GetCenter());
+  //weightFunc2->SetAnchor(atomicTransform2->GetCenter());
+  FixedImageType::PointType anchor1, anchor2;
+  FixedImageType::RegionType anchorRegion = fixedImage->GetLargestPossibleRegion();
+  fixedImage->TransformIndexToPhysicalPoint(anchorRegion.GetIndex(), anchor1);
+  fixedImage->TransformIndexToPhysicalPoint(anchorRegion.GetIndex() + anchorRegion.GetSize(), anchor2);
+  weightFunc1->SetAnchor(anchor1);
+  weightFunc2->SetAnchor(anchor2);
+
+  movingTransform->PushTransformWithWeight(atomicTransform1, weightFunc1);
+  //movingTransform->PushTransformWithWeight(atomicTransform2, weightFunc2);
   movingTransform->SetIdentity();
 
   //identity transform for fixed image
@@ -187,9 +208,8 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  //  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
-  //                                                                  MetricType;
-
+  //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType > MetricType;
+  //typedef MeanSquaresImageToImageObjectMetric<FixedImageType, MovingImageType> MetricType;
   typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
       MetricType;
 
@@ -213,7 +233,7 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
 
   // Optimizer
   //typedef GradientDescentObjectOptimizer  OptimizerType;
-  typedef QuasiNewtonObjectOptimizer  OptimizerType;
+  typedef itk::QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetNumberOfIterations( numberOfIterations );
@@ -225,9 +245,7 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   iterationCommand->SetOptimizer(  optimizer.GetPointer() );
 
   // Testing optimizer parameter estimator
-  typedef itk::OptimizerParameterEstimator< MetricType,
-                                        IdentityTransformType,
-                                        MovingTransformType > OptimizerParameterEstimatorType;
+  typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);
@@ -290,6 +308,33 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
       pass = false;
       }
     }
+
+  //Output the polyaffine transform to a deformation field
+  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
+                                                    double, Dimension>
+                                                    DeformationTransformType;
+  DeformationTransformType::Pointer deformationTransform =
+                                              DeformationTransformType::New();
+  typedef DeformationTransformType::DisplacementFieldType DisplacementFieldType;
+  DisplacementFieldType::Pointer field = DisplacementFieldType::New();
+
+  field->SetRegions( fixedImage->GetLargestPossibleRegion() );
+  field->Allocate();
+  deformationTransform->SetDisplacementField( field );
+
+  field->SetOrigin( fixedImage->GetOrigin() );
+  field->SetSpacing( fixedImage->GetSpacing() );
+  field->SetDirection( fixedImage->GetDirection() );
+
+  movingTransform->OutputDisplacementField< DisplacementFieldType >(field);
+
+  //Write out the deformation field
+  typedef ImageFileWriter< DisplacementFieldType >  DeformationWriterType;
+  DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
+  std::string defout( "tmpdef.mha" );
+  deformationwriter->SetFileName( defout.c_str() );
+  deformationwriter->SetInput( deformationTransform->GetDisplacementField() );
+  deformationwriter->Update();
 
   if( !pass )
     {

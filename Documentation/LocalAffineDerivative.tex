@@ -1,0 +1,84 @@
+\documentclass{article}
+
+%%% remove comment delimiter ('%') and specify encoding parameter if required,
+%%% see TeX documentation for additional info (cp1252-Western,cp1251-Cyrillic)
+%\usepackage[cp1252]{inputenc}
+
+%%% remove comment delimiter ('%') and select language if required
+%\usepackage[english,spanish]{babel}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[dvips]{graphicx}
+%%% remove comment delimiter ('%') and specify parameters if required
+%\usepackage[dvips]{graphics}
+
+\begin{document}
+
+%%% remove comment delimiter ('%') and select language if required
+%\selectlanguage{spanish}
+
+\noindent $M$: the metric function \newline
+
+\noindent $J$: the moving image \newline
+
+\noindent $I$: the fixed image \newline
+
+\noindent $J^{*}$: the warped moving image \newline
+
+\noindent
+
+\noindent $x$: coordinates in the warped space \newline
+
+\noindent $y = A(x)x+b(x)$ : coordinates in the moving space via a
+locally affine transform \newline
+
+\noindent $A(x) = [ a_{ij} ] (x) $ a spatially varying affine
+transform. \newline
+
+\noindent $b(x) = b_{i} (x) $ a spatially varying translation
+transform. \newline
+
+\noindent
+
+\noindent $ M =  \| I - J(T(x)) \|^2 $ a SSD metric \newline
+
+\noindent$ J^*(x) = J(T(x)) = J(A(x)x+b(x))  $ where $J^*$ is the image
+$J$ after the warping is applied. \newline
+
+\noindent We have
+\begin{eqnarray}
+\frac{1}{2}\frac{\partial} {\partial a_{ij}} \| I - J (  A(x) x + b(x) ) \|^2 = \\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} \frac{\partial} {\partial
+  a_{ij}}(  A(x) x + b(x) ) = \\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} \frac{\partial [a_{ij}]  } {\partial
+  a_{ij}} x = \\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} \text{\bf{Id}}_{ij} x
+\end{eqnarray}
+where \text{\bf{Id}}$_{ij}$ represents the $ij$ component of the
+identity matrix.   \newline
+
+ With respect to $x_i$ the $i^{th}$ parameter of $x$ :
+\begin{eqnarray}
+\frac{1}{2}\frac{\partial} {\partial x_{i}} \| I - J (  A(x) x + b(x) ) \|^2 = \\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} \frac{\partial} {\partial
+  x_{i}}(  A(x) x + b(x) ) = \\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} ( \frac{\partial A(x) x } {\partial
+  x_{i}} +  \frac{\partial b(x) } {\partial
+  x_{i}}    ) = \\ \notag
+\text{then apply the product rule}\\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} (  A(x) \frac{\partial x } {\partial
+  x_{i}}  +  \frac{\partial A(x) } {\partial
+  x_{i}}x +  \frac{\partial b(x) } {\partial
+  x_{i}}    )  \\ \notag
+ \end{eqnarray}
+
+ Assuming $\frac{\partial A(x) } {\partial x_{i}}=0$ and $\frac{\partial b(x) } {\partial x_{i}}=0$, we have
+
+\begin{eqnarray}
+\frac{1}{2}\frac{\partial} {\partial x_{i}} \| I - J (  A(x) x + b(x) ) \|^2 = \\ \notag
+( I - J (  A(x) x + b(x))~) \frac{d J}{dT} (  A(x) \frac{\partial x } {\partial
+  x_{i}}  )  \\ \notag
+\end{eqnarray}
+
+\end{document}

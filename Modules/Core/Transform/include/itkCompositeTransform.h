@@ -141,6 +141,7 @@ public:
   typedef typename Superclass::JacobianType         JacobianType;
   /** Standard coordinate point type for this class. */
   typedef typename Superclass::InputPointType       InputPointType;
+  typedef typename Superclass::InputIndexType       InputIndexType;
   typedef typename Superclass::OutputPointType      OutputPointType;
   /** Standard vector type for this class. */
   typedef typename Superclass::InputVectorType      InputVectorType;
@@ -300,26 +301,28 @@ public:
   virtual OutputPointType TransformPoint( const InputPointType& thisPoint,
                                           bool &isInsideTransformRegion ) const;
   */
+
+  /**  Method to transform a point via index access. */
+  using Superclass::TransformIndex;
+  virtual OutputPointType TransformIndex(const InputIndexType &) const;
+
+
   /**  Method to transform a vector. */
   using Superclass::TransformVector;
-  virtual OutputVectorType TransformVector(const InputVectorType &) const
-  {
-    itkExceptionMacro( "TransformVector unimplemented" );
-  }
+  virtual OutputVectorType TransformVector(const InputVectorType &) const;
 
   /**  Method to transform a vnl_vector. */
-  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const
-  {
-    itkExceptionMacro( "TransformVector unimplemented" );
-  }
+  virtual OutputVnlVectorType TransformVector(const InputVnlVectorType &) const;
 
   /**  Method to transform a CovariantVector. */
-  using Superclass::TransformCovariantVector;
   virtual OutputCovariantVectorType
-  TransformCovariantVector(const InputCovariantVectorType &) const
+  TransformCovariantVector(const InputCovariantVectorType &  ) const
   {
-    itkExceptionMacro( "TransformCovariantVector unimplemented" );
+    itkExceptionMacro( "TransformCovariantVector unimplemented, use TransformCovariantVector(vector,point) to be general and safe." );
   }
+
+  virtual OutputCovariantVectorType
+  TransformCovariantVector(const InputCovariantVectorType & ,  const InputPointType &inputPoint ) const;
 
   virtual bool IsLinear() const;
 

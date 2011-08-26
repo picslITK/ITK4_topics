@@ -56,17 +56,17 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
   unsigned int t;
 
   os << indent << "PolyAffineTransform: contains "
-     << m_AtomTransformSet.size() << " transforms " << std::endl;
+     << m_AtomicTransformList.size() << " transforms " << std::endl;
 
-  for ( t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( t = 0; t < m_AtomicTransformList.size(); t++ )
     {
     os << indent << "Transforms[" << t << "] = ";
     os << indent.GetNextIndent();
-    //m_AtomTransformSet[t]->PrintSelf(os, indent.GetNextIndent());
-    os << m_AtomTransformSet[t]->GetTransformTypeAsString();
+    //m_AtomicTransformList[t]->PrintSelf(os, indent.GetNextIndent());
+    os << m_AtomicTransformList[t]->GetTransformTypeAsString();
     os << std::endl;
     os << indent.GetNextIndent() << "NumberOfParameters ";
-    os << m_AtomTransformSet[t]->GetNumberOfParameters();
+    os << m_AtomicTransformList[t]->GetNumberOfParameters();
     os << std::endl;
     }
 }
@@ -77,10 +77,12 @@ void
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 ::SetIdentity(void)
 {
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    m_AtomTransformSet[t]->SetIdentity();
+    m_AtomicTransformList[t]->SetIdentity();
     }
+  this->GetParameters();
+  this->GetFixedParameters();
   this->Modified();
 }
 
@@ -93,24 +95,22 @@ typename PolyAffineTransform< TScalarType,
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 ::TransformPoint(const InputPointType & point) const
 {
-  if (m_AtomTransformSet.size() <= 0)
+  if (m_AtomicTransformList.size() <= 0)
     {
     return point;
     }
 
   unsigned int i;
   OutputPointType outPoint, sumPoint;
-  double squaredDistance, weight, sumWeight;
+  double weight, sumWeight;
 
   sumPoint.Fill(0.0);
   sumWeight = 0.0;
 
-  for ( i = 0; i < m_AtomTransformSet.size(); i++ )
+  for ( i = 0; i < m_AtomicTransformList.size(); i++ )
     {
-    outPoint = m_AtomTransformSet[i]->TransformPoint( point );
-
-    squaredDistance = point.SquaredEuclideanDistanceTo(m_AtomTransformSet[i]->GetCenter());
-    weight = vcl_exp( - squaredDistance );
+    outPoint = m_AtomicTransformList[i]->TransformPoint( point );
+    weight = m_WeightFunctorList[i]->GetWeight( point );
 
     sumWeight = sumWeight + weight;
     for ( unsigned d = 0; d < NOutputDimensions; d++ )
@@ -134,7 +134,7 @@ typename PolyAffineTransform< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputVectorType
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformVector(const InputVectorType &) const
+::TransformVector(const InputVectorType & vect) const
 {
   itkExceptionMacro("TransformVector not yet implemented.");
   OutputVectorType output;
@@ -148,11 +148,12 @@ typename PolyAffineTransform< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputVnlVectorType
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformVector(const InputVnlVectorType &) const
+::TransformVector(const InputVnlVectorType & vect) const
 {
-  itkExceptionMacro("TransformVector not yet implemented.");
-  OutputVnlVectorType output;
-  return output;
+  //itkExceptionMacro("TransformVector not yet implemented.");
+  //OutputVnlVectorType output;
+  //return output;
+  return vect;
 }
 
 // Transform a CovariantVector
@@ -162,11 +163,12 @@ typename PolyAffineTransform< TScalarType,
                                     NInputDimensions,
                                     NOutputDimensions >::OutputCovariantVectorType
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::TransformCovariantVector(const InputCovariantVectorType &) const
+::TransformCovariantVector(const InputCovariantVectorType & vect) const
 {
-  itkExceptionMacro("TransformCovariantVector not yet implemented.");
-  OutputCovariantVectorType result;     // Converted vector
-  return result;
+  //itkExceptionMacro("TransformCovariantVector not yet implemented.");
+  //OutputCovariantVectorType result;     // Converted vector
+  //return result;
+  return vect;
 }
 
 // return an inverse transformation
@@ -183,9 +185,9 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 
   unsigned int i;
 
-  for ( i = 0; i < m_AtomTransformSet.size(); i++ )
+  for ( i = 0; i < m_AtomicTransformList.size(); i++ )
     {
-      if ( !m_AtomTransformSet[i]->GetInverse( inverse->GetAtomTransformSet()[i].GetPointer() ) )
+      if ( !m_AtomicTransformList[i]->GetInverse( inverse->GetAtomicTransformList()[i].GetPointer() ) )
         {
         return false;
         }
@@ -224,10 +226,10 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 
   unsigned int paramSize;
 
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
     //assuming each transform object has m_FixedParameters set initially
-    AtomParametersType param = m_AtomTransformSet[t]->GetFixedParameters();
+    AtomParametersType param = m_AtomicTransformList[t]->GetFixedParameters();
     paramSize = param.GetSize();
 
     for ( unsigned int par1 = 0; par1 < paramSize; par1++ )
@@ -236,7 +238,7 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
       par++;
       }
 
-    m_AtomTransformSet[t]->SetFixedParameters(param);
+    m_AtomicTransformList[t]->SetFixedParameters(param);
     }
 
   // Modified is always called since we just have a pointer to the
@@ -255,16 +257,16 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 {
   unsigned int paramSize = 0, par = 0;
 
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    paramSize += m_AtomTransformSet[t]->GetFixedParameters().GetSize();
+    paramSize += m_AtomicTransformList[t]->GetFixedParameters().GetSize();
     }
 
   this->m_FixedParameters.SetSize (paramSize);
 
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    const AtomParametersType &param = m_AtomTransformSet[t]->GetFixedParameters();
+    const AtomParametersType &param = m_AtomicTransformList[t]->GetFixedParameters();
     for ( unsigned int par1 = 0; par1 < param.GetSize(); par1++ )
       {
       this->m_FixedParameters[par] = param[par1];
@@ -286,16 +288,16 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 {
   unsigned int paramSize = 0, par = 0;
 
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    paramSize += m_AtomTransformSet[t]->GetNumberOfParameters();
+    paramSize += m_AtomicTransformList[t]->GetNumberOfParameters();
     }
 
   this->m_Parameters.SetSize (paramSize);
 
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    const AtomParametersType &param = m_AtomTransformSet[t]->GetParameters();
+    const AtomParametersType &param = m_AtomicTransformList[t]->GetParameters();
     for ( unsigned int par1 = 0; par1 < param.GetSize(); par1++ )
       {
       this->m_Parameters[par] = param[par1];
@@ -323,10 +325,10 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 
   unsigned int paramSize;
 
-  for ( unsigned int t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( unsigned int t = 0; t < m_AtomicTransformList.size(); t++ )
     {
     //assuming each transform object has m_Parameters set initially
-    AtomParametersType param = m_AtomTransformSet[t]->GetParameters();
+    AtomParametersType param = m_AtomicTransformList[t]->GetParameters();
     paramSize = param.GetSize();
 
     for ( unsigned int par1 = 0; par1 < paramSize; par1++ )
@@ -335,7 +337,7 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
       par++;
       }
 
-    m_AtomTransformSet[t]->SetParameters(param);
+    m_AtomicTransformList[t]->SetParameters(param);
     }
 
   // Modified is always called since we just have a pointer to the
@@ -346,42 +348,53 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 // Compute the Jacobian in one position
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
+const typename PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >::JacobianType &
+PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
+::GetJacobian(const InputPointType & p) const
+{
+  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
+  return this->m_Jacobian;
+
+}
+
+// Compute the Jacobian in one position, without setting values to m_Jacobian
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
 void
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 ::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
 {
   //This will not reallocate memory if the dimensions are equal
   // to the matrix's current dimensions.
+
   j.SetSize( NOutputDimensions, this->GetNumberOfLocalParameters() );
   j.Fill(0.0);
 
   unsigned int t, d, par1, par = 0;
-  double squaredDistance, *weights, sumWeight;
+  double *weights, sumWeight;
 
   sumWeight = 0;
-  weights = new double[ m_AtomTransformSet.size() ];
+  weights = new double[ m_AtomicTransformList.size() ];
 
-  for ( t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    squaredDistance = p.SquaredEuclideanDistanceTo(m_AtomTransformSet[t]->GetCenter());
-    weights[t] = vcl_exp( - squaredDistance );
-
+    weights[t] = m_WeightFunctorList[t]->GetWeight( p );
     sumWeight = sumWeight + weights[t];
     }
-  for ( t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( t = 0; t < m_AtomicTransformList.size(); t++ )
     {
     weights[t] /= sumWeight; //normalizing weights
     }
 
-  for ( t = 0; t < m_AtomTransformSet.size(); t++ )
+  for ( t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    typename AtomTransformType::JacobianType atomJacobian;
-    m_AtomTransformSet[t]->GetJacobianWithRespectToParameters(p, atomJacobian);
-    for ( par1 = 0; par1 < m_AtomTransformSet[t]->GetNumberOfLocalParameters(); par1++ )
+    const typename AtomicTransformType::JacobianType &atomicJacobian
+      = m_AtomicTransformList[t]->GetJacobian(p);
+    for ( par1 = 0; par1 < m_AtomicTransformList[t]->GetNumberOfLocalParameters(); par1++ )
       {
       for ( d = 0; d < NOutputDimensions; d++ )
         {
-        j(d, par) = weights[t] * atomJacobian[d][par1];
+        j(d, par) = weights[t] * atomicJacobian[d][par1];
         }
       par++;
       }
@@ -391,6 +404,37 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 
   return;
 
+}
+
+// Output the deformation field as an image
+template< class TScalarType, unsigned int NInputDimensions,
+          unsigned int NOutputDimensions >
+template< class TDisplacementField >
+void
+PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
+::OutputDisplacementField(typename TDisplacementField::Pointer DisplacementField) const
+{
+  typedef typename TDisplacementField::IndexType      IndexType;
+
+  InputPointType point, sumPoint;
+  typename TDisplacementField::PixelType displacement;
+
+  ImageRegionIteratorWithIndex< TDisplacementField >
+      iter( DisplacementField, DisplacementField->GetLargestPossibleRegion() );
+
+  /* Iterate over the region */
+  iter.GoToBegin();
+  while( !iter.IsAtEnd() )
+    {
+    const IndexType &index = iter.GetIndex();
+    DisplacementField->TransformIndexToPhysicalPoint(index, point);
+
+    sumPoint = this->TransformPoint( point );
+    displacement = sumPoint - point;
+    iter.Set( displacement );
+
+    ++iter;
+    }
 }
 
 } // namespace

@@ -24,6 +24,8 @@
 #include "itkTransform.h"
 #include "itkMacro.h"
 
+#include "itkPolyAffineWeightFunctor.h"
+
 namespace itk
 {
 /**
@@ -157,32 +159,40 @@ public:
                   itkGetStaticConstMacro(OutputSpaceDimension) >
   InverseMatrixType;
 
-  typedef InputPointType CenterType;
+  typedef InputPointType                  CenterType;
 
-  typedef OutputVectorType               OffsetType;
-  typedef typename OffsetType::ValueType OffsetValueType;
+  typedef OutputVectorType                OffsetType;
+  typedef typename OffsetType::ValueType  OffsetValueType;
 
-  typedef OutputVectorType TranslationType;
+  typedef OutputVectorType                TranslationType;
 
-  typedef typename TranslationType::ValueType TranslationValueType;
+  typedef typename TranslationType::ValueType             TranslationValueType;
 
   /** Base inverse transform type. This type should not be changed to the
    * concrete inverse transform type or inheritance would be lost. */
-  typedef typename Superclass::InverseTransformBaseType InverseTransformBaseType;
-  typedef typename InverseTransformBaseType::Pointer    InverseTransformBasePointer;
+  typedef typename Superclass::InverseTransformBaseType   InverseTransformBaseType;
+  typedef typename InverseTransformBaseType::Pointer      InverseTransformBasePointer;
 
   /** Types for atomic transforms */
-  typedef MatrixOffsetTransformBase<TScalarType, NInputDimensions,
-                                    NOutputDimensions>  AtomTransformType;
-  typedef typename AtomTransformType::Pointer           AtomTransformPointer;
-  typedef typename AtomTransformType::ParametersType    AtomParametersType;
+  typedef MatrixOffsetTransformBase<TScalarType, NInputDimensions, NOutputDimensions>
+                                                          AtomicTransformType;
+  typedef typename AtomicTransformType::Pointer           AtomicTransformPointer;
+  typedef typename AtomicTransformType::ParametersType    AtomParametersType;
+
+  typedef PolyAffineWeightFunctor<double, NInputDimensions>
+                                                          WeightFunctorType;
+  typedef typename WeightFunctorType::Pointer
+                                                          WeightFunctorPointer;
 
   /** Transform queue type */
-  typedef std::vector<AtomTransformPointer>             AtomTransformSetType;
+  typedef std::vector<AtomicTransformPointer>             AtomicTransformListType;
 
-  AtomTransformSetType & GetAtomTransformSet()
+  /** Transform weight */
+  typedef std::vector<WeightFunctorPointer>               WeightFunctorListType;
+
+  AtomicTransformListType & GetAtomicTransformList()
     {
-    return m_AtomTransformSet;
+    return m_AtomicTransformList;
     }
 
   /** Set the transformation to an Identity
@@ -249,29 +259,31 @@ public:
   //    const InputPointType & itkNotUsed(point) ) const
   //  { return TransformCovariantVector( vector ); }
 
-  virtual const JacobianType & GetJacobian(const InputPointType  &) const
-  {
-    itkExceptionMacro("to be removed")
-  }
-
   /** Compute the Jacobian of the transformation
    *
    * This method computes the Jacobian matrix of the transformation.
    * given point or vector, returning the transformed point or
    * vector. The rank of the Jacobian will also indicate if the transform
-   * is invertible at this point.
-   * \c jacobian will sized properly as needed. */
-  void GetJacobianWithRespectToParameters(const InputPointType  &x,
-                                          JacobianType &jacobian) const;
+   * is invertible at this point. */
+  const JacobianType & GetJacobian(const InputPointType & point) const;
 
-  /** NOT IMPLEMENTED */
+  /** get local Jacobian for the given point
+   * \c j will sized properly as needed.
+   * This is a thread-safe version for GetJacobian(). Otherwise,
+   * m_Jacobian could be changed for different values in different threads. */
+  void GetJacobianWithRespectToParameters(const InputPointType  &x,
+                                          JacobianType &j) const;
+
+  /** This provides the ability to get a local jacobian value
+   *  in a dense/local transform, e.g. DisplacementFieldTransform. For such
+   *  transforms it would be unclear what parameters would refer to.
+   *  Generally, global transforms should return an indentity jacobian
+   *  since there is no change with respect to position. */
   virtual void GetJacobianWithRespectToPosition(
-                                       const InputPointType &,
-                                       JacobianType & ) const
-  {
-    itkExceptionMacro("GetJacobianWithRespectToPosition not implemented for "
-                      << this->GetNameOfClass() );
-  }
+                                       const InputPointType & x,
+                                       JacobianType &j ) const
+    {
+    }
 
   /** Create inverse of an affine transformation
    *
@@ -296,12 +308,19 @@ public:
   /** Return an inverse of this transform. */
   virtual InverseTransformBasePointer GetInverseTransform() const;
 
-  void AddAtomTransform( AtomTransformType *t  )
+  void PushTransformWithWeight( AtomicTransformType *t, WeightFunctorType *f  )
   {
-    AtomTransformPointer tp = t;
-    m_AtomTransformSet.push_back(tp);
+    AtomicTransformPointer tp = t;
+    m_AtomicTransformList.push_back(tp);
+
+    WeightFunctorPointer fp = f;
+    m_WeightFunctorList.push_back(fp);
+
     this->Modified();
   }
+
+  template< class TDisplacementField > void
+    OutputDisplacementField(typename TDisplacementField::Pointer DisplacementField) const;
 
 protected:
   /** Construct an PolyAffineTransform object
@@ -324,7 +343,8 @@ private:
   PolyAffineTransform(const Self & other);
   const Self & operator=(const Self &);
 
-  AtomTransformSetType            m_AtomTransformSet;
+  AtomicTransformListType            m_AtomicTransformList;
+  WeightFunctorListType              m_WeightFunctorList;
 
 }; //class PolyAffineTransform
 }  // namespace itk

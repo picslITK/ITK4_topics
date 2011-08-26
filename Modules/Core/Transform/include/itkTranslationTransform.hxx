@@ -57,17 +57,17 @@ TranslationTransform< TScalarType, NDimensions >
   //Save parameters. Needed for proper operation of TransformUpdateParameters.
   if( &parameters != &(this->m_Parameters) )
     {
-    this->m_Parameters = parameters;
+      this->m_Parameters = parameters;
     }
 
   typedef typename ParametersType::ValueType ParameterValueType;
   bool modified = false;
   for ( unsigned int i = 0; i < SpaceDimension; i++ )
     {
-    if ( m_Offset[i] != parameters[i] )
+    if ( this->m_Offset[i] != parameters[i] )
       {
-      m_Offset[i] = parameters[i];
-      modified = true;
+        this->m_Offset[i] = parameters[i];
+        modified = true;
       }
     }
   if ( modified )
@@ -224,7 +224,8 @@ template< class TScalarType, unsigned int NDimensions >
 void
 TranslationTransform< TScalarType, NDimensions >::SetIdentity()
 {
-  m_Offset.Fill(0.0);
+  this->m_Parameters.Fill(0);
+  this->m_Offset.Fill(0.0);
 }
 } // namespace
 

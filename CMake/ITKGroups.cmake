@@ -91,6 +91,7 @@ ITKFEMRegistration
 ITKPDEDeformableRegistration
 ITKRegistrationCommon
 ITKRegistrationRefactoring
+ITKHighDimensionalMetrics
 )
 
 set(Registration_documentation
@@ -124,6 +125,7 @@ ITKNeuralNetworks
 ITKOptimizers
 ITKPolynomials
 ITKStatistics
+ITKHighDimensionalOptimizers
 )
 
 set(Numerics_documentation

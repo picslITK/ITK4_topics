@@ -15,13 +15,13 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-//#ifndef __itkQuasiNewtonObjectOptimizer_hxx
-//#define __itkQuasiNewtonObjectOptimizer_hxx
+//#ifndef __itkQuasiNewtonLocalSupportObjectOptimizer_hxx
+//#define __itkQuasiNewtonLocalSupportObjectOptimizer_hxx
 
 #include <iostream>
 #include <iomanip>
 
-#include "itkQuasiNewtonObjectOptimizer.h"
+#include "itkQuasiNewtonLocalSupportObjectOptimizer.h"
 #include "itkCommand.h"
 #include "itkEventObject.h"
 #include "itkMacro.h"
@@ -33,23 +33,27 @@ namespace itk
 /**
  * Constructor
  */
-QuasiNewtonObjectOptimizer
-::QuasiNewtonObjectOptimizer()
+QuasiNewtonLocalSupportObjectOptimizer
+::QuasiNewtonLocalSupportObjectOptimizer()
 {
   itkDebugMacro("Constructor");
 
   m_MaximumVoxelShift = 1.0;
-
-  // m_MinimumVoxelShift will be set to a value in the first iteration
-  // according the first step
-  m_MinimumVoxelShift = 0;
+  m_MinimumGradientNorm = 1e-20;
+  m_MinimumValueChange = 1e-20;
 
   m_LocalHessian = NULL;
   m_LocalHessianInverse = NULL;
+
+  m_LineSearchEnabled = true;
+  m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
+
+  this->SetDebug(true);
+
 }
 
 void
-QuasiNewtonObjectOptimizer
+QuasiNewtonLocalSupportObjectOptimizer
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -59,19 +63,30 @@ QuasiNewtonObjectOptimizer
  * Start the optimization
  */
 void
-QuasiNewtonObjectOptimizer
+QuasiNewtonLocalSupportObjectOptimizer
 ::StartOptimization(void)
 {
   itkDebugMacro("StartOptimization");
 
+  m_ValueAndDerivateEvaluated = false;
+
   if ( ! this->m_Metric->HasLocalSupport() )
     {
-    // initialize scales
-    ScalesType scales(this->m_Metric->GetNumberOfParameters());
-    //this->m_Metric->EstimateScales(true, scales);
-    m_OptimizerParameterEstimator->EstimateScales(this->m_Metric->GetParameters(), scales);
-    this->SetScales(scales);
-    std::cout << " Estimated scales = " << scales << std::endl;
+    if (m_OptimizerParameterEstimator.IsNotNull())
+      {
+      // initialize scales
+      m_CurrentPosition = this->m_Metric->GetParameters();
+      if (m_CurrentPosition[0] != m_CurrentPosition[0]) //checking NaN or #IND
+        {
+        itkExceptionMacro("QuasiNewtonLocalSupportObjectOptimizer: metric parameters are not defined.");
+        }
+      ScalesType scales(this->m_Metric->GetNumberOfParameters());
+
+      m_OptimizerParameterEstimator->EstimateScales(scales);
+      //m_CurrentPosition = this->m_Metric->GetParameters();
+      this->SetScales(scales);
+      std::cout << " Estimated scales = " << scales << std::endl;
+      }
     }
   else
     {
@@ -86,12 +101,73 @@ QuasiNewtonObjectOptimizer
 }
 
 /**
+ * Resume optimization.
+ */
+void
+QuasiNewtonLocalSupportObjectOptimizer
+::ResumeOptimization()
+{
+  m_StopConditionDescription.str("");
+  m_StopConditionDescription << this->GetNameOfClass() << ": ";
+  InvokeEvent( StartEvent() );
+
+  m_Stop = false;
+  while( ! m_Stop )
+    {
+    /* Compute value/derivative, using threader. */
+    try
+      {
+      /* m_Gradient will be sized as needed by metric. If it's already
+       * proper size, no new allocation is done. */
+      if (!m_ValueAndDerivateEvaluated)
+        {
+        this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+
+        }
+      }
+    catch ( ExceptionObject & err )
+      {
+      m_StopCondition = MetricError;
+      m_StopConditionDescription << "Metric error";
+      this->StopOptimization();
+
+      // Pass exception to caller
+      throw err;
+      }
+
+    /* Check if optimization has been stopped externally.
+     * (Presumably this could happen from a multi-threaded client app?) */
+    if ( m_Stop )
+      {
+      m_StopConditionDescription << "StopOptimization() called";
+      break;
+      }
+
+    /* Advance one step along the gradient.
+     * This will modify the gradient and update the transform. */
+    this->AdvanceOneStep();
+
+    /* Update and check iteration count */
+    m_CurrentIteration++;
+    if ( m_CurrentIteration >= m_NumberOfIterations )
+      {
+      m_StopConditionDescription << "Maximum number of iterations ("
+                                 << m_NumberOfIterations
+                                 << ") exceeded.";
+      m_StopCondition = MaximumNumberOfIterations;
+      this->StopOptimization();
+      break;
+      }
+    } //while (!m_Stop)
+}
+
+/**
  * Advance one Step: if the Quasi-Newton direction is consistent
  * with the gradient direction, follow the Quasi-Newton direction,
  * otherwise, follow the gradient direction.
  */
 void
-QuasiNewtonObjectOptimizer
+QuasiNewtonLocalSupportObjectOptimizer
 ::AdvanceOneStep(void)
 {
   itkDebugMacro("AdvanceOneStep");
@@ -101,100 +177,6 @@ QuasiNewtonObjectOptimizer
     AdvanceOneLocalStep();
     return;
     }
-
-  const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
-  ScalesType scales = this->GetScales();
-
-  double learningRate;
-  bool   newtonStepException = false;
-
-  this->m_CurrentPosition = this->m_Metric->GetParameters();
-
-  if (this->GetCurrentIteration() == 0)
-    {
-    m_PreviousPosition = this->m_CurrentPosition;
-    m_PreviousGradient = this->m_Gradient;
-
-    m_NewtonStep.SetSize(spaceDimension);
-    m_Hessian.SetSize(spaceDimension, spaceDimension);
-    m_HessianInverse.SetSize(spaceDimension, spaceDimension);
-    }
-
-  try
-    {
-    this->EstimateNewtonStep();
-    }
-  catch ( ExceptionObject & )
-    {
-    //This may happen with a singular hessian matrix
-    std::cout << "Warning: exception in estimating Newton step." << std::endl;
-    newtonStepException = true;
-    }
-
-  //std::cout << "m_NewtonStep = " << m_NewtonStep << std::endl;
-  //std::cout << "m_Gradient = "   << m_Gradient << std::endl;
-
-  /** Save for the next iteration */
-  m_PreviousPosition = this->GetCurrentPosition();
-  m_PreviousGradient = this->GetGradient();
-
-  DerivativeType gradientStep = m_Gradient;
-  for (unsigned int i=0; i<spaceDimension; i++)
-    {
-    gradientStep[i] = gradientStep[i] / scales[i];
-    }
-
-  /** If a Newton step is on the opposite direction of a gradient step, we'd
-   * better use the gradient step. This happens when the second order
-   * approximation produces a convex instead of an expected concave, or
-   * vice versa.
-   */
-  if ( newtonStepException || inner_product(gradientStep, m_NewtonStep) <= 0 )
-    {
-    learningRate = this->EstimateLearningRate(gradientStep);
-    this->SetLearningRate( learningRate );
-    //std::cout << "using gradient, learningRate = " << learningRate << std::endl;
-
-    if ( learningRate == 0)
-      {
-      m_StopCondition = StepTooSmall;
-      m_StopConditionDescription << "Learning rate is zero after "
-                                 << this->GetCurrentIteration()
-                                 << " iterations. This may be due to that"
-                                 << " the new step yields zero voxel shift.";
-      this->StopOptimization();
-      return;
-      }
-    this->GradientDescentObjectOptimizer::AdvanceOneStep();
-    }
-  else
-    {
-    // Now a Newton step is on the consistent direction of a gradient step
-    learningRate = this->EstimateLearningRate(m_NewtonStep);
-    learningRate = vnl_math_min(learningRate, 1.0);
-    this->SetLearningRate( learningRate );
-    //std::cout << "using newton, learningRate = " << learningRate << std::endl;
-
-    if ( learningRate == 0)
-      {
-      m_StopCondition = StepTooSmall;
-      m_StopConditionDescription << "Learning rate is zero after "
-                                 << this->GetCurrentIteration()
-                                 << " iterations. This may be due to that"
-                                 << " the new step yields little voxel shift.";
-      this->StopOptimization();
-      return;
-      }
-
-    DerivativeType step(spaceDimension);
-    for ( unsigned int j = 0; j < spaceDimension; j++ )
-      {
-      step[j] = this->m_LearningRate * this->m_NewtonStep[j];
-      }
-    this->m_Metric->UpdateTransformParameters( step );
-
-    this->InvokeEvent( IterationEvent() );
-    }
 }
 
 /**
@@ -203,7 +185,7 @@ QuasiNewtonObjectOptimizer
  * otherwise, follow the gradient direction.
  */
 void
-QuasiNewtonObjectOptimizer
+QuasiNewtonLocalSupportObjectOptimizer
 ::AdvanceOneLocalStep(void)
 {
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
@@ -266,7 +248,6 @@ QuasiNewtonObjectOptimizer
   double newtonLearningRate   = 100*m_MaximumVoxelShift / maxNewtonStep;
   newtonLearningRate = vnl_math_min(newtonLearningRate, 1.0);
 
-  //this->SetDebug(true);
   if (this->GetDebug())
     {
     std::cout << "Iteration = " << this->GetCurrentIteration() << std::endl;
@@ -310,87 +291,7 @@ QuasiNewtonObjectOptimizer
 }
 
 /** Estimate Hessian step */
-void QuasiNewtonObjectOptimizer
-::EstimateNewtonStep()
-{
-  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
-
-  // Estimate Hessian
-  EstimateHessian();
-
-  // Compute the Newton step
-  ParametersType sdx(numPara);
-
-  if (this->GetCurrentIteration() == 0 ||
-      m_Hessian[0][0] == NumericTraits<double>::max() ||
-      m_HessianInverse[0][0] == NumericTraits<double>::max())
-    {
-    m_NewtonStep.Fill(0); //use gradient step
-
-    // Initialize Hessian to identity matrix
-    m_Hessian.Fill(0.0f);
-    m_HessianInverse.Fill(0.0f);
-    for (unsigned int i=0; i<numPara; i++)
-      {
-      m_Hessian[i][i] = 1.0; //identity matrix
-      m_HessianInverse[i][i] = 1.0; //identity matrix
-      }
-    }
-  else
-    {
-    sdx = m_HessianInverse * m_Gradient;
-    //this->m_NewtonStep = -1.0 * sdx; //minimize
-    this->m_NewtonStep = sdx; //maximize
-    }
-}
-
-/** Estimate Hessian matrix */
-void QuasiNewtonObjectOptimizer
-::EstimateHessian()
-{
-  if (this->GetCurrentIteration() == 0)
-    {
-    return;
-    }
-
-  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
-
-  ParametersType dx(numPara);  //delta of position x: x_k+1 - x_k
-  ParametersType dg(numPara);  //delta of gradient: g_k+1 - g_k
-  ParametersType edg(numPara); //estimated delta of gradient: hessian_k * dx
-
-  dx = this->m_CurrentPosition - this->m_PreviousPosition;
-  //dg = this->m_Gradient - this->m_PreviousGradient; //minimize
-  dg = this->m_PreviousGradient - this->m_Gradient; //maximize
-  edg = m_Hessian * dx;
-
-  double dot_dg_dx = inner_product(dg, dx);
-  double dot_edg_dx = inner_product(edg, dx);
-
-  if (dot_dg_dx ==0 || dot_edg_dx == 0)
-    {
-    m_Hessian[0][0] = NumericTraits<double>::max();
-    return;
-    }
-
-  vnl_matrix<double> plus  = outer_product(dg, dg) / dot_dg_dx;
-  vnl_matrix<double> minus = outer_product(edg, edg) / dot_edg_dx;
-  vnl_matrix<double> newHessian = m_Hessian + plus - minus;
-
-  m_Hessian         = newHessian;
-
-  if ( vcl_abs(vnl_determinant(newHessian)) == 0 )
-    {
-    m_HessianInverse[0][0] = NumericTraits<double>::max();
-    }
-  else
-    {
-    m_HessianInverse = vnl_matrix_inverse<double>(newHessian);
-    }
-}
-
-/** Estimate Hessian step */
-void QuasiNewtonObjectOptimizer
+void QuasiNewtonLocalSupportObjectOptimizer
 ::EstimateLocalNewtonStep()
 {
   unsigned int numPara = this->m_Metric->GetNumberOfParameters();
@@ -414,7 +315,7 @@ void QuasiNewtonObjectOptimizer
       m_LocalHessianInverse[i].Fill(0.0);
       for (unsigned int d=0; d<imageDimension; d++)
         {
-        m_NewtonStep[i*imageDimension + d] = 0; //use gradient
+        m_NewtonStep[i*imageDimension + d] = m_Gradient[i*imageDimension + d]; //use gradient step
         m_LocalHessian[i][d][d] = 1; //reset to identity
         m_LocalHessianInverse[i][d][d] = 1; //reset to identity
         }
@@ -438,7 +339,7 @@ void QuasiNewtonObjectOptimizer
 }
 
 /** Estimate Hessian matrix */
-void QuasiNewtonObjectOptimizer
+void QuasiNewtonLocalSupportObjectOptimizer
 ::EstimateLocalHessian()
 {
   if (this->GetCurrentIteration() == 0)
@@ -494,26 +395,28 @@ void QuasiNewtonObjectOptimizer
 }
 
 /** Compute learning late from voxel shift*/
-double QuasiNewtonObjectOptimizer
+double QuasiNewtonLocalSupportObjectOptimizer
 ::EstimateLearningRate(ParametersType step)
 {
+  if (m_OptimizerParameterEstimator.IsNull())
+    {
+    return 1;
+    }
+
   ParametersType parameters = this->GetCurrentPosition();
 
   ScalesType     scales = this->GetScales();
 
   double shift, learningRate;
 
-  //shift = this->m_Metric->ComputeMaximumVoxelShift(true, step);
-  shift = m_OptimizerParameterEstimator->ComputeMaximumVoxelShift(parameters, step);
+  shift = m_OptimizerParameterEstimator->ComputeMaximumVoxelShift(step);
 
-  //initialize for the first time of executing EstimateLearningRate
-  if (this->GetCurrentIteration() == 0 || m_MinimumVoxelShift == 0)
+  if (this->GetCurrentIteration() == 0)
     {
-    m_MinimumVoxelShift = shift * 1e-3;
     std::cout << " Initial learningRate = " << m_MaximumVoxelShift / shift << std::endl;
     }
 
-  if (shift >= m_MinimumVoxelShift)
+  if (shift > 0)
     {
     learningRate = m_MaximumVoxelShift / shift;
     }
@@ -525,7 +428,7 @@ double QuasiNewtonObjectOptimizer
 }
 
 /** Debug the step sizes and turn angles */
-void QuasiNewtonObjectOptimizer
+void QuasiNewtonLocalSupportObjectOptimizer
 ::DebugStepSizeAndAngles(const char *debugLabel,
                          ParametersType lastStep,
                          ParametersType thisStep) const

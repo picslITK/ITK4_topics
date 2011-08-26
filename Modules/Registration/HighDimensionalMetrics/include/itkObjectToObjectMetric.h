@@ -26,16 +26,11 @@ namespace itk
 /** \class ObjectToObjectMetric
  * \brief Computes similarity between regions of two objects.
  *
- * This Class is templated over the type of the two input objects.
- * This is the base class for a hierarchy of similarity metrics that may, in
- * derived classes, operate on meshes, images, etc.  This class computes a
+ * This class is templated over the type of the two input objects.
+ * This is the abstract base class for a hierarchy of similarity metrics
+ * that may, in derived classes, operate on meshes, images, etc.
+ * This class computes a
  * value that measures the similarity between the two objects.
- *
- * Transform Optimization
- * This hierarchy currently assumes only the moving transform is 'active',
- * i.e. begin optimized when used in an optimizer. The goal however is
- * to allow for either moving, fixed or both transforms to be optimized
- * within a single metric.
  *
  * Derived classes must provide implementations for:
  *  GetValue
@@ -47,7 +42,14 @@ namespace itk
  *  HasLocalSupport
  *  UpdateTransformParameters
  *
- * \ingroup ITKRegistrationRefactoring
+ * \note Transform Optimization
+ * This hierarchy currently assumes only the moving transform is 'active',
+ * i.e. only the moving transform is being optimized when used in an optimizer.
+ * The eventual goal however is
+ * to allow for either moving, fixed or both transforms to be optimized
+ * within a single metric.
+ *
+ * \ingroup ITKHighDimensionalMetrics
  */
 
 class ITK_EXPORT ObjectToObjectMetric:
@@ -79,22 +81,22 @@ public:
   typedef  Superclass::ParametersType       ParametersType;
   typedef  Superclass::ParametersValueType  ParametersValueType;
 
-  /** Source of the gradient (image gradients, in the case of
-   * image to image metrics). */
+  /** Source of the gradient(s) used by the metric
+   * (e.g. image gradients, in the case of
+   * image to image metrics). Defaults to Moving. */
   typedef enum  { Fixed=0, Moving, Both } GradientSourceType;
 
   /**
-   * Set source of image gradient.  This variable allows the user to switch
-   * between calculating the derivative with respect to the fixed
+   * Set source of gradient.  This variable allows the user to switch
+   * between calculating the gradient with respect to the fixed
    * object or moving object.
-   * Defaults to Moving.
-   * This setting determines which image gradients are calculated by
-   * the base class and passed to derived classes. */
+   * \sa GradientSourceType
+   */
   itkSetMacro( GradientSource, GradientSourceType );
 
   /**
-   * Get coordinate system type.
-   * See \c GetGradientSourceIncludesFixed and GetGradientSourceIncludesMoving
+   * Get gradient source.
+   * See \c GetGradientSourceIncludesFixed and \c GetGradientSourceIncludesMoving
    * for convenience methods. */
   itkGetConstMacro( GradientSource, GradientSourceType );
 
@@ -113,7 +115,9 @@ public:
   }
 
   /** Initialize the Metric by making sure that all the components
-   *  are present and plugged together correctly     */
+   *  are present and plugged together correctly, and initializing
+   *  internal variables as required. This is for one-time initialization,
+   *  e.g. before starting an optimization process. */
   virtual void Initialize(void) throw ( ExceptionObject ) = 0;
 
   /** This method returns the value of the cost function */
@@ -144,7 +148,7 @@ public:
   virtual const ParametersType & GetParameters() const = 0;
 
   /** Return whether the metric's active transform has local support,
-   * i.e. is dense. */
+   * e.g. whether it is dense/high-dimensional. */
   virtual bool HasLocalSupport() const = 0;
 
   /** Update the parameters of the metric's active transform.
@@ -157,7 +161,10 @@ public:
                                           ParametersValueType factor = 1.0) = 0;
 
 protected:
-  ObjectToObjectMetric() {}
+  ObjectToObjectMetric()
+  {
+    SetGradientSource( Moving );
+  }
   virtual ~ObjectToObjectMetric() {}
 
   void PrintSelf(std::ostream & os, Indent indent) const
@@ -169,9 +176,9 @@ private:
   ObjectToObjectMetric(const Self &); //purposely not implemented
   void operator=(const Self &);     //purposely not implemented
 
-  /** Provide these two methods to satisfy pure virtuals within
+  /** Provide these three methods to satisfy pure virtuals within
    * SingleValuedCostFunction. This is a sign that we probalby shouldn't
-   * be deriving this from SingleValuedCostFunction. */
+   * be deriving this class from SingleValuedCostFunction. */
   MeasureType GetValue( const ParametersType& ) const
   { itkExceptionMacro("Not implemented. Use GetValue(void)."); }
 

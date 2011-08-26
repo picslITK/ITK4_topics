@@ -66,7 +66,7 @@ public:
 
 using namespace itk;
 
-int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
+int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
 {
 
   if( argc >= 2 && (argc < 4 || argc > 5))
@@ -163,8 +163,9 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   matcher->Update();
   movingImage = matcher->GetOutput();
 
-  //create a displacement field transform
-  typedef TranslationTransform<double, Dimension>
+  //create a deformation field transform
+  //typedef TranslationTransform<double, Dimension>
+  typedef AffineTransform<double, Dimension>
                                                   TranslationTransformType;
   typedef TranslationTransformType::ParametersType
                                                   ParametersType;
@@ -204,11 +205,16 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   metric->Initialize();
 
   // Optimizer
-  //typedef GradientDescentObjectOptimizer  OptimizerType;
-  typedef QuasiNewtonObjectOptimizer  OptimizerType;
+  typedef GradientDescentObjectOptimizer  OptimizerType;
+  //typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetNumberOfIterations( numberOfIterations );
+  ParametersType scales(6);
+  for (int s=0; s<4; s++) scales[s] = 9801;
+  for (int s=4; s<6; s++) scales[s] = 1;
+  optimizer->SetScales( scales );
+  optimizer->SetLearningRate( 1086.76 );
 
   // Instantiate an Observer to report the progress of the Optimization
   typedef itk::CommandIterationUpdate<
@@ -217,15 +223,13 @@ int itkQuasiNewtonObjectOptimizerTest(int argc, char *argv[])
   iterationCommand->SetOptimizer(  optimizer.GetPointer() );
 
   // Testing optimizer parameter estimator
-  typedef itk::OptimizerParameterEstimator< MetricType,
-                                        IdentityTransformType,
-                                        TranslationTransformType > OptimizerParameterEstimatorType;
+  typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);
   parameterEstimator->SetTransformForward(true);
   parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
-  optimizer->SetOptimizerParameterEstimator( parameterEstimator );
+  //optimizer->SetOptimizerParameterEstimator( parameterEstimator );
   // Estimating optimizer parameters done
 
   std::cout << "Start optimization..." << std::endl

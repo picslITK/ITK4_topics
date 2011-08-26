@@ -22,6 +22,7 @@
 #include "itkVector.h"
 #include "itkMattesMutualInformationImageToImageObjectMetric.h"
 #include "itkIdentityTransform.h"
+#include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
 
@@ -34,10 +35,10 @@
 
 using namespace itk;
 
-int itkMattesMutualInformationImageToImageObjectMetricTest(int, char **)
+int itkMattesMutualInformationImageToImageObjectMetricTest( int , char * argv[] )
 {
 
-  const unsigned int imageSize = 5;
+  const unsigned int imageSize = 10;
   const unsigned int imageDimensionality = 3;
   typedef Image< double, imageDimensionality >              ImageType;
 
@@ -85,7 +86,7 @@ int itkMattesMutualInformationImageToImageObjectMetricTest(int, char **)
   count = 1;
   while( !itMoving.IsAtEnd() )
     {
-    itMoving.Set( 1.0/(count*count) );
+    itMoving.Set( (count) );
     count++;
     ++itMoving;
     }
@@ -110,8 +111,7 @@ int itkMattesMutualInformationImageToImageObjectMetricTest(int, char **)
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( fixedTransform );
   metric->SetMovingTransform( movingTransform );
-  metric->SetNumberOfHistogramBins( 32 );
-  std::cout <<" A " << std::endl;
+  metric->SetNumberOfHistogramBins( 6 );
 
   /* Initialize. */
   try
@@ -125,7 +125,6 @@ int itkMattesMutualInformationImageToImageObjectMetricTest(int, char **)
               << exc;
     return EXIT_FAILURE;
     }
-  std::cout <<" B " << std::endl;
 
   // Evaluate
   MetricType::MeasureType valueReturn;
@@ -141,8 +140,6 @@ int itkMattesMutualInformationImageToImageObjectMetricTest(int, char **)
               << exc;
     return EXIT_FAILURE;
     }
-
-  std::cout <<" C " << std::endl;
   std::cout << "Test passed." << std::endl;
   return EXIT_SUCCESS;
 }
