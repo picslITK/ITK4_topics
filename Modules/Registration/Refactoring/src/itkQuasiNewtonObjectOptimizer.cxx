@@ -39,11 +39,13 @@ QuasiNewtonObjectOptimizer
   itkDebugMacro("Constructor");
 
   m_MaximumVoxelShift = 1.0;
+  m_MinimumGradientNorm = 1e-20;
+  m_MinimumValueChange = 1e-20;
 
   m_LocalHessian = NULL;
   m_LocalHessianInverse = NULL;
 
-  m_LineSearchEnabled = false;
+  m_LineSearchEnabled = true;
   m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
 
   this->SetDebug(true);
@@ -67,15 +69,6 @@ QuasiNewtonObjectOptimizer
   itkDebugMacro("StartOptimization");
 
   m_ValueAndDerivateEvaluated = false;
-
-  if (m_OptimizerParameterEstimator.IsNotNull())
-    {
-    m_LineSearchEnabled = false;
-    }
-  else
-    {
-    m_LineSearchEnabled = true;
-    }
 
   if ( ! this->m_Metric->HasLocalSupport() )
     {
@@ -129,11 +122,7 @@ QuasiNewtonObjectOptimizer
       if (!m_ValueAndDerivateEvaluated)
         {
         this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
-        }
-      else
-        {
-        //already counted in line search
-        m_CurrentIteration--;
+
         }
       }
     catch ( ExceptionObject & err )
@@ -238,22 +227,16 @@ QuasiNewtonObjectOptimizer
   m_PreviousPosition = this->GetCurrentPosition();
   m_PreviousGradient = this->GetGradient();
 
-  DerivativeType gradientStep = m_Gradient;
-  for (unsigned int i=0; i<spaceDimension; i++)
-    {
-    gradientStep[i] = gradientStep[i] / scales[i];
-    }
-
   /** If a Newton step is on the opposite direction of a gradient step, we'd
    * better use the gradient step. This happens when the second order
    * approximation produces a convex instead of an expected concave, or
    * vice versa.
    */
-  if ( newtonStepException || inner_product(gradientStep, m_NewtonStep) < 0 )
+  if ( newtonStepException || inner_product(m_Gradient, m_NewtonStep) < 0 )
     {
     // using gradient step
-    double gradientNormSquare = inner_product(m_Gradient, m_Gradient);
-    if (gradientNormSquare < 1/NumericTraits<double>::max())
+    double gradientNorm = m_Gradient.two_norm();
+    if (gradientNorm < m_MinimumGradientNorm)
       {
       m_StopCondition = StepTooSmall;
       m_StopConditionDescription << "Optimization stops after "
@@ -264,14 +247,23 @@ QuasiNewtonObjectOptimizer
       return;
       }
 
+    DerivativeType gradientStep = m_Gradient;
+    for (unsigned int i=0; i<spaceDimension; i++)
+      {
+      gradientStep[i] = gradientStep[i] / scales[i];
+      }
+    learningRate = this->EstimateLearningRate(gradientStep);
+    this->SetLearningRate( learningRate );
+
     if ( m_LineSearchEnabled )
       {
-      this->AdvanceWithLineSearch();
+      //this->AdvanceWithSimpleLineSearch(gradientStep, learningRate);
+      this->AdvanceWithStrongWolfeLineSearch(gradientStep, learningRate);
+      this->m_ValueAndDerivateEvaluated = true;
+      m_CurrentIteration--;
       }
     else
       {
-      learningRate = this->EstimateLearningRate(gradientStep);
-      this->SetLearningRate( learningRate );
       if (this->GetDebug())
         {
         std::cout << "using gradient, learningRate = " << learningRate << std::endl;
@@ -285,8 +277,8 @@ QuasiNewtonObjectOptimizer
     {
     // Now a Newton step is on the consistent direction of a gradient step
     // using Newton step
-    double newtonNormSquare = inner_product(m_NewtonStep, m_NewtonStep);
-    if (newtonNormSquare < 1/NumericTraits<double>::max())
+    double newtonNorm = m_NewtonStep.two_norm();
+    if (newtonNorm < m_MinimumGradientNorm)
       {
       m_StopCondition = StepTooSmall;
       m_StopConditionDescription << "Optimization stops after "
@@ -297,15 +289,19 @@ QuasiNewtonObjectOptimizer
       return;
       }
 
+    learningRate = this->EstimateLearningRate(m_NewtonStep);
+    learningRate = vnl_math_min(learningRate, 1.0);
+    this->SetLearningRate( learningRate );
+
     if ( m_LineSearchEnabled )
       {
-      this->AdvanceWithLineSearch();
+      //this->AdvanceWithSimpleLineSearch(m_NewtonStep, learningRate);
+      this->AdvanceWithStrongWolfeLineSearch(m_NewtonStep, learningRate);
+      this->m_ValueAndDerivateEvaluated = true;
+      m_CurrentIteration--;
       }
     else
       {
-      learningRate = this->EstimateLearningRate(m_NewtonStep);
-      learningRate = vnl_math_min(learningRate, 1.0);
-      this->SetLearningRate( learningRate );
       if (this->GetDebug())
         {
         std::cout << "using newton, learningRate = " << learningRate << std::endl;
@@ -328,19 +324,18 @@ QuasiNewtonObjectOptimizer
  * Do backtracking line search on the Newton direction
  *************************************************/
 void QuasiNewtonObjectOptimizer
-::AdvanceWithLineSearch()
+::AdvanceWithSimpleLineSearch(ParametersType direction, double maxStepSize)
 {
-  double direction = 1.0; //maximizing
+  double optimalDirection = -1.0; //maximizing
 
   double t = 1.0, beta = 0.75;
-  double c1 = 1e-4, c2 = 0.9;
-  unsigned int MaxSearch = 200;
+  double c1 = 1e-4;
 
   double oldValue = this->GetValue();
-  double stepChange = inner_product(m_NewtonStep, m_Gradient);
+  double stepChange = inner_product(direction, m_Gradient);
 
   const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
-  DerivativeType step(spaceDimension);
+  ParametersType step(spaceDimension);
 
   ParametersType initPosition = this->m_Metric->GetParameters();
   ParametersType tempPosition(spaceDimension);
@@ -348,29 +343,29 @@ void QuasiNewtonObjectOptimizer
   while (true)
     {
     tempPosition = this->m_Metric->GetParameters();
-    step = initPosition + m_NewtonStep * t - tempPosition;
+    step = initPosition + direction * t - tempPosition;
 
     this->m_Metric->UpdateTransformParameters( step );
     this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+    m_CurrentIteration++;
 
-    double gradientNormSquare = inner_product(m_Gradient, m_Gradient);
-    if (gradientNormSquare < 1/NumericTraits<double>::max())
+    double gradientNorm = m_Gradient.two_norm();
+    if (gradientNorm < m_MinimumGradientNorm)
       {
       m_StopCondition = StepTooSmall;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
-                                 << " the gradient is too small.";
+                                 << " the gradient is too small in line search.";
       this->StopOptimization();
       return;
       }
 
-    if ((this->m_Value - (oldValue + c1 * t * stepChange)) * direction >= 0)
+    if ((this->m_Value - (oldValue + c1 * t * stepChange)) * optimalDirection <= 0)
       {
       break;
       }
     /* Update and check iteration count */
-    m_CurrentIteration++;
     if ( m_CurrentIteration >= m_NumberOfIterations )
       {
       m_StopConditionDescription << "Maximum number of iterations ("
@@ -385,11 +380,238 @@ void QuasiNewtonObjectOptimizer
 
     }
 
-  m_ValueAndDerivateEvaluated = true;
   //std::cout << "line search step size = " << t << std::endl;
 
   this->InvokeEvent( IterationEvent() );
 
+}
+
+/*************************************************
+ * Do backtracking line search on the Newton direction
+ *************************************************/
+double QuasiNewtonObjectOptimizer
+::AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize)
+{
+  const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
+  double optimalDirection = -1.0; //maximizing
+
+  double tmax = maxStepSize, t0 = 0, topt;
+  double t1 = t0, t2 = tmax / 2.0;
+
+  double c1 = 1e-4, c2 = 0.9;
+
+  double f0, f1, f2;
+  double g0, g1, g2; //derivative w.r.t the step size t
+
+  f0 = optimalDirection * this->GetValue();
+  g0 = optimalDirection * inner_product(direction, this->m_Gradient);
+
+  f1 = f0;
+  g1 = g0;
+
+  int loop = 1;
+  ParametersType initPosition = this->m_Metric->GetParameters();
+  ParametersType tempPosition(spaceDimension);
+  ParametersType deltaPosition(spaceDimension);
+
+  while (true)
+    {
+    tempPosition = this->m_Metric->GetParameters();
+    deltaPosition = initPosition + t2 * direction - tempPosition;
+
+    this->m_Metric->UpdateTransformParameters( deltaPosition );
+    this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+    m_CurrentIteration++;
+
+    double gradientNorm = m_Gradient.two_norm();
+    if (gradientNorm < m_MinimumGradientNorm)
+      {
+      m_StopCondition = StepTooSmall;
+      m_StopConditionDescription << "Optimization stops after "
+                                 << this->GetCurrentIteration()
+                                 << " iterations since"
+                                 << " the gradient is too small in line search.";
+      this->StopOptimization();
+
+      topt = t2;
+      return topt;
+      }
+
+    f2 = optimalDirection * this->m_Value;
+    g2 = optimalDirection * inner_product(direction, this->m_Gradient);
+
+    if (f2 > f0 + c1 * t2 * g0 || ( loop > 1 && f2 >= f1 ))
+      {
+      topt = this->LineSearchZoom(initPosition, f0, g0, direction, t1, t2);
+      return topt;
+      }
+
+    if (vcl_abs(g2) <= -c2 * g0)
+      {
+      topt = t2;
+      return topt;
+      }
+
+    if (g2 >= 0)
+      {
+      topt = this->LineSearchZoom(initPosition, f0, g0, direction, t2, t1);
+      this->InvokeEvent( IterationEvent() );
+      return topt;
+      }
+    t1 = t2;
+    f1 = f2;
+    g1 = g2;
+    t2 = t2 + (tmax - t2) / 2;
+
+    loop++;
+
+    /* Update and check iteration count */
+    if ( m_CurrentIteration >= m_NumberOfIterations )
+      {
+      m_StopConditionDescription << "Maximum number of iterations ("
+                                 << m_NumberOfIterations
+                                 << ") exceeded in line search. ";
+      m_StopCondition = MaximumNumberOfIterations;
+      this->StopOptimization();
+      topt = t2;
+      return topt;
+      }
+    } //while
+
+}
+
+double QuasiNewtonObjectOptimizer
+::LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh)
+{
+  const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
+  double optimalDirection = -1.0; //maximizing
+
+  double c1 = 1e-4, c2 = 0.9;
+  double t2, topt;
+  double f2, g2;
+  double flow, glow;
+
+  double tempValue, oldValue = f0;
+
+  ParametersType tempPosition(spaceDimension);
+  ParametersType deltaPosition(spaceDimension);
+  DerivativeType tempGradient(spaceDimension);
+
+  int loop = 0;
+  while (true)
+    {
+    loop++;
+    t2 = (tlow + thigh) / 2.0;
+
+    tempPosition = this->m_Metric->GetParameters();
+    deltaPosition = initPosition + t2 * direction - tempPosition;
+
+    this->m_Metric->UpdateTransformParameters( deltaPosition );
+    this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+    m_CurrentIteration++;
+
+    if (this->GetDebug())
+      {
+      std::cout << "LineSearchZoom: position=" << initPosition + t2 * direction << std::endl;
+      std::cout << "LineSearchZoom: m_Value=" << this->m_Value << std::endl;
+      std::cout << "LineSearchZoom: m_Gradient=" << this->m_Gradient << std::endl;
+      }
+
+    double gradientNorm = m_Gradient.two_norm();
+    if (gradientNorm < m_MinimumGradientNorm)
+      {
+      m_StopCondition = StepTooSmall;
+      m_StopConditionDescription << "Optimization stops after "
+                                 << this->GetCurrentIteration()
+                                 << " iterations since"
+                                 << " the gradient is too small in Wolfe line search.";
+      this->StopOptimization();
+
+      topt = t2;
+      return topt;
+      }
+
+    f2 = optimalDirection * this->m_Value;
+    g2 = optimalDirection * inner_product(direction, this->m_Gradient);
+
+    if (loop >= 2 && vcl_abs(oldValue - f2) < m_MinimumValueChange)
+      {
+      m_StopCondition = StepTooSmall;
+      m_StopConditionDescription << "Optimization stops after "
+                                 << this->GetCurrentIteration()
+                                 << " iterations since"
+                                 << " the value change is too small in Wolfe line search.";
+      this->StopOptimization();
+
+      topt = t2;
+      return topt;
+      }
+
+    oldValue = f2;
+
+    if ( f2 > f0 + c1 * t2 * g0 )
+      {
+      thigh = t2;
+      }
+    else
+      {
+      tempPosition = this->m_Metric->GetParameters();
+      deltaPosition = initPosition + tlow * direction - tempPosition;
+
+      this->m_Metric->UpdateTransformParameters( deltaPosition );
+      this->m_Metric->GetValueAndDerivative( tempValue, tempGradient );
+      m_CurrentIteration++;
+
+      flow = optimalDirection * tempValue;
+      glow = optimalDirection * inner_product(direction, tempGradient);
+
+      if ( f2 >= flow ) // f2 == flow when |thigh - tlow| is small?
+        {
+        thigh = t2;
+        }
+      else
+        {
+        if ( vcl_abs(g2) <= -c2 * g0 )
+          {
+          //reset the parameters to initPosition + t2 * direction
+          //this->m_Value and this->m_Gradient are already evaluated
+          tempPosition = this->m_Metric->GetParameters();
+          deltaPosition = initPosition + t2 * direction - tempPosition;
+          this->m_Metric->UpdateTransformParameters( deltaPosition );
+
+          this->InvokeEvent( IterationEvent() );
+
+          topt = t2;
+          return topt;
+          }
+
+        if (g2 * (thigh - tlow) >= 0)
+          {
+          thigh = tlow;
+          }
+        tlow = t2;
+        }
+      }
+
+    if ( m_CurrentIteration >= m_NumberOfIterations )
+      {
+      m_StopConditionDescription << "Maximum number of iterations ("
+                                 << m_NumberOfIterations
+                               << ") exceeded in Wolfe line search. ";
+      m_StopCondition = MaximumNumberOfIterations;
+      this->StopOptimization();
+
+      topt = t2;
+
+      //reset the parameters to initPosition + t2 * direction
+      //this->m_Value and this->m_Gradient are already evaluated
+      tempPosition = this->m_Metric->GetParameters();
+      deltaPosition = initPosition + t2 * direction - tempPosition;
+      this->m_Metric->UpdateTransformParameters( deltaPosition );
+
+      return topt;
+      }
+    } //while
 }
 
 /**

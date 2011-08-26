@@ -144,7 +144,7 @@ private:
 
 int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
 {
-  std::cout << "Gradient Descent Object Optimizer Test ";
+  std::cout << "Quasi-Newton Object Optimizer Test ";
   std::cout << std::endl << std::endl;
 
   typedef  itk::QuasiNewtonObjectOptimizer      OptimizerType;
@@ -171,7 +171,7 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
   metric->SetParameters( initialPosition );
 
   //itkOptimizer->SetLearningRate( 0.1 );
-  itkOptimizer->SetNumberOfIterations( 200 );
+  itkOptimizer->SetNumberOfIterations( 1000 );
 
   try
     {
