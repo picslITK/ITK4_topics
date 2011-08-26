@@ -41,7 +41,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   this->m_JointPDF=NULL;
 
   // Initialize histogram properties
-  this->m_NumberOfHistogramBins=50;
+  this->m_NumberOfHistogramBins=32;
   this->m_FixedImageTrueMin=(0.0);
   this->m_FixedImageTrueMax=(0.0);
   this->m_MovingImageTrueMin=(0.0);

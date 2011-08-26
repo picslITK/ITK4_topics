@@ -26,6 +26,8 @@
  */
 
 #include "itkMattesMutualInformationImageToImageObjectMetric.h"
+#include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
+#include "itkDemonsImageToImageObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkOptimizerParameterEstimator.h"
@@ -33,6 +35,7 @@
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
 #include "itkAffineTransform.h"
+#include "itkEuler2DTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
@@ -103,6 +106,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     scalarScale = atof( argv[5] );
   if( argc == 7 )
     learningRate = atof( argv[6] );
+  std::cout << " iterations "<< numberOfIterations << " scale " << scalarScale << " learningRate "<<learningRate << std::endl;
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -137,20 +141,13 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   typedef CompositeType::ScalarType                     ScalarType;
   CompositeType::Pointer compositeTransform = CompositeType::New();
 
-  //create a displacement field transform
-  typedef TranslationTransform<double, Dimension>
-                                                    TranslationTransformType;
-  TranslationTransformType::Pointer translationTransform =
-                                                  TranslationTransformType::New();
-  translationTransform->SetIdentity();
-
+  //create an affine transform
   typedef AffineTransform<double, Dimension>
+  //  typedef Euler2DTransform<double>
                                                     AffineTransformType;
-  AffineTransformType::Pointer affineTransform =
-                                                  AffineTransformType::New();
+  AffineTransformType::Pointer affineTransform = AffineTransformType::New();
   affineTransform->SetIdentity();
-  std::cout << affineTransform->GetParameters() << std::endl;
-
+  std::cout <<" affineTransform params " << affineTransform->GetParameters() << std::endl;
   typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
                                                     double, Dimension>
                                                      DisplacementTransformType;
@@ -174,7 +171,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothingSigma( 6 );
+  displacementTransform->SetGaussianSmoothingSigma( 1 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -183,9 +180,13 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   identityTransform->SetIdentity();
 
   // The metric
-  typedef MattesMutualInformationImageToImageObjectMetric< FixedImageType, MovingImageType >
+  typedef MattesMutualInformationImageToImageObjectMetric < FixedImageType, MovingImageType >
+    //  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric < FixedImageType, MovingImageType >
+    //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
+  Size<Dimension> radSize;
+  radSize.Fill(2);
 
   // Assign images and transforms.
   // By not setting a virtual domain image or virtual domain settings,
@@ -193,33 +194,30 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   metric->SetVirtualDomainImage( fixedImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  metric->SetNumberOfHistogramBins(32);
+  //  metric->SetNumberOfHistogramBins(32);
+  //metric->SetRadius(radSize);//antscc
   metric->SetFixedTransform( identityTransform );
-  compositeTransform->AddTransform( translationTransform );
+  compositeTransform->AddTransform( affineTransform );
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   metric->SetMovingTransform( compositeTransform );
-
   metric->SetPreWarpImages( false );
   metric->SetPrecomputeImageGradient( false );
-
-  //Initialize the metric to prepare for use
   metric->Initialize();
-
 
   typedef GradientDescentObjectOptimizer  OptimizerType0;
   OptimizerType0::Pointer  optimizer0 = OptimizerType0::New();
+  unsigned int nthreads=itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
+  metric->SetNumberOfThreads(nthreads);
+  optimizer0->SetNumberOfThreads(nthreads);
   optimizer0->SetMetric( metric );
   optimizer0->SetLearningRate( learningRate );
   optimizer0->SetNumberOfIterations( numberOfIterations );
   optimizer0->SetScalarScale( scalarScale );
   optimizer0->SetUseScalarScale(true);
 
-  std::cout << "Start optimization..." << std::endl
-            << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+  std::cout << " start test of " << nthreads << " threads "<< std::endl;
+  // now optimize both
   try
     {
     optimizer0->StartOptimization();
@@ -234,6 +232,9 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     std::cout << "Test FAILED." << std::endl;
     return EXIT_FAILURE;
     }
+
+  std::cout << " parameters "  << std::endl;
+  std::cout <<  compositeTransform->GetParameters() << std::endl;
 
   /*
   // Optimizer with parameter estimator
@@ -268,7 +269,6 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     std::cout << "Test FAILED." << std::endl;
     return EXIT_FAILURE;
     }
-  */
   // now add the displacement field to the composite transform
   compositeTransform->AddTransform( displacementTransform );
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
@@ -302,17 +302,14 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     return EXIT_FAILURE;
     }
 
-
-
-  std::cout << "...finished. " << std::endl;
-
   field = displacementTransform->GetDisplacementField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
+*/
+  std::cout << "...finished. " << std::endl;
+
 
   //warp the image with the displacement field
-  resample->SetTransform( displacementTransform );
-  resample->SetTransform( affineTransform );
   resample->SetTransform( compositeTransform );
   resample->SetInput( movingImageReader->GetOutput() );
   resample->SetSize(    fixedImage->GetLargestPossibleRegion().GetSize() );
@@ -346,8 +343,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   writer->SetInput( caster->GetOutput() );
   writer->Update();
 
-  std::cout << affineTransform->GetParameters() << std::endl;
-  std::cout << "Test PASSED." << std::endl;
+  std::cout << "Test PASSED." << affineTransform->GetParameters() << std::endl;
   return EXIT_SUCCESS;
 
 }
