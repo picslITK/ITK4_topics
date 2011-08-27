@@ -605,7 +605,8 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
                                                             mappedMovingPoint,
                                                             jacobian);
 
- //  mutual information
+  // this correction is necessary for consistent derivatives across N threads
+  double floatingpointcorrectionresolution=10000;
   for ( unsigned int par = 0; par < this->GetNumberOfLocalParameters(); par++ )
   {
     double sum = 0.0;
@@ -614,6 +615,8 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
         sum += scalingfactor * jacobian(dim, par) * movingImageGradients[dim];
       }
     localDerivativeReturn[par] = sum;
+    int test=(int)( localDerivativeReturn[par] * floatingpointcorrectionresolution );
+    localDerivativeReturn[par] = (double) test/floatingpointcorrectionresolution;
   }
   return true;
 }
