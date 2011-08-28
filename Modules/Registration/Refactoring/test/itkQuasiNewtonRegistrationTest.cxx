@@ -23,6 +23,7 @@
  */
 
 //#include "itkDemonsImageToImageObjectMetric.h"
+#include "itkMeanSquaresImageToImageObjectMetric.h"
 #include "itkANTSNeighborhoodCorrelationImageToImageObjectMetric.h"
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "itkOptimizerParameterEstimator.h"
@@ -69,7 +70,7 @@ using namespace itk;
 int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc >= 2 && (argc < 4 || argc > 5))
+  if( (argc >= 2) && (argc < 4) )
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
@@ -166,12 +167,12 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   //create a deformation field transform
   //typedef TranslationTransform<double, Dimension>
   typedef AffineTransform<double, Dimension>
-                                                  TranslationTransformType;
-  typedef TranslationTransformType::ParametersType
+                                                  MovingTransformType;
+  typedef MovingTransformType::ParametersType
                                                   ParametersType;
-  TranslationTransformType::Pointer translationTransform =
-                                                  TranslationTransformType::New();
-  translationTransform->SetIdentity();
+  MovingTransformType::Pointer movingTransform =
+                                                  MovingTransformType::New();
+  movingTransform->SetIdentity();
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension>    IdentityTransformType;
@@ -180,11 +181,12 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   identityTransform->SetIdentity();
 
   // The metric
-  //  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
+  typedef MeanSquaresImageToImageObjectMetric< FixedImageType, MovingImageType >
+                                                                    MetricType;
+  //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
   //                                                                  MetricType;
-
-  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
-      MetricType;
+  //typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
+  //    MetricType;
 
   MetricType::Pointer metric = MetricType::New();
 
@@ -195,27 +197,27 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( translationTransform );
+  metric->SetMovingTransform( movingTransform );
 
   Size<Dimension> radSize;
   radSize.Fill(2);
-  metric->SetRadius(radSize);
+  //metric->SetRadius(radSize);
 
   //Initialize the metric to prepare for use
   metric->Initialize();
 
   // Optimizer
-  typedef GradientDescentObjectOptimizer  OptimizerType;
-  //typedef QuasiNewtonObjectOptimizer  OptimizerType;
+  //typedef GradientDescentObjectOptimizer  OptimizerType;
+  typedef QuasiNewtonObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  ParametersType scales(6);
+  /*ParametersType scales(6);
   for (int s=0; s<4; s++) scales[s] = 9801;
   for (int s=4; s<6; s++) scales[s] = 1;
   optimizer->SetScales( scales );
   optimizer->SetLearningRate( 1086.76 );
-
+  */
   // Instantiate an Observer to report the progress of the Optimization
   typedef itk::CommandIterationUpdate<
                                     OptimizerType >      CommandIterationType;
@@ -229,7 +231,8 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   parameterEstimator->SetMetric(metric);
   parameterEstimator->SetTransformForward(true);
   parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
-  //optimizer->SetOptimizerParameterEstimator( parameterEstimator );
+  optimizer->SetOptimizerParameterEstimator( parameterEstimator );
+  //optimizer->SetLineSearchEnabled(true);
   // Estimating optimizer parameters done
 
   std::cout << "Start optimization..." << std::endl
@@ -261,7 +264,7 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   // results
   //
   ParametersType actualParameters = imageSource->GetActualParameters();
-  ParametersType finalParameters  = translationTransform->GetParameters();
+  ParametersType finalParameters  = movingTransform->GetParameters();
 
   const unsigned int numbeOfParameters = actualParameters.Size();
 

@@ -172,6 +172,7 @@ int itkQuasiNewtonObjectOptimizerTest(int, char* [] )
 
   //itkOptimizer->SetLearningRate( 0.1 );
   itkOptimizer->SetNumberOfIterations( 1000 );
+  itkOptimizer->SetLineSearchEnabled(true);
 
   try
     {

@@ -36,14 +36,14 @@ QuasiNewtonObjectOptimizer
 {
   itkDebugMacro("Constructor");
 
-  m_MaximumVoxelShift = 1.0;
+  m_MaximumVoxelShift = 1.0/2;
   m_MinimumGradientNorm = 1e-20;
   m_MinimumValueChange = 1e-20;
 
-  m_LineSearchEnabled = true;
+  m_LineSearchEnabled = false;
   m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
 
-  this->SetDebug(false);
+  this->SetDebug(true);
 
 }
 
@@ -312,8 +312,74 @@ QuasiNewtonObjectOptimizer
     } // using newton step
 }
 
+/** Do backtracking line search on the Newton direction */
+void QuasiNewtonObjectOptimizer
+::AdvanceWithBacktrackingLineSearch(ParametersType direction, double maxStepSize)
+{
+  double optimalDirection = -1.0; //maximizing
+
+  double t = 1.0, beta = 0.75;
+  double c1 = 1e-4;
+
+  double oldValue = this->GetValue();
+  double stepChange = inner_product(direction, m_Gradient);
+
+  const unsigned int spaceDimension =  this->m_Metric->GetNumberOfParameters();
+  ParametersType step(spaceDimension);
+
+  ParametersType initPosition = this->m_Metric->GetParameters();
+  ParametersType tempPosition(spaceDimension);
+
+  while (true)
+    {
+    tempPosition = this->m_Metric->GetParameters();
+    step = initPosition + direction * t - tempPosition;
+
+    this->m_Metric->UpdateTransformParameters( step );
+    this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+    m_CurrentIteration++;
+
+    double gradientNorm = m_Gradient.two_norm();
+    if (gradientNorm < m_MinimumGradientNorm)
+      {
+      m_StopCondition = StepTooSmall;
+      m_StopConditionDescription << "Optimization stops after "
+                                 << this->GetCurrentIteration()
+                                 << " iterations since"
+                                 << " the gradient is too small in line search.";
+      this->StopOptimization();
+      return;
+      }
+
+    if ((this->m_Value - (oldValue + c1 * t * stepChange)) * optimalDirection <= 0)
+      {
+      break;
+      }
+    /* Update and check iteration count */
+    if ( m_CurrentIteration >= m_NumberOfIterations )
+      {
+      m_StopConditionDescription << "Maximum number of iterations ("
+                                 << m_NumberOfIterations
+                                 << ") exceeded.";
+      m_StopCondition = MaximumNumberOfIterations;
+      this->StopOptimization();
+      return;
+      }
+
+    t *= beta;
+
+    }
+
+  //std::cout << "line search step size = " << t << std::endl;
+
+  this->InvokeEvent( IterationEvent() );
+
+}
+
 /** Do line search on a direction with strong Wolfe's conditions.
- * The line search algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, on * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
+ * The line search algorithm is from "Introduction to Nonlinear Optimization"
+ * by Paul J Atzberger, on
+ * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
  */
 double QuasiNewtonObjectOptimizer
 ::AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize)
@@ -322,7 +388,7 @@ double QuasiNewtonObjectOptimizer
   double optimalDirection = -1.0; //maximizing
 
   double tmax = maxStepSize, t0 = 0, topt;
-  double t1 = t0, t2 = tmax / 2.0;
+  double t1 = t0, t2 = tmax;
 
   double c1 = 1e-4, c2 = 0.9;
 
@@ -335,19 +401,49 @@ double QuasiNewtonObjectOptimizer
   f1 = f0;
   g1 = g0;
 
-  int loop = 1;
+  int loop = 0;
   ParametersType initPosition = this->m_Metric->GetParameters();
   ParametersType tempPosition(spaceDimension);
   ParametersType deltaPosition(spaceDimension);
+  if (m_CurrentIteration >= 3)
+    int tmpdbg = 0;
 
+  tempPosition = this->m_Metric->GetParameters();
+  deltaPosition = initPosition + t2 * direction - tempPosition;
+  this->m_Metric->UpdateTransformParameters( deltaPosition );
+  this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+  m_CurrentIteration++;
+
+  f2 = optimalDirection * this->m_Value;
+  g2 = optimalDirection * inner_product(direction, this->m_Gradient);
+
+  if (-g2 >= -c2 * g0)
+    {
+    //it may be difficult to find an intermediate t2 such that
+    //the stronger wolfe condition holds: vcl_abs(g2) <= -c2 * g0
+    if (f2 < f0 + c1 * t2 * g0)
+      {
+      topt = t2;
+      return topt;
+      }
+    else
+      {
+      this->AdvanceWithBacktrackingLineSearch(direction, maxStepSize);
+      }
+    }
+
+  t2 = tmax / 2.0;
   while (true)
     {
+    loop++;
     tempPosition = this->m_Metric->GetParameters();
     deltaPosition = initPosition + t2 * direction - tempPosition;
 
     this->m_Metric->UpdateTransformParameters( deltaPosition );
     this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
     m_CurrentIteration++;
+    if (m_CurrentIteration == 46)
+      int tmpdbg = 0;
 
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
@@ -365,6 +461,10 @@ double QuasiNewtonObjectOptimizer
 
     f2 = optimalDirection * this->m_Value;
     g2 = optimalDirection * inner_product(direction, this->m_Gradient);
+    if (this->GetDebug())
+      {
+      std::cout << "LineSearch: phi(" << loop << ",:)=[" << t2 << " " << f2 << " " << g2 << "]" << std::endl;
+      }
 
     if (f2 > f0 + c1 * t2 * g0 || ( loop > 1 && f2 >= f1 ))
       {
@@ -387,9 +487,8 @@ double QuasiNewtonObjectOptimizer
     t1 = t2;
     f1 = f2;
     g1 = g2;
-    t2 = t2 + (tmax - t2) / 2;
 
-    loop++;
+    t2 = t2 + (tmax - t2) / 2;
 
     /* Update and check iteration count */
     if ( m_CurrentIteration >= m_NumberOfIterations )
@@ -407,7 +506,9 @@ double QuasiNewtonObjectOptimizer
 }
 
 /** Do zoom search on a direction with strong Wolfe's conditions.
- * The zoom algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, on * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
+ * The zoom algorithm is from "Introduction to Nonlinear Optimization"
+ * by Paul J Atzberger, on
+ * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
  */
 double QuasiNewtonObjectOptimizer
 ::LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh)
@@ -426,6 +527,8 @@ double QuasiNewtonObjectOptimizer
   ParametersType deltaPosition(spaceDimension);
   DerivativeType tempGradient(spaceDimension);
 
+  if (m_CurrentIteration >= 3)
+    int tmpdbg = 0;
   int loop = 0;
   while (true)
     {
@@ -441,7 +544,7 @@ double QuasiNewtonObjectOptimizer
 
     if (this->GetDebug())
       {
-      std::cout << "LineSearchZoom: position=" << initPosition + t2 * direction << std::endl;
+      std::cout << "LineSearchZoom: m_CurrentPosition=" << initPosition + t2 * direction << std::endl;
       std::cout << "LineSearchZoom: m_Value=" << this->m_Value << std::endl;
       std::cout << "LineSearchZoom: m_Gradient=" << this->m_Gradient << std::endl;
       }

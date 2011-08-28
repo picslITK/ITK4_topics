@@ -45,7 +45,9 @@ namespace itk
  * If a helper object of OptimizerParameterEstimatorBase is set, it is used
  * to estimate the maximum step size in line search.
  *
- * The line search algorithm is from "Introduction to Nonlinear Optimization" * by Paul J Atzberger, on * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
+ * The line search algorithm is from "Introduction to Nonlinear Optimization"
+ * by Paul J Atzberger, on
+ * Page 7 on http://www.math.ucsb.edu/~atzberg/finance/nonlinearOpt.pdf
  *
  * \ingroup ITKHighDimensionalOptimizers
  */
@@ -88,6 +90,7 @@ public:
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
 
+  void AdvanceWithBacktrackingLineSearch(ParametersType direction, double maxStepSize);
   double AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize);
   double LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh);
 
