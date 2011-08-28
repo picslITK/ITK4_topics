@@ -83,14 +83,14 @@ public:
 int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
 
-  if( argc < 4 || argc > 7)
+  if( argc < 4 || argc > 8)
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations] ";
-    std::cerr << " [scalarScale] [learningRate] " << std::endl;
+    std::cerr << " [scalarScale] [learningRate] [deformationLearningRate] " << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
@@ -100,12 +100,15 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   unsigned int numberOfIterations = 10;
   double scalarScale = 1.0;
   double learningRate = 0.1;
+  double deformationLearningRate = 1;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
   if( argc >= 6)
     scalarScale = atof( argv[5] );
-  if( argc == 7 )
+  if( argc >= 7 )
     learningRate = atof( argv[6] );
+  if( argc == 8 )
+    deformationLearningRate = atof( argv[7] );
   std::cout << " iterations "<< numberOfIterations << " scale " << scalarScale << " learningRate "<<learningRate << std::endl;
 
   const unsigned int Dimension = 2;
@@ -180,13 +183,15 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   identityTransform->SetIdentity();
 
   // The metric
+  Size<Dimension> radSize;
+  radSize.Fill(4);
   typedef MattesMutualInformationImageToImageObjectMetric < FixedImageType, MovingImageType >
-    //  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric < FixedImageType, MovingImageType >
-    //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
+  //typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric < FixedImageType, MovingImageType >
+  //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
-  Size<Dimension> radSize;
-  radSize.Fill(2);
+  metric->SetNumberOfHistogramBins(20);
+  //metric->SetRadius(radSize);//antscc
 
   // Assign images and transforms.
   // By not setting a virtual domain image or virtual domain settings,
@@ -194,8 +199,6 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   metric->SetVirtualDomainImage( fixedImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
-  //  metric->SetNumberOfHistogramBins(32);
-  //metric->SetRadius(radSize);//antscc
   metric->SetFixedTransform( identityTransform );
   compositeTransform->AddTransform( affineTransform );
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
@@ -205,43 +208,21 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   metric->SetPrecomputeImageGradient( false );
   metric->Initialize();
 
-  typedef GradientDescentObjectOptimizer  OptimizerType0;
-  OptimizerType0::Pointer  optimizer0 = OptimizerType0::New();
-  unsigned int nthreads=itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
-  metric->SetNumberOfThreads(nthreads);
-  optimizer0->SetNumberOfThreads(nthreads);
-  optimizer0->SetMetric( metric );
-  optimizer0->SetLearningRate( learningRate );
-  optimizer0->SetNumberOfIterations( numberOfIterations );
-  optimizer0->SetScalarScale( scalarScale );
-  optimizer0->SetUseScalarScale(true);
-
-  std::cout << " start test of " << nthreads << " threads "<< std::endl;
-  // now optimize both
-  try
-    {
-    optimizer0->StartOptimization();
-    }
-  catch( ExceptionObject & e )
-    {
-    std::cout << "Exception thrown ! " << std::endl;
-    std::cout << "An error ocurred during Optimization:" << std::endl;
-    std::cout << e.GetLocation() << std::endl;
-    std::cout << e.GetDescription() << std::endl;
-    std::cout << e.what()    << std::endl;
-    std::cout << "Test FAILED." << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  std::cout << " parameters "  << std::endl;
-  std::cout <<  compositeTransform->GetParameters() << std::endl;
-
+  typedef GradientDescentObjectOptimizer  OptimizerType;
+  OptimizerType::Pointer  optimizer = OptimizerType::New();
+  optimizer->SetMetric( metric );
+  optimizer->SetLearningRate( learningRate );
+  optimizer->SetNumberOfIterations( numberOfIterations );
+  optimizer->SetScalarScale( scalarScale );
+  optimizer->SetUseScalarScale(true);
+  optimizer->StartOptimization();
   /*
   // Optimizer with parameter estimator
   typedef QuasiNewtonObjectOptimizer  QOptimizerType;
   QOptimizerType::Pointer  qoptimizer = QOptimizerType::New();
   qoptimizer->SetMetric( metric );
   qoptimizer->SetNumberOfIterations( numberOfIterations );
+  qoptimizer->SetLineSearchEnabled(false);
   typedef itk::OptimizerParameterEstimator< MetricType > OptimizerParameterEstimatorType;
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
   parameterEstimator->SetMetric(metric);
@@ -251,6 +232,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
 
 
   std::cout << "Start optimization..." << std::endl
+            << "Number of threads: " << metric->GetNumberOfThreads() << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
@@ -269,43 +251,41 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     std::cout << "Test FAILED." << std::endl;
     return EXIT_FAILURE;
     }
+  std::cout << " parameters "  << std::endl;
+  std::cout <<  compositeTransform->GetParameters() << std::endl;
+*/
+
   // now add the displacement field to the composite transform
   compositeTransform->AddTransform( displacementTransform );
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   // Optimizer
-  metric->Initialize();
   typedef GradientDescentObjectOptimizer  OptimizerType;
-  OptimizerType::Pointer  optimizer = OptimizerType::New();
-  optimizer->SetMetric( metric );
-  optimizer->SetLearningRate( learningRate );
-  optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
+  OptimizerType::Pointer  defoptimizer = OptimizerType::New();
+  defoptimizer->SetMetric( metric );
+  defoptimizer->SetLearningRate( deformationLearningRate );
+  defoptimizer->SetNumberOfIterations( numberOfIterations );
+  defoptimizer->SetScalarScale( scalarScale );
+  defoptimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
-            << "Learning rate: " << learningRate << std::endl
+            << "Deformation learning rate: " << deformationLearningRate << std::endl
             << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
     {
-    optimizer->StartOptimization();
+    defoptimizer->StartOptimization();
     }
   catch( ExceptionObject & e )
     {
     std::cout << "Exception thrown ! " << std::endl;
-    std::cout << "An error ocurred during Optimization:" << std::endl;
+    std::cout << "An error ocurred during deformation Optimization:" << std::endl;
     std::cout << e.GetLocation() << std::endl;
     std::cout << e.GetDescription() << std::endl;
     std::cout << e.what()    << std::endl;
     std::cout << "Test FAILED." << std::endl;
     return EXIT_FAILURE;
     }
-
-  field = displacementTransform->GetDisplacementField();
-  std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
-            << std::endl;
-*/
   std::cout << "...finished. " << std::endl;
 
 

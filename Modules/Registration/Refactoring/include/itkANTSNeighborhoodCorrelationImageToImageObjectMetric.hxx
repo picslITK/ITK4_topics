@@ -656,6 +656,8 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
     unsigned int numberOfLocalParameters = this->m_MovingTransform->GetNumberOfLocalParameters();
 
+    // this correction is necessary for consistent derivatives across N threads
+    double floatingpointcorrectionresolution=10000;
     for (unsigned int par = 0; par < numberOfLocalParameters; par++) {
 
         double sum = 0.0;
@@ -663,11 +665,11 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             sum += deriv_wrt_image[dim] * jacobian(dim, par);
         }
 
-        deriv[par] = sum;
+        int floatingpointcorrection_int=(int)( sum * floatingpointcorrectionresolution );
+        deriv[par] = (double)floatingpointcorrection_int/floatingpointcorrectionresolution;
     }
 
-    return;
-
+  return;
 }
 
 } // end namespace itk
