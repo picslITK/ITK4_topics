@@ -88,9 +88,8 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   this->m_MovingTransform->GetJacobianWithRespectToParameters(
                                                             mappedMovingPoint,
                                                             jacobian);
-
-  for ( unsigned int par = 0;
-          par < this->GetNumberOfLocalParameters(); par++ )
+  double floatingpointcorrectionresolution=10000;
+  for ( unsigned int par = 0; par < this->GetNumberOfLocalParameters(); par++ )
   {
     double sum = 0.0;
     for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
@@ -98,9 +97,9 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
         sum += 2.0 * diff * jacobian(dim, par) * movingImageGradient[dim];
       }
     localDerivativeReturn[par] = sum;
+    int test=(int)( localDerivativeReturn[par] * floatingpointcorrectionresolution );
+    localDerivativeReturn[par] = (double) test/floatingpointcorrectionresolution;
   }
-  //  std::cout << localDerivativeReturn << std::endl;
-  // Return true if the point was used in evaluation
   return true;
 }
 
