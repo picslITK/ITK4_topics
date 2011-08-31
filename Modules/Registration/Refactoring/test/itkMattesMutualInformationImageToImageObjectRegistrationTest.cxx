@@ -137,7 +137,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
 
 
   /** create a composite transform holder for other transforms  */
-  typedef itk::CompositeTransform<double, Dimension>  CompositeType;
+  typedef itk::CompositeTransform<double, Dimension>    CompositeType;
   typedef CompositeType::ScalarType                     ScalarType;
   CompositeType::Pointer compositeTransform = CompositeType::New();
 
@@ -201,8 +201,8 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   metric->SetMovingTransform( compositeTransform );
-  metric->SetPreWarpImages( false );
-  metric->SetPrecomputeImageGradient( false );
+  metric->SetPreWarpMovingImage( false );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
   metric->Initialize();
 
   typedef GradientDescentObjectOptimizer  OptimizerType0;
@@ -254,7 +254,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpImages: " << metric->GetPreWarpMovingImage() << std::endl;
   try
     {
     qoptimizer->StartOptimization();
@@ -286,7 +286,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpImages: " << metric->GetPreWarpMovingImage() << std::endl;
   try
     {
     optimizer->StartOptimization();

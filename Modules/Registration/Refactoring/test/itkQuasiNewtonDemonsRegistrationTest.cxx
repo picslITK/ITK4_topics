@@ -191,9 +191,9 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   metric->SetMovingTransform( displacementTransform );
   //  metric->SetMovingTransform( translationTransform );
 
-  metric->SetPreWarpImages( true );
-  metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
-  //metric->SetPrecomputeImageGradient( false );
+  metric->SetPreWarpMovingImage( true );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( ! metric->GetPreWarpMovingImage() );
+  //metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -222,7 +222,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpImages: " << metric->GetPreWarpMovingImage() << std::endl;
   try
     {
     optimizer->StartOptimization();

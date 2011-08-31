@@ -189,7 +189,6 @@ int itkDemonsVectorImageToVectorImageObjectRegistrationTest(int argc, char *argv
 
   metric->SetPreWarpImages( true );
   metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
-  //metric->SetPrecomputeImageGradient( false );
 
   //Initialize the metric to prepare for use
   metric->Initialize();

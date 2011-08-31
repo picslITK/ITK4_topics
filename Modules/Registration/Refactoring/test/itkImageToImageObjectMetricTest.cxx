@@ -408,8 +408,10 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( fixedTransform );
   metric->SetMovingTransform( movingTransform );
-  metric->SetPreWarpImages( false );
-  metric->SetPrecomputeImageGradient( true );
+  metric->SetPreWarpFixedImage( false );
+  metric->SetPreWarpMovingImage( false );
+  metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
   metric->SetGradientSource( TestMetricType::Both );
 
@@ -453,8 +455,10 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   // Assign it to the metric
   metric->SetMovingTransform( displacementTransform );
 
-  metric->SetPreWarpImages( false );
-  metric->SetPrecomputeImageGradient( true );
+  metric->SetPreWarpFixedImage( false );
+  metric->SetPreWarpMovingImage( false );
+  metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
   metric->SetGradientSource( TestMetricType::Both );
 
