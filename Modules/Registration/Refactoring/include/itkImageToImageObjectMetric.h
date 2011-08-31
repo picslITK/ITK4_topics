@@ -55,6 +55,7 @@ namespace itk
  *
  * Both transforms are initialized to an IdentityTransform.
  *
+ * TODO: Update:
  * The PreWarpImages option can be set for computational efficiency. This
  * creates a warped version for each image at the begin of each iteration.
  * However the cost is more memory usage (2x VirtualDomain size).
@@ -408,17 +409,28 @@ public:
   itkSetConstObjectMacro(FixedImageMask, FixedImageMaskType);
   itkGetConstObjectMacro(FixedImageMask, FixedImageMaskType);
 
+  /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter
+   * for fixed image. */
+  itkSetMacro(UseFixedGradientRecursiveGaussianImageFilter, bool);
+  itkGetConstReferenceMacro(UseFixedGradientRecursiveGaussianImageFilter, bool);
+  itkBooleanMacro(UseFixedGradientRecursiveGaussianImageFilter);
+
   /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter. */
-  itkSetMacro(PrecomputeImageGradient, bool);
-  itkGetConstReferenceMacro(PrecomputeImageGradient, bool);
-  itkBooleanMacro(PrecomputeImageGradient);
+  itkSetMacro(UseMovingGradientRecursiveGaussianImageFilter, bool);
+  itkGetConstReferenceMacro(UseMovingGradientRecursiveGaussianImageFilter, bool);
+  itkBooleanMacro(UseMovingGradientRecursiveGaussianImageFilter);
 
-  /** Set/Get pre-warping of images option. */
-  itkSetMacro(PreWarpImages, bool);
-  itkGetConstReferenceMacro(PreWarpImages, bool);
-  itkBooleanMacro(PreWarpImages);
+  /** Set/Get pre-warping of fixed image option. */
+  itkSetMacro(PreWarpFixedImage, bool);
+  itkGetConstReferenceMacro(PreWarpFixedImage, bool);
+  itkBooleanMacro(PreWarpFixedImage);
 
-  /** Get pre-warmed images */
+  /** Set/Get pre-warping of Moving image option. */
+  itkSetMacro(PreWarpMovingImage, bool);
+  itkGetConstReferenceMacro(PreWarpMovingImage, bool);
+  itkBooleanMacro(PreWarpMovingImage);
+
+  /** Get pre-warped images */
   itkGetConstObjectMacro( MovingWarpedImage, MovingImageType );
   itkGetConstObjectMacro( FixedWarpedImage, FixedImageType );
 
@@ -437,10 +449,19 @@ public:
    * \warning See discussion for GetNumberOfThreads. */
   void SetNumberOfThreads( ThreadIdType );
 
-  /** Computes the gradients of the fixed and moving images, using the
+  /** Computes the gradients of the fixed image, using the
    * GradientRecursiveGaussianImageFilter, assigning the output to
-   * to m_[Fixed|Moving]GaussianGradientImage. */
-  virtual void ComputeGaussianGradient(void);
+   * to m_FixedGaussianGradientImage. It will use either the original
+   * fixed image, or the pre-warped version, depending on the setting
+   * of PreWarpFixedImage. */
+  virtual void ComputeFixedGaussianGradientImage(void);
+
+  /** Computes the gradients of the moving image, using the
+   * GradientRecursiveGaussianImageFilter, assigning the output to
+   * to m_MovingGaussianGradientImage. It will use either the original
+   * moving image, or the pre-warped version, depending on the setting
+   * of PreWarpMovingImage. */
+  virtual void ComputeMovingGaussianGradientImage(void);
 
   /** Get Fixed Gradient Image. */
   itkGetConstObjectMacro(FixedGaussianGradientImage, FixedGradientImageType);
@@ -678,7 +699,8 @@ protected:
 
   /** Flag to control use of precomputed Gaussian gradient filter or gradient
    * calculator for image gradient calculations. */
-  bool                                        m_PrecomputeImageGradient;
+  bool                          m_UseFixedGradientRecursiveGaussianImageFilter;
+  bool                          m_useMovingGradientRecursiveGaussianImageFilter;
 
   /** Gradient images to store Gaussian gradient filter output. */
   typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
@@ -688,8 +710,11 @@ protected:
   typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
   typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
 
-  /** Flag to control pre-warping of images. */
-  bool                               m_PreWarpImages;
+  /** Flag to control pre-warping of fixed image. */
+  bool                               m_PreWarpFixedImage;
+
+  /** Flag to control pre-warping of moving image. */
+  bool                               m_PreWarpMovingImage;
 
   /** Pre-warped images. */
   FixedImagePointer   m_FixedWarpedImage;
@@ -819,7 +844,8 @@ private:
                           Self * dataHolder);
 
   /** Pre-warp the images for efficiency and computational stability. */
-  void PreWarpImages( void );
+  void PreWarpFixedImage( void );
+  void PreWarpMovingImage( void );
 
   /** Flag to track if threading memory has been initialized since last
    * call to Initialize. */
