@@ -255,13 +255,13 @@ public:
   }
 
   /** Outputs the FE deformation field interpolated over the entire image domain. */
-  FieldType * GetDeformationField()
+  FieldType * GetDisplacementField()
   {
     return m_Field;
   }
 
   /** Sets the FE deformation field. */
-  void SetDeformationField(FieldType* F)
+  void SetDisplacementField(FieldType* F)
   {
     m_FieldSize = F->GetLargestPossibleRegion().GetSize();
     m_Field = F;
@@ -547,13 +547,6 @@ public:
 
 // HELPER FUNCTIONS
 protected:
-
-  /* Remove After debugging is complete */
-  void WriteWarpedImage(const char* fname);
-
-  int WriteDisplacementField(unsigned int index);
-
-  int WriteDisplacementFieldMultiComponent();
 
   /** This function generates a regular mesh of ElementsPerSide^D size */
   // void CreateMesh(double ElementsPerSide, FEMObjectType *femObject, SolverType *solver, ImageSizeType sz);

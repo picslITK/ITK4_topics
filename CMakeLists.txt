@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+
+if( "${CMAKE_GENERATOR}" MATCHES "Visual Studio 10" )
+  cmake_minimum_required(VERSION 2.8.4)
+endif()
+
 project(ITK)
 
 if( WIN32 )
@@ -132,7 +137,11 @@ endfunction()
 option(BUILD_SHARED_LIBS "Build ITK with shared libraries." OFF)
 set(ITK_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
 
-include(ITKPlatformSpecificChecks)
+include(ITKSetStandardCompilerFlags)
+#---------------------------------------------------------------
+# run try compiles and tests for ITK
+include(itkTestFriendTemplatedFunction)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ITK_REQUIRED_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ITK_REQUIRED_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ITK_REQUIRED_LINK_FLAGS}")
@@ -221,8 +230,6 @@ option(ITK_USE_STRICT_CONCEPT_CHECKING "Turn on Strict concept checking to give 
 mark_as_advanced(ITK_USE_STRICT_CONCEPT_CHECKING)
 
 #----------------------------------------------------------------------------
-configure_file(CMake/CTestCustom.cmake.in CTestCustom.cmake)
-
 set(ITK_TEST_OUTPUT_DIR "${ITK_BINARY_DIR}/Testing/Temporary")
 
 #-----------------------------------------------------------------------------
@@ -536,6 +543,9 @@ foreach(itk-module ${ITK_MODULES_ENABLED})
   include("${${itk-module}_SOURCE_DIR}/itk-module-init.cmake" OPTIONAL)
   add_subdirectory("${${itk-module}_SOURCE_DIR}" "${${itk-module}_BINARY_DIR}")
 endforeach()
+
+#----------------------------------------------------------------------------
+configure_file(CMake/CTestCustom.cmake.in CTestCustom.cmake)
 
 #-----------------------------------------------------------------------------
 

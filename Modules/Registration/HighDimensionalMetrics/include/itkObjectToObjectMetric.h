@@ -29,8 +29,8 @@ namespace itk
  * This class is templated over the type of the two input objects.
  * This is the abstract base class for a hierarchy of similarity metrics
  * that may, in derived classes, operate on meshes, images, etc.
- * This class computes a
- * value that measures the similarity between the two objects.
+ * This class computes a value that measures the similarity between the two
+ * objects.
  *
  * Derived classes must provide implementations for:
  *  GetValue
@@ -45,9 +45,8 @@ namespace itk
  * \note Transform Optimization
  * This hierarchy currently assumes only the moving transform is 'active',
  * i.e. only the moving transform is being optimized when used in an optimizer.
- * The eventual goal however is
- * to allow for either moving, fixed or both transforms to be optimized
- * within a single metric.
+ * The eventual goal however is to allow for either moving, fixed or both
+ * transforms to be optimized within a single metric.
  *
  * \ingroup ITKHighDimensionalMetrics
  */
@@ -84,7 +83,9 @@ public:
   /** Source of the gradient(s) used by the metric
    * (e.g. image gradients, in the case of
    * image to image metrics). Defaults to Moving. */
-  typedef enum  { Fixed=0, Moving, Both } GradientSourceType;
+  typedef enum  { GRADIENT_SOURCE_FIXED=0,
+                  GRADIENT_SOURCE_MOVING,
+                  GRADIENT_SOURCE_BOTH } GradientSourceType;
 
   /**
    * Set source of gradient.  This variable allows the user to switch
@@ -112,11 +113,7 @@ public:
   /** This method returns the derivative of the cost function.
    * \c derivative will be sized and allocated as needed by metric.
    * If it's already allocated at proper size, no new allocation is done. */
-  virtual void GetDerivative(DerivativeType & derivative)
-  {
-    MeasureType value;
-    this->GetValueAndDerivative(value, derivative);
-  }
+  virtual void GetDerivative(DerivativeType & derivative);
 
   /** This method returns the value and derivative of the cost function.
    * \c derivative will be sized and allocated as needed by metric.
@@ -147,14 +144,10 @@ public:
                                           ParametersValueType factor = 1.0) = 0;
 
 protected:
-  ObjectToObjectMetric()
-  {
-    SetGradientSource( Moving );
-  }
-  virtual ~ObjectToObjectMetric() {}
+  ObjectToObjectMetric();
+  virtual ~ObjectToObjectMetric();
 
-  void PrintSelf(std::ostream & os, Indent indent) const
-  { Superclass::PrintSelf(os, indent); os << indent << "TODO..."; }
+  void PrintSelf(std::ostream & os, Indent indent) const;
 
   GradientSourceType       m_GradientSource;
 
@@ -165,18 +158,14 @@ private:
   /** Provide these three methods to satisfy pure virtuals within
    * SingleValuedCostFunction. This is a sign that we probalby shouldn't
    * be deriving this class from SingleValuedCostFunction. */
-  MeasureType GetValue( const ParametersType& ) const
-  { itkExceptionMacro("Not implemented. Use GetValue(void)."); }
+  MeasureType GetValue( const ParametersType& ) const;
 
   /** This method returns the derivative of the cost function */
-  void GetDerivative( const ParametersType &, DerivativeType &) const
-  { itkExceptionMacro("Not implemented. Use GetDerivative(DerivativeType&).");}
+  void GetDerivative( const ParametersType &, DerivativeType &) const;
 
   void GetValueAndDerivative (const ParametersType &,
                               MeasureType &,
-                              DerivativeType &) const
-  { itkExceptionMacro("Not implemented. Use GetValueAndDerivative( "
-                      "MeasureType & value, DerivativeType & derivative)."); }
+                              DerivativeType &) const;
 
 };
 } // end namespace itk

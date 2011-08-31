@@ -726,10 +726,6 @@ itkTypeMacro(newexcp, parentexcp);                                              
     " instead.")
 #endif
 
-#if defined( __INTEL_COMPILER )
-#pragma warning (disable: 193) /* #if testing undefined identifier */
-#endif
-
 //=============================================================================
 /* Define a common way of declaring a templated function as a friend inside a class.
   - ITK_FRIEND_TEMPLATE_FUNCTION_ARGUMENTS(T)
@@ -823,9 +819,6 @@ itkTypeMacro(newexcp, parentexcp);                                              
 */
 #if ITK_TEMPLATE_EXTERN
 #define ITK_TEMPLATE_IMPORT_DELAY(x) extern template ITK_TEMPLATE_##x;
-#if defined( _MSC_VER )
-#pragma warning (disable: 4231) /* extern template extension */
-#endif
 #elif ITK_TEMPLATE_DO_NOT_INSTANTIATE
 #define ITK_TEMPLATE_IMPORT_DELAY(x) \
   ITK_TEMPLATE_IMPORT_IMPL(do_not_instantiate ITK_TEMPLATE_##x)
@@ -932,6 +925,12 @@ itkTypeMacro(newexcp, parentexcp);                                              
      #include "itkFoo.hxx"
      #endif
 */
+#ifndef ITK_TEMPLATE_CXX //At this point this variable MUST be defined
+#define ITK_TEMPLATE_CXX 0
+#endif
+#ifndef ITK_TEMPLATE_TYPE
+#define ITK_TEMPLATE_TYPE 0
+#endif
 #if defined( ITK_MANUAL_INSTANTIATION )
 #define ITK_TEMPLATE_TXX 0
 #else
@@ -946,10 +945,6 @@ itkTypeMacro(newexcp, parentexcp);                                              
 #if ITK_TEMPLATE_CXX
 #undef ITK_MANUAL_INSTANTIATION
 #define ITK_MANUAL_INSTANTIATION
-#if defined( _MSC_VER )
-#pragma warning (disable: 4275) /* non dll-interface base */
-#pragma warning (disable: 4661) /* no definition available */
-#endif
 #endif
 //=============================================================================
 
@@ -1057,6 +1052,10 @@ itkTypeMacro(newexcp, parentexcp);                                              
     itkAssertInDebugOrThrowInReleaseMacro( msgstr.str().c_str() ); \
     }
 
+#ifndef NDEBUG
 #define itkAssertInDebugAndIgnoreInReleaseMacro(X) assert(X)
+#else
+#define itkAssertInDebugAndIgnoreInReleaseMacro(X)
+#endif
 
 #endif //end of itkMacro.h

@@ -5,6 +5,7 @@ itkConvertBufferTest2.cxx
 itkImageFileReaderTest1.cxx
 itkImageFileWriterTest.cxx
 itkIOCommonTest.cxx
+itkIOCommonTest2.cxx
 itkNumericSeriesFileNamesTest.cxx
 itkRegularExpressionSeriesFileNamesTest.cxx
 itkArchetypeSeriesFileNamesTest.cxx
@@ -58,6 +59,8 @@ itk_add_test(NAME itkImageFileWriterTest
               ${ITK_TEST_OUTPUT_DIR}/test.png)
 itk_add_test(NAME itkIOCommonTest
       COMMAND ITKIOBaseTestDriver itkIOCommonTest)
+itk_add_test(NAME itkIOCommonTest2
+      COMMAND ITKIOBaseTestDriver itkIOCommonTest2)
 itk_add_test(NAME itkNumericSeriesFileNamesTest
       COMMAND ITKIOBaseTestDriver itkNumericSeriesFileNamesTest)
 itk_add_test(NAME itkRegularExpressionSeriesFileNamesTest
@@ -122,9 +125,9 @@ itk_add_test(NAME itkImageFileWriterStreamingPastingCompressingTest_VTK
 # enabled when it is resolved and to confirm the above test is
 # working.
 #
-#itk_add_test(NAME itkImageFileWriterStreamingPastingCompressingTest_DCM
-#      COMMAND ITKIOBaseTestDriver itkImageFileWriterStreamingPastingCompressingTest1
-#              ${ITK_DATA_ROOT}/Input/HeadMRVolume.mhd ${ITK_TEST_OUTPUT_DIR}/itkImageFileWriterStreamingPastingCompressingTest dcm 0 0 1 1 0 0 1 1)
+itk_add_test(NAME itkImageFileWriterStreamingPastingCompressingTest_DCM
+      COMMAND ITKIOBaseTestDriver itkImageFileWriterStreamingPastingCompressingTest1
+              ${ITK_DATA_ROOT}/Input/HeadMRVolume.mhd ${ITK_TEST_OUTPUT_DIR}/itkImageFileWriterStreamingPastingCompressingTest dcm 0 0 1 1 0 0 1 1)
 itk_add_test(NAME itkImageFileWriterStreamingTest1_1
       COMMAND ITKIOBaseTestDriver
     --compare ${ITK_DATA_ROOT}/Baseline/IO/HeadMRVolume.mhd

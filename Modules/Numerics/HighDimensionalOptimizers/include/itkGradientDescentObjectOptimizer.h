@@ -1,24 +1,23 @@
 /*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGradientDescentObjectOptimizer.h,v $
-  Language:  C++
-  Date:      $Date: $
-  Version:   $Revision: $
-
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 #ifndef __itkGradientDescentObjectOptimizer_h
 #define __itkGradientDescentObjectOptimizer_h
 
-#include "itkPoint.h"
-#include "itkIndex.h"
 #include "itkGradientDescentObjectOptimizerBase.h"
 
 namespace itk
@@ -38,15 +37,18 @@ namespace itk
  * The user can scale each component of the df / dp
  * but setting a scaling vector using method SetScales().
  *
+ * The learning rate defaults to 1.0, and can be set via \c SetLearningRate.
+ *
  * \note Unlike the previous version of GradientDescentOptimizer, this version
  * does not have a "maximize/minimize" option to modify the effect of the metric
  * derivative.
- * The assigned metric is assumed to return a parameter derivative result that
- * "improves" the optimization when *added* to the current parameters via the
- * metric::UpateTransformParameters method, after the optimizer applies scales
- * and a learning rate.
  *
- * \ingroup ITKRegistrationRefactoring
+ * \note The assigned metric is assumed to return a parameter derivative
+ * result that "improves" the optimization when *added* to the current
+ * parameters via the metric::UpateTransformParameters method, after the
+ * optimizer applies scales and a learning rate.
+ *
+ * \ingroup ITKHighDimensionalOptimizers
  */
 class ITK_EXPORT GradientDescentObjectOptimizer
   : public GradientDescentObjectOptimizerBase
@@ -59,8 +61,7 @@ public:
   typedef SmartPointer< const Self >           ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(GradientDescentObjectOptimizer,
-               GradientDescentObjectOptimizerBase);
+  itkTypeMacro(GradientDescentObjectOptimizer, GradientDescentObjectOptimizerBase);
 
   /** New macro for creation of through a Smart Pointer   */
   itkNewMacro(Self);
@@ -77,8 +78,6 @@ public:
 
   /** Get the learning rate. */
   itkGetConstReferenceMacro(LearningRate, InternalComputationValueType);
-
-public:
 
   /** Start and run the optimization */
   virtual void StartOptimization();
@@ -101,13 +100,15 @@ protected:
   /** Default constructor */
   GradientDescentObjectOptimizer();
 
-  virtual ~GradientDescentObjectOptimizer(){}
+  /** Destructor */
+  virtual ~GradientDescentObjectOptimizer();
 
 private:
 
   //purposely not implemented
   GradientDescentObjectOptimizer( const Self & );
-  void operator=( const Self& );      //purposely not implemented
+  //purposely not implemented
+  void operator=( const Self& );
 
 };
 

@@ -15,36 +15,29 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
-
 #include "itkObjectToObjectOptimizerBase.h"
 #include "itkObjectToObjectMetric.h"
 #include "itkImage.h"
-
-using namespace itk;
-
-namespace{
+#include "itkTestingMacros.h"
 
 /* Create a simple metric to use for testing here. */
 template< class TFixedObject,  class TMovingObject >
-class ITK_EXPORT ObjectToObjectMetricSurrogate:
+class ITK_EXPORT ObjectToObjectOptimizerBaseTestMetric:
   public itk::ObjectToObjectMetric
 {
 public:
   /** Standard class typedefs. */
-  typedef ObjectToObjectMetricSurrogate                           Self;
-  typedef itk::ObjectToObjectMetric                               Superclass;
-  typedef itk::SmartPointer< Self >                               Pointer;
-  typedef itk::SmartPointer< const Self >                         ConstPointer;
+  typedef ObjectToObjectOptimizerBaseTestMetric     Self;
+  typedef itk::ObjectToObjectMetric                 Superclass;
+  typedef itk::SmartPointer< Self >                 Pointer;
+  typedef itk::SmartPointer< const Self >           ConstPointer;
 
   typedef typename Superclass::MeasureType          MeasureType;
   typedef typename Superclass::DerivativeType       DerivativeType;
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
-  itkTypeMacro(ObjectToObjectMetricSurrogate, ObjectToObjectMetric);
+  itkTypeMacro(ObjectToObjectOptimizerBaseTestMetric, ObjectToObjectMetric);
 
   itkNewMacro(Self);
 
@@ -78,32 +71,27 @@ public:
   ParametersType  m_Parameters;
 
 private:
-  ObjectToObjectMetricSurrogate() {}
-  ~ObjectToObjectMetricSurrogate() {}
+  ObjectToObjectOptimizerBaseTestMetric() {}
+  ~ObjectToObjectOptimizerBaseTestMetric() {}
 };
 
-/* global defines */
-const int ImageDimension = 2;
-typedef Image<double, ImageDimension>                    ImageType;
-typedef ImageType::Pointer                               ImagePointerType;
-
 /* Define a simple derived optimizer class.
- * \class TestOptimizer - must satisfy KWStyle! */
-class TestOptimizer
-  : public ObjectToObjectOptimizerBase
+ * \class ObjectToObjectOptimizerBaseTestOptimizer */
+class ObjectToObjectOptimizerBaseTestOptimizer
+  : public itk::ObjectToObjectOptimizerBase
 {
 public:
   /** Standard "Self" typedef. */
-  typedef TestOptimizer                           Self;
-  typedef ObjectToObjectOptimizerBase             Superclass;
-  typedef SmartPointer< Self >                    Pointer;
-  typedef SmartPointer< const Self >              ConstPointer;
+  typedef ObjectToObjectOptimizerBaseTestOptimizer Self;
+  typedef ObjectToObjectOptimizerBase              Superclass;
+  typedef itk::SmartPointer< Self >                Pointer;
+  typedef itk::SmartPointer< const Self >          ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(TestOptimizer, ObjectToObjectOptimizerBase);
+  itkTypeMacro(ObjectToObjectOptimizerBaseTestOptimizer, ObjectToObjectOptimizerBase);
 
   /* Provide an override for the pure virtual StartOptimization */
   void StartOptimization()
@@ -113,15 +101,17 @@ public:
 
 };
 
-}//namespace
-
 /**
  */
 int itkObjectToObjectOptimizerBaseTest(int , char* [])
 {
-  typedef ObjectToObjectMetricSurrogate<ImageType,ImageType>   MetricType;
+  const int ImageDimension = 2;
+  typedef itk::Image<double, ImageDimension>                    ImageType;
+
+  typedef ObjectToObjectOptimizerBaseTestMetric<ImageType,ImageType> MetricType;
+
   MetricType::Pointer metric = MetricType::New();
-  TestOptimizer::Pointer optimizer = TestOptimizer::New();
+  ObjectToObjectOptimizerBaseTestOptimizer::Pointer optimizer = ObjectToObjectOptimizerBaseTestOptimizer::New();
 
   /* exercise some methods */
   optimizer->SetMetric( metric );
@@ -134,10 +124,10 @@ int itkObjectToObjectOptimizerBaseTest(int , char* [])
   std::cout << "value: " << optimizer->GetValue() << std::endl;
 
   /* Test set/get of scales */
-  TestOptimizer::ScalesType scales;
+  ObjectToObjectOptimizerBaseTestOptimizer::ScalesType scales;
   scales.Fill(3);
   optimizer->SetScales( scales );
-  const TestOptimizer::ScalesType& scalesReturn = optimizer->GetScales();
+  const ObjectToObjectOptimizerBaseTestOptimizer::ScalesType& scalesReturn = optimizer->GetScales();
   if( scalesReturn != scales )
     {
     std::cerr << "Set/GetScales failed." << std::endl;
@@ -146,7 +136,7 @@ int itkObjectToObjectOptimizerBaseTest(int , char* [])
 
   optimizer->SetNumberOfThreads( 1 );
 
-  optimizer->StartOptimization();
+  TRY_EXPECT_NO_EXCEPTION( optimizer->StartOptimization() )
 
   return EXIT_SUCCESS;
 }

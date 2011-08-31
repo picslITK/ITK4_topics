@@ -42,7 +42,6 @@ namespace itk
  * The serialization of the fixed parameters is an array of 3 elements defining
  * the center of rotation in each dimension.
  *
- * \ingroup Transforms
  * \ingroup ITKTransform
  */
 template< class TScalarType = double >
@@ -193,10 +192,9 @@ virtual InverseTransformBasePointer GetInverseTransform() const
   bool MatrixIsOrthogonal(const MatrixType & matrix, double tol = 1e-10);
 
 protected:
-  Rigid3DTransform(unsigned int spaceDim,
-                   unsigned int paramDim);
   Rigid3DTransform(const MatrixType & matrix,
                    const OutputVectorType & offset);
+  Rigid3DTransform(unsigned int paramDim);
   Rigid3DTransform();
   ~Rigid3DTransform();
 

@@ -31,10 +31,17 @@ for syntax and missing #include's.
 # Headers to not test because of dependecy issues, etc.
 BANNED_HEADERS = set(('itkExceptionObject.h', # There is a pre-processor check so people use itkMacro.h instead.
     'itkMINC2ImageIO.h', # In case minc2.h is not available.
-    'itkFFTWRealToComplexConjugateImageFilter.h',
-    'itkFFTWComplexConjugateToRealImageFilter.h',
+    'itkFFTWForwardFFTImageFilter.h',
+    'itkFFTWInverseFFTImageFilter.h',
     'itkFFTWComplexToComplexImageFilter.h',
     'itkFFTWCommon.h',
+    'itkLevelSetEquationChanAndVeseInternalTerm.h',   # JIRA 2645 FIXME
+    'itkLevelSetEquationCurvatureTerm.h',             # JIRA 2645 FIXME
+    'itkLevelSetEquationLaplacianTerm.h',             # JIRA 2645 FIXME
+    'itkLevelSetEquationPropagationTerm.h',           # JIRA 2645 FIXME
+    'itkDenseLevelSetContainer.h',                    # JIRA 2645 FIXME
+    'itkLevelSetContainerBase.h',                     # JIRA 2645 FIXME
+    'itkLevelSetEquationContainerBase.h',             # JIRA 2645 FIXME
     'itkVanHerkGilWermanErodeDilateImageFilter.h', # circular include's
     'itkBSplineDeformableTransform.h',   # deprecated
     'itkBSplineDeformableTransformInitializer.h'))

@@ -1,27 +1,24 @@
 /*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkImageSource.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-12 01:11:08 $
-  Version:   $Revision: 1.59 $
-
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-  Portions of this code are covered under the VTK copyright.
-  See VTKCopyright.txt or http://www.kitware.com/VTKCopyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 #ifndef __itkObjectToDataBase_h
 #define __itkObjectToDataBase_h
 
 #include "itkProcessObject.h"
-#include "itkImage.h"
 
 namespace itk
 {
@@ -36,7 +33,7 @@ namespace itk
  *
  * SplitRequestedObject is a method to split the object into
  * non-overlapping pieces for threading. Must be overridden by derived
- * classes to provide the particular funcationality required for
+ * classes to provide the particular functionality required for
  * TInputObject type.
  *
  * Call SetHolder to assign a user data object.
@@ -59,11 +56,12 @@ namespace itk
  * before running.
  *
  * \note There is no test for this class yet. See Array1DToDataTest.
+ * \todo Make test.
  * \note The name of this and derived classes should possibly be
  * changed for more clarity.
  *
  * \sa ImageToData
- * \ingroup ITKRegistrationRefactoring
+ * \ingroup ITKHighDimensionalOptimizers
  */
 
 template <class TInputObject, class TDataHolder>
@@ -75,9 +73,6 @@ public:
   typedef ProcessObject             Superclass;
   typedef SmartPointer<Self>        Pointer;
   typedef SmartPointer<const Self>  ConstPointer;
-
-  /** Smart Pointer type to a DataObject. */
-  //typedef DataObject::Pointer DataObjectPointer;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(ObjectToDataBase,ProcessObject);
@@ -110,52 +105,36 @@ public:
                                                 DataHolderType * holder);
 
   /** Set the overall (i.e. complete) object over which to thread */
-  void SetOverallObject( InputObjectType & object )
-    {
-    if( object != m_OverallObject )
-      {
-      m_OverallObject = object;
-      m_OverallObjectHasBeenSet = true;
-      this->Modified();
-      }
-    }
+  void SetOverallObject( const InputObjectType & object );
 
   /** Set the threaded worker callback. Used by the user class
    * to assign the worker callback.
    * \note This callback must be a static function if it is a class method. */
-  void SetThreadedGenerateData( ThreadedGenerateDataFuncType func )
-  { m_ThreadedGenerateData = func; }
+  void SetThreadedGenerateData( ThreadedGenerateDataFuncType func );
 
   /** Set the object holder used during threading. */
-  void SetHolder( DataHolderType* holder )
-    {
-    if( this->m_Holder != holder )
-      {
-      this->m_Holder = holder;
-      this->Modified();
-      }
-    }
+  void SetHolder( DataHolderType* holder );
 
   /** Get the assigned holder, as a raw C-pointer */
-  DataHolderType* GetHolder()
-  { return this->m_Holder; }
+  itkGetMacro( Holder, DataHolderType *);
+  itkGetConstMacro( Holder, DataHolderType *);
 
   /** Accessor for number of threads actually used */
   itkGetMacro( NumberOfThreadsUsed, ThreadIdType );
 
   /** Start the threading process */
-  virtual void GenerateData();
+  virtual void StartThreadedExecution();
 
   /** Determine the number of threads that will be used by calling
    * SplitRequestedObject once and getting the return value. This uses
    * m_NumberOfThreads and requires that \c m_OverallObject has been set.
    * The number may be less than m_NumberOfThreads if SplitRequestedObject
    * determines that fewer threads would be more efficient. */
-  ThreadIdType DetermineNumberOfThreadsToUse(void);
+  ThreadIdType DetermineNumberOfThreadsToUse() const;
 
 protected:
   ObjectToDataBase();
-  virtual ~ObjectToDataBase() {}
+  virtual ~ObjectToDataBase();
 
   /** Split the output's RequestedObject into \c requestedTotal "pieces",
    * returning piece \c i as \c splitObject. "Pieces" may represent
@@ -169,9 +148,9 @@ protected:
    * This must be overridden by derived classes to provide specialized
    * behavior. */
   virtual
-  ThreadIdType SplitRequestedObject(ThreadIdType threadID,
-                           ThreadIdType requestedTotal,
-                           InputObjectType& overallObject,
+  ThreadIdType SplitRequestedObject(const ThreadIdType threadID,
+                           const ThreadIdType requestedTotal,
+                           const InputObjectType& overallObject,
                            InputObjectType& splitObject) const = 0;
 
   /** Static function used as a "callback" by the MultiThreader.  The threading
@@ -189,13 +168,20 @@ protected:
   /** The object over which to thread. */
   //This should probably be made into a SmartPointer
   InputObjectType               m_OverallObject;
+
   /** Flag is set when user calls SetOveralObject */
   bool                          m_OverallObjectHasBeenSet;
+
   /** Raw C-pointer to the data holder */
   DataHolderType *              m_Holder;
 
+  /** Verify that all the inputs required are set properly.
+   *  This method is called from GenerateData().  */
+  virtual void VerifyInputConsistency();
+
 private:
   ThreadedGenerateDataFuncType  m_ThreadedGenerateData;
+
   /** Store the actual number of threads used, which may be less than
    * the number allocated by the threader if the object does not split
    * well into that number.

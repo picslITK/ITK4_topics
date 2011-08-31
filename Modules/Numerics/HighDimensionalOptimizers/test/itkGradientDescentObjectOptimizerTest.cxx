@@ -15,19 +15,14 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
-
 #include "itkObjectToObjectMetric.h"
 #include "itkGradientDescentObjectOptimizer.h"
 #include "vnl/vnl_math.h"
 
 /* Cribbed from itkGradientDescentOptimizerTest */
 
-namespace {
 /**
- *  \class gradientMetric for test
+ *  \class GradientDescentObjectOptimizerTestMetric for test
  *
  *  The objectif function is the quadratic form:
  *
@@ -43,16 +38,17 @@ namespace {
  *   the solution is the vector | 2 -2 |
  *
  */
-class gradientMetric : public itk::ObjectToObjectMetric
+class GradientDescentObjectOptimizerTestMetric
+  : public itk::ObjectToObjectMetric
 {
 public:
 
-  typedef gradientMetric                  Self;
-  typedef itk::ObjectToObjectMetric       Superclass;
-  typedef itk::SmartPointer<Self>         Pointer;
-  typedef itk::SmartPointer<const Self>   ConstPointer;
+  typedef GradientDescentObjectOptimizerTestMetric  Self;
+  typedef itk::ObjectToObjectMetric                 Superclass;
+  typedef itk::SmartPointer<Self>                   Pointer;
+  typedef itk::SmartPointer<const Self>             ConstPointer;
   itkNewMacro( Self );
-  itkTypeMacro( gradientMetric, ObjectToObjectMetric );
+  itkTypeMacro( GradientDescentObjectOptimizerTestMetric, ObjectToObjectMetric );
 
   enum { SpaceDimension=2 };
 
@@ -61,7 +57,7 @@ public:
   typedef Superclass::DerivativeType        DerivativeType;
   typedef Superclass::MeasureType           MeasureType;
 
-  gradientMetric()
+  GradientDescentObjectOptimizerTestMetric()
   {
     m_Parameters.SetSize( SpaceDimension );
     m_Parameters.Fill( 0 );
@@ -138,8 +134,6 @@ private:
   ParametersType m_Parameters;
 };
 
-}//namespace
-
 int itkGradientDescentObjectOptimizerTest(int, char* [] )
 {
   std::cout << "Gradient Descent Object Optimizer Test ";
@@ -153,11 +147,11 @@ int itkGradientDescentObjectOptimizerTest(int, char* [] )
   OptimizerType::Pointer  itkOptimizer = OptimizerType::New();
 
   // Declaration of the Metric
-  gradientMetric::Pointer metric = gradientMetric::New();
+  GradientDescentObjectOptimizerTestMetric::Pointer metric = GradientDescentObjectOptimizerTestMetric::New();
 
   itkOptimizer->SetMetric( metric );
 
-  typedef gradientMetric::ParametersType    ParametersType;
+  typedef GradientDescentObjectOptimizerTestMetric::ParametersType    ParametersType;
 
   const unsigned int spaceDimension =
                       metric->GetNumberOfParameters();
@@ -198,7 +192,9 @@ int itkGradientDescentObjectOptimizerTest(int, char* [] )
   for( unsigned int j = 0; j < 2; j++ )
     {
     if( vnl_math_abs( finalPosition[j] - trueParameters[j] ) > 0.01 )
+      {
       pass = false;
+      }
     }
 
   // Exercise various member functions.

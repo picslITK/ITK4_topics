@@ -15,28 +15,22 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
 #include "itkImage.h"
-
 #include "itkObjectToObjectMetric.h"
+#include "itkTestingMacros.h"
 
 /* Test basic operation of ObjectToObjectMetric.
  *
  * TODO Finsish exercising all methods.
  */
 
-namespace itkObjectToObjectMetricTestHelpers
-{
-
-
 template< class TFixedObject,  class TMovingObject >
-class ITK_EXPORT ObjectToObjectMetricSurrogate:
+class ITK_EXPORT ObjectToObjectMetricTestMetric:
   public itk::ObjectToObjectMetric
 {
 public:
   /** Standard class typedefs. */
-  typedef ObjectToObjectMetricSurrogate                           Self;
+  typedef ObjectToObjectMetricTestMetric                          Self;
   typedef itk::ObjectToObjectMetric                               Superclass;
   typedef itk::SmartPointer< Self >                               Pointer;
   typedef itk::SmartPointer< const Self >                         ConstPointer;
@@ -46,7 +40,7 @@ public:
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
-  itkTypeMacro(ObjectToObjectMetricSurrogate, ObjectToObjectMetric);
+  itkTypeMacro(ObjectToObjectMetricTestMetric, ObjectToObjectMetric);
 
   itkNewMacro(Self);
 
@@ -80,17 +74,14 @@ public:
   ParametersType  m_Parameters;
 
 private:
-  ObjectToObjectMetricSurrogate() {}
-  ~ObjectToObjectMetricSurrogate() {}
+  ObjectToObjectMetricTestMetric() {}
+  ~ObjectToObjectMetricTestMetric() {}
 };
-
-}
 
 int itkObjectToObjectMetricTest(int ,char * [])
 {
-  typedef itk::Image< unsigned char, 3 > ImageType;
-  typedef itkObjectToObjectMetricTestHelpers::ObjectToObjectMetricSurrogate<
-    ImageType, ImageType> ObjectMetricType;
+  typedef itk::Image< unsigned char, 3 >                       ImageType;
+  typedef ObjectToObjectMetricTestMetric<ImageType, ImageType> ObjectMetricType;
 
   ObjectMetricType::Pointer objectMetric = ObjectMetricType::New();
 
@@ -105,7 +96,7 @@ int itkObjectToObjectMetricTest(int ,char * [])
   ParametersType parameters(13);
   parameters.Fill( 19.5);
 
-  objectMetric->GetValue( );
+  TEST_EXPECT_EQUAL( objectMetric->GetValue( ), 1.0 );
 
   return EXIT_SUCCESS;
 }

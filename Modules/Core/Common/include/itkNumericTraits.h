@@ -258,7 +258,7 @@ public:
 
 /** \class NumericTraits<char>
  * \brief Define traits for type char.
- * NOTE: char is not guaranteed to be signed. On SGI's, the default is unsigned
+ * NOTE: char is not guaranteed to be signed. On SGI computers, the default is unsigned
  * \ingroup ITKCommon
  */
 template< >
@@ -277,15 +277,8 @@ public:
   static const char ITKCommon_EXPORT Zero;
   static const char ITKCommon_EXPORT One;
 
-#ifdef _MSC_VER
-#pragma warning (push)
-#pragma warning (disable: 4310) // cast truncates constant value
-#endif
   static char min() { return char(255) < 0 ? -128 : 0; }
   static char max() { return char(255) < 0 ? 127 : 255; }
-#ifdef _MSC_VER
-#pragma warning (pop)
-#endif
 
   static char min(char) { return min(); }
   static char max(char) { return max(); }
@@ -318,7 +311,7 @@ public:
 
 /** \class NumericTraits<char>
  * \brief Define traits for type char.
- * NOTE: char is not guaranteed to be signed. On SGI's, the default is unsigned
+ * NOTE: char is not guaranteed to be signed. On SGI computers, the default is unsigned
  * \ingroup ITKCommon
  */
 template< >

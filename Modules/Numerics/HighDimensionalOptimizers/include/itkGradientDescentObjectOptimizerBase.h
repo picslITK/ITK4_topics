@@ -1,24 +1,23 @@
 /*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGradientDescentObjectOptimizerBase.h,v $
-  Language:  C++
-  Date:      $Date: $
-  Version:   $Revision: $
-
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 #ifndef __itkGradientDescentObjectOptimizerBase_h
 #define __itkGradientDescentObjectOptimizerBase_h
 
-#include "itkPoint.h"
-#include "itkIndex.h"
 #include "itkObjectToObjectOptimizerBase.h"
 #include "itkArray1DToData.h"
 
@@ -50,13 +49,19 @@ public:
 
   /** Codes of stopping conditions. */
   typedef enum {
-    MaximumNumberOfIterations,
-    MetricError,
-    UpdateTransformParametersError,
-    StepTooSmall,
-    QuasiNewtonStepError,
-    OtherError
+    MAXIMUM_NUMBER_OF_ITERATIONS,
+    COSTFUNCTION_ERROR,
+    UPDATE_PARAMETERS_ERROR,
+    STEP_TOO_SMALL,
+    QUASI_NEWTON_STEP_ERROR,
+    OTHER_ERROR
     } StopConditionType;
+
+  /** Stop condition return string type */
+  typedef std::string                            StopConditionReturnStringType;
+
+  /** Stop condition internal string type */
+  typedef std::ostringstream                     StopConditionDescriptionType;
 
   /** Metric type over which this class is templated */
   typedef Superclass::MetricType                    MetricType;
@@ -69,13 +74,13 @@ public:
   typedef Superclass::MeasureType                   MeasureType;
 
   /** Internal computation type, for maintaining a desired precision */
-  typedef Superclass::InternalComputationValueType
-                                                InternalComputationValueType;
+  typedef Superclass::InternalComputationValueType InternalComputationValueType;
 
   /** Threader for gradient update */
-  typedef Array1DToData<Self>                       ModifyGradientThreaderType;
+  typedef Array1DToData<Self>                        ModifyGradientThreaderType;
+
   /** Type of index range for threading */
-  typedef ModifyGradientThreaderType::IndexRangeType  IndexRangeType;
+  typedef ModifyGradientThreaderType::IndexRangeType IndexRangeType;
 
   /** Get the most recent gradient values. */
   itkGetConstReferenceMacro( Gradient, DerivativeType );
@@ -102,13 +107,13 @@ public:
   virtual void StopOptimization(void);
 
   /** Get the reason for termination */
-  virtual const std::string GetStopConditionDescription() const;
+  virtual const StopConditionReturnStringType GetStopConditionDescription() const;
 
 protected:
 
   /** Default constructor */
   GradientDescentObjectOptimizerBase();
-  virtual ~GradientDescentObjectOptimizerBase(){}
+  virtual ~GradientDescentObjectOptimizerBase();
 
   /** Modify the gradient in place, to advance the optimization.
    * This call performs a threaded modification for transforms with
@@ -129,11 +134,11 @@ protected:
   virtual void ModifyGradientOverSubRange( const IndexRangeType& subrange ) = 0;
 
   /* Common variables for optimization control and reporting */
-  bool               m_Stop;
-  StopConditionType  m_StopCondition;
-  std::ostringstream m_StopConditionDescription;
-  SizeValueType      m_NumberOfIterations;
-  SizeValueType      m_CurrentIteration;
+  bool                          m_Stop;
+  StopConditionType             m_StopCondition;
+  StopConditionDescriptionType  m_StopConditionDescription;
+  SizeValueType                 m_NumberOfIterations;
+  SizeValueType                 m_CurrentIteration;
 
   /** Current gradient */
   DerivativeType     m_Gradient;
@@ -142,7 +147,8 @@ private:
 
   //purposely not implemented
   GradientDescentObjectOptimizerBase( const Self & );
-  void operator=( const Self& );      //purposely not implemented
+  //purposely not implemented
+  void operator=( const Self& );
 
   /** Callback used during threaded gradient modification.
    * Gets assigned to the modify-gradient threader's
@@ -162,9 +168,5 @@ private:
 };
 
 } // end namespace itk
-
-//#ifndef ITK_MANUAL_INSTANTIATION
-//# include "itkGradientDescentObjectOptimizerBase.hxx"
-//#endif
 
 #endif
