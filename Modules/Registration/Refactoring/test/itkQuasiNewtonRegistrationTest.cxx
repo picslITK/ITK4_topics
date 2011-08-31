@@ -81,7 +81,7 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
     return EXIT_FAILURE;
     }
   std::cout << argc << std::endl;
-  unsigned int numberOfIterations = 100;
+  unsigned int numberOfIterations = 200;
   //double scalarScale = 1.0;
   //double learningRate = 100;
   //if( argc >= 7 )
@@ -197,6 +197,11 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
+  //ParametersType initParameters(6);
+  //double initParams[] = {0.921, -0.294589, 0.300455, 0.914788, 11.7851, -12.7107};
+  //for (unsigned int p=0; p<6; p++)
+  //  initParameters[p] = initParams[p];
+  //movingTransform->SetParameters(initParameters);
   metric->SetMovingTransform( movingTransform );
 
   Size<Dimension> radSize;

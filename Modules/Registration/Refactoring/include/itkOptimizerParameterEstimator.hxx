@@ -49,15 +49,10 @@ OptimizerParameterEstimator< TMetric >
     itkExceptionMacro(" OptimizerParameterEstimator: m_Metric == NULL.");
     }
 
-  SetMovingTransform(const_cast<MovingTransformType *>(m_Metric->GetMovingTransform()));
-  SetFixedTransform(const_cast<FixedTransformType *>(m_Metric->GetFixedTransform()));
-
   if (parameterScales.size() != this->GetTransform()->GetNumberOfParameters())
     {
     itkExceptionMacro(" The size of scales does not match that of transform parameters.");
     }
-
-  this->SampleImageDomain();
 
   switch (m_ScaleStrategy)
     {
@@ -388,7 +383,7 @@ OptimizerParameterEstimator< TMetric >
     {
     point = this->m_ImageSamples[c];
     this->TransformPointToContinuousIndex<ContinuousIndexType>(point, oldMappedIndices[c]);
-  } // end for numSamples
+    } // end for numSamples
 
   // set the new parameters in the transform
   this->GetTransform()->SetParameters(newParameters);

@@ -139,6 +139,10 @@ public:
       this->m_MovingImage  = metric->GetMovingImage();
       this->m_VirtualImage = metric->GetVirtualDomainImage();
 
+      SetMovingTransform(const_cast<MovingTransformType *>(m_Metric->GetMovingTransform()));
+      SetFixedTransform(const_cast<FixedTransformType *>(m_Metric->GetFixedTransform()));
+
+      this->SampleImageDomain();
       this->Modified();
       }
     }

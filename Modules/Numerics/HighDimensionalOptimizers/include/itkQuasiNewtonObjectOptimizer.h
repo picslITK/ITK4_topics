@@ -115,7 +115,8 @@ protected:
    *  This happens when line search is done. */
   bool            m_ValueAndDerivateEvaluated;
 
-  /** The gradient in the previous step */
+  /** The information about the previous step */
+  double          m_PreviousValue;
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
 
@@ -125,6 +126,9 @@ protected:
   /** The Hessian and its inverse estimated by a Quasi-Newton method */
   HessianType     m_Hessian;
   HessianType     m_HessianInverse;
+
+  //may be used in the future for Levenberg Marquardt
+  //double          m_Lambda;
 
   /** Do line search on the direction of the Newton step */
   //void LineSearch();

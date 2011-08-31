@@ -37,8 +37,8 @@ QuasiNewtonObjectOptimizer
   itkDebugMacro("Constructor");
 
   m_MaximumVoxelShift = 1.0/2;
-  m_MinimumGradientNorm = 1e-20;
-  m_MinimumValueChange = 1e-20;
+  m_MinimumGradientNorm = 1e-15;
+  m_MinimumValueChange = 1e-15;
 
   m_LineSearchEnabled = false;
   m_OptimizerParameterEstimator = (OptimizerParameterEstimatorBase::Pointer)NULL;
@@ -77,7 +77,9 @@ QuasiNewtonObjectOptimizer
         }
       ScalesType scales(this->m_Metric->GetNumberOfParameters());
 
-      m_OptimizerParameterEstimator->EstimateScales(scales);
+      //m_OptimizerParameterEstimator->EstimateScales(scales);
+      for (int s=0; s<4; s++) scales[s] = 9801;
+      for (int s=4; s<6; s++) scales[s] = 1;
 
       this->SetScales(scales);
       std::cout << " Estimated scales = " << scales << std::endl;
@@ -184,12 +186,24 @@ QuasiNewtonObjectOptimizer
 
   if (this->GetCurrentIteration() == 0)
     {
+    m_PreviousValue = this->m_Value;
     m_PreviousPosition = this->m_CurrentPosition;
     m_PreviousGradient = this->m_Gradient;
 
     m_NewtonStep.SetSize(spaceDimension);
     m_Hessian.SetSize(spaceDimension, spaceDimension);
     m_HessianInverse.SetSize(spaceDimension, spaceDimension);
+    }
+  if ( this->GetCurrentIteration() > 0
+    && vcl_abs(m_PreviousValue - m_Value) < m_MinimumValueChange )
+    {
+    m_StopCondition = StepTooSmall;
+    m_StopConditionDescription << "Optimization stops after "
+                               << this->GetCurrentIteration()
+                               << " iterations since"
+                               << " the value change is too small.";
+    this->StopOptimization();
+    return;
     }
 
   try
@@ -212,6 +226,7 @@ QuasiNewtonObjectOptimizer
     std::cout << "m_Gradient(:," << 1+this->GetCurrentIteration() << ") = " << m_Gradient << "';" << std::endl;
     }
   /** Save for the next iteration */
+  m_PreviousValue = this->GetValue();
   m_PreviousPosition = this->GetCurrentPosition();
   m_PreviousGradient = this->GetGradient();
 
@@ -220,10 +235,15 @@ QuasiNewtonObjectOptimizer
    * approximation produces a convex instead of an expected concave, or
    * vice versa.
    */
-  if ( newtonStepException || inner_product(m_Gradient, m_NewtonStep) < 0 )
+  double gradientNewtonProduct = inner_product(m_Gradient, m_NewtonStep);
+  double gradientNorm = m_Gradient.two_norm();
+  double newtonNorm = m_NewtonStep.two_norm();
+  double cosine = gradientNewtonProduct / gradientNorm / newtonNorm;
+
+  if ( newtonStepException || cosine < 0 )
     {
     // using gradient step
-    double gradientNorm = m_Gradient.two_norm();
+    //double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
       m_StopCondition = StepTooSmall;
@@ -267,7 +287,7 @@ QuasiNewtonObjectOptimizer
     {
     // Now a Newton step is on the consistent direction of a gradient step
     // using Newton step
-    double newtonNorm = m_NewtonStep.two_norm();
+    //double newtonNorm = m_NewtonStep.two_norm();
     if (newtonNorm < m_MinimumGradientNorm)
       {
       m_StopCondition = StepTooSmall;
@@ -285,6 +305,7 @@ QuasiNewtonObjectOptimizer
 
     if ( m_LineSearchEnabled )
       {
+      learningRate = 1.0;
       this->AdvanceWithStrongWolfeLineSearch(m_NewtonStep, learningRate);
       this->m_ValueAndDerivateEvaluated = true;
 
@@ -659,6 +680,7 @@ void QuasiNewtonObjectOptimizer
   ParametersType sdx(numPara);
 
   if (this->GetCurrentIteration() == 0 ||
+      //this->GetCurrentIteration() == 100 ||
       m_Hessian[0][0] == NumericTraits<double>::max() ||
       m_HessianInverse[0][0] == NumericTraits<double>::max())
     {
@@ -667,6 +689,7 @@ void QuasiNewtonObjectOptimizer
     // Initialize Hessian to identity matrix
     m_Hessian.Fill(0.0f);
     m_HessianInverse.Fill(0.0f);
+
     for (unsigned int i=0; i<numPara; i++)
       {
       m_Hessian[i][i] = 1.0; //identity matrix
@@ -679,6 +702,17 @@ void QuasiNewtonObjectOptimizer
     //this->m_NewtonStep = -1.0 * sdx; //minimize
     this->m_NewtonStep = sdx; //maximize
     }
+
+  if ( this->GetDebug() )
+    {
+    unsigned int cur = this->GetCurrentIteration();
+    for (unsigned int row = 0; row < m_Hessian.rows(); row++)
+      {
+      std::cout << "m_Hessian(" << row+1 << ",:" << "," << cur+1 << ") = ["
+        << m_Hessian.get_row(row) << "];" << std::endl;
+      }
+    }
+
 }
 
 /** Estimate Hessian matrix with BFGS method described
@@ -724,6 +758,12 @@ void QuasiNewtonObjectOptimizer
     }
   else
     {
+    //HessianType approximateHessian(numPara, numPara);
+    //approximateHessian.set_identity();
+    //approximateHessian *= m_Lambda;
+    //approximateHessian += newHessian;
+    //m_HessianInverse = vnl_matrix_inverse<double>(approximateHessian);
+
     m_HessianInverse = vnl_matrix_inverse<double>(newHessian);
     }
 }
