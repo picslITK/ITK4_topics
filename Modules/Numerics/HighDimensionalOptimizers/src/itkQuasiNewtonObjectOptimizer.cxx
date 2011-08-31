@@ -25,6 +25,7 @@
 #include "itkCommand.h"
 #include "itkEventObject.h"
 #include "itkMacro.h"
+#include <vnl/algo/vnl_determinant.h>
 
 namespace itk
 {
@@ -120,7 +121,7 @@ QuasiNewtonObjectOptimizer
       }
     catch ( ExceptionObject & err )
       {
-      m_StopCondition = MetricError;
+      m_StopCondition = COSTFUNCTION_ERROR;
       m_StopConditionDescription << "Metric error";
       this->StopOptimization();
 
@@ -147,7 +148,7 @@ QuasiNewtonObjectOptimizer
       m_StopConditionDescription << "Maximum number of iterations ("
                                  << m_NumberOfIterations
                                  << ") exceeded.";
-      m_StopCondition = MaximumNumberOfIterations;
+      m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
       this->StopOptimization();
       break;
       }
@@ -197,7 +198,7 @@ QuasiNewtonObjectOptimizer
   if ( this->GetCurrentIteration() > 0
     && vcl_abs(m_PreviousValue - m_Value) < m_MinimumValueChange )
     {
-    m_StopCondition = StepTooSmall;
+    m_StopCondition = STEP_TOO_SMALL;
     m_StopConditionDescription << "Optimization stops after "
                                << this->GetCurrentIteration()
                                << " iterations since"
@@ -246,7 +247,7 @@ QuasiNewtonObjectOptimizer
     //double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
-      m_StopCondition = StepTooSmall;
+      m_StopCondition = STEP_TOO_SMALL;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
@@ -290,7 +291,7 @@ QuasiNewtonObjectOptimizer
     //double newtonNorm = m_NewtonStep.two_norm();
     if (newtonNorm < m_MinimumGradientNorm)
       {
-      m_StopCondition = StepTooSmall;
+      m_StopCondition = STEP_TOO_SMALL;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
@@ -363,7 +364,7 @@ void QuasiNewtonObjectOptimizer
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
-      m_StopCondition = StepTooSmall;
+      m_StopCondition = STEP_TOO_SMALL;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
@@ -382,7 +383,7 @@ void QuasiNewtonObjectOptimizer
       m_StopConditionDescription << "Maximum number of iterations ("
                                  << m_NumberOfIterations
                                  << ") exceeded.";
-      m_StopCondition = MaximumNumberOfIterations;
+      m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
       this->StopOptimization();
       return;
       }
@@ -469,7 +470,7 @@ double QuasiNewtonObjectOptimizer
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
-      m_StopCondition = StepTooSmall;
+      m_StopCondition = STEP_TOO_SMALL;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
@@ -517,7 +518,7 @@ double QuasiNewtonObjectOptimizer
       m_StopConditionDescription << "Maximum number of iterations ("
                                  << m_NumberOfIterations
                                  << ") exceeded in line search. ";
-      m_StopCondition = MaximumNumberOfIterations;
+      m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
       this->StopOptimization();
       topt = t2;
       return topt;
@@ -573,7 +574,7 @@ double QuasiNewtonObjectOptimizer
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
-      m_StopCondition = StepTooSmall;
+      m_StopCondition = STEP_TOO_SMALL;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
@@ -589,7 +590,7 @@ double QuasiNewtonObjectOptimizer
 
     if (loop >= 2 && vcl_abs(oldValue - f2) < m_MinimumValueChange)
       {
-      m_StopCondition = StepTooSmall;
+      m_StopCondition = STEP_TOO_SMALL;
       m_StopConditionDescription << "Optimization stops after "
                                  << this->GetCurrentIteration()
                                  << " iterations since"
@@ -651,7 +652,7 @@ double QuasiNewtonObjectOptimizer
       m_StopConditionDescription << "Maximum number of iterations ("
                                  << m_NumberOfIterations
                                << ") exceeded in Wolfe line search. ";
-      m_StopCondition = MaximumNumberOfIterations;
+      m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
       this->StopOptimization();
 
       topt = t2;

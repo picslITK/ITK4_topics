@@ -90,7 +90,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations] ";
-    std::cerr << " [scalarScale] [learningRate] [deformationLearningRate] " << std::endl;
+    std::cerr << " [learningRate] [deformationLearningRate] " << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
@@ -98,18 +98,15 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
 
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
-  double scalarScale = 1.0;
   double learningRate = 0.1;
   double deformationLearningRate = 1;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
-  if( argc >= 6)
-    scalarScale = atof( argv[5] );
-  if( argc >= 7 )
-    learningRate = atof( argv[6] );
-  if( argc == 8 )
-    deformationLearningRate = atof( argv[7] );
-  std::cout << " iterations "<< numberOfIterations << " scale " << scalarScale << " learningRate "<<learningRate << std::endl;
+  if( argc >= 6 )
+    learningRate = atof( argv[5] );
+  if( argc == 7 )
+    deformationLearningRate = atof( argv[6] );
+  std::cout << " iterations "<< numberOfIterations << " learningRate "<<learningRate << std::endl;
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -140,8 +137,9 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
 
 
   /** create a composite transform holder for other transforms  */
-  typedef itk::CompositeTransform<double, Dimension>  CompositeType;
+  typedef itk::CompositeTransform<double, Dimension>    CompositeType;
   typedef CompositeType::ScalarType                     ScalarType;
+
   CompositeType::Pointer compositeTransform = CompositeType::New();
 
   //create an affine transform
@@ -213,8 +211,6 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
   optimizer->StartOptimization();
   /*
   // Optimizer with parameter estimator
@@ -234,7 +230,6 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   std::cout << "Start optimization..." << std::endl
             << "Number of threads: " << metric->GetNumberOfThreads() << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
             << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
@@ -264,12 +259,9 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   defoptimizer->SetMetric( metric );
   defoptimizer->SetLearningRate( deformationLearningRate );
   defoptimizer->SetNumberOfIterations( numberOfIterations );
-  defoptimizer->SetScalarScale( scalarScale );
-  defoptimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
             << "Deformation learning rate: " << deformationLearningRate << std::endl
             << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try

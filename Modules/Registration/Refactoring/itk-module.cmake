@@ -12,6 +12,7 @@ itk_module(ITKRegistrationRefactoring
     ITKFiniteDifference
     ITKHighDimensionalOptimizers
     ITKHighDimensionalMetrics
+    ITKDisplacementField
   TEST_DEPENDS
     ITKTestKernel
 )

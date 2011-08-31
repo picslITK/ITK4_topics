@@ -84,7 +84,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations] ";
-    std::cerr << " [scalarScale] [learningRate] " << std::endl;
+    std::cerr << " [learningRate] " << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
     return EXIT_SUCCESS;
@@ -92,14 +92,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 10;
-  double scalarScale = 1.0;
   double learningRate = 0.1;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
-  if( argc >= 6)
-    scalarScale = atof( argv[5] );
-  if( argc == 7 )
-    learningRate = atof( argv[6] );
+  if( argc == 6 )
+    learningRate = atof( argv[5] );
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -202,12 +199,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
             << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
   try
@@ -274,7 +268,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;

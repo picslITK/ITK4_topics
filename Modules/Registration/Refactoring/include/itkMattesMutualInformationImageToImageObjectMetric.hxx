@@ -601,7 +601,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
                             this->m_MovingTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */
-  this->m_MovingTransform->GetJacobianWithRespectToParameters(
+  this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
                                                             mappedMovingPoint,
                                                             jacobian);
 

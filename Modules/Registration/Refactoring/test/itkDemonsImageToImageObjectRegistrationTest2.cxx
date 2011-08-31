@@ -111,14 +111,11 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
 
 
   unsigned int numberOfIterations = 200;
-  double scalarScale = 1.0;
   double learningRate = 0.1;
   if( argc >= 2 )
     numberOfIterations = atoi( argv[1] );
-  if( argc >= 3)
-    scalarScale = atof( argv[2] );
-  if( argc == 4 )
-    learningRate = atof( argv[3] );
+  if( argc == 3 )
+    learningRate = atof( argv[2] );
 
   //--------------------------------------------------------
   std::cout << "Generate input images and displacement field";
@@ -218,12 +215,9 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl;
 
   // Initialize the metric to prepare for use
@@ -262,7 +256,7 @@ int itkDemonsImageToImageObjectRegistrationTest2(int argc, char* argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
   warper->SetInput( movingImage );
-  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
   warper->SetInterpolator( interpolator );
   warper->SetOutputSpacing( fixedImage->GetSpacing() );
   warper->SetOutputOrigin( fixedImage->GetOrigin() );

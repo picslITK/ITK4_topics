@@ -92,7 +92,7 @@ DemonsVectorImageToVectorImageObjectMetric<TFixedImage,TMovingImage,TVirtualImag
   metricValueReturn /= (double) this->FixedImageDimension;
 
   /** For dense transforms, this returns identity */
-  this->m_MovingTransform->GetJacobianWithRespectToParameters(
+  this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
                                               mappedMovingPoint, m_Jacobian);
 
   localDerivativeReturn.SetSize( this->GetNumberOfLocalParameters() );

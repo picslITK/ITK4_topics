@@ -259,19 +259,7 @@ public:
   //    const InputPointType & itkNotUsed(point) ) const
   //  { return TransformCovariantVector( vector ); }
 
-  /** Compute the Jacobian of the transformation
-   *
-   * This method computes the Jacobian matrix of the transformation.
-   * given point or vector, returning the transformed point or
-   * vector. The rank of the Jacobian will also indicate if the transform
-   * is invertible at this point. */
-  const JacobianType & GetJacobian(const InputPointType & point) const;
-
-  /** get local Jacobian for the given point
-   * \c j will sized properly as needed.
-   * This is a thread-safe version for GetJacobian(). Otherwise,
-   * m_Jacobian could be changed for different values in different threads. */
-  void GetJacobianWithRespectToParameters(const InputPointType  &x,
+  void ComputeJacobianWithRespectToParameters(const InputPointType  &x,
                                           JacobianType &j) const;
 
   /** This provides the ability to get a local jacobian value
@@ -279,7 +267,7 @@ public:
    *  transforms it would be unclear what parameters would refer to.
    *  Generally, global transforms should return an indentity jacobian
    *  since there is no change with respect to position. */
-  virtual void GetJacobianWithRespectToPosition(
+  virtual void ComputeJacobianWithRespectToPosition(
                                        const InputPointType & x,
                                        JacobianType &j ) const
     {

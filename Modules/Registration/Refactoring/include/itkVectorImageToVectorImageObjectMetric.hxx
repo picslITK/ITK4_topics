@@ -371,7 +371,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   // call GetValueAndDerivativeMultiThreadedCallback, which
   // iterates over virtual domain region and calls derived class'
   // GetValueAndDerivativeProcessPoint.
-  this->m_ValueAndDerivativeThreader->GenerateData();
+  this->m_ValueAndDerivativeThreader->StartThreadedExecution();
   // Determine the total number of points used during calculations.
   CollectNumberOfValidPoints();
 

@@ -74,7 +74,6 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
         char *argv[]) {
 
     unsigned int numberOfIterations = 100;
-    double scalarScale = 1.0;
     double learningRate = 1000;
     bool usePreWarp = true;
 
@@ -82,7 +81,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
         std::cerr << "Missing Parameters " << std::endl;
         std::cerr << "Usage: " << argv[0];
         std::cerr << " [numberOfIterations=100] ";
-        std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
+        std::cerr << " [learningRate=100] " << std::endl;
         std::cerr << " [usePreWarp=1 | 0]" << std::endl;
         std::cerr << "For test purpose, return PASSED here." << std::endl;
         std::cout << "Test PASSED." << std::endl;
@@ -106,11 +105,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
         numberOfIterations = atoi(argv[2]);
 
     if (argc >= 3)
-        scalarScale = atof(argv[3]);
+        learningRate = atof(argv[3]);
     if (argc >= 4)
-        learningRate = atof(argv[4]);
-    if (argc >= 5)
-        usePreWarp = atoi(argv[5]);
+        usePreWarp = atoi(argv[4]);
 
     bool pass = true;
     // Size Type
@@ -202,13 +199,11 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
     optimizer->SetMetric(metric);
     optimizer->SetLearningRate(learningRate);
     optimizer->SetNumberOfIterations(numberOfIterations);
-    optimizer->SetScalarScale(scalarScale);
-    optimizer->SetUseScalarScale(true);
 
     std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl << "Learning rate: "
-            << learningRate << std::endl << "CC radius: " << metric->GetRadius()
+            << "Learning rate: " << learningRate << std::endl
+            << "CC radius: " << metric->GetRadius()
             << std::endl << "CC prewarp: " << metric->GetPreWarpImages()
             << std::endl << "CC number of threads: "
             << metric->GetNumberOfThreads() << std::endl;
@@ -285,7 +280,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
     warper->SetOutputOrigin(fixedImage->GetOrigin());
     warper->SetOutputDirection(fixedImage->GetDirection());
 
-    warper->SetDeformationField(displacementTransform->GetDisplacementField());
+    warper->SetDisplacementField(displacementTransform->GetDisplacementField());
 
 //  //write out the displacement field
 //  typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
