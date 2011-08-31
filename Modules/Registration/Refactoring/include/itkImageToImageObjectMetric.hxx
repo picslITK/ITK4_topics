@@ -425,7 +425,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /*
- * Default post-processing for threaded GetValueAndDerivative calculation.
+ * Default post-processing for threaded GetValueAndDerivative calculation,
+ * after threading is completed.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
@@ -640,6 +641,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 #if 0 //(***************************************************************
+{
 /*
  * Evaluate at an index within pre-warped images.
  */
@@ -734,7 +736,7 @@ virtual void TransformAndEvaluateWarpedMovingImageAtIndex(
     ComputeMovingImageGradientAtIndex( index, mappedMovingImageGradient );
     }
 }
-
+}
 #endif //***************************************************************
 
 /*
@@ -745,7 +747,7 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::TransformAndEvaluateFixedPoint(
                          const VirtualIndexType & index,
-                         const VirtualPointType & point,
+                         const VirtualPointType & virtualPoint,
                          const bool computeImageGradient,
                          FixedImagePointType & mappedFixedPoint,
                          FixedImagePixelType & mappedFixedPixelValue,
@@ -762,7 +764,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    mappedFixedPoint = m_FixedTransform->TransformPoint( point );
+    mappedFixedPoint = m_FixedTransform->TransformPoint( virtualPoint );
     }
 
   // check against the mask if one is assigned
@@ -788,7 +790,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     /* Get the pixel values at this index */
     mappedFixedPixelValue = m_FixedWarpedImage->GetPixel( index );
-
     if( computeImageGradient )
       {
       ComputeFixedImageGradientAtIndex( index, mappedFixedImageGradient );
@@ -823,7 +824,7 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::TransformAndEvaluateMovingPoint(
                          const VirtualIndexType & index,
-                         const VirtualPointType & point,
+                         const VirtualPointType & virtualPoint,
                          const bool computeImageGradient,
                          MovingImagePointType & mappedMovingPoint,
                          MovingImagePixelType & mappedMovingPixelValue,
@@ -840,7 +841,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    mappedMovingPoint = m_MovingTransform->TransformPoint( point );
+    mappedMovingPoint = m_MovingTransform->TransformPoint( virtualPoint );
     }
 
   // check against the mask if one is assigned
@@ -878,15 +879,16 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     if( computeImageGradient )
       {
       this->ComputeMovingImageGradient( mappedMovingPoint,
-                                       mappedMovingImageGradient );
+                                        mappedMovingImageGradient );
       mappedMovingImageGradient =
         m_MovingTransform->TransformCovariantVector( mappedMovingImageGradient,
-                                                         mappedMovingPoint );
+                                                     mappedMovingPoint );
       }
     }
 }
 
 #if 0 //*************************************************************
+{
 /*
  * Transform a point from VirtualImage domain to MovingImage domain.
  */
@@ -947,8 +949,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                                         mappedMovingPoint );
     }
 }
-
-
+}
 #endif //******************************************************************/
 
 /*
@@ -959,9 +960,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedImageGradient(
-                              const FixedImagePointType & mappedPoint,
-                              FixedImageGradientType & gradient ) const
+::ComputeFixedImageGradient( const FixedImagePointType & mappedPoint,
+                             FixedImageGradientType & gradient ) const
 {
   if ( m_PrecomputeImageGradient )
     {
@@ -1069,7 +1069,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   m_FixedWarpedImage = m_FixedWarpResampleImageFilter->GetOutput();
 
   /* Point the interpolators to the warped images.
-   * We should try to skip this for efficiency. Will be possible if
+   * We should try to skip this for efficiency because setting of
+   * SmartPointers is relatively slow. Will be possible if
    * ResampleImageFilter always returns the same image pointer after
    * its first update, or if it can be set to allocate output during init. */
   /* No need to call Modified here on the calculators */
@@ -1144,10 +1145,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::UpdateTransformParameters( DerivativeType & derivative,
                              ParametersValueType factor )
 {
-  if( derivative.GetSize() != this->GetNumberOfParameters() )
-    {
-    itkExceptionMacro("derivative is not the proper size");
-    }
+  /* Rely on transform::UpdateTransformParameters to verify proper
+   * size of derivative */
   this->m_MovingTransform->UpdateTransformParameters( derivative, factor );
 }
 

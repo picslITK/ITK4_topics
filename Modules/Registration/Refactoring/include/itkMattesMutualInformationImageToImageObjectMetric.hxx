@@ -375,22 +375,20 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
         {
         this->TransformAndEvaluateFixedPoint( ItV.GetIndex(),
                                               virtualPoint,
-                                              mappedFixedPoint,
-                                              pointIsValid,
-                                              fixedImageValue,
                                               false /*compute gradient*/,
+                                              mappedFixedPoint,
+                                              fixedImageValue,
                                               fixedImageGradients,
-                                              0 );
+                                              pointIsValid );
         if( pointIsValid )
           {
           this->TransformAndEvaluateMovingPoint( ItV.GetIndex(),
                                                 virtualPoint,
-                                                mappedMovingPoint,
-                                                pointIsValid,
-                                                movingImageValue,
                                                 false /*compute gradient*/,
+                                                mappedMovingPoint,
+                                                movingImageValue,
                                                 movingImageGradients,
-                                                0 );
+                                                pointIsValid );
           }
         }
       catch( ExceptionObject & exc )

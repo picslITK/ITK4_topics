@@ -520,16 +520,16 @@ protected:
    * \warning  This is called from the threader, and thus must be thread-safe.
    */
   virtual bool GetValueAndDerivativeProcessPoint(
-        const VirtualPointType &          itkNotUsed(virtualPoint),
-        const FixedImagePointType &       itkNotUsed(mappedFixedPoint),
-        const FixedImagePixelType &       itkNotUsed(mappedFixedPixelValue),
-        const FixedImageGradientType &    itkNotUsed(mappedFixedImageGradient),
-        const MovingImagePointType &      itkNotUsed(mappedMovingPoint),
-        const MovingImagePixelType &      itkNotUsed(mappedMovingPixelValue),
-        const MovingImageGradientType &   itkNotUsed(mappedMovingImageGradient),
-        MeasureType &                     itkNotUsed(metricValueReturn),
-        DerivativeType &                  itkNotUsed(localDerivativeReturn),
-        ThreadIdType                      itkNotUsed(threadID) ) = 0;
+        const VirtualPointType &          virtualPoint,
+        const FixedImagePointType &       mappedFixedPoint,
+        const FixedImagePixelType &       mappedFixedPixelValue,
+        const FixedImageGradientType &    mappedFixedImageGradient,
+        const MovingImagePointType &      mappedMovingPoint,
+        const MovingImagePixelType &      mappedMovingPixelValue,
+        const MovingImageGradientType &   mappedMovingImageGradient,
+        MeasureType &                     metricValueReturn,
+        DerivativeType &                  localDerivativeReturn,
+        ThreadIdType                      threadID ) = 0;
 
   /** Perform any initialization required before each evaluation of
    * value and derivative. This is distinct from Initialize, which
@@ -826,6 +826,7 @@ private:
   bool                    m_ThreadingMemoryHasBeenInitialized;
 
   /* The number of threads to use.
+   * Keep private to force use of SetNumberOfThreads in derived classes.
    * /warning See discussion in GetNumberOfThreads.
    */
   ThreadIdType            m_NumberOfThreads;

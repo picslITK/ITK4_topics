@@ -37,6 +37,9 @@
  * Test various options for image gradient calculation
  * Test image pre-warping
  * Test mask
+ * Test with non-identity transforms
+ * Test with gradient calculation performed in test itself rather than relying
+ *  on the metric's gradient calculation.
  * Exercise other methods
  */
 
@@ -87,10 +90,10 @@ public:
   /* Provide the worker routine to process each point */
   bool GetValueAndDerivativeProcessPoint(
                     const VirtualPointType &,
-                    const FixedImagePointType &,
+                    const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
                     const FixedImageGradientType &  fixedImageGradient,
-                    const MovingImagePointType & ,
+                    const MovingImagePointType &    mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
                     const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
@@ -99,14 +102,14 @@ public:
   {
     /* Just return some test values that can verify proper mechanics */
     metricValueResult = fixedImageValue + movingImageValue;
-
     /*
-    std::cout << "Metric: " << mappedMovingPoint << ": movingImageDerivative:"
+    std::cout << "TestDerivedMetric: in GetValueAndDerivativeProcessPoint."
+                << std::endl;
+    std::cout << " mappedMovingPoint: " << mappedMovingPoint << ": movingImageDerivative:"
               << movingImageGradient << std::endl
-              << "Metric: " << mappedFixedPoint << ": fixedImageDerivative: "
+              << " mappedFixedPoint:  " << mappedFixedPoint << ":  fixedImageDerivative: "
               << fixedImageGradient << std::endl;
     */
-
     for ( unsigned int par = 0;
           par < this->GetNumberOfLocalParameters(); par++ )
       {
@@ -118,11 +121,8 @@ public:
         }
       localDerivativeReturn[par] = sum;
       }
-      /*
-      std::cout << "TestDerivedMetric: in GetValueAndDerivativeProcessPoint."
-                << std::endl
-                << "localDerivativeReturn: " << localDerivativeReturn << std::endl;
-      */
+    //  std::cout << " localDerivativeReturn: " << localDerivativeReturn << std::endl;
+
     // Return true if the point was used in evaluation
     return true;
   }
@@ -242,7 +242,7 @@ int RunTest( TestMetricType::Pointer & metric,
     }
 
   //
-  // Verify results
+  // Compute truth values
   //
   TestMetricType::MeasureType       truthValue = 0;
   TestMetricType::DerivativeType
@@ -258,7 +258,6 @@ int RunTest( TestMetricType::Pointer & metric,
   TestMetricType::MovingGradientImageType::ConstPointer
     movingGradientImage = metric->GetMovingGaussianGradientImage();
 
-  // Compute truth values
   ImageRegionIterator<ImageType>
     itFixed( fixedImage, fixedImage->GetRequestedRegion() );
   ImageRegionIterator<ImageType>
@@ -272,14 +271,16 @@ int RunTest( TestMetricType::Pointer & metric,
 
     // Get the image derivatives. Because this test is using identity transforms,
     // simply retrieve by index.
+    // NOTE: relying on the metric's gradient image isn't a complete test, but it
+    // does test the rest of the mechanics.
     fixedImageDerivative = fixedGradientImage->GetPixel( itFixed.GetIndex() );
     movingImageDerivative = movingGradientImage->GetPixel( itMoving.GetIndex() );
-    /*
+
     std::cout << "Truth: " << itMoving.GetIndex() << ": movingImageDerivative:"
               << movingImageDerivative << std::endl
               << "Truth: " << itFixed.GetIndex() << ": fixedImageDerivative: "
               << fixedImageDerivative << std::endl;
-    */
+
     for ( unsigned int par = 0;
           par < metric->GetNumberOfLocalParameters(); par++ )
       {
@@ -311,7 +312,9 @@ int RunTest( TestMetricType::Pointer & metric,
     truthDerivative /= metric->GetNumberOfValidPoints();
     }
 
-  // Compare truth with test
+  //
+  // Verify results
+  //
   if( vcl_fabs( truthValue - valueReturn ) > epsilon )
     {
     std::cout << "truthValue does not equal value: " << std::endl
@@ -372,6 +375,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   while( !itFixed.IsAtEnd() )
     {
     itFixed.Set( count*count );
+    //itFixed.Set( 1.0 );
     count++;
     ++itFixed;
     }
@@ -381,6 +385,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   while( !itMoving.IsAtEnd() )
     {
     itMoving.Set( 1.0/(count*count) );
+    //itMoving.Set(1.0);
     count++;
     ++itMoving;
     }
@@ -403,9 +408,14 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( fixedTransform );
   metric->SetMovingTransform( movingTransform );
+  metric->SetPreWarpImages( false );
+  metric->SetPrecomputeImageGradient( true );
+  // Tell the metric to compute image gradients for both fixed and moving.
+  metric->SetGradientSource( TestMetricType::Both );
+
 
   //Evaluate the metric
-  //metric->SetNumberOfThreads(1);
+  metric->SetNumberOfThreads(1);
   std::cout << "* Testing with IdentityTransform for moving image..." << std::endl;
   if( RunTest( metric, fixedImage, movingImage ) != EXIT_SUCCESS )
     {
@@ -442,6 +452,12 @@ int itkImageToImageObjectMetricTest(int, char ** const)
 
   // Assign it to the metric
   metric->SetMovingTransform( displacementTransform );
+
+  metric->SetPreWarpImages( false );
+  metric->SetPrecomputeImageGradient( true );
+  // Tell the metric to compute image gradients for both fixed and moving.
+  metric->SetGradientSource( TestMetricType::Both );
+
   //Evaluate the metric
   std::cout
     << "* Testing with identity DisplacementFieldTransform for moving image..."
