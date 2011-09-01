@@ -140,6 +140,9 @@ protected:
   /** Estimate the Hessian with BFGS method */
   void EstimateHessian();
 
+  /** Reset Hessian to Identity and use the gradient step*/
+  void ResetNewtonStep();
+
   /** Function to compute the learning rate. */
   virtual double EstimateLearningRate(ParametersType step);
 

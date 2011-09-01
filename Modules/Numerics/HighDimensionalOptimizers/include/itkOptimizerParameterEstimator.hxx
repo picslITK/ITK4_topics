@@ -29,11 +29,14 @@ OptimizerParameterEstimator< TMetric >
 {
   // Euclidean distance
   m_LNorm = 2;
-  // true means to transform from fixed domain to moving domain
+
+  // estimate paramter scales of the moving transform
   m_TransformForward = true;
 
+  // using maximum voxel shift to estimate scales
   m_ScaleStrategy = ScalesFromShift;
 
+  // the metric object must be set before EstimateScales()
   m_Metric = NULL;
 
 }
@@ -54,6 +57,8 @@ OptimizerParameterEstimator< TMetric >
     itkExceptionMacro(" The size of scales does not match that of transform parameters.");
     }
 
+  this->SampleImageDomain();
+
   switch (m_ScaleStrategy)
     {
     case ScalesFromShift:
@@ -72,6 +77,8 @@ OptimizerParameterEstimator< TMetric >
       }
     }
 }
+
+/** Get the transform being estimated */
 template< class TMetric >
 TransformBase *
 OptimizerParameterEstimator< TMetric >
@@ -87,6 +94,7 @@ OptimizerParameterEstimator< TMetric >
     }
 }
 
+/** Transform a physical point to its continuous index */
 template< class TMetric >
 template< class TContinuousIndexType >
 void
@@ -108,6 +116,7 @@ OptimizerParameterEstimator< TMetric >
     }
 }
 
+/** Get the transform Jacobian w.r.t parameters at a point */
 template< class TMetric >
 const typename OptimizerParameterEstimator< TMetric >::JacobianType &
 OptimizerParameterEstimator< TMetric >
@@ -123,7 +132,7 @@ OptimizerParameterEstimator< TMetric >
     }
 }
 
-/** Compute parameter scales */
+/** Estimate parameter scales from maximum voxel shift */
 template< class TMetric >
 void
 OptimizerParameterEstimator< TMetric >
@@ -135,9 +144,7 @@ OptimizerParameterEstimator< TMetric >
   ParametersType deltaParameters(numPara);
   deltaParameters.Fill(0.0);
 
-  // To avoid division-by-zero, assign a small value for parameters
-  // whose impact on voxel shift is zero. This small value may be
-  // the minimum non-zero shift.
+  // minNonZeroShift: the minimum non-zero shift.
   double minNonZeroShift = NumericTraits<double>::max();
 
   // compute voxel shift generated from each transform parameter
@@ -148,9 +155,9 @@ OptimizerParameterEstimator< TMetric >
     deltaParameters[i] = 0;
 
     if (maxShift != maxShift)
-    {
-    itkExceptionMacro("OptimizerParameterEstimator: maximum voxel shift is undefined with current parameters.");
-    }
+      {
+      itkExceptionMacro("OptimizerParameterEstimator: maximum voxel shift is undefined with current parameters.");
+      }
 
     parameterScales[i] = maxShift;
     if ( maxShift != 0 && maxShift < minNonZeroShift )
@@ -158,23 +165,35 @@ OptimizerParameterEstimator< TMetric >
       minNonZeroShift = maxShift;
       }
     }
-    if (minNonZeroShift == NumericTraits<double>::max())
-    {
-    itkExceptionMacro("OptimizerParameterEstimator: any change in the parameters yields zero voxel shift. Nothing could be optimized.");
-    }
 
-  for (unsigned int i=0; i<numPara; i++)
+  if (minNonZeroShift == NumericTraits<double>::max())
     {
-    if (parameterScales[i] == 0)
+    std::cout << std::endl
+      << "Warning: any change in the parameters yields zero voxel shift."
+      << std::endl
+      << "Warning: nothing could be optimized."
+      << std::endl;
+    parameterScales.fill(0.0);
+    }
+  else
+    {
+    for (unsigned int i=0; i<numPara; i++)
       {
-      parameterScales[i] = minNonZeroShift;
+      if (parameterScales[i] == 0)
+        {
+        // To avoid division-by-zero in optimizers, assign a small value for a zero scale.
+        parameterScales[i] = minNonZeroShift;
+        }
+      parameterScales[i] *= parameterScales[i];
       }
-    parameterScales[i] *= parameterScales[i];
     }
-
 }
 
-/** Compute parameter scales */
+/** Compute parameter scales from average jacobian norms.
+ *  For each parameter, compute the squared norm of its transform Jacobian,
+ *  then average the squared norm over the sample points. This average is
+ *  used as the scale of this parameter.
+ */
 template< class TMetric >
 void
 OptimizerParameterEstimator< TMetric >
@@ -204,7 +223,7 @@ OptimizerParameterEstimator< TMetric >
     norms[p] = 0;
     }
 
-  // find max shift by checking each sample point
+  // checking each sample point
   for (unsigned int c=0; c<numSamples; c++)
     {
     point = m_ImageSamples[c];
@@ -229,7 +248,7 @@ OptimizerParameterEstimator< TMetric >
 
 }
 
-/** Set the sample points for computing pixel shifts */
+/** Initialize the sample points in the virtual image domain */
 template< class TMetric >
 void
 OptimizerParameterEstimator< TMetric >
@@ -255,7 +274,7 @@ OptimizerParameterEstimator< TMetric >
 }
 
 /**
- * Sample the physical coordinates of image in uniform random
+ * Sample the physical points of the virtual image in a uniform random distribution
  */
 template< class TMetric >
 void
@@ -288,7 +307,7 @@ OptimizerParameterEstimator< TMetric >
 }
 
 /**
- * Get the physical coordinates of image corners
+ * Sample the physical points with image corners
  */
 template< class TMetric >
 void
@@ -321,13 +340,17 @@ OptimizerParameterEstimator< TMetric >
 }
 
 /**
- * Compute the maximum shift when one transform is changed to another
+ * Compute the maximum shift when a transform is changed with deltaParameters
  */
 template< class TMetric >
 double
 OptimizerParameterEstimator< TMetric >
 ::ComputeMaximumVoxelShift(ParametersType deltaParameters)
 {
+  //when ComputeMaximumVoxelShift is called without EstimateScales being called,
+  //we need to make sure SampleImageDomain is called
+  this->SampleImageDomain();
+
   double shift;
   if (m_TransformForward)
     {
@@ -340,6 +363,10 @@ OptimizerParameterEstimator< TMetric >
   return shift;
 }
 
+/** The templated version of EstimateScalesFromMaximumShift.
+ *  The template argument TTransform may be either MovingTransformType
+ *  or FixedTransformType.
+ */
 template< class TMetric >
 template< class TTransform >
 double
@@ -377,7 +404,6 @@ OptimizerParameterEstimator< TMetric >
   //store the old mapped indices to reduce calls to Transform::SetParameters()
   ContinuousIndexType *oldMappedIndices = new ContinuousIndexType[numSamples];
 
-  // find max shift by checking each sample point
   // compute the indices mapped by the old transform
   for (unsigned int c=0; c<numSamples; c++)
     {
@@ -388,6 +414,7 @@ OptimizerParameterEstimator< TMetric >
   // set the new parameters in the transform
   this->GetTransform()->SetParameters(newParameters);
 
+  // compute the indices mapped by the new transform
   for (unsigned int c=0; c<numSamples; c++)
     {
     point = this->m_ImageSamples[c];
@@ -398,6 +425,7 @@ OptimizerParameterEstimator< TMetric >
       diffIndex[d] = oldMappedIndices[c][d] - newMappedIndex[d];
       }
 
+    // find max shift by checking each sample point
     distance = ComputeLNorm<ContinuousIndexType>(diffIndex);
     if ( voxelShift < distance )
       {
@@ -458,6 +486,7 @@ OptimizerParameterEstimator< TMetric >
   return distance;
 }
 
+/** Print the information about this class */
 template< class TMetric >
 void
 OptimizerParameterEstimator< TMetric >
@@ -465,19 +494,16 @@ OptimizerParameterEstimator< TMetric >
 {
   Superclass::PrintSelf(os,indent);
 
+  os << indent << "MetricType   = " << std::endl;
+  os << indent << typeid(MetricType).name()  << std::endl;
+
   os << indent << "FixedTransformType   = " << std::endl;
   os << indent << typeid(FixedTransformType).name()  << std::endl;
 
   os << indent << "MovingTransformType   = " << std::endl;
   os << indent << typeid(MovingTransformType).name()  << std::endl;
 
-  os << indent << "MetricType   = " << std::endl;
-  os << indent << typeid(MetricType).name()  << std::endl;
-
-  os << indent << "m_LNorm   = " << this->m_LNorm << std::endl;
-  os << indent << "TransformForward   = " << this->m_TransformForward << std::endl;
-
-  os << indent << "FixedImage   = " << std::endl;
+  os << indent << "m_FixedImage   = " << std::endl;
   if( this->m_FixedImage )
     {
     os << indent << this->m_FixedImage  << std::endl;
@@ -487,7 +513,7 @@ OptimizerParameterEstimator< TMetric >
     os << indent << "None" << std::endl;
     }
 
-  os << indent << "MovingImage   = " << std::endl;
+  os << indent << "m_MovingImage   = " << std::endl;
   if( this->m_MovingImage )
     {
     os << indent << this->m_MovingImage  << std::endl;
@@ -497,8 +523,22 @@ OptimizerParameterEstimator< TMetric >
     os << indent << "None" << std::endl;
     }
 
-  os << indent << "ImageSamples Size   = " << std::endl;
+  os << indent << "m_VirtualImage   = " << std::endl;
+  if( this->m_VirtualImage )
+    {
+    os << indent << this->m_VirtualImage  << std::endl;
+    }
+  else
+    {
+    os << indent << "None" << std::endl;
+    }
+
+  os << indent << "m_ImageSamples.size = " << std::endl;
   os << indent << this->m_ImageSamples.size()  << std::endl;
+
+  os << indent << "m_LNorm = " << this->m_LNorm << std::endl;
+  os << indent << "m_TransformForward = " << this->m_TransformForward << std::endl;
+  os << indent << "m_ScaleStrategy = " << this->m_ScaleStrategy << std::endl;
 
 }
 

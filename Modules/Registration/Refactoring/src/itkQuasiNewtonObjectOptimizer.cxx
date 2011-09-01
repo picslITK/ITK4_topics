@@ -77,9 +77,9 @@ QuasiNewtonObjectOptimizer
         }
       ScalesType scales(this->m_Metric->GetNumberOfParameters());
 
-      //m_OptimizerParameterEstimator->EstimateScales(scales);
-      for (int s=0; s<4; s++) scales[s] = 9801;
-      for (int s=4; s<6; s++) scales[s] = 1;
+      m_OptimizerParameterEstimator->EstimateScales(scales);
+      //for (int s=0; s<4; s++) scales[s] = 9801;
+      //for (int s=4; s<6; s++) scales[s] = 1;
 
       this->SetScales(scales);
       std::cout << " Estimated scales = " << scales << std::endl;
@@ -238,11 +238,13 @@ QuasiNewtonObjectOptimizer
   double gradientNewtonProduct = inner_product(m_Gradient, m_NewtonStep);
   double gradientNorm = m_Gradient.two_norm();
   double newtonNorm = m_NewtonStep.two_norm();
-  double cosine = gradientNewtonProduct / gradientNorm / newtonNorm;
+  //double cosine = gradientNewtonProduct / gradientNorm / newtonNorm;
 
-  if ( newtonStepException || cosine < 0 )
+  if ( newtonStepException || gradientNewtonProduct < 0 )
     {
     // using gradient step
+    this->ResetNewtonStep();
+
     //double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
       {
@@ -426,8 +428,8 @@ double QuasiNewtonObjectOptimizer
   ParametersType initPosition = this->m_Metric->GetParameters();
   ParametersType tempPosition(spaceDimension);
   ParametersType deltaPosition(spaceDimension);
-  if (m_CurrentIteration >= 3)
-    int tmpdbg = 0;
+  //if (m_CurrentIteration >= 3)
+  //  int tmpdbg = 0;
 
   tempPosition = this->m_Metric->GetParameters();
   deltaPosition = initPosition + t2 * direction - tempPosition;
@@ -463,8 +465,8 @@ double QuasiNewtonObjectOptimizer
     this->m_Metric->UpdateTransformParameters( deltaPosition );
     this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
     m_CurrentIteration++;
-    if (m_CurrentIteration == 46)
-      int tmpdbg = 0;
+    //if (m_CurrentIteration == 46)
+    //  int tmpdbg = 0;
 
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
@@ -548,8 +550,8 @@ double QuasiNewtonObjectOptimizer
   ParametersType deltaPosition(spaceDimension);
   DerivativeType tempGradient(spaceDimension);
 
-  if (m_CurrentIteration >= 3)
-    int tmpdbg = 0;
+  //if (m_CurrentIteration >= 3)
+  //  int tmpdbg = 0;
   int loop = 0;
   while (true)
     {
@@ -684,17 +686,7 @@ void QuasiNewtonObjectOptimizer
       m_Hessian[0][0] == NumericTraits<double>::max() ||
       m_HessianInverse[0][0] == NumericTraits<double>::max())
     {
-    m_NewtonStep = m_Gradient; //use gradient step
-
-    // Initialize Hessian to identity matrix
-    m_Hessian.Fill(0.0f);
-    m_HessianInverse.Fill(0.0f);
-
-    for (unsigned int i=0; i<numPara; i++)
-      {
-      m_Hessian[i][i] = 1.0; //identity matrix
-      m_HessianInverse[i][i] = 1.0; //identity matrix
-      }
+    this->ResetNewtonStep();
     }
   else
     {
@@ -765,6 +757,24 @@ void QuasiNewtonObjectOptimizer
     //m_HessianInverse = vnl_matrix_inverse<double>(approximateHessian);
 
     m_HessianInverse = vnl_matrix_inverse<double>(newHessian);
+    }
+}
+
+void QuasiNewtonObjectOptimizer
+::ResetNewtonStep()
+{
+  unsigned int numPara = this->m_Metric->GetNumberOfParameters();
+
+  m_NewtonStep = m_Gradient; //use gradient step
+
+  // Initialize Hessian to identity matrix
+  m_Hessian.Fill(0.0f);
+  m_HessianInverse.Fill(0.0f);
+
+  for (unsigned int i=0; i<numPara; i++)
+    {
+    m_Hessian[i][i] = 1.0; //identity matrix
+    m_HessianInverse[i][i] = 1.0; //identity matrix
     }
 }
 
