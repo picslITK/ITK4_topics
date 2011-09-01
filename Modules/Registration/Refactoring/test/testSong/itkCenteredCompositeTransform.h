@@ -51,7 +51,7 @@ namespace itk
  * transforms, although have their own fixed parameters, must be reset to
  * all zero, when adding to CenteredCompositeTransform. Otherwise, it will
  * not function properly. Also, the transform should guarantee that
- *  GetParameters() don't include m_Center and thus GetJacobianWithRespectToParameters()
+ *  GetParameters() don't include m_Center and thus ComputeJacobianWithRespectToParameters()
  *
  *
  */
@@ -62,8 +62,8 @@ class ITK_EXPORT CenteredCompositeTransform :
 {
 public:
   /** Standard class typedefs. */
-  typedef CenteredCompositeTransform                           Self;
-  typedef CompositeTransform<TScalar, NDimensions> Superclass;
+  typedef CenteredCompositeTransform                   Self;
+  typedef CompositeTransform<TScalar, NDimensions>     Superclass;
   typedef SmartPointer<Self>                           Pointer;
   typedef SmartPointer<const Self>                     ConstPointer;
 
@@ -281,10 +281,7 @@ public:
    */
   virtual const JacobianType & GetJacobian(const InputPointType  &) const;
 
-
-  virtual void GetJacobianWithRespectToParameters(const InputPointType  &x, JacobianType &j) const;
-
-
+  virtual void ComputeJacobianWithRespectToParameters(const InputPointType  &x, JacobianType &j) const;
 
   /** Get/Set Parameter functions work on the current list of transforms
       that are set to be optimized (active) using the

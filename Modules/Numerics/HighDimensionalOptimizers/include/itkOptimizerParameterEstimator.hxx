@@ -118,17 +118,18 @@ OptimizerParameterEstimator< TMetric >
 
 /** Get the transform Jacobian w.r.t parameters at a point */
 template< class TMetric >
-const typename OptimizerParameterEstimator< TMetric >::JacobianType &
+void
 OptimizerParameterEstimator< TMetric >
-::GetJacobian(VirtualPointType &point)
+::ComputeJacobianWithRespectToParameters( const VirtualPointType  & point,
+                                          JacobianType & jacobian ) const
 {
   if (m_TransformForward)
     {
-    return m_MovingTransform->GetJacobian(point);
+    m_MovingTransform->ComputeJacobianWithRespectToParameters(point, jacobian);
     }
   else
     {
-    return m_FixedTransform->GetJacobian(point);
+    m_FixedTransform->ComputeJacobianWithRespectToParameters(point, jacobian);
     }
 }
 
@@ -228,7 +229,8 @@ OptimizerParameterEstimator< TMetric >
     {
     point = m_ImageSamples[c];
 
-    const JacobianType &jacobian = this->GetJacobian(point);
+    JacobianType jacobian;
+    this->ComputeJacobianWithRespectToParameters( point, jacobian );
 
     for (unsigned int p=0; p<numPara; p++)
       {

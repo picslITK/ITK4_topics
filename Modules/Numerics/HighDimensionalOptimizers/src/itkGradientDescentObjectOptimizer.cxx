@@ -15,8 +15,6 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-//#ifndef __itkGradientDescentObjectOptimizer_hxx
-//#define __itkGradientDescentObjectOptimizer_hxx
 
 #include "itkGradientDescentObjectOptimizer.h"
 
@@ -29,8 +27,15 @@ namespace itk
 GradientDescentObjectOptimizer
 ::GradientDescentObjectOptimizer()
 {
-  m_LearningRate = 1.0;
+  this->m_LearningRate = 1.0;
 }
+
+/**
+ * Destructor
+ */
+GradientDescentObjectOptimizer
+::~GradientDescentObjectOptimizer()
+{}
 
 /**
  * Start and run the optimization
@@ -44,7 +49,7 @@ GradientDescentObjectOptimizer
   /* Must call the superclass version for basic validation and setup */
   Superclass::StartOptimization();
 
-  m_CurrentIteration = 0;
+  this->m_CurrentIteration = 0;
 
   this->ResumeOptimization();
 }
@@ -56,12 +61,12 @@ void
 GradientDescentObjectOptimizer
 ::ResumeOptimization()
 {
-  m_StopConditionDescription.str("");
-  m_StopConditionDescription << this->GetNameOfClass() << ": ";
-  InvokeEvent( StartEvent() );
+  this->m_StopConditionDescription.str("");
+  this->m_StopConditionDescription << this->GetNameOfClass() << ": ";
+  this->InvokeEvent( StartEvent() );
 
-  m_Stop = false;
-  while( ! m_Stop )
+  this->m_Stop = false;
+  while( ! this->m_Stop )
     {
     /* Compute metric value/derivative. */
     try
@@ -72,8 +77,8 @@ GradientDescentObjectOptimizer
       }
     catch ( ExceptionObject & err )
       {
-      m_StopCondition = MetricError;
-      m_StopConditionDescription << "Metric error during optimization";
+      this->m_StopCondition = COSTFUNCTION_ERROR;
+      this->m_StopConditionDescription << "Metric error during optimization";
       this->StopOptimization();
 
       // Pass exception to caller
@@ -82,9 +87,9 @@ GradientDescentObjectOptimizer
 
     /* Check if optimization has been stopped externally.
      * (Presumably this could happen from a multi-threaded client app?) */
-    if ( m_Stop )
+    if ( this->m_Stop )
       {
-      m_StopConditionDescription << "StopOptimization() called";
+      this->m_StopConditionDescription << "StopOptimization() called";
       break;
       }
 
@@ -93,13 +98,13 @@ GradientDescentObjectOptimizer
     this->AdvanceOneStep();
 
     /* Update and check iteration count */
-    m_CurrentIteration++;
-    if ( m_CurrentIteration >= m_NumberOfIterations )
+    this->m_CurrentIteration++;
+    if ( this->m_CurrentIteration >= this->m_NumberOfIterations )
       {
-      m_StopConditionDescription << "Maximum number of iterations ("
-                                 << m_NumberOfIterations
+      this->m_StopConditionDescription << "Maximum number of iterations ("
+                                 << this->m_NumberOfIterations
                                  << ") exceeded.";
-      m_StopCondition = MaximumNumberOfIterations;
+      this->m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
       this->StopOptimization();
       break;
       }
@@ -122,12 +127,12 @@ GradientDescentObjectOptimizer
   try
     {
     /* Pass graident to transform and let it do its own updating */
-    this->m_Metric->UpdateTransformParameters( m_Gradient );
+    this->m_Metric->UpdateTransformParameters( this->m_Gradient );
     }
   catch ( ExceptionObject & err )
     {
-    m_StopCondition = UpdateTransformParametersError;
-    m_StopConditionDescription << "UpdateTransformParameters error";
+    this->m_StopCondition = UPDATE_PARAMETERS_ERROR;
+    this->m_StopConditionDescription << "UpdateTransformParameters error";
     this->StopOptimization();
 
     // Pass exception to caller
@@ -145,20 +150,23 @@ GradientDescentObjectOptimizer
 ::ModifyGradientOverSubRange( const IndexRangeType& subrange )
 {
   const ScalesType& scales = this->GetScales();
+  typedef IndexRangeType::IndexValueType     IndexValueType;
 
-  for ( unsigned int j = subrange[0]; j <= subrange[1]; j++ )
+  /* Loop over the range. It is inclusive. */
+  for ( IndexValueType j = subrange[0]; j <= subrange[1]; j++ )
     {
-    if( this->m_UseScalarScale )
+    if( scales.GetSize() == 0 )
       {
-      m_Gradient[j] = m_Gradient[j] / this->m_ScalarScale * m_LearningRate;
+      this->m_Gradient[j] = this->m_Gradient[j] * this->m_LearningRate;
       }
     else
       {
-      m_Gradient[j] = m_Gradient[j] / scales[j] * m_LearningRate;
+      // scales is checked during StartOptmization for values <=
+      // machine epsilon.
+      this->m_Gradient[j] =
+                this->m_Gradient[j] / scales[j] * this->m_LearningRate;
       }
     }
 }
 
 }//namespace itk
-
-//#endif

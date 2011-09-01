@@ -36,7 +36,7 @@ class ITK_EXPORT RegularStepGradientDescentObjectOptimizer
 {
 public:
   /** Standard class typedefs. */
-  typedef RegularStepGradientDescentObjectOptimizer     Self;
+  typedef RegularStepGradientDescentObjectOptimizer             Self;
   typedef GradientDescentObjectOptimizerBase <TMetricFunction>
                                                                 Superclass;
   typedef SmartPointer< Self >                                  Pointer;
@@ -97,7 +97,7 @@ public:
        * Use threader. */
       /* per-iteration preparation for threading */
       this->BeforeMetricThreadedGenerateData();
-      this->m_MetricThreader->GenerateData();
+      this->m_MetricThreader->StartThreadedExecution();
       /* Collect metric results from the threads. */
       this->AfterMetricThreadedGenerateData();
 

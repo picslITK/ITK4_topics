@@ -80,7 +80,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
     std::cerr << " fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
     std::cerr << " [numberOfIterations=100] ";
-    std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
+    std::cerr << " [learningRate=100] " << std::endl;
     std::cerr << " [usePreWarp=1 | 0]" << std::endl;
     std::cerr << "For test purpose, return PASSED here." << std::endl;
     std::cout << "Test PASSED." << std::endl;
@@ -88,17 +88,14 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
     }
 //  std::cout << argc << std::endl;
   unsigned int numberOfIterations = 100;
-  double scalarScale = 1.0;
   double learningRate = 100;
   bool preWarp = true;
   if( argc >= 5 )
     numberOfIterations = atoi( argv[4] );
-  if( argc >= 6)
-    scalarScale = atof( argv[5] );
-  if( argc >= 7 )
-    learningRate = atof( argv[6] );
-  if ( argc >= 8 )
-    preWarp = (atoi(argv[7]) != 0);
+  if( argc >= 6 )
+    learningRate = atof( argv[5] );
+  if ( argc >= 7 )
+    preWarp = (atoi(argv[6]) != 0);
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -208,12 +205,9 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
-  optimizer->SetScalarScale( scalarScale );
-  optimizer->SetUseScalarScale(true);
 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
-            << "Scalar scale: " << scalarScale << std::endl
             << "Learning rate: " << learningRate << std::endl
             << "CC radius: " << metric->GetRadius() << std::endl
             << "CC prewarp: " << metric->GetPreWarpImages() << std::endl
@@ -268,7 +262,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;

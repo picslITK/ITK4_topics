@@ -345,24 +345,12 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
   this->Modified();
 }
 
-// Compute the Jacobian in one position
-template< class TScalarType, unsigned int NInputDimensions,
-          unsigned int NOutputDimensions >
-const typename PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >::JacobianType &
-PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::GetJacobian(const InputPointType & p) const
-{
-  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
-  return this->m_Jacobian;
-
-}
-
 // Compute the Jacobian in one position, without setting values to m_Jacobian
 template< class TScalarType, unsigned int NInputDimensions,
           unsigned int NOutputDimensions >
 void
 PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
-::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
+::ComputeJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
 {
   //This will not reallocate memory if the dimensions are equal
   // to the matrix's current dimensions.
@@ -388,8 +376,8 @@ PolyAffineTransform< TScalarType, NInputDimensions, NOutputDimensions >
 
   for ( t = 0; t < m_AtomicTransformList.size(); t++ )
     {
-    const typename AtomicTransformType::JacobianType &atomicJacobian
-      = m_AtomicTransformList[t]->GetJacobian(p);
+    typename AtomicTransformType::JacobianType atomicJacobian;
+    m_AtomicTransformList[t]->ComputeJacobianWithRespectToParameters( p, atomicJacobian );
     for ( par1 = 0; par1 < m_AtomicTransformList[t]->GetNumberOfLocalParameters(); par1++ )
       {
       for ( d = 0; d < NOutputDimensions; d++ )

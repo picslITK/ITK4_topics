@@ -127,8 +127,8 @@ QuasiNewtonLocalSupportObjectOptimizer
       }
     catch ( ExceptionObject & err )
       {
-      m_StopCondition = MetricError;
-      m_StopConditionDescription << "Metric error";
+      m_StopCondition = COSTFUNCTION_ERROR;
+      m_StopConditionDescription << "CostFunction error";
       this->StopOptimization();
 
       // Pass exception to caller
@@ -154,7 +154,7 @@ QuasiNewtonLocalSupportObjectOptimizer
       m_StopConditionDescription << "Maximum number of iterations ("
                                  << m_NumberOfIterations
                                  << ") exceeded.";
-      m_StopCondition = MaximumNumberOfIterations;
+      m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
       this->StopOptimization();
       break;
       }

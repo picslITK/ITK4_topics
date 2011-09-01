@@ -41,15 +41,13 @@ private:
     void f(ty<Tx, char>) { } // "specialized"
 };
 
-
-
 template<typename T, int Dim>
 class MyTransform
 {
 public:
-     MyTransform(){std::cout << "general!" << std::endl;};
+     MyTransform(){std::cout << "general!" << std::endl;}
      void rotate();
-    T m;
+    T m_M;
 };
 
 template <typename T>
@@ -59,7 +57,7 @@ public:
         std::cout << "2!" << std::endl;
     }
     void rotate();
-    int m;
+    int m_M;
 };
 
 template <typename T, int Dim>
@@ -67,14 +65,14 @@ void
 MyTransform<T, Dim>
 ::rotate() {
     std::cout << " rotate genereal" << std::endl;
-};
+}
 
 template <typename T>
 void
 MyTransform<T, 2>
 ::rotate() {
     std::cout << " rotate 3" << std::endl;
-};
+}
 
 int main1(){
     MyTransform<bool, 2> m;
@@ -86,12 +84,8 @@ int main1(){
     return 0;
 }
 
-
-
-
-
-typedef std::vector<double> RawVectorType;
-typedef std::vector< RawVectorType > RawPointListType;
+typedef std::vector<double>           RawVectorType;
+typedef std::vector< RawVectorType >  RawPointListType;
 
 
 template<int Dim, class TRawVector, class TRawPointList>
@@ -125,7 +119,7 @@ double max_distance_between_point_list(const TRawPointList &a, const TRawPointLi
 
     }
 
-    if (a.size()==0) {
+    if (a.size() == 0) {
         std::cerr << "in distance_between_point_list: WARNING empty point list ! "
                 << std::endl;
         return 0;
@@ -178,13 +172,10 @@ int main(int argc, char **argv){
     test_centered_composite_transform<Dim, RawVectorType, RawPointListType>(raw_x, raw_y, A, t, c, nb_iter);
     t3.Stop();
 
-
-
     itk::TimeProbe t4;
     t4.Start();
     test_centered_composite_RSKT_transform<Dim, RawVectorType, RawPointListType>(raw_x, raw_y, A, t, c, nb_iter);
     t4.Stop();
-
 
     std::cout << "test_one_transform timing:" << t1.GetTotal() << " seconds" << std::endl;
 //    std::cout << "test_composite_transform timing:" << t2.GetTotal() << " seconds" << std::endl;
@@ -213,8 +204,6 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
     A1.clear();
     t1.clear();
     c1.clear();
-
-
 
 //    float A[Dim*Dim] = { 0.5, -3.6, 0.2, -2.9 };
 //    float A[Dim*Dim] = { 1.2, -0.8, 0.8, 0.6};
@@ -264,7 +253,7 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
     }
 
     std::cout << "A = ";
-    for(int i=0; i<Dim*Dim; i++) std::cout<<A1[i]<<",";
+    for(int i=0; i< Dim * Dim; i++) std::cout<<A1[i]<<",";
     std::cout << std::endl;
 
     std::cout << "c = ";
@@ -275,12 +264,12 @@ void generate_random_point_list(const int n, TRawPointList &x, TRawPointList &y,
     for(int i=0; i<Dim; i++) std::cout <<t1[i]<<",";
     std::cout << std::endl;
 
-    std::cout <<"x = \t==>\t y = " << std::endl;
+    std::cout << "x = \t= >\t y = " << std::endl;
     for(int i=0; i<n; i++){
         for(int d=0; d<Dim; d++){
             std::cout << x[i][d] << " ";
         }
-        std::cout << "\t==>\t";
+        std::cout << "\t= >\t";
         for(int d=0; d<Dim; d++){
             std::cout << y[i][d] << " ";
         }
@@ -326,7 +315,7 @@ void test_one_transform( const TRawPointList &x, const TRawPointList &y,
         delta_para.Fill(0);
 
         for(int i=0; i<nb_pts; i++){
-            typedef typename AffineType::InputPointType InputPointType;
+            typedef typename AffineType::InputPointType  InputPointType;
             typedef typename AffineType::OutputPointType OutputPointType;
 
             InputPointType ptx;
@@ -344,7 +333,7 @@ void test_one_transform( const TRawPointList &x, const TRawPointList &y,
             typedef typename AffineType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            affine->GetJacobianWithRespectToParameters(ptx, jac);
+            affine->ComputeJacobianWithRespectToParameters(ptx, jac);
 
             JacobianType jac2(Dim, kParaDim);
             jac2 = affine->GetMatrix() * jac;
@@ -356,7 +345,7 @@ void test_one_transform( const TRawPointList &x, const TRawPointList &y,
             }
         }
 
-        delta_para *= 1.0 / nb_pts ;
+        delta_para *= 1.0 / nb_pts;
         current_para -= delta_para;
         affine->SetParameters(current_para);
         cnt++;
@@ -366,7 +355,7 @@ void test_one_transform( const TRawPointList &x, const TRawPointList &y,
     std::cout << "current para:" << affine->GetParameters() << std::endl;
 
     for(int i=0; i<nb_pts; i++){
-        typedef typename AffineType::InputPointType InputPointType;
+        typedef typename AffineType::InputPointType  InputPointType;
         typedef typename AffineType::OutputPointType OutputPointType;
 
         InputPointType ptx;
@@ -382,18 +371,14 @@ void test_one_transform( const TRawPointList &x, const TRawPointList &y,
                 << "\t" << "ptz(=?=pty):" << ptz << std::endl;
     }
 
-
-
 }
-
-
 
 template<int Dim, class TRawVector, class TRawPointList>
 void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
         const TRawVector &A, const TRawVector &t, const TRawVector &c, int nb_iter){
 
-    typedef itk::MatrixOffsetTransformBase<double, Dim, Dim> AffineType;
-    typedef itk::CompositeTransform<double, Dim> CompositeType;
+    typedef itk::MatrixOffsetTransformBase<double, Dim, Dim>  AffineType;
+    typedef itk::CompositeTransform<double, Dim>              CompositeType;
 
     typename AffineType::Pointer affine = AffineType::New();
     affine->SetIdentity();
@@ -415,13 +400,8 @@ void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
     //    for(int i=0; i<aff_para.Size(); i++) aff_para[i] = (rand() % 100) / 50.0;
     affine->SetParameters(aff_para);
 
-
-
-
     typename CompositeType::Pointer comp = CompositeType::New();
     comp->AddTransform(affine);
-
-
 
     typename AffineType::Pointer affine2 = AffineType::New();
     affine2->SetIdentity();
@@ -465,7 +445,7 @@ void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
         // std::cout << "iter: " << cnt << "---------------" << std::endl;
 
         for(int i=0; i<nb_pts; i++){
-            typedef typename CompositeType::InputPointType InputPointType;
+            typedef typename CompositeType::InputPointType  InputPointType;
             typedef typename CompositeType::OutputPointType OutputPointType;
 
             InputPointType ptx;
@@ -483,7 +463,7 @@ void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
             typedef typename AffineType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            comp->GetJacobianWithRespectToParameters(ptx, jac);
+            comp->ComputeJacobianWithRespectToParameters(ptx, jac);
 
             for(int d=0; d<Dim; d++){
                 for(int k=0; k<kParaDim; k++){
@@ -502,8 +482,8 @@ void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
     std::cout << "current para:" << comp->GetParameters() << std::endl;
 
     for(int i=0; i<nb_pts; i++){
-        typedef typename AffineType::InputPointType InputPointType;
-        typedef typename AffineType::OutputPointType OutputPointType;
+        typedef typename AffineType::InputPointType   InputPointType;
+        typedef typename AffineType::OutputPointType  OutputPointType;
 
         InputPointType ptx;
         OutputPointType pty, ptz;
@@ -519,21 +499,14 @@ void test_composite_transform( const TRawPointList &x, const TRawPointList &y,
     }
 
     return;
-
 }
-
-
-
-
-
-
 
 template<int Dim, class TRawVector, class TRawPointList>
 void test_centered_composite_transform( const TRawPointList &x, const TRawPointList &y,
         const TRawVector &A, const TRawVector &t, const TRawVector &c, int nb_iter){
 
-    typedef itk::MatrixOffsetTransformBase<double, Dim, Dim> AffineType;
-    typedef itk::CenteredCompositeTransform<double, Dim> CompositeType;
+    typedef itk::MatrixOffsetTransformBase<double, Dim, Dim>  AffineType;
+    typedef itk::CenteredCompositeTransform<double, Dim>      CompositeType;
 
     typename AffineType::Pointer affine = AffineType::New();
     affine->SetIdentity();
@@ -565,8 +538,6 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
 
 //    float scale[6] = {4,4,4,4,0.5,0.5};
     float scale[6] = {1,1,1,1,0.5,0.5};
-
-
 
     typename CompositeType::Pointer comp = CompositeType::New();
     comp->AddTransform(affine);
@@ -636,7 +607,7 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
         // std::cout << "iter: " << cnt << "---------------" << std::endl;
 
         for(int i=0; i<nb_pts; i++){
-            typedef typename CompositeType::InputPointType InputPointType;
+            typedef typename CompositeType::InputPointType  InputPointType;
             typedef typename CompositeType::OutputPointType OutputPointType;
 
             InputPointType ptx;
@@ -654,7 +625,7 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
             typedef typename CompositeType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            comp->GetJacobianWithRespectToParameters(ptx, jac);
+            comp->ComputeJacobianWithRespectToParameters(ptx, jac);
 
             for(int d=0; d<Dim; d++){
                 for(int k=0; k<kParaDim; k++){
@@ -676,8 +647,8 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
 
 
         for(int i=0; i<nb_pts; i++){
-            typedef typename AffineType::InputPointType InputPointType;
-            typedef typename AffineType::OutputPointType OutputPointType;
+            typedef typename AffineType::InputPointType   InputPointType;
+            typedef typename AffineType::OutputPointType  OutputPointType;
 
             InputPointType ptx;
             OutputPointType pty, ptz;
@@ -714,8 +685,8 @@ void test_centered_composite_transform( const TRawPointList &x, const TRawPointL
 
 
     for(int i=0; i<nb_pts; i++){
-        typedef typename AffineType::InputPointType InputPointType;
-        typedef typename AffineType::OutputPointType OutputPointType;
+        typedef typename AffineType::InputPointType   InputPointType;
+        typedef typename AffineType::OutputPointType  OutputPointType;
 
         InputPointType ptx;
         OutputPointType pty, ptz;
@@ -812,10 +783,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 //    comp->AddTransform(rotation_transform2);
     comp->AddTransform(shear_transform);
 
-
-
 //    comp->AddTransform(rotation_transform);
-
 
     float scale[7] = {1,1,1,1,1,0.5,0.5};
 
@@ -829,12 +797,9 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     // comp->SetNthTransformToOptimize(2, true);
     // comp->SetNthTransformToOptimize(3, true);
 
-
-
     typename CompositeType::InputPointType c0;
     for(int i=0; i<Dim; i++) c0[i]=c[i];
     comp->SetCenter(c0);
-
 
     std::cout << "center: " << c0 << std::endl;
 
@@ -868,7 +833,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
         // std::cout << "iter: " << cnt << "---------------" << std::endl;
 
         for(int i=0; i<nb_pts; i++){
-            typedef typename CompositeType::InputPointType InputPointType;
+            typedef typename CompositeType::InputPointType  InputPointType;
             typedef typename CompositeType::OutputPointType OutputPointType;
 
             InputPointType ptx;
@@ -883,7 +848,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
             typedef typename CompositeType::JacobianType JacobianType;
             JacobianType jac(Dim, kParaDim);
 
-            comp->GetJacobianWithRespectToParameters(ptx, jac);
+            comp->ComputeJacobianWithRespectToParameters(ptx, jac);
 
             // manipulate the jacobian w.r.t the translation of the rigid transform
             // k s r t: 1 + 2 + 3 (angle + translation) + 2
@@ -923,7 +888,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
 
 
         for(int i=0; i<nb_pts; i++){
-            typedef typename CompositeType::InputPointType InputPointType;
+            typedef typename CompositeType::InputPointType  InputPointType;
             typedef typename CompositeType::OutputPointType OutputPointType;
 
             InputPointType ptx;
@@ -970,7 +935,7 @@ void test_centered_composite_RSKT_transform( const TRawPointList &x, const TRawP
     std::cout << "r.trans=" << rotation_transform->GetTranslation() << std::endl;
 
     for(int i=0; i<nb_pts; i++){
-        typedef typename CompositeType::InputPointType InputPointType;
+        typedef typename CompositeType::InputPointType  InputPointType;
         typedef typename CompositeType::OutputPointType OutputPointType;
 
         InputPointType ptx;

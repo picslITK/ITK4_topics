@@ -87,11 +87,11 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   //                          this->m_FixedTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */
-  this->m_MovingTransform->GetJacobianWithRespectToParameters(
+  this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
                                                             virtualPoint,
                                                             movingJacobian);
   //FIXME: we may optimize the fixed transform as well
-  //this->m_FixedTransform->GetJacobianWithRespectToParameters(
+  //this->m_FixedTransform->ComputeJacobianWithRespectToParameters(
   //                                                          virtualPoint,
   //                                                          fixedJacobian);
 

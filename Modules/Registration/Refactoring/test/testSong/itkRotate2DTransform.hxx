@@ -279,14 +279,14 @@ template< class TScalarType >
 const typename Rotate2DTransform< TScalarType >::JacobianType &
 Rotate2DTransform< TScalarType >::GetJacobian(const InputPointType & p) const
 {
-  GetJacobianWithRespectToParameters( p, this->m_Jacobian );
+  ComputeJacobianWithRespectToParameters( p, this->m_Jacobian );
   return this->m_Jacobian;
 }
 
 // Compute transformation Jacobian
 template< class TScalarType >
 void
-Rotate2DTransform< TScalarType >::GetJacobianWithRespectToParameters(const InputPointType & p,
+Rotate2DTransform< TScalarType >::ComputeJacobianWithRespectToParameters(const InputPointType & p,
         JacobianType &j ) const
 {
   j.SetSize( OutputSpaceDimension, this->GetNumberOfLocalParameters() );

@@ -287,7 +287,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   warper->SetOutputOrigin( fixedImage->GetOrigin() );
   warper->SetOutputDirection( fixedImage->GetDirection() );
 
-  warper->SetDeformationField( displacementTransform->GetDisplacementField() );
+  warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
   typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;

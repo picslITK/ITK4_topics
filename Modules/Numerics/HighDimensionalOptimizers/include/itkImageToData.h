@@ -1,27 +1,25 @@
 /*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkImageSource.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-12 01:11:08 $
-  Version:   $Revision: 1.59 $
-
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-  Portions of this code are covered under the VTK copyright.
-  See VTKCopyright.txt or http://www.kitware.com/VTKCopyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 #ifndef __itkImageToData_h
 #define __itkImageToData_h
 
 #include "itkObjectToDataBase.h"
-#include "itkImage.h"
+#include "itkImageRegion.h"
 
 namespace itk
 {
@@ -58,7 +56,7 @@ namespace itk
  * before running.
  *
  * \sa ObjectToDataBase
- * \ingroup ITKRegistrationRefactoring
+ * \ingroup ITKHighDimensionalOptimizers
  */
 
 
@@ -94,12 +92,11 @@ public:
   /** Set the overall image region over which to operate.
    * This is equivalent to SetOverallObject, but named more intuitively
    * for this derived class. */
-  virtual void SetOverallRegion(  ImageRegionType& region )
-  { this->SetOverallObject( region ); }
+  virtual void SetOverallRegion(  const ImageRegionType& region );
 
 protected:
   ImageToData();
-  virtual ~ImageToData() {}
+  virtual ~ImageToData();
 
   /** Split the ImageRegion \c overallRegion into \c requestedTotal subregions,
    * returning subregion \c i as \c splitRegion.
@@ -108,9 +105,9 @@ protected:
    * the routine is capable of splitting the output RequestedObject,
    * i.e. return value is less than or equal to \c requestedTotal. */
   virtual
-  ThreadIdType SplitRequestedObject(ThreadIdType i,
-                           ThreadIdType requestedTotal,
-                           InputObjectType& overallRegion,
+  ThreadIdType SplitRequestedObject(const ThreadIdType i,
+                           const ThreadIdType requestedTotal,
+                           const InputObjectType& overallRegion,
                            InputObjectType& splitRegion) const;
 
 private:

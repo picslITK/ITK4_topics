@@ -79,6 +79,9 @@ public:
   typedef typename MetricType::MovingTransformType  MovingTransformType;
   typedef typename MovingTransformType::Pointer     MovingTransformPointer;
 
+  /** Jacobian type */
+  typedef typename Superclass::JacobianType         JacobianType;
+
   /** Image Types to use in the initialization of the transform */
   typedef typename TMetric::FixedImageType          FixedImageType;
   typedef typename TMetric::MovingImageType         MovingImageType;
@@ -197,7 +200,7 @@ protected:
   void SampleImageDomain();
 
   TransformBase * GetTransform();
-  const Superclass::JacobianType & GetJacobian(VirtualPointType &point);
+  virtual void ComputeJacobianWithRespectToParameters(const VirtualPointType  & p, JacobianType & jacobian) const;
 
   template< class TContinuousIndexType > void TransformPointToContinuousIndex(
                               const VirtualPointType &point,

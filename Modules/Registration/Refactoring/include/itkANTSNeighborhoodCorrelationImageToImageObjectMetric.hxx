@@ -651,7 +651,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             this->m_MovingTransformJacobianPerThread[threadID];
 
     /** For dense transforms, this returns identity */
-    this->m_MovingTransform->GetJacobianWithRespectToParameters(
+    this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
             scan_mem.mappedMovingPoint, jacobian);
 
     unsigned int numberOfLocalParameters = this->m_MovingTransform->GetNumberOfLocalParameters();

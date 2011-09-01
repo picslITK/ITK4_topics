@@ -35,7 +35,6 @@ namespace itk
  *
  * \sa Rigid2DTransform
  *
- * \ingroup Transforms
  * \ingroup ITKTransform
  */
 template< class TScalarType = double >
@@ -116,10 +115,9 @@ public:
   void ComputeAngleFromMatrix()
   { this->ComputeMatrixParameters(); }
 protected:
+  Euler2DTransform(unsigned int parametersDimension);
   Euler2DTransform();
   ~Euler2DTransform(){}
-
-  Euler2DTransform(unsigned int outputSpaceDimension, unsigned int parametersDimension);
 
   void PrintSelf(std::ostream & os, Indent indent) const;
 

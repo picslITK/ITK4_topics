@@ -22,12 +22,6 @@
 
 #include <memory>
 
-
-#if defined( _MSC_VER )
-
-// local variable may be used without having been initialized
-#pragma warning ( disable : 4701 )
-#endif
 namespace itk
 {
 namespace Functor
@@ -63,6 +57,9 @@ class Offset
 public:
   /** Standard class typedefs. */
   typedef Offset Self;
+
+  /** Dimension constant */
+  itkStaticConstMacro(Dimension, unsigned int, VOffsetDimension);
 
   /** Get the dimension (size) of the index. */
   static unsigned int GetOffsetDimension() { return VOffsetDimension; }

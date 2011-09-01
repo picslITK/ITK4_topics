@@ -15,9 +15,6 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-//#ifndef __itkGradientDescentObjectOptimizerBase_hxx
-//#define __itkGradientDescentObjectOptimizerBase_hxx
-
 #include "itkGradientDescentObjectOptimizerBase.h"
 
 namespace itk
@@ -29,21 +26,26 @@ GradientDescentObjectOptimizerBase
 {
   this->m_ModifyGradientThreader = ModifyGradientThreaderType::New();
   this->m_ModifyGradientThreader->SetThreadedGenerateData(
-    Self::ModifyGradientThreaded );
+                                                Self::ModifyGradientThreaded );
   this->m_ModifyGradientThreader->SetHolder( this );
 
-  m_NumberOfIterations = 100;
-  m_CurrentIteration = 0;
-  m_StopCondition = MaximumNumberOfIterations;
-  m_StopConditionDescription << this->GetNameOfClass() << ": ";
+  this->m_NumberOfIterations = 100;
+  this->m_CurrentIteration = 0;
+  this->m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
+  this->m_StopConditionDescription << this->GetNameOfClass() << ": ";
 }
 
 //-------------------------------------------------------------------
-const std::string
+GradientDescentObjectOptimizerBase
+::~GradientDescentObjectOptimizerBase()
+{}
+
+//-------------------------------------------------------------------
+const GradientDescentObjectOptimizerBase::StopConditionReturnStringType
 GradientDescentObjectOptimizerBase
 ::GetStopConditionDescription() const
 {
-  return m_StopConditionDescription.str();
+  return this->m_StopConditionDescription.str();
 }
 
 //-------------------------------------------------------------------
@@ -52,8 +54,8 @@ GradientDescentObjectOptimizerBase
 ::StopOptimization(void)
 {
   itkDebugMacro("StopOptimization");
-  m_Stop = true;
-  InvokeEvent( EndEvent() );
+  this->m_Stop = true;
+  this->InvokeEvent( EndEvent() );
 }
 
 //-------------------------------------------------------------------
@@ -69,7 +71,7 @@ GradientDescentObjectOptimizerBase
     {
     this->m_ModifyGradientThreader->SetOverallIndexRange( fullrange );
     /* This ends up calling ModifyGradientThreaded from each thread */
-    this->m_ModifyGradientThreader->GenerateData();
+    this->m_ModifyGradientThreader->StartThreadedExecution();
     }
   else
     {
@@ -77,6 +79,7 @@ GradientDescentObjectOptimizerBase
     this->ModifyGradientOverSubRange( fullrange );
     }
 }
+
 //-------------------------------------------------------------------
 void
 GradientDescentObjectOptimizerBase
@@ -88,5 +91,3 @@ GradientDescentObjectOptimizerBase
 }
 
 }//namespace itk
-
-//#endif

@@ -225,7 +225,7 @@ const typename Shear2DTransform< ScalarType, NDimensions >::JacobianType &
 Shear2DTransform< ScalarType, NDimensions >
 ::GetJacobian(const InputPointType & p) const
  {
-    GetJacobianWithRespectToParameters( p, this->m_Jacobian );
+    ComputeJacobianWithRespectToParameters( p, this->m_Jacobian );
     return this->m_Jacobian;
  }
 
@@ -234,7 +234,7 @@ Shear2DTransform< ScalarType, NDimensions >
 template< class ScalarType, unsigned int NDimensions >
 void
 Shear2DTransform< ScalarType, NDimensions >
-::GetJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
+::ComputeJacobianWithRespectToParameters(const InputPointType & p, JacobianType &j) const
  {
     j.SetSize( 2, 1 );
     j.Fill(0);

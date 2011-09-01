@@ -14,7 +14,7 @@ itk_module(ITKReview
     ITKConnectedComponents
     ITKCurvatureFlow
     ITKDeformableMesh
-    ITKDeformationField
+    ITKDisplacementField
     ITKDiffusionTensorImage
     ITKDistanceMap
     ITKEigen
@@ -84,6 +84,7 @@ itk_module(ITKReview
     ITKImageFusion
   TEST_DEPENDS
     ITKTestKernel
+    ITKIOMesh
   DESCRIPTION
     "${DOCUMENTATION}"
 )
