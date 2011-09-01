@@ -528,7 +528,7 @@ protected:
    * \c mappedMovingPixelValue, and \c mappedMovingImageGradient are
    * provided for use by the derived class. Note however, that the
    * mappedFixed* values are only calculated when
-   * \c m_GradientSource is set to either \c Fixed or \c Both, and
+   * \c m_GradientSource is set to either \c *_FIXED or \c *_BOTH, and
    * similarly respectively for mappedMoving* values. Otherwise, the
    * values are meaningless and should be ignored.
    * Results are experected to be returned in \c metricValueReturn and

@@ -108,13 +108,11 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 ::GetNumberOfComponents() const
 {
   unsigned long numberOfComponents = 0;
-  if( this->GetGradientSource() == Superclass::Fixed ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesFixed() )
     {
     numberOfComponents += this->m_FixedTransformedPointSet->GetNumberOfPoints();
     }
-  if( this->GetGradientSource() == Superclass::Moving ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesMoving() )
     {
     numberOfComponents += this->m_MovingTransformedPointSet->GetNumberOfPoints();
     }
@@ -128,8 +126,7 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 {
   MeasureType measure = 0.0;
 
-  if( this->GetGradientSource() == Superclass::Fixed ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesFixed() )
     {
     PointsConstIterator It =
       this->m_FixedTransformedPointSet->GetPoints()->Begin();
@@ -139,8 +136,7 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
       ++It;
       }
     }
-  if( this->GetGradientSource() == Superclass::Moving ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesMoving() )
     {
     PointsConstIterator It =
       this->m_MovingTransformedPointSet->GetPoints()->Begin();
@@ -165,8 +161,7 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 
   unsigned long index = 0;
 
-  if( this->GetGradientSource() == Superclass::Fixed ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesFixed )
     {
     PointsConstIterator It =
       this->m_FixedTransformedPointSet->GetPoints()->Begin();
@@ -184,8 +179,7 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
       }
     }
 
-  if( this->GetGradientSource() == Superclass::Moving ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesMoving )
     {
     PointsConstIterator It =
       this->m_MovingTransformedPointSet->GetPoints()->Begin();
@@ -215,8 +209,7 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
 
   unsigned long index = 0;
 
-  if( this->GetGradientSource() == Superclass::Fixed ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesFixed() )
     {
     PointsConstIterator It =
       this->m_FixedTransformedPointSet->GetPoints()->Begin();
@@ -238,8 +231,7 @@ PointSetToPointSetMetric<TFixedPointSet, TMovingPointSet>
       }
     }
 
-  if( this->GetGradientSource() == Superclass::Moving ||
-    this->GetGradientSource() == Superclass::Both )
+  if( this->GetGradientSourceIncludesMoving() )
     {
     PointsConstIterator It =
       this->m_MovingTransformedPointSet->GetPoints()->Begin();

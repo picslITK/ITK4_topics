@@ -413,7 +413,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
   metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
-  metric->SetGradientSource( TestMetricType::Both );
+  metric->SetGradientSource( TestMetricType::GRADIENT_SOURCE_BOTH );
 
 
   //Evaluate the metric
@@ -460,7 +460,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
   metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
-  metric->SetGradientSource( TestMetricType::Both );
+  metric->SetGradientSource( TestMetricType::GRADIENT_SOURCE_BOTH );
 
   //Evaluate the metric
   std::cout

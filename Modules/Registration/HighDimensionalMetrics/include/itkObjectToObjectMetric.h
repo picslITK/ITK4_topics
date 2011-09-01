@@ -101,18 +101,20 @@ public:
    * for convenience methods. */
   itkGetConstMacro( GradientSource, GradientSourceType );
 
-  /** Return true of \c m_GradientSource is either \c Fixed or
-   * \c Both. Convenience method. */
+  /** Return true of \c m_GradientSource is either \c GRADIENT_SOURCE_FIXED or
+   * \c GRADIENT_SOURCE_BOTH. Convenience method. */
   bool GetGradientSourceIncludesFixed()
   {
-    return m_GradientSource == Fixed || m_GradientSource == Both;
+    return m_GradientSource ==
+              GRADIENT_SOURCE_FIXED || m_GradientSource == GRADIENT_SOURCE_BOTH;
   }
 
-  /** Return true of \c m_GradientSource is either \c Moving or
-   * \c Both. Convenience method. */
+  /** Return true of \c m_GradientSource is either \c GRADIENT_SOURCE_MOVING or
+   * \c GRADIENT_SOURCE_BOTH. Convenience method. */
   bool GetGradientSourceIncludesMoving()
   {
-    return m_GradientSource == Moving || m_GradientSource == Both;
+    return m_GradientSource ==
+             GRADIENT_SOURCE_MOVING || m_GradientSource == GRADIENT_SOURCE_BOTH;
   }
 
   /** Initialize the Metric by making sure that all the components
