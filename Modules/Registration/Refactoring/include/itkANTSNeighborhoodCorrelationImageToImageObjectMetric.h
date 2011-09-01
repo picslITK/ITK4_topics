@@ -110,7 +110,7 @@ public:
     typedef typename Superclass::MovingImagePixelType MovingImagePixelType;
     typedef typename Superclass::MovingImageGradientType
                                                      MovingImageGradientType;
-    typedef typename Superclass::MovingTransformType MovingTransformType;
+    typedef typename Superclass::MovingTransformType  MovingTransformType;
 //    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
     typedef typename Superclass::MovingTransformJacobianType
                                                     MovingTransformJacobianType;
@@ -215,8 +215,7 @@ protected:
 
       void InitializeScanning(const ImageRegionType &scan_region,
             ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-            ScanParaType &scan_para,
-            const ThreadIdType threadID);
+            ScanParaType &scan_para );
 
       void UpdateQueuesAtBeginingOfLine(
             const ScanningIteratorType &scan_it, ScanMemType &scan_mem,

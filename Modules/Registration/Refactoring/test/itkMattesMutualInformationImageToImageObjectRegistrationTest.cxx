@@ -202,8 +202,8 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   metric->SetMovingTransform( compositeTransform );
-  metric->SetPreWarpImages( false );
-  metric->SetPrecomputeImageGradient( false );
+  metric->SetPreWarpMovingImage( false );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
   metric->Initialize();
 
   typedef GradientDescentObjectOptimizer  OptimizerType;
@@ -231,7 +231,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
             << "Number of threads: " << metric->GetNumberOfThreads() << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpImages: " << metric->GetPreWarpMovingImage() << std::endl;
   try
     {
     qoptimizer->StartOptimization();
@@ -263,7 +263,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Deformation learning rate: " << deformationLearningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpMovingImages: " << metric->GetPreWarpMovingImage() << std::endl;
   try
     {
     defoptimizer->StartOptimization();

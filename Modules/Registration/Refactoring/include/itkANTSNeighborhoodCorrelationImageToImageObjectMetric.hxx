@@ -127,7 +127,7 @@ ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                   scan_mem, scan_para, threadID);
           dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
                   scan_para, localDerivativeResult, metricValueResult,
-                  threadID);
+                  threadID );
 
       } catch (ExceptionObject & exc) {
           //NOTE: there must be a cleaner way to do this:
@@ -159,8 +159,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::InitializeScanning(
         const ImageRegionType &scan_region, ScanningIteratorType &scan_it,
-        ScanMemType &, ScanParaType &scan_para,
-        const ThreadIdType )
+        ScanMemType &, ScanParaType &scan_para )
 {
 
     scan_para.scan_region = scan_region;
@@ -185,7 +184,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueuesAtBeginingOfLine(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &scan_para, const ThreadIdType threadID) {
+        const ScanParaType &scan_para, const ThreadIdType ) {
 
     int nb_fill_zero = scan_para.number_of_fill_zero;
     unsigned int hoodlen = scan_para.window_length;
@@ -243,7 +242,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             false, /* compute gradient */
                             fixedImageValue, movingImageValue,
                             fixedImageGradient, movingImageGradient,
-                            pointIsValid, threadID);
+                            pointIsValid );
 //                    /* Get the point in moving and fixed space for use below */
 //                    mappedFixedPoint = self->m_FixedTransform->TransformPoint(
 //                            virtualPoint);
@@ -268,8 +267,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             pointIsValid, //
                             fixedImageValue, //
                             false/*compute gradient*/, // true /*compute gradient*/,
-                            fixedImageGradient, //
-                            threadID);
+                            fixedImageGradient);
                     if (pointIsValid) {
                         this->TransformAndEvaluateMovingPoint( //
                                 index,
@@ -278,8 +276,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                                 pointIsValid, //
                                 movingImageValue, //
                                 false/*compute gradient*/, // true /*compute gradient*/,
-                                movingImageGradient, //
-                                threadID);
+                                movingImageGradient);
                     }
 
                 } catch (ExceptionObject & exc) {
@@ -321,7 +318,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueuesToNextScanWindow(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &scan_para, const ThreadIdType threadID) {
+        const ScanParaType &scan_para, const ThreadIdType ) {
 
     const unsigned int hoodlen = scan_para.window_length;
 
@@ -364,7 +361,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             try {
                 this->EvaluatePreWarpedImagesAtIndex(index, false, /* compute gradient */
                 fixedImageValue, movingImageValue, fixedImageGradient,
-                        movingImageGradient, pointIsValid, threadID);
+                        movingImageGradient, pointIsValid );
                 //                    /* Get the point in moving and fixed space for use below */
                 //                    mappedFixedPoint = self->m_FixedTransform->TransformPoint(
                 //                            virtualPoint);
@@ -388,8 +385,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         pointIsValid, //
                         fixedImageValue, //
                         false/*compute gradient*/, // true /*compute gradient*/,
-                        fixedImageGradient, //
-                        threadID);
+                        fixedImageGradient);
                 if (pointIsValid) {
                     this->TransformAndEvaluateMovingPoint( //
                             index,
@@ -398,8 +394,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                             pointIsValid, //
                             movingImageValue, //
                             false/*compute gradient*/, // true /*compute gradient*/,
-                            movingImageGradient, //
-                            threadID);
+                            movingImageGradient);
                 }
             } catch (ExceptionObject & exc) {
                 //NOTE: there must be a cleaner way to do this:
@@ -460,7 +455,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ComputeInformationFromQueues(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &, const ThreadIdType threadID) {
+        const ScanParaType &, const ThreadIdType ) {
 
     // Test to see if there are any voxels we need to handle in the current
     // window.
@@ -535,7 +530,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         try {
             this->EvaluatePreWarpedImagesAtIndex(oindex, true, /* compute gradient */
             fixedImageValue, movingImageValue, fixedImageGradient,
-                    movingImageGradient, pointIsValid, threadID);
+                    movingImageGradient, pointIsValid );
             //                    /* Get the point in moving and fixed space for use below */
 //                       mappedFixedPoint = self->m_FixedTransform->TransformPoint(
 //                               virtualPoint);
@@ -559,7 +554,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                     pointIsValid, //
                     fixedImageValue, //
                     true/*compute gradient*/, // true /*compute gradient*/,
-                    fixedImageGradient, threadID);
+                    fixedImageGradient);
             if (pointIsValid) {
                 this->TransformAndEvaluateMovingPoint(
                         oindex,
@@ -568,7 +563,7 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                         pointIsValid, //
                         movingImageValue, //
                         true/*compute gradient*/, // true /*compute gradient*/,
-                        movingImageGradient, threadID);
+                        movingImageGradient);
             }
         } catch (ExceptionObject & exc) {
             //NOTE: there must be a cleaner way to do this:

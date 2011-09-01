@@ -192,8 +192,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   metric->SetRadius(radSize);
 
 
-  metric->SetPreWarpImages( preWarp );
-  metric->SetPrecomputeImageGradient( false );
+  metric->SetPreWarpMovingImage( preWarp );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
 
 
   //Initialize the metric to prepare for use
@@ -210,7 +210,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
             << "CC radius: " << metric->GetRadius() << std::endl
-            << "CC prewarp: " << metric->GetPreWarpImages() << std::endl
+            << "CC prewarp: " << metric->GetPreWarpMovingImage() << std::endl
             << "CC number of threads: " << metric->GetNumberOfThreads() << std::endl;
 
 

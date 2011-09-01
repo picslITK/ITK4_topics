@@ -186,9 +186,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetMovingTransform( displacementTransform );
   //  metric->SetMovingTransform( translationTransform );
 
-  metric->SetPreWarpImages( true );
-  metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
-  //metric->SetPrecomputeImageGradient( false );
+  metric->SetPreWarpMovingImage( true );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( ! metric->GetPreWarpMovingImage() );
+  //metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -203,7 +203,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpImages: " << metric->GetPreWarpMovingImage() << std::endl;
   try
     {
     optimizer->StartOptimization();

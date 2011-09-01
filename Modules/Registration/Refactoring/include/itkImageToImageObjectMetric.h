@@ -22,7 +22,6 @@
 #include "itkGradientRecursiveGaussianImageFilter.h"
 #include "itkObjectToObjectMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
-#include "itkBSplineInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
 #include "itkImageToData.h"
 //#include "itkDisplacementFieldTransform.h"
@@ -56,6 +55,7 @@ namespace itk
  *
  * Both transforms are initialized to an IdentityTransform.
  *
+ * TODO: Update:
  * The PreWarpImages option can be set for computational efficiency. This
  * creates a warped version for each image at the begin of each iteration.
  * However the cost is more memory usage (2x VirtualDomain size).
@@ -67,14 +67,13 @@ namespace itk
  * \note Use of PreWarpImages option is not yet supported when also using
  * image masks.
  *
+ * TODO - UPDATE:
  * Image gradient calculation is performed in one of these ways:
  * If \c PreWarpImages is enabled:
  *  CentralDifferenceImageFunction.
  *  Other options will be supported in the future.
  * If \c PreWarpImages is disabled:
- *  1) The BSplineInterpolator is used if it has been set by user as the
- *  interpolator.
- *  2) otherwise, GradientRecursiveGaussianImageFilter is used by default to
+ *  2) GradientRecursiveGaussianImageFilter is used by default to
  *  precompute the gradient for each image. This requires memory to hold the
  *  fully computed gradient image.
  *  3) lastly, CentralDifferenceImageFunction is used if
@@ -240,19 +239,6 @@ public:
   typedef LinearInterpolateImageFunction< MovingImageType,
                                           CoordinateRepresentationType >
                                                   MovingLinearInterpolatorType;
-
-  /**
-   * If a BSplineInterpolationFunction is used, this class obtain
-   * image derivatives from the BSpline interpolator. Otherwise,
-   * image derivatives are computed using central differencing
-   * or Gaussian gradient fileter. See main documentation.
-   */
-  typedef BSplineInterpolateImageFunction< MovingImageType,
-                                           CoordinateRepresentationType >
-                                                FixedBSplineInterpolatorType;
-  typedef BSplineInterpolateImageFunction< MovingImageType,
-                                           CoordinateRepresentationType >
-                                                MovingBSplineInterpolatorType;
 
   /** Image derivatives types */
   typedef   CovariantVector< CoordinateRepresentationType,
@@ -423,17 +409,28 @@ public:
   itkSetConstObjectMacro(FixedImageMask, FixedImageMaskType);
   itkGetConstObjectMacro(FixedImageMask, FixedImageMaskType);
 
+  /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter
+   * for fixed image. */
+  itkSetMacro(UseFixedGradientRecursiveGaussianImageFilter, bool);
+  itkGetConstReferenceMacro(UseFixedGradientRecursiveGaussianImageFilter, bool);
+  itkBooleanMacro(UseFixedGradientRecursiveGaussianImageFilter);
+
   /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter. */
-  itkSetMacro(PrecomputeImageGradient, bool);
-  itkGetConstReferenceMacro(PrecomputeImageGradient, bool);
-  itkBooleanMacro(PrecomputeImageGradient);
+  itkSetMacro(UseMovingGradientRecursiveGaussianImageFilter, bool);
+  itkGetConstReferenceMacro(UseMovingGradientRecursiveGaussianImageFilter, bool);
+  itkBooleanMacro(UseMovingGradientRecursiveGaussianImageFilter);
 
-  /** Set/Get pre-warping of images option. */
-  itkSetMacro(PreWarpImages, bool);
-  itkGetConstReferenceMacro(PreWarpImages, bool);
-  itkBooleanMacro(PreWarpImages);
+  /** Set/Get pre-warping of fixed image option. */
+  itkSetMacro(PreWarpFixedImage, bool);
+  itkGetConstReferenceMacro(PreWarpFixedImage, bool);
+  itkBooleanMacro(PreWarpFixedImage);
 
-  /** Get pre-warmed images */
+  /** Set/Get pre-warping of Moving image option. */
+  itkSetMacro(PreWarpMovingImage, bool);
+  itkGetConstReferenceMacro(PreWarpMovingImage, bool);
+  itkBooleanMacro(PreWarpMovingImage);
+
+  /** Get pre-warped images */
   itkGetConstObjectMacro( MovingWarpedImage, MovingImageType );
   itkGetConstObjectMacro( FixedWarpedImage, FixedImageType );
 
@@ -452,10 +449,19 @@ public:
    * \warning See discussion for GetNumberOfThreads. */
   void SetNumberOfThreads( ThreadIdType );
 
-  /** Computes the gradients of the fixed and moving images, using the
+  /** Computes the gradients of the fixed image, using the
    * GradientRecursiveGaussianImageFilter, assigning the output to
-   * to m_[Fixed|Moving]GaussianGradientImage. */
-  virtual void ComputeGaussianGradient(void);
+   * to m_FixedGaussianGradientImage. It will use either the original
+   * fixed image, or the pre-warped version, depending on the setting
+   * of PreWarpFixedImage. */
+  virtual void ComputeFixedGaussianGradientImage(void);
+
+  /** Computes the gradients of the moving image, using the
+   * GradientRecursiveGaussianImageFilter, assigning the output to
+   * to m_MovingGaussianGradientImage. It will use either the original
+   * moving image, or the pre-warped version, depending on the setting
+   * of PreWarpMovingImage. */
+  virtual void ComputeMovingGaussianGradientImage(void);
 
   /** Get Fixed Gradient Image. */
   itkGetConstObjectMacro(FixedGaussianGradientImage, FixedGradientImageType);
@@ -514,12 +520,19 @@ protected:
    * given the point, value and image derivative for both fixed and moving
    * spaces. The provided values have been calculated from \c virtualPoint,
    * which is provided in case it's needed.
-   * Must be overriden by derived classes to do anything meaningful.
+   * Must be overriden by derived classes.
    * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
    * that have passed bounds checking, and lie within any mask that may
    * be assigned.
-   * Results are returned in \c metricValueReturn and \c localDerivativeReturn,
-   * and will be processed by this base class.
+   * \c mappedFixedPixelValue, \c mappedFixedImageGradient,
+   * \c mappedMovingPixelValue, and \c mappedMovingImageGradient are
+   * provided for use by the derived class. Note however, that the
+   * mappedFixed* values are only calculated when
+   * \c m_GradientSource is set to either \c Fixed or \c Both, and
+   * similarly respectively for mappedMoving* values. Otherwise, the
+   * values are meaningless and should be ignored.
+   * Results are experected to be returned in \c metricValueReturn and
+   * \c localDerivativeReturn, and will be processed by this base class.
    * \c threadID may be used as needed, for example to access any per-thread
    * data cached during pre-processing by the derived class.
    * \warning The derived class should use \c m_NumberOfThreads from this base
@@ -527,99 +540,71 @@ protected:
    * assure that the same number of threads are used.
    * \warning  This is called from the threader, and thus must be thread-safe.
    */
-  virtual inline bool GetValueAndDerivativeProcessPoint(
-        const VirtualPointType &           itkNotUsed(virtualPoint),
-        const FixedImagePointType &        itkNotUsed(mappedFixedPoint),
-        const FixedImagePixelType &        itkNotUsed(fixedImageValue),
-        const FixedImageGradientType &  itkNotUsed(FixedImageGradient),
-        const MovingImagePointType &       itkNotUsed(mappedMovingPoint),
-        const MovingImagePixelType &       itkNotUsed(movingImageValue),
-        const MovingImageGradientType & itkNotUsed(movingImageGradient),
-        MeasureType &                      itkNotUsed(metricValueReturn),
-        DerivativeType &                   itkNotUsed(localDerivativeReturn),
-        ThreadIdType                       itkNotUsed(threadID) )
-    /* ImageToImageMetric had this method simply return false. But why not
-     * make it pure virtual ? */
-    {return false;}
+  virtual bool GetValueAndDerivativeProcessPoint(
+        const VirtualPointType &          virtualPoint,
+        const FixedImagePointType &       mappedFixedPoint,
+        const FixedImagePixelType &       mappedFixedPixelValue,
+        const FixedImageGradientType &    mappedFixedImageGradient,
+        const MovingImagePointType &      mappedMovingPoint,
+        const MovingImagePixelType &      mappedMovingPixelValue,
+        const MovingImageGradientType &   mappedMovingImageGradient,
+        MeasureType &                     metricValueReturn,
+        DerivativeType &                  localDerivativeReturn,
+        const ThreadIdType                threadID ) = 0;
 
   /** Perform any initialization required before each evaluation of
    * value and derivative. This is distinct from Initialize, which
    * is called only once before a number of iterations, e.g. before
    * a registration loop.
    * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
-   * threading starts. */     //NOTE: make this private?
+   * threading starts. */     //NOTE: make this private or protected?
   virtual void InitializeForIteration(void);
 
-  /** Transform a point from VirtualImage domain to FixedImage domain.
+  /** Transform and evaluate a point into the virtual domain.
    * This function also checks if mapped point is within the mask if
-   * one is set, and that is within the moving image buffer, in which
+   * one is set, and that is within the fixed image buffer, in which
    * case \c pointIsValid will be true on return.
-   * \c mappedFixedPoint and \c fixedImageValue are also returned, and
-   * \c fixedImageGradient is returned if \c computeImageGradient is set,
-   * and it is mapped into the virtual space.
+   * \c mappedFixedPoint and \c mappedFixedPixelValue are  returned, and
+   * \c mappedFixedImageGradient is returned if \c computeImageGradient is set.
+   * All return values are in the virtual domain.
    * \note It would be better for maintainence to have a single method
    * that could work for either fixed or moving domains. However setting
    * that up is complicated because dimensionality and pixel type may
    * be different between the two. */
   virtual void TransformAndEvaluateFixedPoint(
-                              const VirtualIndexType & index,
-                              const VirtualPointType & point,
-                              FixedImagePointType & mappedFixedPoint,
-                              bool & pointIsValid,
-                              FixedImagePixelType & fixedImageValue,
-                              bool computeImageGradient,
-                              FixedImageGradientType & fixedImageGradient,
-                              ThreadIdType threadID) const;
+                           const VirtualIndexType & index,
+                           const VirtualPointType & point,
+                           const bool computeImageGradient,
+                           FixedImagePointType & mappedFixedPoint,
+                           FixedImagePixelType & mappedFixedPixelValue,
+                           FixedImageGradientType & mappedFixedImageGradient,
+                           bool & pointIsValid ) const;
 
-  /** Transform a point from VirtualImage domain to MovingImage domain,
-   * as is done in \c TransformAndEvaluateMovingPoint. */
+  /** See TransformAndEvaluateFixedPoint. TODO. */
   virtual void TransformAndEvaluateMovingPoint(
-                              const VirtualIndexType & index,
-                              const VirtualPointType & point,
-                              MovingImagePointType & mappedMovingPoint,
-                              bool & pointIsValid,
-                              MovingImagePixelType & movingImageValue,
-                              bool computeImageGradient,
-                              MovingImageGradientType & movingImageGradient,
-                              ThreadIdType threadID) const;
-
-  /** When using pre-warped images, this routine will return pixel value
-   * and optionally the image gradient at a given \c index.
-   * Used internally.
-   * \c fixedImageValue and \c movingImageValue are returned.
-   * \c fixedImageGradient and \c movingImageGradient are returned if
-   * \c computeImageGradient is true.
-   * \c pointIsValid is returned true if the index is valid within a mask if
-   * one is supplied.
-   * \warning Use of masks with pre-warped images is not yet implemented. */
-  virtual void EvaluatePreWarpedImagesAtIndex( const VirtualIndexType & index,
-                                 const bool computeImageGradient,
-                                 FixedImagePixelType & fixedImageValue,
-                                 MovingImagePixelType & movingImageValue,
-                                 FixedImageGradientType & fixedImageGradient,
-                                 MovingImageGradientType & movingImageGradient,
-                                 bool & pointIsValid,
-                                 const ThreadIdType threadID ) const;
+                           const VirtualIndexType & index,
+                           const VirtualPointType & point,
+                           const bool computeImageGradient,
+                           MovingImagePointType & mappedMovingPoint,
+                           MovingImagePixelType & mappedMovingPixelValue,
+                           MovingImageGradientType & mappedMovingImageGradient,
+                           bool & pointIsValid ) const;
 
   /** Compute image derivatives at a point. */
   virtual void ComputeFixedImageGradient(
                                     const FixedImagePointType & mappedPoint,
-                                    FixedImageGradientType & gradient,
-                                    ThreadIdType threadID) const;
+                                    FixedImageGradientType & gradient ) const;
   virtual void ComputeMovingImageGradient(
                                     const MovingImagePointType & mappedPoint,
-                                    MovingImageGradientType & gradient,
-                                    ThreadIdType threadID) const;
+                                    MovingImageGradientType & gradient ) const;
 
   /** Compute image derivatives at an index. */
   virtual void ComputeFixedImageGradientAtIndex(
                                     const VirtualIndexType & index,
-                                    FixedImageGradientType & gradient,
-                                    ThreadIdType threadID) const;
+                                    FixedImageGradientType & gradient ) const;
   virtual void ComputeMovingImageGradientAtIndex(
                                     const VirtualIndexType & index,
-                                    MovingImageGradientType & gradient,
-                                    ThreadIdType threadID) const;
+                                    MovingImageGradientType & gradient ) const;
 
   /** Store derivative result from a single point calculation.
    * \warning If this method is overridden or otherwise not used
@@ -649,17 +634,11 @@ protected:
   /** Pointers to interpolators */
   FixedInterpolatorPointer                        m_FixedInterpolator;
   MovingInterpolatorPointer                       m_MovingInterpolator;
-  /** Pointers to BSplineInterpolators */
-  typename FixedBSplineInterpolatorType::Pointer  m_FixedBSplineInterpolator;
-  typename MovingBSplineInterpolatorType::Pointer m_MovingBSplineInterpolator;
-  /** Boolean to indicate if the fixed interpolator is BSpline. */
-  bool                               m_FixedInterpolatorIsBSpline;
-  /** Boolean to indicate if the moving interpolator is BSpline. */
-  bool                               m_MovingInterpolatorIsBSpline;
 
   /** Flag to control use of precomputed Gaussian gradient filter or gradient
    * calculator for image gradient calculations. */
-  bool                               m_PrecomputeImageGradient;
+  bool                          m_UseFixedGradientRecursiveGaussianImageFilter;
+  bool                          m_UseMovingGradientRecursiveGaussianImageFilter;
 
   /** Gradient images to store Gaussian gradient filter output. */
   typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
@@ -669,8 +648,11 @@ protected:
   typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
   typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
 
-  /** Flag to control pre-warping of images. */
-  bool                               m_PreWarpImages;
+  /** Flag to control pre-warping of fixed image. */
+  bool                               m_PreWarpFixedImage;
+
+  /** Flag to control pre-warping of moving image. */
+  bool                               m_PreWarpMovingImage;
 
   /** Pre-warped images. */
   FixedImagePointer   m_FixedWarpedImage;
@@ -693,6 +675,15 @@ protected:
   /** Masks */
   FixedImageMaskConstPointer                  m_FixedImageMask;
   MovingImageMaskConstPointer                 m_MovingImageMask;
+
+  /** Flag to track if the fixed transform can be used by calling
+   * TransformIndex. Determine this during initialization and store
+   * result because the check can involve several comparisons. */
+  bool                                   m_FixedTransformCanUseTransformIndex;
+  /** Flag to track if the moving transform can be used by calling
+   * TransformIndex. Determine this during initialization and store
+   * result because the check can involve several comparisons. */
+  bool                                   m_MovingTransformCanUseTransformIndex;
 
   /** Metric value, stored after evaluating */
   MeasureType             m_Value;
@@ -791,13 +782,15 @@ private:
                           Self * dataHolder);
 
   /** Pre-warp the images for efficiency and computational stability. */
-  void PreWarpImages( void );
+  void PreWarpFixedImage( void );
+  void PreWarpMovingImage( void );
 
   /** Flag to track if threading memory has been initialized since last
    * call to Initialize. */
   bool                    m_ThreadingMemoryHasBeenInitialized;
 
   /* The number of threads to use.
+   * Keep private to force use of SetNumberOfThreads in derived classes.
    * /warning See discussion in GetNumberOfThreads.
    */
   ThreadIdType            m_NumberOfThreads;
