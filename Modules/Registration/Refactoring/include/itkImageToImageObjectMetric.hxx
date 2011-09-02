@@ -76,7 +76,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_PreWarpFixedImage = true;
   this->m_PreWarpMovingImage = true;
   this->m_UseFixedGradientRecursiveGaussianImageFilter = true;
-  this->m_UseMovingGradientRecursiveGaussianImageFilter = false;
+  this->m_UseMovingGradientRecursiveGaussianImageFilter = true;
 }
 
 /*
@@ -88,7 +88,8 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::Initialize() throw ( itk::ExceptionObject )
 {
-
+  itkDebugMacro("Initialize entered");
+  
   /* Verify things are connected */
   if ( !this->m_FixedImage )
     {
@@ -192,14 +193,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * Instantiate a central difference derivative calculator
    * if appropriate. If pre-warping is enabled, the
    * calculator will be pointed to the warped image at time of warping. */
+  itkDebugMacro("Setup for image gradient calculations.");
   if( !this->m_UseFixedGradientRecursiveGaussianImageFilter )
     {
+    this->m_FixedGaussianGradientImage = NULL; 
     this->m_FixedGradientCalculator = FixedGradientCalculatorType::New();
     this->m_FixedGradientCalculator->UseImageDirectionOn();
     this->m_FixedGradientCalculator->SetInputImage(this->m_FixedImage);
     }
   if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
     {
+    this->m_MovingGaussianGradientImage = NULL;
     this->m_MovingGradientCalculator = MovingGradientCalculatorType::New();
     this->m_MovingGradientCalculator->UseImageDirectionOn();
     this->m_MovingGradientCalculator->SetInputImage(this->m_MovingImage);
@@ -209,6 +213,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * option is set. */
   if( this->m_PreWarpFixedImage )
     {
+    itkDebugMacro("Init resample image filters for Fixed.");
     if( this->m_FixedImageMask )
       {
       itkExceptionMacro("Use of m_PreWarpFixedImage with image masks is not "
@@ -229,6 +234,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
      * m_UseMovingGradientRecursiveGaussianImageFilter is enabled.
      * Also, fixed images are currently never optimized, so we only
      * have to prewarp once, so do it here. */
+    itkDebugMacro("Init: PreWarpFixedImage.");
     this->PreWarpFixedImage();
     }
   else
@@ -239,6 +245,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( this->m_PreWarpMovingImage )
     {
+    itkDebugMacro("Init resample image filters for Moving.");
     if( this->m_MovingImageMask )
       {
       itkExceptionMacro("Use of m_PreWarpMovingImage with image masks is not "
@@ -268,6 +275,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * Do this *after* setting up above for pre-warping. */
   if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
     {
+    itkDebugMacro("Initialize: ComputeFixedGaussianGradientImage");
     ComputeFixedGaussianGradientImage();
     }
   /* For moving gradient images, if the GaussianImageFilter option is enabled,
@@ -276,6 +284,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   if( this->m_UseMovingGradientRecursiveGaussianImageFilter
         && ! this->m_PreWarpMovingImage )
     {
+    itkDebugMacro("Initialize: ComputeMovingGaussianGradientImage");
     this->ComputeMovingGaussianGradientImage();
     }
 
@@ -1013,7 +1022,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * its first update, or if it can be set to allocate output during init. */
   /* No need to call Modified here on the calculators */
   //this->m_FixedInterpolator->SetInputImage( this->m_FixedWarpedImage );
-  this->m_FixedGradientCalculator->SetInputImage( this->m_FixedWarpedImage );
+  if( ! this->m_UseFixedGradientRecursiveGaussianImageFilter )
+    {
+    this->m_FixedGradientCalculator->SetInputImage( this->m_FixedWarpedImage );
+    }
 }
 
 /*
@@ -1034,7 +1046,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* Point the interpolator and calculator to the warped images. */
   /* No need to call Modified here on the calculators */
   //this->m_MovingInterpolator->SetInputImage( this->m_MovingWarpedImage );
-  this->m_MovingGradientCalculator->SetInputImage( this->m_MovingWarpedImage );
+  if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
+    {
+    this->m_MovingGradientCalculator->SetInputImage( this->m_MovingWarpedImage );
+    }
 }
 
 /*

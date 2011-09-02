@@ -68,6 +68,12 @@ namespace itk
  * image masks.
  *
  * TODO - UPDATE:
+ * Include discussion of difference between GradientRecursiveGaussian
+ * and CentralDiff method. Gaussian one is smoothed. We use it for
+ * both fixed and moving by default to avoid difference in image gradient
+ * method.
+ * Both Gaussian and Calculator methods are threaded, the later by threaded
+ * operation of this metric.
  * Image gradient calculation is performed in one of these ways:
  * If \c PreWarpImages is enabled:
  *  CentralDifferenceImageFunction.
@@ -467,6 +473,10 @@ public:
   itkGetConstObjectMacro(FixedGaussianGradientImage, FixedGradientImageType);
   /** Get Moving Gradient Image. */
   itkGetConstObjectMacro(MovingGaussianGradientImage, MovingGradientImageType);
+
+  /** Get the gradient calculators */
+  itkGetConstObjectMacro( FixedGradientCalculatorType, FixedGradientCalculator);
+  itkGetConstObjectMacro( MovingGradientCalculatorType, MovingGradientCalculator);
 
   /** Get number of valid points from most recent update */
   itkGetConstMacro( NumberOfValidPoints, SizeValueType );

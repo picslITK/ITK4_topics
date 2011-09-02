@@ -20,10 +20,6 @@
 #include "itkDisplacementFieldTransform.h"
 #include "itkTranslationTransform.h"
 #include "vnl/vnl_math.h"
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
 
 /*
  * This test creates synthetic images and verifies numerical results
@@ -35,7 +31,7 @@
  * Test evaluating over sub-region, maybe with non-identity tx's.
  * Test assigning different virtual image.
  * Test various options for image gradient calculation
- * Test image pre-warping
+ * Test permutations of image pre-warping and image gradient calculation method.
  * Test mask
  * Test with non-identity transforms
  * Test with gradient calculation performed in test itself rather than relying
@@ -198,11 +194,25 @@ typedef Image< double, imageDimensionality >              ImageType;
 typedef TestDerivedMetric<ImageType,ImageType,ImageType>  TestMetricType;
 
 ////////////////////////////////////////////////////////////
+//
+// Pass true for 'computeTruthValues' to have the test compute
+// truth values using the metric's GradientRecursiveGaussianFilterImage.
+// Thus, only set to true when this option is set.
+// This is meant to facilitate testing a metric with different
+// permutations of the pre-warp and image gradient options.
+// The first call to this should be with the metric using
+// GradientRecursiveGaussianFilterImage, and set computeTruthValues
+// to true. Then subsequent calls should pass back the return truthValue
+// and truthDerivative and set computeTruthValues to false.
 int RunTest( TestMetricType::Pointer & metric,
              ImageType::Pointer & fixedImage,
-             ImageType::Pointer & movingImage )
+             ImageType::Pointer & movingImage,
+             TestMetricType::MeasureType& truthValue,
+             TestMetricType::DerivativeType& truthDerivative,
+             bool computeTruthValues )
 {
   // Initialize.
+  std::cout << "Initializing Metric." << std::endl;
   try
     {
     metric->Initialize();
@@ -228,7 +238,6 @@ int RunTest( TestMetricType::Pointer & metric,
               << exc;
     return EXIT_FAILURE;
     }
-  std::cout << "...done GetValueAndDerivative." << std::endl;
 
   //Check number of threads and valid points
   std::cout << "Number of threads used: "
@@ -240,98 +249,130 @@ int RunTest( TestMetricType::Pointer & metric,
               << " but instead got " << metric->GetNumberOfValidPoints();
     return EXIT_FAILURE;
     }
-
+  std::cout << "GetNumberOfValidPoints: " << metric->GetNumberOfValidPoints()
+            << std::endl;
+            
   //
   // Compute truth values
   //
-  TestMetricType::MeasureType       truthValue = 0;
-  TestMetricType::DerivativeType
-                    truthDerivative( metric->GetNumberOfParameters() );
-  truthDerivative.Fill( 0 );
-
-  // Default behavior is for the metric to precompute image derivatives, so
-  // we access them here for testing.
-  TestMetricType::FixedImageGradientType  fixedImageDerivative;
-  TestMetricType::MovingImageGradientType movingImageDerivative;
-  TestMetricType::FixedGradientImageType::ConstPointer
-    fixedGradientImage = metric->GetFixedGaussianGradientImage();
-  TestMetricType::MovingGradientImageType::ConstPointer
-    movingGradientImage = metric->GetMovingGaussianGradientImage();
-
-  ImageRegionIterator<ImageType>
-    itFixed( fixedImage, fixedImage->GetRequestedRegion() );
-  ImageRegionIterator<ImageType>
-    itMoving( movingImage, movingImage->GetRequestedRegion() );
-  itFixed.GoToBegin();
-  itMoving.GoToBegin();
-  unsigned int count = 0;
-  while( !itFixed.IsAtEnd() && !itMoving.IsAtEnd() )
+  if( computeTruthValues )
     {
-    truthValue += itFixed.Get() + itMoving.Get();
+    truthValue = 0;
+    truthDerivative.SetSize( metric->GetNumberOfParameters() );
+    truthDerivative.Fill( 0 );
 
-    // Get the image derivatives. Because this test is using identity transforms,
-    // simply retrieve by index.
-    // NOTE: relying on the metric's gradient image isn't a complete test, but it
-    // does test the rest of the mechanics.
-    fixedImageDerivative = fixedGradientImage->GetPixel( itFixed.GetIndex() );
-    movingImageDerivative = movingGradientImage->GetPixel( itMoving.GetIndex() );
+    // Default behavior is for the metric to precompute image derivatives, so
+    // we access them here for testing.
+    TestMetricType::FixedImageGradientType  fixedImageDerivative;
+    TestMetricType::MovingImageGradientType movingImageDerivative;
+    TestMetricType::FixedGradientImageType::ConstPointer
+      fixedGradientImage = metric->GetFixedGaussianGradientImage();
+    TestMetricType::MovingGradientImageType::ConstPointer
+      movingGradientImage = metric->GetMovingGaussianGradientImage();
 
-    std::cout << "Truth: " << itMoving.GetIndex() << ": movingImageDerivative:"
-              << movingImageDerivative << std::endl
-              << "Truth: " << itFixed.GetIndex() << ": fixedImageDerivative: "
-              << fixedImageDerivative << std::endl;
-
-    for ( unsigned int par = 0;
-          par < metric->GetNumberOfLocalParameters(); par++ )
+    ImageRegionIterator<ImageType>
+      itFixed( fixedImage, fixedImage->GetRequestedRegion() );
+    ImageRegionIterator<ImageType>
+      itMoving( movingImage, movingImage->GetRequestedRegion() );
+    itFixed.GoToBegin();
+    itMoving.GoToBegin();
+    unsigned int count = 0;
+    std::cout << "Iterating to compute truth values." << std::endl;
+    while( !itFixed.IsAtEnd() && !itMoving.IsAtEnd() )
       {
-      double sum = 0.0;
-      for ( unsigned int dim = 0; dim < imageDimensionality; dim++ )
-        {
-        sum += movingImageDerivative[dim] + fixedImageDerivative[dim];
-        }
+      truthValue += itFixed.Get() + itMoving.Get();
 
-      if( metric->HasLocalSupport() )
+      // Get the image derivatives.
+      // Because this test is using identity transforms,
+      // simply retrieve by index.
+      // NOTE: relying on the metric's gradient image isn't a complete test, but it
+      // does test the rest of the mechanics.
+      if( metric->GetUseFixedGradientRecursiveGaussianImageFilter )
         {
-        truthDerivative[ count * metric->GetNumberOfLocalParameters() + par ]
-                                                                        = sum;
+        fixedImageDerivative = fixedGradientImage->GetPixel( itFixed.GetIndex() );
         }
       else
         {
-        truthDerivative[par] += sum;
+        FixedGradientCalculatorType::Pointer fixedGradientCalculator;
+        fixedGradientCalculator = metric->GetFixedGradientCalculator();
+        fixedImageDerivative = this->m_FixedGradientCalculator->EvaluateAtIndex( itFixed.GetIndex() );
+        if( ! metric->GetPreWarpFixedImage() )
+          {
+          ...
+          }
+        
         }
+      if( metric->GetUseMovinGradientRecursiveGaussianImageFilter )
+        {
+        movingImageDerivative = movingGradientImage->GetPixel( itMoving.GetIndex() );
+        }
+      else
+        {
+        MovingGradientCalculatorType::Pointer movingGradientCalculator;
+        movingGradientCalculator = metric->GetMovingGradientCalculator();        
+        }
+        
+      std::cout << "Truth: " << itMoving.GetIndex() << ": movingImageDerivative:"
+                << movingImageDerivative << std::endl
+                << "Truth: " << itFixed.GetIndex() << ": fixedImageDerivative: "
+                << fixedImageDerivative << std::endl;
+
+      for ( unsigned int par = 0;
+            par < metric->GetNumberOfLocalParameters(); par++ )
+        {
+        double sum = 0.0;
+        for ( unsigned int dim = 0; dim < imageDimensionality; dim++ )
+          {
+          sum += movingImageDerivative[dim] + fixedImageDerivative[dim];
+          }
+
+        if( metric->HasLocalSupport() )
+          {
+          truthDerivative[ count * metric->GetNumberOfLocalParameters() + par ]
+                                                                          = sum;
+          }
+        else
+          {
+          truthDerivative[par] += sum;
+          }
+        }
+      count++;
+      ++itFixed;
+      ++itMoving;
       }
-    count++;
-    ++itFixed;
-    ++itMoving;
-    }
 
-  // Take the averages
-  truthValue /= metric->GetNumberOfValidPoints();
-  if( ! metric->HasLocalSupport() )
-    {
-    truthDerivative /= metric->GetNumberOfValidPoints();
-    }
-
+    // Take the averages
+    std::cout << "Getting averages." << std::endl;
+    truthValue /= metric->GetNumberOfValidPoints();
+    if( ! metric->HasLocalSupport() )
+      {
+      truthDerivative /= metric->GetNumberOfValidPoints();
+      }
+      
+    } // computeTruthValues
+  
   //
   // Verify results
   //
+  int result = EXIT_SUCCESS;
+  std::cout << "Verifying results." << std::endl;
   if( vcl_fabs( truthValue - valueReturn ) > epsilon )
     {
-    std::cout << "truthValue does not equal value: " << std::endl
+    std::cout << "-FAILED-truthValue does not equal value: " << std::endl
               << "truthValue: " << truthValue << std::endl
               << "value: " << valueReturn << std::endl;
-    return EXIT_FAILURE;
+    result = EXIT_FAILURE;
 
     }
   if( ! testArray( truthDerivative, derivativeReturn ) )
     {
-    std::cout << "truthDerivative does not equal derivatives:" << std::endl
+    std::cout << "-FAILED-truthDerivative does not equal derivatives:" << std::endl
               << "truthDerivative: " << truthDerivative << std::endl
               << "derivatives: " << derivativeReturn << std::endl;
-    return EXIT_FAILURE;
+    result = EXIT_FAILURE;
     }
 
-  return EXIT_SUCCESS;
+  return result;
 }
 
 }//namespace
@@ -339,6 +380,9 @@ int RunTest( TestMetricType::Pointer & metric,
 ////////////////////////////////////////////////////////////
 int itkImageToImageObjectMetricTest(int, char ** const)
 {
+  bool origGlobalWarningValue = Object::GetGlobalWarningDisplay();
+  Object::SetGlobalWarningDisplay( true );
+  
   int result = EXIT_SUCCESS;
 
   ImageType::SizeType       size = {{imageSize, imageSize}};
@@ -408,21 +452,57 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( fixedTransform );
   metric->SetMovingTransform( movingTransform );
-  metric->SetPreWarpFixedImage( false );
-  metric->SetPreWarpMovingImage( false );
-  metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
-  metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
   metric->SetGradientSource( TestMetricType::GRADIENT_SOURCE_BOTH );
 
+  // Enable ITK debugging output
+  metric->SetDebug( false );
 
-  //Evaluate the metric
+  // Evaluate the metric
+  // Run through all the permutations of pre-warping and image gradient
+  // calculation method.
+  TestMetricType::MeasureType     truthValue;
+  TestMetricType::DerivativeType  truthDerivative;
   metric->SetNumberOfThreads(1);
-  std::cout << "* Testing with IdentityTransform for moving image..." << std::endl;
-  if( RunTest( metric, fixedImage, movingImage ) != EXIT_SUCCESS )
+  for( char useGaussianFixed = 1; useGaussianFixed >= 0; useGaussianFixed-- )
     {
-    result = EXIT_FAILURE;
-    }
+    for( char useGaussianMoving = 1; useGaussianMoving >= 0; useGaussianMoving-- )
+      {
+      //Have to recompute new truth values for each permutation of
+      // image gradient calculation options.
+      bool computeTruthValues = true;
+      for( char preWarpFixed = 1; preWarpFixed >= 0; preWarpFixed-- )
+        {
+        for( char preWarpMoving = 1; preWarpMoving >= 0; preWarpMoving-- )
+          {
+          metric->SetPreWarpFixedImage( preWarpFixed == 1 );
+          metric->SetPreWarpMovingImage( preWarpMoving == 1);
+          metric->SetUseFixedGradientRecursiveGaussianImageFilter(
+                                                       useGaussianFixed == 1);
+          metric->SetUseMovingGradientRecursiveGaussianImageFilter(
+                                                       useGaussianMoving == 1 );
+          std::cout << "* Testing with IdentityTransform for moving image..."
+                    << std::endl
+                    << "Pre-warp image fixed, moving: "
+                    << metric->GetPreWarpFixedImage() << ", "
+                    << metric->GetPreWarpMovingImage() << std::endl
+                    << "Use RecursiveGaussian filter for fixed, moving: "
+                    << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
+                    << ", "
+                    << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
+                    << std::endl;                    
+                    
+          if( RunTest( metric, fixedImage, movingImage,
+                       truthValue, truthDerivative, computeTruthValues )
+                                                            != EXIT_SUCCESS )
+            {
+            result = EXIT_FAILURE;
+            }
+          computeTruthValues = false;
+          }
+        }
+      }
+    } // loop through permutations
 
   //
   // Test with an identity displacement field transform for moving image
@@ -455,21 +535,25 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   // Assign it to the metric
   metric->SetMovingTransform( displacementTransform );
 
-  metric->SetPreWarpFixedImage( false );
-  metric->SetPreWarpMovingImage( false );
+  metric->SetPreWarpFixedImage( true );
+  metric->SetPreWarpMovingImage( true );
   metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
   metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
   metric->SetGradientSource( TestMetricType::GRADIENT_SOURCE_BOTH );
 
   //Evaluate the metric
+  bool computeTruthValues = true;
   std::cout
     << "* Testing with identity DisplacementFieldTransform for moving image..."
     << std::endl;
-  if( RunTest( metric, fixedImage, movingImage ) != EXIT_SUCCESS )
+  if( RunTest( metric, fixedImage, movingImage,
+               truthValue, truthDerivative, computeTruthValues ) != EXIT_SUCCESS )
     {
     result = EXIT_FAILURE;
     }
+
+  Object::SetGlobalWarningDisplay( origGlobalWarningValue );
 
   return result;
 }
