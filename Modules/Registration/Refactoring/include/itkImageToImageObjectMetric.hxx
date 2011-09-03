@@ -825,82 +825,19 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
   else
     {
-    mappedMovingPixelValue = this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
+    mappedMovingPixelValue =
+                      this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
     if( computeImageGradient )
       {
       this->ComputeMovingImageGradient( mappedMovingPoint,
                                         mappedMovingImageGradient );
       mappedMovingImageGradient =
-        this->m_MovingTransform->TransformCovariantVector( mappedMovingImageGradient,
+        this->m_MovingTransform->TransformCovariantVector(
+                                                     mappedMovingImageGradient,
                                                      mappedMovingPoint );
       }
     }
 }
-
-#if 0 //*************************************************************
-{
-/*
- * Transform a point from VirtualImage domain to MovingImage domain.
- */
-template<class TFixedImage,class TMovingImage,class TVirtualImage>
-void
-ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::TransformAndEvaluateMovingPoint(
-                      const VirtualIndexType & index,
-                      const VirtualPointType & point,
-                      MovingImagePointType & mappedMovingPoint,
-                      bool & pointIsValid,
-                      MovingImagePixelType & movingImageValue,
-                      bool computeImageGradient,
-                      MovingImageGradientType & movingImageGradient ) const
-{
-  pointIsValid = true;
-  movingImageValue = 0;
-
-  if( this->m_MovingTransform->HasLocalSupport() )
-    {
-    mappedMovingPoint = this->m_MovingTransform->TransformIndex( index );
-    }
-  else
-    {
-    mappedMovingPoint = this->m_MovingTransform->TransformPoint( point );
-    }
-
-  // If user provided a mask over the Moving image
-  if ( this->m_MovingImageMask )
-    {
-    // Check if mapped point is within the support region of the moving image
-    // mask
-    pointIsValid = this->m_MovingImageMask->IsInside( mappedMovingPoint );
-    }
-
-  if( ! pointIsValid )
-    {
-    return;
-    }
-
-  // Check if mapped point inside image buffer
-  pointIsValid = this->m_MovingInterpolator->IsInsideBuffer(mappedMovingPoint);
-  if ( pointIsValid )
-    {
-    movingImageValue = this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
-    if( computeImageGradient )
-      {
-      this->ComputeMovingImageGradient( mappedMovingPoint,
-                                        movingImageGradient );
-      }
-    }
-
-  if( pointIsValid && computeImageGradient )
-    {
-    // Transform into the virtual space. See TransformAndEvaluateFixedPoint.
-    movingImageGradient =
-      this->m_MovingTransform->TransformCovariantVector( movingImageGradient,
-                                                        mappedMovingPoint );
-    }
-}
-}
-#endif //******************************************************************/
 
 /*
  * Compute image derivatives for a Fixed point.

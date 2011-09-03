@@ -475,8 +475,8 @@ public:
   itkGetConstObjectMacro(MovingGaussianGradientImage, MovingGradientImageType);
 
   /** Get the gradient calculators */
-  itkGetConstObjectMacro( FixedGradientCalculatorType, FixedGradientCalculator);
-  itkGetConstObjectMacro( MovingGradientCalculatorType, MovingGradientCalculator);
+  itkGetConstObjectMacro( FixedGradientCalculator, FixedGradientCalculatorType);
+  itkGetConstObjectMacro( MovingGradientCalculator, MovingGradientCalculatorType);
 
   /** Get number of valid points from most recent update */
   itkGetConstMacro( NumberOfValidPoints, SizeValueType );
