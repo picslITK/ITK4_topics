@@ -577,7 +577,10 @@ int itkImageToImageObjectMetricTest(int, char ** const)
                                                          useGaussianFixed == 1);
             metric->SetUseMovingGradientRecursiveGaussianImageFilter(
                                                          useGaussianMoving == 1 );
-I am here - trouble with this test cuz it seems cuz of edge conditions changing the derivative vals between pre-warped and orig calcs. If I do a large image 100x100 and only look at center points, they seems idential between orig and pre-warped calcs, so that's probably the issue.
+I am here - trouble with this test cuz it seems cuz of edge conditions changing the derivative vals between pre-warped and orig calcs. If I do a large image 100x100 and only look at center points , they seems idential between orig and pre-warped calcs, so that's probably the issue.
+See above in test metric where I just print-out w/in center of large image.
+Also, note that I commented out test code above for the identity-transform test.
+
              std::cout << "* Testing with NON-IDENTITY transforms ..."
                       << std::endl;                    
             if( RunSingleTest( metric, fixedImage, movingImage,
