@@ -19,8 +19,9 @@
 #define __itkImageToImageObjectMetric_hxx
 
 #include "itkImageToImageObjectMetric.h"
-//#include "itkImageRandomConstIteratorWithIndex.h"
 #include "itkPixelTraits.h"
+#include "itkDisplacementFieldTransform.h"
+#include "itkCompositeTransform.h"
 
 namespace itk
 {
@@ -80,6 +81,15 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /*
+ * Destructor
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::~ImageToImageObjectMetric()
+{
+}
+
+/*
  * Initialize. One-time initializations, i.e. once before each
  * registration loop.
  */
@@ -89,7 +99,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::Initialize() throw ( itk::ExceptionObject )
 {
   itkDebugMacro("Initialize entered");
-  
+
   /* Verify things are connected */
   if ( !this->m_FixedImage )
     {
@@ -123,7 +133,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* If a virtual image has not been set, create one from fixed image */
   if( ! this->m_VirtualDomainImage )
     {
-    itkDebugMacro("Creating VirtualDomainImage from FixedImage");
     /* This instantiation will fail at compilation if user has provided
      * a different type for VirtualImage in the template parameters. */
     this->m_VirtualDomainImage = FixedImageType::New();
@@ -138,6 +147,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       }
     }
 
+  /* Special checks for when the moving transform is dense/high-dimensional */
   if( this->m_MovingTransform->HasLocalSupport() )
     {
     /* Verify that virtual domain and displacement field are the same size
@@ -152,11 +162,12 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     has PixelTraits associated with it, and not a particular value. */
     if( PixelTraits< VirtualImagePixelType >::Dimension != 1 )
       {
-      itkExceptionMacro("VirtualImagePixelType must be scalar. "
+      itkExceptionMacro("VirtualImagePixelType must be scalar for use "
+                        "with high-dimensional transform. "
                         "Dimensionality is " <<
                         PixelTraits< VirtualImagePixelType >::Dimension );
       }
-    }//Moving transform is dense
+    }
 
   /*
    * Determine number of threads that will be used
@@ -179,12 +190,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * in GetValueAndDerivativeMultiThreadedInitiate. */
   this->m_ThreadingMemoryHasBeenInitialized = false;
 
-  /*
-   * Interpolators and image gradients.
-   * Do this AFTER we have the
-   * proper value in m_NumberOfThreads.
-   */
-
   /* Inititialize interpolators. */
   this->m_FixedInterpolator->SetInputImage( this->m_FixedImage );
   this->m_MovingInterpolator->SetInputImage( this->m_MovingImage );
@@ -193,10 +198,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * Instantiate a central difference derivative calculator
    * if appropriate. If pre-warping is enabled, the
    * calculator will be pointed to the warped image at time of warping. */
-  itkDebugMacro("Setup for image gradient calculations.");
   if( !this->m_UseFixedGradientRecursiveGaussianImageFilter )
     {
-    this->m_FixedGaussianGradientImage = NULL; 
+    this->m_FixedGaussianGradientImage = NULL;
     this->m_FixedGradientCalculator = FixedGradientCalculatorType::New();
     this->m_FixedGradientCalculator->UseImageDirectionOn();
     this->m_FixedGradientCalculator->SetInputImage(this->m_FixedImage);
@@ -210,16 +214,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     }
 
   /* Initialize resample image filters for pre-warping images if
-   * option is set. */
+   * option is set.
+   * The proper number of threads is required. */
   if( this->m_PreWarpFixedImage )
     {
-    itkDebugMacro("Init resample image filters for Fixed.");
-    if( this->m_FixedImageMask )
-      {
-      itkExceptionMacro("Use of m_PreWarpFixedImage with image masks is not "
-                        "yet supported." );
-      }
-
     this->m_FixedWarpResampleImageFilter = FixedWarpResampleImageFilterType::New();
     this->m_FixedWarpResampleImageFilter->SetUseReferenceImage( true );
     this->m_FixedWarpResampleImageFilter->SetReferenceImage(
@@ -245,12 +243,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( this->m_PreWarpMovingImage )
     {
-    itkDebugMacro("Init resample image filters for Moving.");
-    if( this->m_MovingImageMask )
-      {
-      itkExceptionMacro("Use of m_PreWarpMovingImage with image masks is not "
-                        "yet supported." );
-      }
     this->m_MovingWarpResampleImageFilter =
                                       MovingWarpResampleImageFilterType::New();
     this->m_MovingWarpResampleImageFilter->SetUseReferenceImage( true );
@@ -292,7 +284,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * Determine this during initialization and store
    * result because the check can involve several comparisons. */
   /*
-   TODO sort out. Interface will likely be simplified...
+   TODO sort out. This must be added to Transform and the interface
+   finalized.
   this->m_FixedTransformCanUseTransformIndex =
     this->m_FixedTransform->CanUseTransformIndex(
       this->GetVirtualDomainImage()->GetRequestedRegion(),
@@ -752,12 +745,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       this->ComputeFixedImageGradient( mappedFixedPoint,
                                        mappedFixedImageGradient );
       //Transform the gradient into the virtual domain. We compute gradient
-      // in the fixed and moving domains and then transform to virtual, because
-      // first warping the fixed and moving images to virtual domain and then
-      // calculating gradient would create threading issues with the creation
-      // of the warped image, unless they were created during initilization.
-      // But, pre-warping the images would be inefficient when a mask or
-      // sampling is used to compute only a subset of points.
+      // in the fixed and moving domains and then transform to virtual.
       mappedFixedImageGradient =
         this->m_FixedTransform->TransformCovariantVector(
                                                       mappedFixedImageGradient,
@@ -1072,6 +1060,28 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 /*
+ * SetTransform
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::SetTransform( MovingTransformType* transform )
+{
+  SetMovingTransform( transform );
+}
+
+/*
+ * GetTransform
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+const typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >::MovingTransformType *
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::GetTransform()
+{
+  return GetMovingTransform();
+}
+
+/*
  * UpdateParameters
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
@@ -1188,6 +1198,67 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->SetVirtualDomainRegion( image->GetBufferedRegion() );
 }
 
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::SetVirtualDomainRegion( VirtualRegionType & region )
+{
+  SetVirtualDomainRegion( static_cast<const VirtualRegionType& >(region) );
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::SetVirtualDomainRegion( const VirtualRegionType & region )
+{
+  if( region != m_VirtualDomainRegion || ! m_VirtualDomainRegionHasBeenSet )
+    {
+    m_VirtualDomainRegionHasBeenSet = true;
+    m_VirtualDomainRegion = region;
+    this->Modified();
+    }
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>::MeasureType
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+::GetValueResult()
+{
+  return m_Value;
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+unsigned int
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+::GetNumberOfParameters() const
+{
+  return this->m_MovingTransform->GetNumberOfParameters();
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+const typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>::ParametersType &
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+::GetParameters() const
+{
+  return this->m_MovingTransform->GetParameters();
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+unsigned int
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::GetNumberOfLocalParameters() const
+{
+  return this->m_MovingTransform->GetNumberOfLocalParameters();
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+bool
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::HasLocalSupport() const
+{
+  return this->m_MovingTransform->HasLocalSupport();
+}
+
 /*
  * Verify a displacement field and virtual image are in the same space.
  */
@@ -1197,20 +1268,23 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::VerifyDisplacementFieldSizeAndPhysicalSpace()
 {
 
-//TODO replace with common external method. Possibly use Transform::CanUseTransformIndex as stop-gap.
+  // TODO: replace with a common external method to check this,
+  // possibly something in Transform.
 
-#if 0
   /* Verify that virtual domain and displacement field are the same size
    * and in the same physical space.
-   * Effects transformation, and calc of offset in StoreDerivativeResult.
+   * Effects transformation, and calculation of offset in StoreDerivativeResult.
    * If it's a composite transform and the displacement field is the first
    * to be applied (i.e. the most recently added), then it has to be
-   * of the same size, otherwise not. But actually at this point, if
-   * a CompositeTransform has local support, it means all its sub-transforms
-   * have local support. So they should all be displacement fields, so just
-   * verify that the first one is at least.
+   * of the same size, otherwise not.
    * Eventually we'll want a method in Transform something like a
    * GetInputDomainSize to check this cleanly. */
+  typedef DisplacementFieldTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingDisplacementFieldTransformType;
+  typedef CompositeTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingCompositeTransformType;
   MovingTransformType* transform;
   transform = this->m_MovingTransform.GetPointer();
   /* If it's a CompositeTransform, get the last transform (1st applied). */
@@ -1220,14 +1294,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     transform = comptx->GetBackTransform().GetPointer();
     }
-  /* Check that it's a DisplacementField type, the only type we expect
-   * at this point */
+  /* Check that it's a DisplacementField type, or a derived type,
+   * the only type we expect at this point. */
   MovingDisplacementFieldTransformType* deftx =
           dynamic_cast< MovingDisplacementFieldTransformType * >( transform );
   if( deftx == NULL )
     {
     itkExceptionMacro("Expected m_MovingTransform to be of type "
-                      "DisplacementFieldTransform" );
+                      "DisplacementFieldTransform or derived." );
     }
   typedef typename MovingDisplacementFieldTransformType::DisplacementFieldType
                                                                     FieldType;
@@ -1257,7 +1331,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     /* tolerance for origin and spacing depends on the size of pixel
      * tolerance for directions a fraction of the unit cube. */
     const double coordinateTol
-      = 1.0e-6 * this->m_VirtualDomainImage->GetSpacing()[0]; // use first dimension spacing
+      = 1.0e-6 * this->m_VirtualDomainImage->GetSpacing()[0];
     const double directionTol = 1.0e-6;
 
     if ( !this->m_VirtualDomainImage->GetOrigin().GetVnlVector().
@@ -1286,7 +1360,96 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                         << originString.str() << spacingString.str()
                         << directionString.str() );
       }
-#endif
+}
+
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::PrintSelf(std::ostream& os, Indent indent) const
+{
+  Superclass::PrintSelf(os, indent);
+
+  os << indent << "ImageToImageObjectMetric: " << std::endl
+               << "GetNumberOfThreads: " << this->GetNumberOfThreads()
+               << std::endl
+               << "GetUseFixedGradientRecursiveGaussianImageFilter: "
+               << this->GetUseFixedGradientRecursiveGaussianImageFilter()
+               << std::endl
+               << "GetUseMovingGradientRecursiveGaussianImageFilter: "
+               << this->GetUseMovingGradientRecursiveGaussianImageFilter()
+               << std::endl
+               << "PreWarpFixedImage: " << this->GetPreWarpFixedImage()
+               << std::endl
+               << "PreWarpMovingImage: " << this->GetPreWarpMovingImage()
+               << std::endl
+               << "GetNumberOfThreads: " << this->GetNumberOfThreads()
+               << std::endl;
+
+  if( this->GetVirtualDomainImage() != NULL )
+    {
+    os << indent << "VirtualDomainImage: "
+                 << this->GetVirtualDomainImage() << std::endl;
+    }
+  else
+    {
+    os << indent << "VirtualDomainImage is NULL." << std::endl;
+    }
+  if( this->GetFixedImage() != NULL )
+    {
+    os << indent << "FixedImage: " << this->GetFixedImage() << std::endl;
+    }
+  else
+    {
+    os << indent << "FixedImage is NULL." << std::endl;
+    }
+  if( this->GetMovingImage() != NULL )
+    {
+    os << indent << "MovingImage: " << this->GetMovingImage() << std::endl;
+    }
+  else
+    {
+    os << indent << "MovingImage is NULL." << std::endl;
+    }
+  if( this->GetFixedTransform() != NULL )
+    {
+    os << indent << "FixedTransform: " << this->GetFixedTransform() << std::endl;
+    }
+  else
+    {
+    os << indent << "FixedTransform is NULL." << std::endl;
+    }
+  if( this->GetMovingTransform() != NULL )
+    {
+    os << indent << "MovingTransform: " << this->GetMovingTransform()
+       << std::endl;
+    }
+  else
+    {
+    os << indent << "MovingTransform is NULL." << std::endl;
+    }
+  if( this->GetFixedImageMask() != NULL )
+    {
+    os << indent << "FixedImageMask: " << this->GetFixedImageMask() << std::endl;
+    }
+  else
+    {
+    os << indent << "FixedImageMask is NULL." << std::endl;
+    }
+  if( this->GetMovingImageMask() != NULL )
+    {
+    os << indent << "MovingImageMask: " << this->GetMovingImageMask()
+       << std::endl;
+    }
+  else
+    {
+    os << indent << "MovingImageMask is NULL." << std::endl;
+    }
+
+
+  //os << indent <<
+  //os << indent <<
+  //os << indent <<
+  //os << indent <<
 }
 
 }//namespace itk

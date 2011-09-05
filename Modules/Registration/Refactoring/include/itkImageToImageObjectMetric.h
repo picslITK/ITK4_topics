@@ -24,8 +24,6 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
 #include "itkImageToData.h"
-//#include "itkDisplacementFieldTransform.h"
-#include "itkCompositeTransform.h"
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
 
@@ -64,9 +62,6 @@ namespace itk
  * already in the virtual domain, for example via an initial affine
  * transformation in the first step of a CompositeTransform.
  *
- * \note Use of PreWarpImages option is not yet supported when also using
- * image masks.
- *
  * TODO - UPDATE:
  * Include discussion of difference between GradientRecursiveGaussian
  * and CentralDiff method. Gaussian one is smoothed. We use it for
@@ -86,7 +81,8 @@ namespace itk
  *  m_PrecomputeImageGradient option has been set to false.
  *
  * Image masks are supported using SetMovingImageMask or SetFixedImageMask.
- * Random sampling or user-supplied point lists are not supported except
+ *
+ * Random sampling or user-supplied point lists are not yet supported, except
  * via a user-supplied mask.
  *
  * Derived classes:
@@ -176,18 +172,6 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
-  /** Displacement field typedef for convenience */
-  /*
-  typedef DisplacementFieldTransform<CoordinateRepresentationType,
-    itkGetStaticConstMacro( MovingImageDimension ) >
-                                          MovingDisplacementFieldTransformType;
-  */
-  /** CompositeTransform typedef for convenience */
-  /*typedef CompositeTransform<CoordinateRepresentationType,
-    itkGetStaticConstMacro( MovingImageDimension ) >
-                                          MovingCompositeTransformType;
-  */
-
   /** Identity transform typedef's for convenience */
   typedef IdentityTransform<CoordinateRepresentationType,
     itkGetStaticConstMacro( MovingImageDimension ) >
@@ -201,16 +185,15 @@ public:
   typedef typename FixedTransformType::OutputPointType FixedOutputPointType;
   typedef typename FixedTransformType::ParametersType
                                                 FixedTransformParametersType;
-  typedef typename FixedTransformType::JacobianType
-                                                FixedTransformJacobianType;
 
   typedef typename MovingTransformType::Pointer         MovingTransformPointer;
   typedef typename MovingTransformType::InputPointType  MovingInputPointType;
   typedef typename MovingTransformType::OutputPointType MovingOutputPointType;
   typedef typename MovingTransformType::ParametersType
                                                 MovingTransformParametersType;
-  typedef typename MovingTransformType::JacobianType
-                                                MovingTransformJacobianType;
+
+  /** Jacobian type. This is the same for all transforms */
+  typedef typename FixedTransformType::JacobianType     JacobianType;
 
   /**  Type for the mask of the fixed image. Only pixels that are "inside"
        this mask will be considered for the computation of the metric */
@@ -357,19 +340,8 @@ public:
    * from m_FixedImage.GetBufferedRegion() in Intitialize.
    * The region passed here will be replaced by
    * any subsequent calls to CreateVirtualDomainImage. */
-  void SetVirtualDomainRegion( VirtualRegionType & region )
-  // FIXME: handle const-ness properly
-  { SetVirtualDomainRegion( static_cast<const VirtualRegionType& >(region) ); }
-
-  void SetVirtualDomainRegion( const VirtualRegionType & region )
-  {
-  if( region != m_VirtualDomainRegion || ! m_VirtualDomainRegionHasBeenSet )
-    {
-    m_VirtualDomainRegionHasBeenSet = true;
-    m_VirtualDomainRegion = region;
-    this->Modified();
-    }
-  }
+  void SetVirtualDomainRegion( VirtualRegionType & region );
+  void SetVirtualDomainRegion( const VirtualRegionType & region );
   itkGetMacro(VirtualDomainRegion, VirtualRegionType);
 
   /** Set all virtual domain setings at once via an image.
@@ -382,18 +354,22 @@ public:
 
   /** Connect the fixed transform. */
   itkSetObjectMacro(FixedTransform, FixedTransformType);
+
   /** Get a pointer to the fixed transform.  */
   itkGetConstObjectMacro(FixedTransform, FixedTransformType);
+
   /** Connect the moving transform. */
   itkSetObjectMacro(MovingTransform, MovingTransformType);
+
   /** Get a pointer to the moving transform.  */
   itkGetConstObjectMacro(MovingTransform, MovingTransformType);
-  /** Connect the moving transform using a backwards-compatible name */
-  void SetTransform( MovingTransformType* transform )
-  { SetMovingTransform( transform ); }
+
+  /** Connect the moving transform using a backwards-compatible name.
+   * This assigns the input transform to the moving transform. */
+  void SetTransform( MovingTransformType* transform );
+
   /** Get the moving transform using a backwards-compatible name */
-  const MovingTransformType * GetTransform()
-  { return GetMovingTransform(); }
+  const MovingTransformType * GetTransform();
 
   /** Connect the fixed interpolator. */
   itkSetObjectMacro(FixedInterpolator, FixedInterpolatorType);
@@ -483,21 +459,20 @@ public:
 
   /** Get the measure value in m_Value, as computed by most recent evaluation.
    * Need to differentiate it from GetValue method in base class. */
-  MeasureType GetValueResult()
-  { return m_Value; }
+  MeasureType GetValueResult();
 
   /** Return the number of parameters. Convenience methods for derived
    * classes mainly.
    * We're always optimizing the moving image transform, so return
-   * its number of parameters. */
-  virtual unsigned int GetNumberOfParameters() const
-    { return this->m_MovingTransform->GetNumberOfParameters(); }
+   * its number of parameters.
+   * TODO: Swithc return type to NumberOfParametersType when superclass
+   * has been changed. */
+  virtual unsigned int GetNumberOfParameters() const;
 
   /** Get a const reference to the moving transform's parameters */
-  virtual const ParametersType & GetParameters() const
-  { return this->m_MovingTransform->GetParameters(); }
+  virtual const ParametersType & GetParameters() const;
 
-  /** Update the metric's transform parameters.
+  /** Update the moving transform's parameters.
    * This call is passed through directly to the transform.
    * \c factor is a scalar multiplier for each value in update, and
    * defaults to 1.0 .
@@ -506,13 +481,11 @@ public:
   virtual void UpdateTransformParameters( DerivativeType & derivative,
                                           ParametersValueType factor = 1.0);
 
-  /** FIXME: documentation. See GetNumberOfParameters */
-  virtual unsigned int GetNumberOfLocalParameters() const
-    { return this->m_MovingTransform->GetNumberOfLocalParameters(); }
+  /** Get the number of local parameters from the moving transform. */
+  virtual unsigned int GetNumberOfLocalParameters() const;
 
-  /** FIXME: documentation. See GetNumberOfParameters */
-  virtual bool HasLocalSupport() const
-    { return this->m_MovingTransform->HasLocalSupport(); }
+  /** Get if the moving transform has local support. */
+  virtual bool HasLocalSupport() const;
 
   /* Initialize the metric before calling GetValue or GetDerivative.
    * Derived classes must call this Superclass version if they override
@@ -761,17 +734,12 @@ protected:
   std::vector< SizeValueType >               m_NumberOfValidPointsPerThread;
   /** Pre-allocated transform jacobian objects, for use as needed by dervied
    * classes for efficiency. */
-  std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
+  std::vector<JacobianType>                  m_MovingTransformJacobianPerThread;
 
   ImageToImageObjectMetric();
-  virtual ~ImageToImageObjectMetric() {}
+  virtual ~ImageToImageObjectMetric();
 
-  void PrintSelf(std::ostream& os, Indent indent) const
-    {
-    Superclass::PrintSelf(os, indent);
-    os << indent << "ImageToImageObjectMetric: TODO..." << std::endl;
-    }
-
+  void PrintSelf(std::ostream& os, Indent indent) const;
 
   /* Verify that virtual domain and displacement field are the same size
    * and in the same physical space. */
