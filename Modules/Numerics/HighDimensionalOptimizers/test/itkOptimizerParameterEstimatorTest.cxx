@@ -26,19 +26,18 @@
 #include "itkTransform.h"
 #include "itkAffineTransform.h"
 #include "itkIdentityTransform.h"
+#include "itkTranslationTransform.h"
 
 using namespace itk;
 
-namespace{
-
 /* Create a simple metric to use for testing here. */
 template< class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage >
-class ITK_EXPORT ObjectToObjectMetricProxy:
+class ITK_EXPORT OptimizerParameterEstimatorTestMetric:
   public itk::ObjectToObjectMetric
 {
 public:
   /** Standard class typedefs. */
-  typedef ObjectToObjectMetricProxy                               Self;
+  typedef OptimizerParameterEstimatorTestMetric                   Self;
   typedef itk::ObjectToObjectMetric                               Superclass;
   typedef itk::SmartPointer< Self >                               Pointer;
   typedef itk::SmartPointer< const Self >                         ConstPointer;
@@ -48,16 +47,20 @@ public:
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
-  itkTypeMacro(ObjectToObjectMetricProxy, ObjectToObjectMetric);
+  itkTypeMacro(OptimizerParameterEstimatorTestMetric, ObjectToObjectMetric);
 
   itkNewMacro(Self);
 
   // Pure virtual functions that all Metrics must provide
   unsigned int GetNumberOfParameters() const { return 5; }
+
+  //using Superclass::GetValue;
   MeasureType GetValue()
     {
     return 1.0;
     }
+
+  //using Superclass::GetValueAndDerivative;
   void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative )
     {
     value = 1.0;
@@ -106,11 +109,11 @@ public:
   itkGetObjectMacro(VirtualDomainImage, VirtualImageType);
 
   /* Image dimension accessors */
-  itkStaticConstMacro(FixedImageDimension, unsigned int,
+  itkStaticConstMacro(FixedImageDimension, IndexValueType,
       ::itk::GetImageDimension<FixedImageType>::ImageDimension);
-  itkStaticConstMacro(MovingImageDimension, unsigned int,
+  itkStaticConstMacro(MovingImageDimension, IndexValueType,
       ::itk::GetImageDimension<MovingImageType>::ImageDimension);
-  itkStaticConstMacro(VirtualImageDimension, unsigned int,
+  itkStaticConstMacro(VirtualImageDimension, IndexValueType,
       ::itk::GetImageDimension<VirtualImageType>::ImageDimension);
 
   /**  Type of the Transform Base classes */
@@ -143,16 +146,10 @@ private:
   FixedTransformPointer   m_FixedTransform;
   MovingTransformPointer  m_MovingTransform;
 
-  ObjectToObjectMetricProxy() {}
-  ~ObjectToObjectMetricProxy() {}
+  OptimizerParameterEstimatorTestMetric() {}
+  ~OptimizerParameterEstimatorTestMetric() {}
+
 };
-
-/* global defines */
-const int ImageDimension = 2;
-typedef Image<double, ImageDimension>                    ImageType;
-typedef ImageType::Pointer                               ImagePointerType;
-
-}//namespace
 
 /**
  */
@@ -160,16 +157,17 @@ int itkOptimizerParameterEstimatorTest(int , char* [])
 {
 
   // Image begins
-  const unsigned int  Dimension = 2;
-  typedef double      PixelType;
+  const IndexValueType  ImageDimension = 2;
+  typedef double        PixelType;
 
-  // Fixed Image Type
-  typedef itk::Image<PixelType,Dimension>           FixedImageType;
-  // Moving Image Type
-  typedef itk::Image<PixelType,Dimension>           MovingImageType;
+  // Image Types
+  typedef itk::Image<PixelType,ImageDimension>           FixedImageType;
+  typedef itk::Image<PixelType,ImageDimension>           MovingImageType;
+  typedef itk::Image<PixelType,ImageDimension>           VirtualImageType;
 
-  MovingImageType::Pointer movingImage = MovingImageType::New();
   FixedImageType::Pointer  fixedImage  = FixedImageType::New();
+  MovingImageType::Pointer movingImage = MovingImageType::New();
+  VirtualImageType::Pointer virtualImage = fixedImage;
 
   MovingImageType::SizeType    size;
   size.Fill(100);
@@ -179,23 +177,23 @@ int itkOptimizerParameterEstimatorTest(int , char* [])
   // Image done
 
   // Transform begins
-  typedef AffineTransform<double, Dimension>      MovingTransformType;
-  typedef MovingTransformType::ParametersType     MovingParametersType;
+  typedef AffineTransform<double, ImageDimension>      MovingTransformType;
   MovingTransformType::Pointer movingTransform =  MovingTransformType::New();
   movingTransform->SetIdentity();
 
-  typedef IdentityTransform<double, Dimension>    FixedTransformType;
+  typedef TranslationTransform<double, ImageDimension> FixedTransformType;
   FixedTransformType::Pointer fixedTransform =    FixedTransformType::New();
   fixedTransform->SetIdentity();
   // Transform done
 
   // Metric begins
-  typedef ObjectToObjectMetricProxy<ImageType,ImageType>   MetricType;
+  typedef OptimizerParameterEstimatorTestMetric<FixedImageType, MovingImageType>   MetricType;
   MetricType::Pointer metric = MetricType::New();
 
-  metric->SetVirtualDomainImage( fixedImage );
+  metric->SetVirtualDomainImage( virtualImage );
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
+
   metric->SetFixedTransform( fixedTransform );
   metric->SetMovingTransform( movingTransform );
   // Metric done
@@ -206,25 +204,185 @@ int itkOptimizerParameterEstimatorTest(int , char* [])
   OptimizerParameterEstimatorType::Pointer parameterEstimator = OptimizerParameterEstimatorType::New();
 
   parameterEstimator->SetMetric(metric);
-  //parameterEstimator->Print( std::cout );
+  parameterEstimator->Print( std::cout );
 
+  // Scales for the moving transform
   parameterEstimator->SetTransformForward(true); //by default
   parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift); //by default
-  //parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromJacobian);
-  OptimizerParameterEstimatorType::ScalesType movingScales(metric->GetMovingTransform()->GetNumberOfParameters());
+  OptimizerParameterEstimatorType::ScalesType movingScales(movingTransform->GetNumberOfParameters());
 
   parameterEstimator->EstimateScales(movingScales);
-  std::cout << "Scales for moving transform parameters = " << movingScales << std::endl;
+  std::cout << "Shift scales for the affine transform = " << movingScales << std::endl;
 
+  // Check the correctness
+  OptimizerParameterEstimatorType::ScalesType theoreticalMovingScales(movingTransform->GetNumberOfParameters());
+  VirtualImageType::PointType upperPoint;
+  virtualImage->TransformIndexToPhysicalPoint(virtualImage->GetLargestPossibleRegion().GetUpperIndex(), upperPoint);
+
+  IndexValueType param = 0;
+  for (IndexValueType row = 0; row < ImageDimension; row++)
+    {
+    for (IndexValueType col = 0; col < ImageDimension; col++)
+      {
+      theoreticalMovingScales[param++] = upperPoint[col] * upperPoint[col];
+      }
+    }
+  for (IndexValueType row = 0; row < ImageDimension; row++)
+    {
+    theoreticalMovingScales[param++] = 1;
+    }
+
+  bool affinePass = true;
+  for (IndexValueType p = 0; p < theoreticalMovingScales.GetSize(); p++)
+    {
+    if (movingScales[p] != theoreticalMovingScales[p])
+      {
+      affinePass = false;
+      break;
+      }
+    }
+  bool nonUniformForAffine = false;
+  for (IndexValueType p = 1; p < movingScales.GetSize(); p++)
+    {
+    if (movingScales[p] != movingScales[0])
+      {
+      nonUniformForAffine = true;
+      break;
+      }
+    }
+
+  // Check done
+
+  // Scales for the fixed transform
   parameterEstimator->SetTransformForward(false);
-  OptimizerParameterEstimatorType::ScalesType fixedScales(metric->GetFixedTransform()->GetNumberOfParameters());
+  OptimizerParameterEstimatorType::ScalesType fixedScales(fixedTransform->GetNumberOfParameters());
 
   parameterEstimator->EstimateScales(fixedScales);
-  std::cout << "Scales for fixed transform parameters = " << fixedScales << std::endl;
+  std::cout << "Shift scales for the translation transform = " << fixedScales << std::endl;
+
+  // Check the correctness
+  OptimizerParameterEstimatorType::ScalesType theoreticalFixedScales(fixedTransform->GetNumberOfParameters());
+  theoreticalFixedScales.Fill(1.0);
+
+  bool translationPass = true;
+  for (IndexValueType p = 0; p < theoreticalFixedScales.GetSize(); p++)
+    {
+    if (fixedScales[p] != theoreticalFixedScales[p])
+      {
+      translationPass = false;
+      break;
+      }
+    }
+  bool uniformForTranslation = true;
+  for (IndexValueType p = 1; p < fixedScales.GetSize(); p++)
+    {
+    if (fixedScales[p] != fixedScales[0])
+      {
+      uniformForTranslation = false;
+      break;
+      }
+    }
+  // Check done
+
+  // Scales for the affine transform from transform jacobians
+  parameterEstimator->SetTransformForward(true); //by default
+  parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromJacobian);
+  OptimizerParameterEstimatorType::ScalesType jacobianScales(movingTransform->GetNumberOfParameters());
+
+  parameterEstimator->EstimateScales(jacobianScales);
+  std::cout << "Jacobian scales for the affine transform = " << jacobianScales << std::endl;
+
+  // Check the correctness
+  OptimizerParameterEstimatorType::ScalesType theoreticalJacobianScales(movingTransform->GetNumberOfParameters());
+
+  param = 0;
+  for (IndexValueType row = 0; row < ImageDimension; row++)
+    {
+    for (IndexValueType col = 0; col < ImageDimension; col++)
+      {
+      //average of squares of consecutive integers [0,1,...,n]
+      // = n*(n+1)*(2n+1)/6 / (n+1) = n*(2n+1)/6
+      theoreticalJacobianScales[param++] = (upperPoint[col] * (2*upperPoint[col]+1)) / 6.0;
+      }
+    }
+  for (IndexValueType row = 0; row < ImageDimension; row++)
+    {
+    theoreticalJacobianScales[param++] = 1;
+    }
+
+  bool jacobianPass = true;
+  for (IndexValueType p = 0; p < jacobianScales.GetSize(); p++)
+    {
+    //due to random sampling, it is not exactly equal
+    if (vcl_abs((jacobianScales[p] - theoreticalJacobianScales[p])/theoreticalJacobianScales[p]) > 0.2 )
+      {
+      jacobianPass = false;
+      break;
+      }
+    }
+  bool nonUniformForJacobian = false;
+  for (IndexValueType p = 1; p < jacobianScales.GetSize(); p++)
+    {
+    if (jacobianScales[p] != jacobianScales[0])
+      {
+      nonUniformForJacobian = true;
+      break;
+      }
+    }
+  // Check done
 
   // Testing OptimizerParameterEstimator done
+  std::cout << std::endl;
 
-  std::cout << std::endl << "Test passed" << std::endl;
+  if (!affinePass)
+    {
+    std::cout << "Failed: the shift scales for the affine transform are not correct." << std::endl;
+    }
+  else
+    {
+    std::cout << "Passed: the shift scales for the affine transform are correct." << std::endl;
+    }
 
-  return EXIT_SUCCESS;
+  if (!translationPass)
+    {
+    std::cout << "Failed: the shift scales for the translation transform are not correct." << std::endl;
+    }
+  else
+    {
+    std::cout << "Passed: the shift scales for the translation transform are correct." << std::endl;
+    }
+
+  if (!jacobianPass)
+    {
+    std::cout << "Failed: the jacobian scales for the affine transform are not correct." << std::endl;
+    }
+  else
+    {
+    std::cout << "Passed: the jacobian scales for the affine transform are correct." << std::endl;
+    }
+
+  if (!uniformForTranslation)
+    {
+    std::cout << "Error: the shift scales for a translation transform are not equal for all parameters." << std::endl;
+    }
+  if (!nonUniformForAffine)
+    {
+    std::cout << "Error: the shift scales for an affine transform are equal for all parameters." << std::endl;
+    }
+  if (!nonUniformForJacobian)
+    {
+    std::cout << "Error: the jacobian scales for an affine transform are equal for all parameters." << std::endl;
+    }
+
+  if (affinePass && translationPass && jacobianPass
+    && nonUniformForAffine && uniformForTranslation && nonUniformForJacobian)
+    {
+    std::cout << "Test passed" << std::endl;
+    return EXIT_SUCCESS;
+    }
+  else
+    {
+    std::cout << "Test failed" << std::endl;
+    return EXIT_FAILURE;
+    }
 }

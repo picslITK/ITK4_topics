@@ -39,15 +39,18 @@ namespace itk
  * Its input includes the fixed/moving images and transform objects,
  * which can be got from the metric object.
  *
- * We've implemented two strategies to estimate scales. With the first
- * strategy ScalesFromShift, the scale of a parameter is estimated from the
- * maximum voxel shift yielded from a unit variation of this parameter. The
+ * We've implemented two strategies to estimate scales. To choose one,
+ * please call SetScaleStrategy(option) where the argument is either
+ * ScalesFromShift or ScalesFromJacobian.
+ *
+ * With ScalesFromShift, the scale of a parameter is estimated from the
+ * maximum voxel shift produced from a unit variation of this parameter. The
  * maximization is done by checking the corners of the image domain.
- * Using corners is enough for affine transformations for this purpose, but
- * may be changed for other types of transforms.
+ * Checking the corners is enough for affine transforms, but may be changed
+ * for other types of transforms.
  *
  * With the second strategy ScalesFromJacobian, the scale of a parameter is
- * estimated from the averaged squared norm of the Jacobian w.r.t this
+ * estimated from the averaged squared norm of the Jacobian w.r.t the
  * parameter. The averaging is done over a uniformly random sampling of the
  * image domain.
  *
@@ -79,9 +82,6 @@ public:
   typedef typename MetricType::MovingTransformType  MovingTransformType;
   typedef typename MovingTransformType::Pointer     MovingTransformPointer;
 
-  /** Jacobian type */
-  typedef typename Superclass::JacobianType         JacobianType;
-
   /** Image Types to use in the initialization of the transform */
   typedef typename TMetric::FixedImageType          FixedImageType;
   typedef typename TMetric::MovingImageType         MovingImageType;
@@ -92,11 +92,11 @@ public:
   typedef typename VirtualImageType::ConstPointer   VirtualImagePointer;
 
   /* Image dimension accessors */
-  itkStaticConstMacro(FixedImageDimension, unsigned int,
+  itkStaticConstMacro(FixedImageDimension, IndexValueType,
       ::itk::GetImageDimension<FixedImageType>::ImageDimension);
-  itkStaticConstMacro(MovingImageDimension, unsigned int,
+  itkStaticConstMacro(MovingImageDimension, IndexValueType,
       ::itk::GetImageDimension<MovingImageType>::ImageDimension);
-  itkStaticConstMacro(VirtualImageDimension, unsigned int,
+  itkStaticConstMacro(VirtualImageDimension, IndexValueType,
       ::itk::GetImageDimension<VirtualImageType>::ImageDimension);
 
   /** The stratigies to decide scales */
@@ -121,22 +121,15 @@ public:
   typedef typename itk::ContinuousIndex< MovingPointValueType,
           MovingImageType::ImageDimension >         MovingContinuousIndexType;
 
-  /** Set the metric used in the registration process */
-  virtual void SetMetric(MetricType *metric)
-    {
-    if (this->m_Metric != metric)
-      {
-      this->m_Metric = metric;
-      this->m_FixedImage   = metric->GetFixedImage();
-      this->m_MovingImage  = metric->GetMovingImage();
-      this->m_VirtualImage = metric->GetVirtualDomainImage();
+  /** SetMetric sets the metric used in the estimation process. SetMetric
+   *  gets the images and transforms from the metric. Please make sure the metric
+   *  has these members set when SetMetric(metric) is called.
+   */
+  virtual void SetMetric(MetricType *metric);
 
-      SetMovingTransform(const_cast<MovingTransformType *>(m_Metric->GetMovingTransform()));
-      SetFixedTransform(const_cast<FixedTransformType *>(m_Metric->GetFixedTransform()));
+  /** Check if the metric, images and transforms are properly set */
+  bool CheckInputs() const;
 
-      this->Modified();
-      }
-    }
   /** Get the metric. */
   itkGetConstObjectMacro(Metric, MetricType);
 
@@ -157,11 +150,13 @@ public:
 
   /** Set the fixed transform */
   itkSetObjectMacro(FixedTransform,  FixedTransformType);
+  /** Get the fixed transform */
+  itkGetConstObjectMacro(FixedTransform,  FixedTransformType);
+
   /** Set the moving transform */
   itkSetObjectMacro(MovingTransform, MovingTransformType);
-
-  /** Set the order of L-norm for computing point distances */
-  itkSetMacro(LNorm, int);
+  /** Get the moving transform */
+  itkGetConstObjectMacro(MovingTransform, MovingTransformType);
 
   /** m_TransformForward specifies which transform scales to be estimated.
    * m_TransformForward = true for the moving transform parameters.
@@ -176,10 +171,7 @@ public:
    * current parameters. */
   virtual double ComputeMaximumVoxelShift(ParametersType deltaParameters);
 
-  virtual unsigned int GetImageDimension()
-    {
-    return Self::VirtualImageDimension;
-    }
+  virtual IndexValueType GetImageDimension() const;
 
 protected:
   OptimizerParameterEstimator();
@@ -192,9 +184,6 @@ protected:
 
   /** Randomly select some points as samples */
   void SampleImageDomainRandomly();
-
-  /** Compute the L-norm of a point */
-  template< class TContinuousIndexType > double ComputeLNorm(TContinuousIndexType point);
 
   /** Set the sample points for computing pixel shifts */
   void SampleImageDomain();
@@ -236,9 +225,6 @@ private:
 
   // the image samples in the virtual image domain
   std::vector<VirtualPointType> m_ImageSamples;
-
-  /** Specify how to calculate the distance between two points */
-  int m_LNorm;
 
   /** m_TransformForward specifies which transform scales to be estimated.
    * m_TransformForward = true for the moving transform parameters.
