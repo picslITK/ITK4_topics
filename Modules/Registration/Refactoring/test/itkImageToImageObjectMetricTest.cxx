@@ -268,7 +268,7 @@ int ComputeIdentityTruthValues(const TestMetricType::Pointer & metric,
       typedef TestMetricType::MovingGradientCalculatorType::ConstPointer
                                               MovingGradientCalculatorPointer;
       MovingGradientCalculatorPointer     movingGradientCalculator;
-      movingGradientCalculator = metric->GetMovingGradientCalculator();        
+      movingGradientCalculator = metric->GetMovingGradientCalculator();
       movingImageDerivative =
               movingGradientCalculator->EvaluateAtIndex( itMoving.GetIndex() );
       }
@@ -335,7 +335,7 @@ int RunSingleTest( const TestMetricType::Pointer & metric,
             << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
             << ", "
             << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
-            << std::endl;                    
+            << std::endl;
 
   // Initialize.
   //std::cout << "Initializing Metric." << std::endl;
@@ -525,7 +525,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
                                           truthValue, truthDerivative );
               }
             std::cout << "* Testing with identity transforms..."
-                      << std::endl;                    
+                      << std::endl;
             if( RunSingleTest( metric, fixedImage, movingImage,
                                 truthValue, truthDerivative,
                                 imageSize * imageSize, false )
@@ -582,7 +582,7 @@ See above in test metric where I just print-out w/in center of large image.
 Also, note that I commented out test code above for the identity-transform test.
 
              std::cout << "* Testing with NON-IDENTITY transforms ..."
-                      << std::endl;                    
+                      << std::endl;
             if( RunSingleTest( metric, fixedImage, movingImage,
                                 truthValue, truthDerivative,
                                 //( imageSize-2 ) * (imageSize - 2),
