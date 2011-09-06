@@ -103,19 +103,11 @@ public:
 
   /** Return true of \c m_GradientSource is either \c GRADIENT_SOURCE_FIXED or
    * \c GRADIENT_SOURCE_BOTH. Convenience method. */
-  bool GetGradientSourceIncludesFixed()
-  {
-    return m_GradientSource ==
-              GRADIENT_SOURCE_FIXED || m_GradientSource == GRADIENT_SOURCE_BOTH;
-  }
+  bool GetGradientSourceIncludesFixed();
 
   /** Return true of \c m_GradientSource is either \c GRADIENT_SOURCE_MOVING or
    * \c GRADIENT_SOURCE_BOTH. Convenience method. */
-  bool GetGradientSourceIncludesMoving()
-  {
-    return m_GradientSource ==
-             GRADIENT_SOURCE_MOVING || m_GradientSource == GRADIENT_SOURCE_BOTH;
-  }
+  bool GetGradientSourceIncludesMoving();
 
   /** Initialize the Metric by making sure that all the components
    *  are present and plugged together correctly, and initializing
