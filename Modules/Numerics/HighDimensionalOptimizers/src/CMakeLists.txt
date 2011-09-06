@@ -2,7 +2,6 @@ set(ITKHighDimensionalOptimizers_SRC
   itkObjectToObjectOptimizerBase.cxx
   itkGradientDescentObjectOptimizerBase.cxx
   itkGradientDescentObjectOptimizer.cxx
-  itkQuasiNewtonObjectOptimizer.cxx
 )
 
 add_library(ITKHighDimensionalOptimizers ${ITKHighDimensionalOptimizers_SRC})

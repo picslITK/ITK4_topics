@@ -3,8 +3,8 @@ set(ITKHighDimensionalOptimizersTests
   itkArray1DToDataTest.cxx
   itkObjectToObjectOptimizerBaseTest.cxx
   itkGradientDescentObjectOptimizerTest.cxx
+  itkOptimizerParameterEstimatorTest.cxx
   itkImageToDataTest.cxx
-  itkQuasiNewtonObjectOptimizerTest.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -27,6 +27,6 @@ itk_add_test(NAME itkGradientDescentObjectOptimizerTest
 itk_add_test(NAME itkImageToDataTest
          COMMAND ITKHighDimensionalOptimizersTestDriver itkImageToDataTest)
 
-itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+itk_add_test(NAME itkOptimizerParameterEstimatorTest
       COMMAND ITKHighDimensionalOptimizersTestDriver
-      itkQuasiNewtonObjectOptimizerTest)
+      itkOptimizerParameterEstimatorTest)

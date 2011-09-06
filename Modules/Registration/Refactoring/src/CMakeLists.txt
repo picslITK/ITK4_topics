@@ -1,4 +1,5 @@
 set(ITKRegistrationRefactoring_SRC
+itkQuasiNewtonObjectOptimizer.cxx
 itkQuasiNewtonLocalSupportObjectOptimizer.cxx
 )
 

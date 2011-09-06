@@ -20,6 +20,8 @@
 
 #include "itkObject.h"
 #include "itkObjectFactory.h"
+#include "itkObjectToObjectOptimizerBase.h"
+#include "itkArray.h"
 #include "itkArray2D.h"
 
 #include <iostream>
@@ -28,16 +30,16 @@ namespace itk
 {
 
 /** \class OptimizerParameterEstimatorBase
- *  \brief OptimizerParameterEstimatorBase is a base class to offer some
- * empty methods to estimate the scales and the maximum voxel shift in
+ *  \brief OptimizerParameterEstimatorBase is the base class to offer some
+ * empty methods of estimating the scales and the maximum voxel shift for
  * optimizers of image registration.
  *
- * The estimation requires information about images and transform that are
- * usually not available in general optimizers that are not limited to
- * image registration. Therefore we create a separate helper class for the
- * specific type of optimization.
+ * The estimation requires information about images and transform objects
+ * that are usually not available in general optimizers. Therefore we create
+ * this helper class for optimizers about image registration.
  *
- * An example of subclass is itkOptimizerParameterEstimator.
+ * A default implementation of OptimizerParameterEstimatorBase is in
+ * itkOptimizerParameterEstimator.
  *
  * \ingroup ITKHighDimensionalOptimizers
  */
@@ -50,20 +52,17 @@ public:
   typedef SmartPointer<Self>                    Pointer;
   typedef SmartPointer<const Self>              ConstPointer;
 
-  /** New macro for creation of through a Smart Pointer. */
-  //itkNewMacro( Self );
-
   /** Run-time type information (and related methods). */
   itkTypeMacro( OptimizerParameterEstimatorBase, Object );
 
   /** Type of scales */
-  typedef Array< double >     ScalesType;
-  /** Type of paramters in optimizer */
-  typedef Array< double >     ParametersType;
-  /** Type of derivative of metric cost function */
-  typedef Array< double >     DerivativeType;
+  typedef ObjectToObjectOptimizerBase::ScalesType     ScalesType;
+  /** Type of paramters of the optimizer */
+  typedef ObjectToObjectOptimizerBase::ParametersType ParametersType;
+  /** Type of derivative of the metric function */
+  typedef ObjectToObjectMetric::DerivativeType        DerivativeType;
   /** Type of Jacobian of transform */
-  typedef Array2D< double >   JacobianType;
+  typedef Array2D<double>                             JacobianType;
 
   /** Estimate parameter scales and learning rate*/
   virtual void EstimateScales(ScalesType &scales) = 0;
@@ -71,7 +70,7 @@ public:
   /** Compute the maximum voxel shift from the parameter change */
   virtual double ComputeMaximumVoxelShift(ParametersType deltaParameters) = 0;
 
-  virtual unsigned int GetImageDimension() = 0;
+  virtual IndexValueType GetImageDimension() const = 0;
 
 protected:
   OptimizerParameterEstimatorBase(){};
@@ -89,10 +88,5 @@ private:
 }; //class OptimizerParameterEstimatorBase
 
 }  // namespace itk
-
-
-#ifndef ITK_MANUAL_INSTANTIATION
-//#include "itkOptimizerParameterEstimatorBase.txx"
-#endif
 
 #endif /* __itkOptimizerParameterEstimatorBase_h */

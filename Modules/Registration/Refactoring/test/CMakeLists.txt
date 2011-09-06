@@ -6,18 +6,19 @@ set(ITKRegistrationRefactoringTests
 #  itkPointSetToPointSetMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
- itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
+  itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
-## Disable these while modifying ImageToImageObjectMetric:
-##  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-##  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
-##  itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
-##  itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-##  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
-##  itkQuasiNewtonObjectOptimizerTest.cxx
-##  itkPolyAffineTransformTest.cxx
-  itkQuasiNewtonDemonsRegistrationTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
+  itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
+  itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkMattesMutualInformationImageToImageObjectMetricTest.cxx
+  itkMattesMutualInformationImageToImageObjectRegistrationTest.cxx
+  itkQuasiNewtonRegistrationTest.cxx
+  itkQuasiNewtonDemonsRegistrationTest.cxx
+  itkQuasiNewtonObjectOptimizerTest.cxx
+  itkPolyAffineTransformTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -101,6 +102,10 @@ itk_add_test(NAME itkPolyAffineTransformTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkPolyAffineTransformTest
       )
+
+itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
+      COMMAND ITKHighDimensionalOptimizersTestDriver
+      itkQuasiNewtonObjectOptimizerTest)
 
 #TODO
 # itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
