@@ -81,8 +81,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
     vcl_fabs( diff  ) / (double) this->FixedImageDimension;
 
   /* Use a pre-allocated jacobian object for efficiency */
-  MovingTransformJacobianType & jacobian =
-                            this->m_MovingTransformJacobianPerThread[threadID];
+  JacobianType & jacobian = this->m_MovingTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->ComputeJacobianWithRespectToParameters(

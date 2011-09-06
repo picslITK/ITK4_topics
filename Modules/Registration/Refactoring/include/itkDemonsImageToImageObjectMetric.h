@@ -66,8 +66,8 @@ public:
                                                     MovingImageGradientType;
 
   typedef typename Superclass::MovingTransformType     MovingTransformType;
-  typedef typename Superclass::MovingTransformJacobianType
-                                                  MovingTransformJacobianType;
+  typedef typename Superclass::JacobianType            JacobianType;
+
   /** Initialize. Must be called before first call to GetValue or
    *  GetValueAndDerivative, after metric settings are changed. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );

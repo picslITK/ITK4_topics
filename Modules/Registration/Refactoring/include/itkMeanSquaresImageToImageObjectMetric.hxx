@@ -80,10 +80,10 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   metricValueReturn = - diff * diff; //always assuming a maximizing function
 
   /* Use a pre-allocated jacobian object for efficiency */
-  MovingTransformJacobianType & movingJacobian =
+  JacobianType & movingJacobian =
                             this->m_MovingTransformJacobianPerThread[threadID];
   //FIXME: we may optimize the fixed transform as well
-  //MovingTransformJacobianType & fixedJacobian =
+  //JacobianType & fixedJacobian =
   //                          this->m_FixedTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */

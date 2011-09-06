@@ -112,8 +112,8 @@ public:
                                                      MovingImageGradientType;
     typedef typename Superclass::MovingTransformType  MovingTransformType;
 //    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
-    typedef typename Superclass::MovingTransformJacobianType
-                                                    MovingTransformJacobianType;
+    typedef typename Superclass::JacobianType
+                                                    JacobianType;
 
     typedef typename Superclass::VirtualImageGradientType
                                                     VirtualImageGradientType;

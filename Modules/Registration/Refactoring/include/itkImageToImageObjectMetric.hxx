@@ -253,6 +253,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     this->m_MovingWarpResampleImageFilter->SetTransform(
                                                this->GetMovingTransform() );
     this->m_MovingWarpResampleImageFilter->SetInput( this->GetMovingImage() );
+
+    /* Pre-warp the moving image, for use when a derived class needs it
+     * before InitiateForIteration is called. */
+    this->PreWarpMovingImage();
     }
   else
     {
@@ -270,11 +274,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     itkDebugMacro("Initialize: ComputeFixedGaussianGradientImage");
     ComputeFixedGaussianGradientImage();
     }
-  /* For moving gradient images, if the GaussianImageFilter option is enabled,
-   * only compute here if we're not pre-warping. Otherwise,
-   * compute this at begin of every iteration. */
-  if( this->m_UseMovingGradientRecursiveGaussianImageFilter
-        && ! this->m_PreWarpMovingImage )
+
+  /* Compute GaussianGradientImage for moving image. Needed now for
+   * derived classes that use it before InitializeForIteration is called.
+   * It's also computed at begin of every iteration. */
+  if( this->m_UseMovingGradientRecursiveGaussianImageFilter )
     {
     itkDebugMacro("Initialize: ComputeMovingGaussianGradientImage");
     this->ComputeMovingGaussianGradientImage();
@@ -432,7 +436,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * to recompute the image gradients if GaussianImageFilter option is set.
    * Otherwise the moving image gradients only need be calculated
    * once, during initialize.
-   * The fixed image is not optimized so we only pre-warp
+   * In contrast, the fixed image is not optimized so we only pre-warp
    * once, during Initialize. */
   if( this->m_PreWarpMovingImage )
     {
@@ -781,7 +785,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     mappedMovingPoint = this->m_MovingTransform->TransformPoint( virtualPoint );
     }
-
   // check against the mask if one is assigned
   if ( this->m_MovingImageMask )
     {
@@ -803,7 +806,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   if( this->m_PreWarpMovingImage )
     {
-    /* Get the pixel values at this index */
+   /* Get the pixel values at this index */
     mappedMovingPixelValue = this->m_MovingWarpedImage->GetPixel( index );
 
     if( computeImageGradient )
@@ -946,7 +949,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * ResampleImageFilter always returns the same image pointer after
    * its first update, or if it can be set to allocate output during init. */
   /* No need to call Modified here on the calculators */
-  //this->m_FixedInterpolator->SetInputImage( this->m_FixedWarpedImage );
   if( ! this->m_UseFixedGradientRecursiveGaussianImageFilter )
     {
     this->m_FixedGradientCalculator->SetInputImage( this->m_FixedWarpedImage );
@@ -970,7 +972,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   /* Point the interpolator and calculator to the warped images. */
   /* No need to call Modified here on the calculators */
-  //this->m_MovingInterpolator->SetInputImage( this->m_MovingWarpedImage );
   if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
     {
     this->m_MovingGradientCalculator->SetInputImage( this->m_MovingWarpedImage );
@@ -1057,6 +1058,27 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   gradientFilter->Update();
 
   this->m_MovingGaussianGradientImage = gradientFilter->GetOutput();
+}
+
+/*
+ * Default behavior for GetValueAndDerivativeProcessPoint
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+bool
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::GetValueAndDerivativeProcessPoint(
+        const VirtualPointType &          virtualPoint,
+        const FixedImagePointType &       mappedFixedPoint,
+        const FixedImagePixelType &       mappedFixedPixelValue,
+        const FixedImageGradientType &    mappedFixedImageGradient,
+        const MovingImagePointType &      mappedMovingPoint,
+        const MovingImagePixelType &      mappedMovingPixelValue,
+        const MovingImageGradientType &   mappedMovingImageGradient,
+        MeasureType &                     metricValueReturn,
+        DerivativeType &                  localDerivativeReturn,
+        const ThreadIdType                threadID )
+{
+  return false;
 }
 
 /*

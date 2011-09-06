@@ -350,7 +350,10 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
   this->m_FixedImageMarginalPDF->FillBuffer(pdfzero);
   this->m_MovingImageMarginalPDF->FillBuffer(pdfzero);
 
-  /** First, we compute the joint histogram */
+  /**
+   * First, we compute the joint histogram
+   */
+
   /* Create an iterator over the virtual sub region */
   ImageRegionConstIteratorWithIndex<typename Superclass::VirtualImageType>
     ItV( this->GetVirtualDomainImage(), this->GetVirtualDomainImage()->GetRequestedRegion() );
@@ -455,6 +458,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
       dg->Update();
       this->m_JointPDF=dg->GetOutput();
     }
+
 
   // Compute moving image marginal PDF by summing over fixed image bins.
   typedef ImageLinearIteratorWithIndex<JointPDFType> JointPDFLinearIterator;
@@ -595,7 +599,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
   else scalingfactor = 0;
 
   /* Use a pre-allocated jacobian object for efficiency */
-  typename Superclass::MovingTransformJacobianType & jacobian =
+  typename Superclass::JacobianType & jacobian =
                             this->m_MovingTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */

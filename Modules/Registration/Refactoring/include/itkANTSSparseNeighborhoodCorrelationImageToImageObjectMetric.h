@@ -123,8 +123,8 @@ public:
                                                     MovingImageGradientType;
 
   typedef typename Superclass::MovingTransformType     MovingTransformType;
-  typedef typename Superclass::MovingTransformJacobianType
-                                                  MovingTransformJacobianType;
+  typedef typename Superclass::JacobianType
+                                                  JacobianType;
 
 
   typedef typename Superclass::ThreaderInputObjectType ThreaderInputObjectType;
@@ -134,8 +134,8 @@ public:
   typedef typename Superclass::FixedOutputPointType    FixedOutputPointType;
   typedef typename Superclass::MovingOutputPointType   MovingOutputPointType;
 
-  typedef typename VirtualImageType::RegionType VirtualImageRegionType;
-  typedef typename VirtualImageType::SizeType RadiusType;
+  typedef typename VirtualImageType::RegionType        VirtualImageRegionType;
+  typedef typename VirtualImageType::SizeType          RadiusType;
 
 
   itkStaticConstMacro(VirtualImageDimension, unsigned int,

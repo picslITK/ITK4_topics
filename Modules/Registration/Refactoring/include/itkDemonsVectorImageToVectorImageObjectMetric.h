@@ -57,7 +57,7 @@ public:
                                                        MovingImageGradientType;
   typedef typename Superclass::MovingTransformType     MovingTransformType;
   typedef typename MovingTransformType::JacobianType
-                                                       MovingTransformJacobianType;
+                                                       JacobianType;
 
   /** Initialize. Must be called before first call to GetValue or
    *  GetValueAndDerivative, after metric settings are changed. */
@@ -96,7 +96,7 @@ private:
   //purposely not implemented
   void operator=(const Self &);
 
-  MovingTransformJacobianType m_Jacobian;
+  JacobianType m_Jacobian;
 
 };
 

@@ -86,10 +86,13 @@ namespace itk
  * via a user-supplied mask.
  *
  * Derived classes:
+ *
  *  Derived classes need to override at least:
  *  \c GetValueAndDerivative
- *  \c GetValueAndDerivativeProcessPoint
  *  Pure virtual methods declared in the base class.
+ *
+ *  \c GetValueAndDerivativeProcessPoint must be overridden by derived
+ *  classes that use \c GetValueAndDerivativeMultiThreadedInitiate.
  *
  *  See \c ImageToImageObjectMetricTest for a clear example of what a
  *  derived class must implement and do. Pre- and Post-processing are
@@ -503,7 +506,12 @@ protected:
    * given the point, value and image derivative for both fixed and moving
    * spaces. The provided values have been calculated from \c virtualPoint,
    * which is provided in case it's needed.
-   * Must be overriden by derived classes.
+   * By default, this will return false and not assign any values.
+   * Derived classes that use \c GetValueAndDerivativeMultiThreadedInitiate
+   * to initiate process must override this method.
+   * \note This method is not pure virtual because some derived classes
+   * do not use \c GetValueAndDerivativeMultiThreadedInitiate, and instead
+   * provide their own processing control.
    * \c mappedMovingPoint and \c mappedFixedPoint will be valid points
    * that have passed bounds checking, and lie within any mask that may
    * be assigned.
@@ -533,7 +541,7 @@ protected:
         const MovingImageGradientType &   mappedMovingImageGradient,
         MeasureType &                     metricValueReturn,
         DerivativeType &                  localDerivativeReturn,
-        const ThreadIdType                threadID ) = 0;
+        const ThreadIdType                threadID );
 
   /** Perform any initialization required before each evaluation of
    * value and derivative. This is distinct from Initialize, which

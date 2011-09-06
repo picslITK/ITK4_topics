@@ -140,7 +140,7 @@ public:
     //2) Call GetValueAndDerivativeMultiThreadedInitiate.
     //This will iterate over virtual image region and call your
     // GetValueAndDerivativeProcessPoint method, see definition in
-    // base.
+    // base. Results are written in 'derivativeReturn'.
     this->GetValueAndDerivativeMultiThreadedInitiate( derivativeReturn );
 
     //3) Optionally call GetValueAndDerivativeMultiThreadedPostProcess for

@@ -181,24 +181,33 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
          * returned as \c true.
          * Do this in a try block to catch exceptions and print more useful info
          * then we otherwise get when exceptions are caught in MultiThreader. */
-        try {
-            dataHolder->TransformAndEvaluateFixedPoint(
-                    virtualIndex, virtualPoint,
-                    mappedFixedPoint, pointIsValid, fixedImageValue,
-                    false /*compute gradient*/, fixedImageGradient);
-            if (pointIsValid) {
-                dataHolder->TransformAndEvaluateMovingPoint(
-                        virtualIndex, virtualPoint,
-                        mappedMovingPoint, pointIsValid, movingImageValue,
-                        false /*compute gradient*/, movingImageGradient);
+        try
+          {
+          dataHolder->TransformAndEvaluateFixedPoint( virtualIndex,
+                                                virtualPoint,
+                                                false/*compute gradient*/,
+                                                mappedFixedPoint,
+                                                fixedImageValue,
+                                                fixedImageGradient,
+                                                pointIsValid );
+          if (pointIsValid)
+            {
+            dataHolder->TransformAndEvaluateMovingPoint( virtualIndex,
+                                                   virtualPoint,
+                                                   false/*compute gradient*/,
+                                                   mappedMovingPoint,
+                                                   movingImageValue,
+                                                   movingImageGradient,
+                                                   pointIsValid );
             }
-        } catch (ExceptionObject & exc) {
-            //NOTE: there must be a cleaner way to do this:
-            std::string msg("Caught exception: \n");
-            msg += exc.what();
-            ExceptionObject err(__FILE__, __LINE__, msg);
-            throw err;
-        }
+          }
+        catch (ExceptionObject & exc)
+          {
+          std::string msg("Caught exception: \n");
+          msg += exc.what();
+          ExceptionObject err(__FILE__, __LINE__, msg);
+          throw err;
+          }
 
         /* Call the user method in derived classes to do the specific
          * calculations for value and derivative. */
