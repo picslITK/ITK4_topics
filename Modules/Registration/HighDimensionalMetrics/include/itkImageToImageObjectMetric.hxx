@@ -70,9 +70,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   this->m_DerivativeResult = NULL;
 
-  this->m_FixedTransformCanUseTransformIndex = false;
-  this->m_MovingTransformCanUseTransformIndex = false;
-
   /* Setup default options assuming dense-sampling */
   this->m_PreWarpFixedImage = true;
   this->m_PreWarpMovingImage = true;
@@ -283,27 +280,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     itkDebugMacro("Initialize: ComputeMovingGaussianGradientImage");
     this->ComputeMovingGaussianGradientImage();
     }
-
-  /* Check if the transforms can use TransformIndex.
-   * Determine this during initialization and store
-   * result because the check can involve several comparisons. */
-  /*
-   TODO sort out. This must be added to Transform and the interface
-   finalized.
-  this->m_FixedTransformCanUseTransformIndex =
-    this->m_FixedTransform->CanUseTransformIndex(
-      this->GetVirtualDomainImage()->GetRequestedRegion(),
-      this->GetVirtualDomainImage()->GetOrigin(),
-      this->GetVirtualDomainImage()->GetSpacing(),
-      this->GetVirtualDomainImage()->GetDirection() );
-
-  this->m_MovingTransformCanUseTransformIndex =
-    this->m_MovingTransform->CanUseTransformIndex(
-      this->GetVirtualDomainImage()->GetRequestedRegion(),
-      this->GetVirtualDomainImage()->GetOrigin(),
-      this->GetVirtualDomainImage()->GetSpacing(),
-      this->GetVirtualDomainImage()->GetDirection() );
-  */
 }
 
 /*
@@ -704,14 +680,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   mappedFixedPixelValue = NumericTraits<FixedImagePixelType>::Zero;
 
   // map the point into fixed space
-  if( this->m_FixedTransformCanUseTransformIndex )
-    {
-    mappedFixedPoint = this->m_FixedTransform->TransformIndex( index );
-    }
-  else
-    {
-    mappedFixedPoint = this->m_FixedTransform->TransformPoint( virtualPoint );
-    }
+  mappedFixedPoint = this->m_FixedTransform->TransformPoint( virtualPoint );
 
   // check against the mask if one is assigned
   if ( this->m_FixedImageMask )
@@ -776,15 +745,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   pointIsValid = true;
   mappedMovingPixelValue = NumericTraits<MovingImagePixelType>::Zero;
 
-  // map the point into fixed space
-  if( this->m_MovingTransformCanUseTransformIndex )
-    {
-    mappedMovingPoint = this->m_MovingTransform->TransformIndex( index );
-    }
-  else
-    {
-    mappedMovingPoint = this->m_MovingTransform->TransformPoint( virtualPoint );
-    }
+  // map the point into moving space
+  mappedMovingPoint = this->m_MovingTransform->TransformPoint( virtualPoint );
+
   // check against the mask if one is assigned
   if ( this->m_MovingImageMask )
     {
@@ -1067,16 +1030,16 @@ template<class TFixedImage,class TMovingImage,class TVirtualImage>
 bool
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::GetValueAndDerivativeProcessPoint(
-        const VirtualPointType &          virtualPoint,
-        const FixedImagePointType &       mappedFixedPoint,
-        const FixedImagePixelType &       mappedFixedPixelValue,
-        const FixedImageGradientType &    mappedFixedImageGradient,
-        const MovingImagePointType &      mappedMovingPoint,
-        const MovingImagePixelType &      mappedMovingPixelValue,
-        const MovingImageGradientType &   mappedMovingImageGradient,
-        MeasureType &                     metricValueReturn,
-        DerivativeType &                  localDerivativeReturn,
-        const ThreadIdType                threadID )
+        const VirtualPointType &          itkNotUsed(virtualPoint),
+        const FixedImagePointType &       itkNotUsed(mappedFixedPoint),
+        const FixedImagePixelType &       itkNotUsed(mappedFixedPixelValue),
+        const FixedImageGradientType &    itkNotUsed(mappedFixedImageGradient),
+        const MovingImagePointType &      itkNotUsed(mappedMovingPoint),
+        const MovingImagePixelType &      itkNotUsed(mappedMovingPixelValue),
+        const MovingImageGradientType &   itkNotUsed(mappedMovingImageGradient),
+        MeasureType &                     itkNotUsed(metricValueReturn),
+        DerivativeType &                  itkNotUsed(localDerivativeReturn),
+        const ThreadIdType                itkNotUsed(threadID) )
 {
   return false;
 }

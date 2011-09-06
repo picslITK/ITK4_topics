@@ -23,12 +23,19 @@
 #include "itkObjectToObjectMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
-#include "itkImageToData.h"
+//#include "itkImageToData.h"
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
 
 namespace itk
 {
+
+//Forward-declare this because of module dependency conflict.
+//ImageToData will soon be moved to a different module, at which
+// time this can be removed.
+template <unsigned int VDimension, class TDataHolder>
+class ImageToData;
+
 /** \class ImageToImageObjectMetric
  *
  * Computes similarity between regions of two images, using two
@@ -93,7 +100,10 @@ namespace itk
  * Image masks are supported using SetMovingImageMask or SetFixedImageMask.
  *
  * Random sampling or user-supplied point lists are not yet supported, except
- * via an image mask.
+ * via an image mask. If the mask is at all sparse, the
+ * SetPreWarp[Fixed|Moving]Image and
+ * Use[Fixed|Moving]GradientRecursiveGaussianImageFilter options should be
+ * disabled.
  *
  * This class is threaded.
  *
@@ -111,7 +121,7 @@ namespace itk
  *  handled by the derived class in its \c GetValueAndDerivative method, as
  *  described in \c ImageToImageObjectMetricTest.
  *
- * \ingroup ITKRegistrationRefactoring
+ * \ingroup ITKHighDimensionalMetrics
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT ImageToImageObjectMetric :
@@ -679,15 +689,6 @@ protected:
   FixedImageMaskConstPointer                  m_FixedImageMask;
   MovingImageMaskConstPointer                 m_MovingImageMask;
 
-  /** Flag to track if the fixed transform can be used by calling
-   * TransformIndex. Determine this during initialization and store
-   * result because the check can involve several comparisons. */
-  bool                                   m_FixedTransformCanUseTransformIndex;
-  /** Flag to track if the moving transform can be used by calling
-   * TransformIndex. Determine this during initialization and store
-   * result because the check can involve several comparisons. */
-  bool                                   m_MovingTransformCanUseTransformIndex;
-
   /** Metric value, stored after evaluating */
   MeasureType             m_Value;
 
@@ -733,7 +734,7 @@ protected:
   /** Type of the default threader used for GetValue and GetDerivative.
    * This splits an image region in per-thread sub-regions over the outermost
    * image dimension. */
-  typedef ImageToData< VirtualImageDimension, Self >
+  typedef ImageToData<VirtualImageDimension, Self>
                                              ValueAndDerivativeThreaderType;
   typedef typename ValueAndDerivativeThreaderType::InputObjectType
                                              ThreaderInputObjectType;

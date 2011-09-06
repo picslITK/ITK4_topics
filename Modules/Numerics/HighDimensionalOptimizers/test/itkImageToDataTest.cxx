@@ -17,14 +17,12 @@
  *=========================================================================*/
 #include "itkImageToData.h"
 
-using namespace itk;
-
 /*
  * Main test entry function
  */
 int itkImageToDataTest(int , char* [])
 {
-  typedef ImageToData<2, Object> ImageToDataType;
+  typedef itk::ImageToData<2, itk::Object> ImageToDataType;
   ImageToDataType::Pointer imageToDataThreader = ImageToDataType::New();
   return EXIT_SUCCESS;
 }

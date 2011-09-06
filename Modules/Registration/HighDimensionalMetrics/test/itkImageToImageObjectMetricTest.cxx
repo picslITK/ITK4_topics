@@ -20,6 +20,11 @@
 #include "itkDisplacementFieldTransform.h"
 #include "itkTranslationTransform.h"
 #include "vnl/vnl_math.h"
+#include "itkIntTypes.h"
+
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 /*
  * This test creates synthetic images and verifies numerical results
@@ -82,10 +87,10 @@ public:
   /* Provide the worker routine to process each point */
   bool GetValueAndDerivativeProcessPoint(
                     const VirtualPointType &,
-                    const FixedImagePointType &        mappedFixedPoint,
+                    const FixedImagePointType &,
                     const FixedImagePixelType &        fixedImageValue,
                     const FixedImageGradientType &  fixedImageGradient,
-                    const MovingImagePointType &    mappedMovingPoint,
+                    const MovingImagePointType &,
                     const MovingImagePixelType &       movingImageValue,
                     const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
@@ -94,15 +99,6 @@ public:
   {
     /* Just return some test values that can verify proper mechanics */
     metricValueResult = fixedImageValue + movingImageValue;
-
-    //std::cout << "ImageToImageObjectMetricTestMetric: in GetValueAndDerivativeProcessPoint."
-    //            << std::endl;
-    /*std::cout << " mappedMovingPoint: " << mappedMovingPoint
-              << ": movingImageDerivative:"
-              << movingImageGradient << std::endl;
-              << " mappedFixedPoint:  " << mappedFixedPoint
-              << ":  fixedImageDerivative: "
-              << fixedImageGradient << std::endl; */
 
     for ( unsigned int par = 0;
           par < this->GetNumberOfLocalParameters(); par++ )
@@ -123,6 +119,7 @@ public:
   }
 
   //This is of one two evaluation methods that the user may call.
+  using Superclass::GetValue;
   MeasureType GetValue()
   {
     //TODO
@@ -130,6 +127,7 @@ public:
   }
 
   //This is of one two evaluation methods that the user may call.
+  using Superclass::GetValueAndDerivative;
   void GetValueAndDerivative( MeasureType & valueReturn,
                               DerivativeType & derivativeReturn)
   {
@@ -202,7 +200,7 @@ typedef ImageToImageObjectMetricTestMetricType::Pointer
 //
 // Compute truth values for the identity-transform tests
 //
-int ImageToImageObjectMetricTestComputeIdentityTruthValues(
+void ImageToImageObjectMetricTestComputeIdentityTruthValues(
        const ImageToImageObjectMetricTestMetricPointer & metric,
        const ImageToImageObjectMetricTestImageType::Pointer & fixedImage,
        const ImageToImageObjectMetricTestImageType::Pointer & movingImage,
@@ -237,17 +235,21 @@ int ImageToImageObjectMetricTestComputeIdentityTruthValues(
     // simply retrieve by index.
     // NOTE: relying on the metric's gradient image isn't a
     // complete test, but it does test the rest of the mechanics.
-    ImageToImageObjectMetricTestMetricType::MovingImageGradientType movingImageDerivative;
-    ImageToImageObjectMetricTestMetricType::FixedImageGradientType  fixedImageDerivative;
+    ImageToImageObjectMetricTestMetricType::MovingImageGradientType
+                                                          movingImageDerivative;
+    ImageToImageObjectMetricTestMetricType::FixedImageGradientType
+                                                          fixedImageDerivative;
     if( metric->GetUseFixedGradientRecursiveGaussianImageFilter() )
       {
-      ImageToImageObjectMetricTestMetricType::FixedGradientImageType::ConstPointer
+      ImageToImageObjectMetricTestMetricType::
+        FixedGradientImageType::ConstPointer
                    fixedGradientImage = metric->GetFixedGaussianGradientImage();
       fixedImageDerivative = fixedGradientImage->GetPixel( itFixed.GetIndex() );
       }
     else
       {
-      typedef ImageToImageObjectMetricTestMetricType::FixedGradientCalculatorType::ConstPointer
+      typedef ImageToImageObjectMetricTestMetricType::
+                FixedGradientCalculatorType::ConstPointer
                                               FixedGradientCalculatorPointer;
       FixedGradientCalculatorPointer fixedGradientCalculator =
                                         metric->GetFixedGradientCalculator();
@@ -258,14 +260,16 @@ int ImageToImageObjectMetricTestComputeIdentityTruthValues(
       }
     if( metric->GetUseMovingGradientRecursiveGaussianImageFilter() )
       {
-      ImageToImageObjectMetricTestMetricType::MovingGradientImageType::ConstPointer
+      ImageToImageObjectMetricTestMetricType::
+        MovingGradientImageType::ConstPointer
               movingGradientImage = metric->GetMovingGaussianGradientImage();
       movingImageDerivative =
                         movingGradientImage->GetPixel( itMoving.GetIndex() );
       }
     else
       {
-      typedef ImageToImageObjectMetricTestMetricType::MovingGradientCalculatorType::ConstPointer
+      typedef ImageToImageObjectMetricTestMetricType::
+        MovingGradientCalculatorType::ConstPointer
                                               MovingGradientCalculatorPointer;
       MovingGradientCalculatorPointer     movingGradientCalculator;
       movingGradientCalculator = metric->GetMovingGradientCalculator();
@@ -284,7 +288,8 @@ int ImageToImageObjectMetricTestComputeIdentityTruthValues(
           par < metric->GetNumberOfLocalParameters(); par++ )
       {
       double sum = 0.0;
-      for ( unsigned int dim = 0; dim < ImageToImageObjectMetricTestImageDimensionality; dim++ )
+      for ( unsigned int dim = 0;
+              dim < ImageToImageObjectMetricTestImageDimensionality; dim++ )
         {
         sum += movingImageDerivative[dim] + fixedImageDerivative[dim];
         }
@@ -321,11 +326,9 @@ int ImageToImageObjectMetricTestComputeIdentityTruthValues(
 // with truthValue and truthDerivative.
 int ImageToImageObjectMetricTestRunSingleTest(
        const ImageToImageObjectMetricTestMetricPointer & metric,
-       const ImageToImageObjectMetricTestImageType::Pointer & fixedImage,
-       const ImageToImageObjectMetricTestImageType::Pointer & movingImage,
        ImageToImageObjectMetricTestMetricType::MeasureType& truthValue,
        ImageToImageObjectMetricTestMetricType::DerivativeType& truthDerivative,
-       int expecteNumberOfPoints,
+       itk::SizeValueType expectedNumberOfPoints,
        bool setTruthValues )
 {
   std::cout << "Pre-warp image: fixed, moving: "
@@ -366,10 +369,10 @@ int ImageToImageObjectMetricTestRunSingleTest(
   //Check number of threads and valid points
   std::cout << "Number of threads used: "
             << metric->GetNumberOfThreads() << std::endl;
-  if( metric->GetNumberOfValidPoints() != ( expecteNumberOfPoints ) )
+  if( metric->GetNumberOfValidPoints() != ( expectedNumberOfPoints ) )
     {
     std::cout << "Expected number of valid points to be "
-              << expecteNumberOfPoints
+              << expectedNumberOfPoints
               << " but instead got " << metric->GetNumberOfValidPoints()
               << std::endl;
     return EXIT_FAILURE;
@@ -537,8 +540,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
             std::cout << "* Testing with identity transforms..."
                       << std::endl;
             if( ImageToImageObjectMetricTestRunSingleTest(
-                                metric, fixedImage, movingImage,
-                                truthValue, truthDerivative,
+                                metric, truthValue, truthDerivative,
                                 imageSize * imageSize, false )
                                                               != EXIT_SUCCESS )
               {
@@ -601,7 +603,7 @@ int itkImageToImageObjectMetricTest(int, char ** const)
   ImageToImageObjectMetricTestComputeIdentityTruthValues(
                                                 metric, fixedImage, movingImage,
                                                 truthValue, truthDerivative );
-  if( ImageToImageObjectMetricTestRunSingleTest( metric, fixedImage, movingImage,
+  if( ImageToImageObjectMetricTestRunSingleTest( metric,
                       truthValue, truthDerivative,
                       imageSize * imageSize, false ) != EXIT_SUCCESS )
     {

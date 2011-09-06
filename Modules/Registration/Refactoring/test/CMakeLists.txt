@@ -4,7 +4,6 @@ set(ITKRegistrationRefactoringTests
   itkDemonsImageToImageObjectMetricTest.cxx
   itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
-  itkImageToImageObjectMetricTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
   itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
@@ -48,10 +47,6 @@ itk_add_test(NAME itkMattesMutualInformationImageToImageObjectRegistrationTest
 itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkDemonsVectorImageToVectorImageObjectMetricTest)
-
-itk_add_test(NAME itkImageToImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
