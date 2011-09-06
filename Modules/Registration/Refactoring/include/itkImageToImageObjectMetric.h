@@ -32,58 +32,70 @@ namespace itk
 /** \class ImageToImageObjectMetric
  *
  * Computes similarity between regions of two images, using two
- * user-supplied transforms.
+ * user-supplied transforms, a 'fixed' transform and a 'moving' transform.
  *
  * \note Currently support for using only \c GetValueAndDerivative is
- * implemented. \c GetValue
- * will follow after final implementation details are worked out.
+ * implemented. \c GetValue will follow after final implementation details
+ * are worked out.
  *
  * Templated over the fixed and moving image types, as well as an optional
  * VirtualImage type to define the virtual domain. The VirtualImage type
  * defaults to TFixedImage.
  *
- * This class uses a virtual reference space. This space defines the resolution,
- *  at which the registration is performed as well as the physical coordinate
- *  system.  Useful for unbiased registration.  If the user does not set this
- *  explicitly then it is taken from the fixed image in \c Initialize method.
+ * This class uses a virtual reference space. This space defines the resolution
+ * at which the registration is performed, as well as the physical coordinate
+ * system.  Useful for unbiased registration.  If the user does not set this
+ * explicitly then it is taken from the fixed image in \c Initialize method.
  * The user can define a virtual domain by calling either
  * \c CreateVirtualDomainImage or \c SetVirtualDomainImage. The virtual
  * domain region can be changed via \c SetVirtualDomainRegion. See these
  * methods for details.
  *
- * Both transforms are initialized to an IdentityTransform.
+ * Both transforms are initialized to an IdentityTransform, and can be
+ * set by the user using \c SetFixedTranform and \c SetMovingTransform.
  *
- * TODO: Update:
- * The PreWarpImages option can be set for computational efficiency. This
- * creates a warped version for each image at the begin of each iteration.
- * However the cost is more memory usage (2x VirtualDomain size).
+ * At a minimum, the user must:
+ *  1) Set images using \c SetFixedImage and \c SetMovingImage.
+ *  3) Call \c Initialize.
  *
- * \warning When using PreWarpImages flag, it is assumed that the images are
- * already in the virtual domain, for example via an initial affine
- * transformation in the first step of a CompositeTransform.
+ * Pre-warping:
+ * The \c SetPreWarpFixedImage and \c SetPreWarpMovingImage options can be set
+ * for better speed. When set, these create a warped version for each image at
+ * the begin of each iteration, warping each image into the virtual domain.
+ * However the cost is more memory usage (VirtualDomain size for each image).
+ * The fixed image is only pre-warped once, during the call to \c Initialize,
+ * because it is assumed the fixed transform is not changing. The moving image
+ * is pre-warped at the begin of every iteration, because it is assumed the
+ * moving transform is changing (e.g. during registration).
+ * By default, pre-warping is enabled for both fixed and moving images.
  *
- * TODO - UPDATE:
- * Include discussion of difference between GradientRecursiveGaussian
- * and CentralDiff method. Gaussian one is smoothed. We use it for
- * both fixed and moving by default to avoid difference in image gradient
- * method.
- * Both Gaussian and Calculator methods are threaded, the later by threaded
- * operation of this metric.
- * Image gradient calculation is performed in one of these ways:
- * If \c PreWarpImages is enabled:
- *  CentralDifferenceImageFunction.
- *  Other options will be supported in the future.
- * If \c PreWarpImages is disabled:
- *  2) GradientRecursiveGaussianImageFilter is used by default to
- *  precompute the gradient for each image. This requires memory to hold the
- *  fully computed gradient image.
- *  3) lastly, CentralDifferenceImageFunction is used if
- *  m_PrecomputeImageGradient option has been set to false.
+ * Image gradient caclulations:
+ * Image gradients can be calculated in one of two ways:
+ * 1) Using GradientRecursiveGaussianImageFilter, by setting
+ *  \c Use[Fixed|Moving]GradientRecursiveGaussianImageFilter to true. This is a
+ *  smoothed gradient filter. This filter uses more memory, because it
+ *  calculates all gradients at once and stores them in an image. The advantage
+ *  of pre-calculation is for the fixed image gradients, since they only need be
+ *  calculated once, and for metrics that need to access image gradients more
+ *  than once for a particular point. The fixed image gradients are only
+ *  calculated once when this option is set, during \c Initialize.
+ * 2) Otherwise, the CentralDifferenceImageFunction is used. This calculation
+ *  is not smoothed and gives different results than
+ *  GradientRecursiveGaussianImageFilter. The advantage is that less memory is
+ *  used. However for the fixed image, it means needlessly computing the image
+ *  gradients at each iteration of a registration instead of just computing
+ *  once at the begin.
+ *
+ * Both image gradient calculation methods are threaded.
+ * Generally it is not recommended to use different image gradient methods for
+ * the fixed and moving images because the methods return different results.
  *
  * Image masks are supported using SetMovingImageMask or SetFixedImageMask.
  *
  * Random sampling or user-supplied point lists are not yet supported, except
- * via a user-supplied mask.
+ * via an image mask.
+ *
+ * This class is threaded.
  *
  * Derived classes:
  *
