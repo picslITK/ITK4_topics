@@ -39,6 +39,17 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 }
 
 /*
+ * GetValue
+ */
+template < class TFixedImage, class TMovingImage, class TVirtualImage >
+typename DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>::MeasureType
+DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
+::GetValue()
+{
+  itkExceptionMacro("GetValue not yet implemented.");
+}
+
+/*
  * GetValueAndDerivative
  */
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
@@ -78,7 +89,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = fixedImageValue - movingImageValue;
   metricValueReturn =
-    vcl_fabs( diff  ) / (double) this->FixedImageDimension;
+    vcl_fabs( diff  ) / static_cast<MeasureType>( this->FixedImageDimension );
 
   /* Use a pre-allocated jacobian object for efficiency */
   JacobianType & jacobian = this->m_MovingTransformJacobianPerThread[threadID];
@@ -87,18 +98,23 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
                                                             mappedMovingPoint,
                                                             jacobian);
-  double floatingpointcorrectionresolution=10000;
+  typedef typename DerivativeType::ValueType    DerivativeValueType;
+  DerivativeValueType floatingpointcorrectionresolution = 10000.0;
+  // NOTE: change 'unsigned int' here when we have NumberOfParametersType
+  // defined in metric base.
   for ( unsigned int par = 0; par < this->GetNumberOfLocalParameters(); par++ )
-  {
+    {
     double sum = 0.0;
-    for ( unsigned int dim = 0; dim < this->MovingImageDimension; dim++ )
+    for ( SizeValueType dim = 0; dim < this->MovingImageDimension; dim++ )
       {
-        sum += 2.0 * diff * jacobian(dim, par) * movingImageGradient[dim];
+      sum += 2.0 * diff * jacobian(dim, par) * movingImageGradient[dim];
       }
     localDerivativeReturn[par] = sum;
-    int test=(int)( localDerivativeReturn[par] * floatingpointcorrectionresolution );
-    localDerivativeReturn[par] = (double) test/floatingpointcorrectionresolution;
-  }
+    intmax_t test = static_cast<intmax_t>
+            ( localDerivativeReturn[par] * floatingpointcorrectionresolution );
+    localDerivativeReturn[par] = static_cast<DerivativeValueType>
+                                  ( test / floatingpointcorrectionresolution );
+    }
   return true;
 }
 

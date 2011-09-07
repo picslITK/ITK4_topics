@@ -15,19 +15,20 @@
  *  limitations under the License.
  *
  *=========================================================================*/
+
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkVector.h"
-#include "itkDemonsImageToImageObjectMetric.h"
+#include "itkMattesMutualInformationImageToImageObjectMetric.h"
 #include "itkIdentityTransform.h"
 #include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
+
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 /* Simple test to verify that class builds and runs.
  * Results are not verified. See ImageToImageObjectMetricTest
@@ -36,14 +37,12 @@
  * TODO Numerical verification.
  */
 
-using namespace itk;
-
-int itkDemonsImageToImageObjectMetricTest(int, char ** const)
+int itkMattesMutualInformationImageToImageObjectMetricTest( int , char * [] )
 {
 
-  const unsigned int imageSize = 5;
+  const unsigned int imageSize = 10;
   const unsigned int imageDimensionality = 3;
-  typedef Image< double, imageDimensionality >              ImageType;
+  typedef itk::Image< double, imageDimensionality >              ImageType;
 
   ImageType::SizeType       size;
   size.Fill( imageSize );
@@ -75,7 +74,7 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
   movingImage->Allocate();
 
   /* Fill images */
-  ImageRegionIterator<ImageType> itFixed( fixedImage, region );
+  itk::ImageRegionIterator<ImageType> itFixed( fixedImage, region );
   itFixed.GoToBegin();
   unsigned int count = 1;
   while( !itFixed.IsAtEnd() )
@@ -84,26 +83,30 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
     count++;
     ++itFixed;
     }
-  ImageRegionIteratorWithIndex<ImageType> itMoving( movingImage, region );
+  itk::ImageRegionIteratorWithIndex<ImageType> itMoving( movingImage, region );
   itMoving.GoToBegin();
   count = 1;
   while( !itMoving.IsAtEnd() )
     {
-    itMoving.Set( 1.0/(count*count) );
+    itMoving.Set( (count) );
     count++;
     ++itMoving;
     }
 
   /* Transforms */
-  typedef TranslationTransform<double,imageDimensionality> FixedTransformType;
-  typedef TranslationTransform<double,imageDimensionality> MovingTransformType;
+  typedef itk::TranslationTransform<double,imageDimensionality>
+                                                            FixedTransformType;
+  typedef itk::TranslationTransform<double,imageDimensionality>
+                                                            MovingTransformType;
   FixedTransformType::Pointer fixedTransform = FixedTransformType::New();
   MovingTransformType::Pointer movingTransform = MovingTransformType::New();
   fixedTransform->SetIdentity();
   movingTransform->SetIdentity();
 
   /* The metric */
-  typedef DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType >
+  typedef itk::MattesMutualInformationImageToImageObjectMetric< ImageType,
+                                                                ImageType,
+                                                                ImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
 
@@ -114,6 +117,7 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( fixedTransform );
   metric->SetMovingTransform( movingTransform );
+  metric->SetNumberOfHistogramBins( 6 );
 
   /* Initialize. */
   try
@@ -121,7 +125,7 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
     std::cout << "Calling Initialize..." << std::endl;
     metric->Initialize();
     }
-  catch( ExceptionObject & exc )
+  catch( itk::ExceptionObject & exc )
     {
     std::cout << "Caught unexpected exception during Initialize: "
               << exc;
@@ -136,13 +140,12 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
     std::cout << "Calling GetValueAndDerivative..." << std::endl;
     metric->GetValueAndDerivative( valueReturn, derivativeReturn );
     }
-  catch( ExceptionObject & exc )
+  catch( itk::ExceptionObject & exc )
     {
     std::cout << "Caught unexpected exception during GetValueAndDerivative: "
               << exc;
     return EXIT_FAILURE;
     }
-
   std::cout << "Test passed." << std::endl;
   return EXIT_SUCCESS;
 }

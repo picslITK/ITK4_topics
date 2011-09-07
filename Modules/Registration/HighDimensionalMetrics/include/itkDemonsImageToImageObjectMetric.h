@@ -28,7 +28,7 @@ namespace itk
  *
  *  See \c GetValueAndDerivativeProcessPoint for algorithm implementation.
  *
- * \ingroup ITKRegistrationRefactoring
+ * \ingroup ITKHighDimensionalMetric
  */
 template <class TFixedImage,
           class TMovingImage,
@@ -72,12 +72,13 @@ public:
    *  GetValueAndDerivative, after metric settings are changed. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
-  /** Evaluate and return the value and derivative */
+  using Superclass::GetValueAndDerivative;
   void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative);
 
-  /** Evaluate and return the metric value */
-  MeasureType GetValue()
-  { itkExceptionMacro("GetValue not yet implemented."); }
+  /** Evaluate and return the metric value.
+   * \warning Not yet implemented. */
+  using Superclass::GetValue;
+  MeasureType GetValue();
 
 protected:
 

@@ -34,12 +34,12 @@ namespace itk
  *      P. Thevenaz and M. Unser
  *      IEEE Transactions in Image Processing, 9(12) December 2000.
  *
- * \ingroup ITK-RegistrationRefactoring
+ * \ingroup ITKHighDimensionalMetrics
  */
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage = TFixedImage>
 class ITK_EXPORT MattesMutualInformationImageToImageObjectMetric :
-public ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
+  public ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 {
 public:
 
@@ -53,53 +53,72 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(MattesMutualInformationImageToImageObjectMetric, ImageToImageObjectMetric);
+  itkTypeMacro(MattesMutualInformationImageToImageObjectMetric,
+                ImageToImageObjectMetric);
 
   /** Type used for representing parameter values  */
   typedef typename Superclass::CoordinateRepresentationType
                                                   CoordinateRepresentationType;
+  /** Type used internally for computations */
+  typedef typename Superclass::InternalComputationValueType
+                                                  InternalComputationValueType;
   /**  Type of the parameters. */
   typedef typename Superclass::ParametersType       ParametersType;
   typedef typename Superclass::ParametersValueType  ParametersValueType;
 
   /** Superclass typedefs */
-  typedef typename Superclass::MeasureType                 MeasureType;
-  typedef typename Superclass::DerivativeType              DerivativeType;
-  typedef typename Superclass::VirtualPointType            VirtualPointType;
-  typedef typename Superclass::FixedImagePointType         FixedImagePointType;
-  typedef typename Superclass::FixedImagePixelType         FixedImagePixelType;
-  typedef typename Superclass::FixedGradientPixelType      FixedImageGradientsType;
-  typedef typename Superclass::MovingImagePointType        MovingImagePointType;
-  typedef typename Superclass::MovingImagePixelType        MovingImagePixelType;
-  typedef typename Superclass::MovingGradientPixelType     MovingImageGradientsType;
+  typedef typename Superclass::MeasureType              MeasureType;
+  typedef typename Superclass::DerivativeType           DerivativeType;
+  typedef typename Superclass::VirtualPointType         VirtualPointType;
+  typedef typename Superclass::FixedImagePointType      FixedImagePointType;
+  typedef typename Superclass::FixedImagePixelType      FixedImagePixelType;
+  typedef typename Superclass::FixedGradientPixelType
+                                                        FixedImageGradientsType;
+  typedef typename Superclass::MovingImagePointType     MovingImagePointType;
+  typedef typename Superclass::MovingImagePixelType     MovingImagePixelType;
+  typedef typename Superclass::MovingGradientPixelType
+                                                        MovingImageGradientsType;
   /** Value type of the PDF */
-  typedef double PDFValueType;
+  typedef InternalComputationValueType                  PDFValueType;
+
   /** Typedef for the joint PDF and marginal PDF are stored as ITK Images. */
-  typedef Image<PDFValueType,1>               MarginalPDFType;
-  typedef typename MarginalPDFType::IndexType MarginalPDFIndexType;
-  typedef typename MarginalPDFType::PointType MarginalPDFPointType;
-  typedef Image< PDFValueType, 2 >            JointPDFType;
-  typedef typename JointPDFType::PointType    JointPDFPointType;
+  typedef Image<PDFValueType,1>                 MarginalPDFType;
+  typedef typename MarginalPDFType::IndexType   MarginalPDFIndexType;
+  typedef typename MarginalPDFType::PointType   MarginalPDFPointType;
+  typedef Image< PDFValueType, 2>               JointPDFType;
+  typedef typename JointPDFType::IndexType      JointPDFIndexType;
+  typedef typename JointPDFType::PointType      JointPDFPointType;
+  typedef typename JointPDFType::IndexValueType JointPDFIndexValueType;
+
   itkGetConstReferenceMacro(JointPDF,typename JointPDFType::Pointer);
 
   // Declare the type for the derivative calculation
-  typedef itk::GradientRecursiveGaussianImageFilter< JointPDFType >  JPDFGradientFilterType;
+  typedef itk::GradientRecursiveGaussianImageFilter< JointPDFType >
+                                                         JPDFGradientFilterType;
+
   typedef typename JPDFGradientFilterType::OutputImageType JPDFGradientImageType;
+
   typedef typename JPDFGradientImageType::Pointer JPDFGradientImagePointer;
-  typedef itk::GradientRecursiveGaussianImageFilter< MarginalPDFType >  MarginalGradientFilterType;
-  typedef typename MarginalGradientFilterType::OutputImageType MarginalGradientImageType;
-  typedef typename MarginalGradientImageType::Pointer MarginalGradientImagePointer;
+
+  typedef itk::GradientRecursiveGaussianImageFilter< MarginalPDFType >
+                                                  MarginalGradientFilterType;
+  typedef typename MarginalGradientFilterType::OutputImageType
+                                                  MarginalGradientImageType;
+  typedef typename MarginalGradientImageType::Pointer
+                                                  MarginalGradientImagePointer;
 
   itkSetClampMacro( NumberOfHistogramBins, SizeValueType,
                     5, NumericTraits< SizeValueType >::max() );
-  itkGetConstReferenceMacro(NumberOfHistogramBins, SizeValueType);
+  itkGetConstReferenceMacro(NumberOfHistogramBins, SizeValueType );
+
   /** pdf interpolator */
-//  typedef BSplineInterpolateImageFunction<JointPDFType,double> JointPDFInterpolatorType;
-  typedef LinearInterpolateImageFunction<JointPDFType,double> JointPDFInterpolatorType;
+  typedef LinearInterpolateImageFunction<JointPDFType,double>
+                                                     JointPDFInterpolatorType;
   typedef typename JointPDFInterpolatorType::Pointer JointPDFInterpolatorPointer;
-//  typedef BSplineInterpolateImageFunction<MarginalPDFType,double> MarginalPDFInterpolatorType;
-  typedef LinearInterpolateImageFunction<MarginalPDFType,double> MarginalPDFInterpolatorType;
-  typedef typename MarginalPDFInterpolatorType::Pointer MarginalPDFInterpolatorPointer;
+  typedef LinearInterpolateImageFunction<MarginalPDFType,double>
+                                                     MarginalPDFInterpolatorType;
+  typedef typename MarginalPDFInterpolatorType::Pointer
+                                                  MarginalPDFInterpolatorPointer;
 
   /** Initialize the metric. Make sure all essential inputs are plugged in. */
   virtual void Initialize() throw (itk::ExceptionObject);
@@ -108,10 +127,13 @@ public:
    *  For Mattes MI, we just compute the joint histogram / pdf here.
    *  This implementation single-threads the JH computation but it
    *  could be multi-threaded in the future.
+   *  Results are returned in \c value and \c derivative.
    */
+  using Superclass::GetValueAndDerivative;
   void GetValueAndDerivative(MeasureType & value, DerivativeType & derivative);
 
   /** Get the value */
+  using Superclass::GetValue;
   MeasureType GetValue();
 
 protected:
@@ -120,87 +142,26 @@ protected:
   virtual ~MattesMutualInformationImageToImageObjectMetric();
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  bool ComputeJointPDFPoint( FixedImagePixelType fixedImageValue, MovingImagePixelType movingImageValue , JointPDFPointType& jointPDFpoint , unsigned int threadID ) {
-    double a=(fixedImageValue-this->m_FixedImageTrueMin)/(this->m_FixedImageTrueMax-this->m_FixedImageTrueMin);
-    double b=(movingImageValue-this->m_MovingImageTrueMin)/(this->m_MovingImageTrueMax-this->m_MovingImageTrueMin);
-    jointPDFpoint[0]=a;
-    jointPDFpoint[1]=b;
-    return this->m_ThreaderJointPDFInterpolator[threadID]->IsInsideBuffer(jointPDFpoint );
-   }
+  bool ComputeJointPDFPoint( const FixedImagePixelType fixedImageValue,
+                             const MovingImagePixelType movingImageValue,
+                             JointPDFPointType& jointPDFpoint,
+                             const ThreadIdType threadID );
 
-  inline double ComputeFixedImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID )
-  {
-    double offset=0.5*this->m_JointPDFSpacing[0];
-    double eps=this->m_JointPDFSpacing[0];
-    MarginalPDFPointType  leftpoint=margPDFpoint;
-    leftpoint[0] -= offset;
-    MarginalPDFPointType  rightpoint=margPDFpoint;
-    rightpoint[0] += offset;
-    if (leftpoint[0] < eps ) leftpoint[0] = eps;
-    if (rightpoint[0] < eps ) rightpoint[0] = eps;
-    if (leftpoint[0] > 1 ) leftpoint[0] = 1;
-    if (rightpoint[0] > 1  ) rightpoint[0] = 1;
-    double delta=rightpoint[0]-leftpoint[0];
-    if ( delta > 0 ) {
-    double deriv=this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
-                 this->m_ThreaderFixedImageMarginalPDFInterpolator[threadID]->Evaluate(leftpoint);
-    return deriv/delta;
-    }
-    else return 0;
-  }
+  inline InternalComputationValueType ComputeFixedImageMarginalPDFDerivative(
+                                        const MarginalPDFPointType margPDFpoint,
+                                        const ThreadIdType threadID );
 
-  inline double ComputeMovingImageMarginalPDFDerivative( MarginalPDFPointType margPDFpoint , unsigned int threadID )
-  {
-    double offset=0.5*this->m_JointPDFSpacing[0];
-    double eps=this->m_JointPDFSpacing[0];
-    MarginalPDFPointType  leftpoint=margPDFpoint;
-    leftpoint[0] -= offset;
-    MarginalPDFPointType  rightpoint=margPDFpoint;
-    rightpoint[0] += offset;
-    if (leftpoint[0] < eps ) leftpoint[0]=eps;
-    if (rightpoint[0] < eps ) rightpoint[0]=eps;
-    if (leftpoint[0] > 1 ) leftpoint[0]=1;
-    if (rightpoint[0] > 1  ) rightpoint[0]=1;
-    double delta=rightpoint[0]-leftpoint[0];
-    if ( delta > 0 ) {
-    double deriv=this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(rightpoint)-
-                 this->m_ThreaderMovingImageMarginalPDFInterpolator[threadID]->Evaluate(leftpoint);
-    return deriv/delta;
-    }
-    else return 0;
-  }
+  inline InternalComputationValueType ComputeMovingImageMarginalPDFDerivative(
+                                        const MarginalPDFPointType margPDFpoint,
+                                        const ThreadIdType threadID );
 
-  inline double ComputeJointPDFDerivative( JointPDFPointType jointPDFpoint , unsigned int threadID , unsigned int ind  )
-  {
-    double offset=0.5*this->m_JointPDFSpacing[ind];
-    double eps=this->m_JointPDFSpacing[ind];
-    JointPDFPointType  leftpoint=jointPDFpoint;
-    leftpoint[ind] -= offset;
-    JointPDFPointType  rightpoint=jointPDFpoint;
-    rightpoint[ind] += offset;
-    if (leftpoint[ind] < eps ) leftpoint[ind]=eps;
-    if (rightpoint[ind] < eps ) rightpoint[ind]=eps;
-    if (leftpoint[ind] > 1 ) leftpoint[ind]=1;
-    if (rightpoint[ind] > 1 ) rightpoint[ind]=1;
-    double delta=rightpoint[ind]-leftpoint[ind];
-    double deriv=0;
-    if ( delta > 0 ) {
-      deriv=this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(rightpoint)-
-            this->m_ThreaderJointPDFInterpolator[threadID]->Evaluate(leftpoint);
-      return deriv/delta;
-    }
-    else return deriv;
-  }
+  inline InternalComputationValueType ComputeJointPDFDerivative(
+                                          const JointPDFPointType jointPDFpoint,
+                                          const ThreadIdType threadID,
+                                          const SizeValueType ind );
 
-
-  /** Initiates multi-threading to evaluate the current metric value
-   * and derivatives. */
-  //  virtual void GetValueAndDerivativeMultiThreadedInitiate( DerivativeType &
-  //          derivativeReturn ) // use superclass
-
-  /* Provide the worker routine to process each point */
   bool GetValueAndDerivativeProcessPoint(
-                    const VirtualPointType &           itkNotUsed(virtualPoint),
+                    const VirtualPointType &           virtualPoint,
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
                     const FixedImageGradientsType &  fixedImageGradients,
@@ -209,16 +170,14 @@ protected:
                     const MovingImageGradientsType & movingImageGradients,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID);
-
-  /** Default post-processing after multi-threaded calculation of
-   * value and derivative.*/
-//  virtual void GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage ); // use superclass
+                    const ThreadIdType                 threadID);
 
   void EnforceJointHistogramBoundaryConditions();
 
-private:
+  /** Update the histograms for use in GetValueAndDerivative */
+  void UpdateHistograms();
 
+private:
 
   //purposely not implemented
   MattesMutualInformationImageToImageObjectMetric(const Self &);
@@ -235,34 +194,34 @@ private:
   typename JointPDFType::Pointer            m_JointPDF;
 
   /** Joint PDF types */
-  typedef JointPDFType::IndexType             JointPDFIndexType;
-  typedef JointPDFType::PixelType             JointPDFValueType;
-  typedef JointPDFType::RegionType            JointPDFRegionType;
-  typedef JointPDFType::SizeType              JointPDFSizeType;
-  typedef JointPDFType::SpacingType           JointPDFSpacingType;
+  typedef typename JointPDFType::PixelType             JointPDFValueType;
+  typedef typename JointPDFType::RegionType            JointPDFRegionType;
+  typedef typename JointPDFType::SizeType              JointPDFSizeType;
+  typedef typename JointPDFType::SpacingType           JointPDFSpacingType;
 
   /** Variables to define the marginal and joint histograms. */
-  SizeValueType m_NumberOfHistogramBins;
-  double        m_FixedImageTrueMin;
-  double        m_FixedImageTrueMax;
-  double        m_MovingImageTrueMin;
-  double        m_MovingImageTrueMax;
-  double        m_FixedImageBinSize;
-  double        m_MovingImageBinSize;
+  SizeValueType                       m_NumberOfHistogramBins;
+  InternalComputationValueType        m_FixedImageTrueMin;
+  InternalComputationValueType        m_FixedImageTrueMax;
+  InternalComputationValueType        m_MovingImageTrueMin;
+  InternalComputationValueType        m_MovingImageTrueMax;
+  InternalComputationValueType        m_FixedImageBinSize;
+  InternalComputationValueType        m_MovingImageBinSize;
 
-  double              m_JointPDFSum;
-  JointPDFSpacingType m_JointPDFSpacing;
+  InternalComputationValueType              m_JointPDFSum;
+  JointPDFSpacingType                       m_JointPDFSpacing;
 
   /** For threading */
   JointPDFInterpolatorPointer*    m_ThreaderJointPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderFixedImageMarginalPDFInterpolator;
   MarginalPDFInterpolatorPointer* m_ThreaderMovingImageMarginalPDFInterpolator;
 
-  double        m_Log2;
-  unsigned int  m_Padding;
+  InternalComputationValueType    m_Log2;
+  JointPDFIndexValueType          m_Padding;
 
   JPDFGradientImagePointer      m_JPDFGradientImage;
   MarginalGradientImagePointer  m_MarginalGradientImage;
+
   /*
   JointPDFType::Pointer * m_ThreaderJointPDF;
   int *m_ThreaderJointPDFStartBin;
