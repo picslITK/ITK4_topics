@@ -3,7 +3,7 @@ set(ITKHighDimensionalMetricsTests
   itkObjectToObjectMetricTest.cxx
   itkImageToImageObjectMetricTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
-  itkMattesMutualInformationImageToImageObjectMetricTest.cxx
+  itkThevenazMutualInformationImageToImageObjectMetricTest.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -23,6 +23,6 @@ itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITKHighDimensionalMetricsTestDriver
       itkDemonsImageToImageObjectMetricTest)
 
-itk_add_test(NAME itkMattesMutualInformationImageToImageObjectMetricTest
+itk_add_test(NAME itkThevenazMutualInformationImageToImageObjectMetricTest
       COMMAND ITKHighDimensionalMetricsTestDriver
-      itkMattesMutualInformationImageToImageObjectMetricTest)
+      itkThevenazMutualInformationImageToImageObjectMetricTest)

@@ -9,6 +9,7 @@ set(ITKRegistrationRefactoringTests
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkMattesMutualInformationImageToImageObjectRegistrationTest.cxx
+  itkThevenazMutualInformationImageToImageObjectRegistrationTest.cxx
   itkQuasiNewtonRegistrationTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
@@ -116,3 +117,7 @@ itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
 
 #itk_add_test(NAME itkJensenHavrdaCharvatTsallisPointSetMetricTest
 #      COMMAND ITKRegistrationRefactoringTestDriver itkPointSetToPointSetMetricTest 3)
+
+itk_add_test(NAME itkThevenazMutualInformationImageToImageObjectRegistrationTest
+      COMMAND ITKRegistrationRefactoringTestDriver
+      itkThevenazMutualInformationImageToImageObjectRegistrationTest)
