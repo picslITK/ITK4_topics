@@ -40,15 +40,16 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageRegistrationMethodImageSource.h"
 
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
+
+using namespace itk;
 
 namespace{
 // The following class is used to support callbacks
@@ -72,8 +73,6 @@ public:
   typename TRegistration::Pointer m_Process;
 };
 }
-
-using namespace itk;
 
 int itkPolyAffineTransformTest(int argc, char *argv[])
 {

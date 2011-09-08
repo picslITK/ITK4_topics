@@ -1,10 +1,8 @@
 itk_module_test()
 set(ITKRegistrationRefactoringTests
 # itkTransformVirtualDomainCalculatorTest.cxx
-  itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
@@ -16,6 +14,9 @@ set(ITKRegistrationRefactoringTests
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkPolyAffineTransformTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
+  # On hold until class is updated
+  #itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
+  #itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -34,9 +35,10 @@ itk_add_test(NAME itkMattesMutualInformationImageToImageObjectRegistrationTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkMattesMutualInformationImageToImageObjectRegistrationTest)
 
-itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkDemonsVectorImageToVectorImageObjectMetricTest)
+# On hold until class is updated
+#itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
+#      COMMAND ITKRegistrationRefactoringTestDriver
+#      itkDemonsVectorImageToVectorImageObjectMetricTest)
 
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver

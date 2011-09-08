@@ -20,9 +20,9 @@ itk_add_test(NAME itkImageToImageObjectMetricTest
               itkImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
+      COMMAND ITKHighDimensionalMetricsTestDriver
       itkDemonsImageToImageObjectMetricTest)
 
 itk_add_test(NAME itkMattesMutualInformationImageToImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
+      COMMAND ITKHighDimensionalMetricsTestDriver
       itkMattesMutualInformationImageToImageObjectMetricTest)

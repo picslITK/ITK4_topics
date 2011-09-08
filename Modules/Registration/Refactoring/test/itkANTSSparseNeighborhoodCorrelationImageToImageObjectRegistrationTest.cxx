@@ -39,12 +39,9 @@
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
 
-// #include "itkMinimumMaximumImageCalculator.h"
-
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 using namespace itk;
 

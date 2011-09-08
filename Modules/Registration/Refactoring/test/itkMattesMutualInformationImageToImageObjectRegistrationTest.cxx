@@ -48,12 +48,9 @@
 #include "itksys/SystemTools.hxx"
 #include "itkResampleImageFilter.h"
 
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
-
-// #include "itkMinimumMaximumImageCalculator.h"
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 using namespace itk;
 
@@ -161,6 +158,8 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
   field->SetRegions( fixedImage->GetLargestPossibleRegion() );
+  //make sure the field has the same spatial information as the image
+  field->CopyInformation( fixedImage );
   std::cout << "fixedImage->GetLargestPossibleRegion(): "
             << fixedImage->GetLargestPossibleRegion() << std::endl
             << "fixedImage->GetBufferedRegion(): "
@@ -202,8 +201,12 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   metric->SetMovingTransform( compositeTransform );
-  metric->SetPreWarpMovingImage( false );
-  metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
+  bool prewarp = false;
+  metric->SetPreWarpMovingImage( prewarp );
+  metric->SetPreWarpFixedImage( prewarp );
+  bool gaussian = false;
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( gaussian );
+  metric->SetUseFixedGradientRecursiveGaussianImageFilter( gaussian );
   metric->Initialize();
 
   typedef GradientDescentObjectOptimizer  OptimizerType;
@@ -260,10 +263,19 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   defoptimizer->SetLearningRate( deformationLearningRate );
   defoptimizer->SetNumberOfIterations( numberOfIterations );
 
+  metric->Initialize();
+
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Deformation learning rate: " << deformationLearningRate << std::endl
-            << "PreWarpMovingImages: " << metric->GetPreWarpMovingImage() << std::endl;
+            << "PreWarpMovingImage: " << metric->GetPreWarpMovingImage() << std::endl
+            << "PreWarpFixedImage: " << metric->GetPreWarpFixedImage() << std::endl
+            << "Use_Moving_GradientRecursiveGaussianImageFilter: "
+            << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
+            << std::endl
+            << "Use_Fixed_GradientRecursiveGaussianImageFilter: "
+            << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
+            << std::endl;
   try
     {
     defoptimizer->StartOptimization();

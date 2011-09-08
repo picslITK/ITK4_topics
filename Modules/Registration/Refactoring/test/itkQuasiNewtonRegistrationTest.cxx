@@ -42,6 +42,12 @@
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
 
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
+
+using namespace itk;
+
 namespace{
 // The following class is used to support callbacks
 // on the filter in the pipeline that follows later
@@ -64,8 +70,6 @@ public:
   typename TRegistration::Pointer m_Process;
 };
 }
-
-using namespace itk;
 
 int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
 {

@@ -23,6 +23,10 @@
 #include "itkQuasiNewtonObjectOptimizer.h"
 #include "vnl/vnl_math.h"
 
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
+
 using namespace itk;
 
 namespace {
