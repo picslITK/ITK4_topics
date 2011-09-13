@@ -149,6 +149,7 @@ QuasiNewtonObjectOptimizer
                                  << m_NumberOfIterations
                                  << ") exceeded.";
       m_StopCondition = MAXIMUM_NUMBER_OF_ITERATIONS;
+      //this->AdvanceDebugSteps();
       this->StopOptimization();
       break;
       }
@@ -160,6 +161,97 @@ QuasiNewtonObjectOptimizer
  * with the gradient direction, follow the Quasi-Newton direction,
  * otherwise, follow the gradient direction.
  */
+void
+QuasiNewtonObjectOptimizer
+::AdvanceDebugSteps(void)
+{
+  itkDebugMacro("AdvanceDebugStep");
+  const unsigned int pnum =  this->m_Metric->GetNumberOfParameters();
+  const unsigned int rows = m_HistoryPositions.size();
+  itk::Array2D<double> ypos(rows, pnum);
+  itk::Array2D<double> xpos(rows, pnum);
+  itk::Array<double>   ypostmp(pnum);
+  itk::Array<double>   xpostmp(pnum);
+  itk::Array<double>   xmean(pnum);
+  itk::Array2D<double> coeff(pnum, pnum);
+  itk::Array2D<double> coeffBack(pnum, pnum);
+
+  xmean.fill(0.0);
+  for (UnInt i=0; i<rows; i++)
+    {
+    xmean += m_HistoryPositions[i];
+    }
+  xmean /= rows;
+
+  for (UnInt i=0; i<rows; i++)
+    {
+    xpos.set_row(i, m_HistoryPositions[i]-xmean);
+    }
+
+  vnl_svd<double> xsvd(xpos);
+  std::cout << "DebugXMean = " << xmean << ";" << std::endl;
+  for (UnInt i=0; i<pnum; i++)
+    {
+    //make "grep DebugSvdV" work
+    std::cout << "DebugSvdV(" << i+1 << ",:) = [" << xsvd.V().get_row(i) << "];" << std::endl;
+    }
+  std::cout << "DebugSvdW = " << xsvd.W() << ";" << std::endl;
+  coeff = xsvd.V();
+  coeffBack = coeff.transpose();
+  for (UnInt i=0; i<rows; i++)
+    {
+    ypos.set_row(i, (xpos.get_row(i)) * coeff);
+    }
+
+  int dimx = 101, dimy = 101;
+  int cx = 0, cy = 1;
+  double smallUnit = 1; //4;
+  double yposx_low  = ypos[rows-1][cx] - smallUnit*2;
+  double yposx_high = ypos[rows-1][cx] + smallUnit*2;
+  double yposy_low  = ypos[rows-1][cy] - smallUnit;
+  double yposy_high = ypos[rows-1][cy] + smallUnit;
+  double dx = (yposx_high - yposx_low)/(dimx-1);
+  double dy = (yposy_high - yposy_low)/(dimx-1);
+  double px, py;
+
+  itk::Array<double> optypos;
+  itk::Array<double> deltapos;
+  optypos = ypos.get_row(rows-1);
+  std::cout << "DebugOptYPos = " << optypos << ";" << std::endl;
+  std::cout << "DebugCx = " << cx+1 << ";" << std::endl;
+  std::cout << "DebugCy = " << cy+1 << ";" << std::endl;
+
+  for (UnInt i=0; i<dimx; i++)
+    {
+    px = yposx_low + i * dx;
+    std::cout << "DebugYPos1(" << i+1 << ") = " << px << ";" << std::endl;
+    }
+  for (UnInt j=0; j<dimy; j++)
+    {
+    py = yposy_low + j * dy;
+    std::cout << "DebugYPos2(" << j+1 << ") = " << py << ";" << std::endl;
+    }
+  for (UnInt i=0; i<dimx; i++)
+    {
+    px = yposx_low + i * dx;
+    for (UnInt j=0; j<dimy; j++)
+      {
+      py = yposy_low + j * dy;
+      ypostmp = optypos;
+      ypostmp[cx] = px;
+      ypostmp[cy] = py;
+      xpostmp = ypostmp * coeffBack + xmean;
+
+      deltapos = xpostmp - this->m_Metric->GetParameters();
+      this->m_Metric->UpdateTransformParameters(deltapos);
+      this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
+
+      //std::cout << "DebugPosition(:," << j+1 << "," << i+1 << ") = " << this->m_Metric->GetParameters() << "';" << std::endl;
+      std::cout << "DebugValue(" << j+1 << "," << i+1 << ") = " << this->GetValue() << ";" << std::endl;
+      }
+    }
+}
+
 void
 QuasiNewtonObjectOptimizer
 ::AdvanceOneStep(void)
@@ -179,6 +271,12 @@ QuasiNewtonObjectOptimizer
   bool   newtonStepException = false;
 
   this->m_CurrentPosition = this->m_Metric->GetParameters();
+
+  if (this->GetDebug())
+    {
+    m_HistoryValues.push_back(m_Value);
+    m_HistoryPositions.push_back(m_CurrentPosition);
+    }
 
   if ( this->m_Gradient[0] != this->m_Gradient[0] ) //checking NaN
     {
@@ -221,10 +319,11 @@ QuasiNewtonObjectOptimizer
 
   if (this->GetDebug())
     {
-    std::cout << "m_CurrentPosition(:," << 1+this->GetCurrentIteration() << ") = " << this->m_CurrentPosition << "';" << std::endl;
-    std::cout << "m_Value(" << 1+this->GetCurrentIteration() << ") = " << this->GetValue() << ";" << std::endl;
-    std::cout << "m_NewtonStep(:," << 1+this->GetCurrentIteration() << ") = " << m_NewtonStep << "';" << std::endl;
-    std::cout << "m_Gradient(:," << 1+this->GetCurrentIteration() << ") = " << m_Gradient << "';" << std::endl;
+    int iter = 1 + this->GetCurrentIteration();
+    std::cout << "m_CurrentPosition(" << iter << ",:) = " << this->m_CurrentPosition << "';" << std::endl;
+    std::cout << "m_Value(" << iter << ") = " << this->GetValue() << ";" << std::endl;
+    std::cout << "m_NewtonStep(" << iter << ",:) = " << m_NewtonStep << "';" << std::endl;
+    std::cout << "m_Gradient(" << iter << ",:) = " << m_Gradient << "';" << std::endl;
     }
   /** Save for the next iteration */
   m_PreviousValue = this->GetValue();
@@ -429,8 +528,6 @@ double QuasiNewtonObjectOptimizer
   ParametersType initPosition = this->m_Metric->GetParameters();
   ParametersType tempPosition(spaceDimension);
   ParametersType deltaPosition(spaceDimension);
-  //if (m_CurrentIteration >= 3)
-  //  int tmpdbg = 0;
 
   tempPosition = this->m_Metric->GetParameters();
   deltaPosition = initPosition + t2 * direction - tempPosition;
@@ -466,8 +563,6 @@ double QuasiNewtonObjectOptimizer
     this->m_Metric->UpdateTransformParameters( deltaPosition );
     this->m_Metric->GetValueAndDerivative( this->m_Value, this->m_Gradient );
     m_CurrentIteration++;
-    //if (m_CurrentIteration == 46)
-    //  int tmpdbg = 0;
 
     double gradientNorm = m_Gradient.two_norm();
     if (gradientNorm < m_MinimumGradientNorm)
@@ -551,8 +646,6 @@ double QuasiNewtonObjectOptimizer
   ParametersType deltaPosition(spaceDimension);
   DerivativeType tempGradient(spaceDimension);
 
-  //if (m_CurrentIteration >= 3)
-  //  int tmpdbg = 0;
   int loop = 0;
   while (true)
     {
@@ -698,10 +791,10 @@ void QuasiNewtonObjectOptimizer
 
   if ( this->GetDebug() )
     {
-    unsigned int cur = this->GetCurrentIteration();
+    unsigned int iter = this->GetCurrentIteration()+1;
     for (unsigned int row = 0; row < m_Hessian.rows(); row++)
       {
-      std::cout << "m_Hessian(" << row+1 << ",:" << "," << cur+1 << ") = ["
+      std::cout << "m_Hessian(" << row+1 << ",:" << "," << iter << ") = ["
         << m_Hessian.get_row(row) << "];" << std::endl;
       }
     }

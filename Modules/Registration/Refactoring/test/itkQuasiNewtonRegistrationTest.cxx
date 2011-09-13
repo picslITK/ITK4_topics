@@ -75,8 +75,8 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " [fixedImageFile movingImageFile ";
-    std::cerr << " outputImageFile] ";
-    std::cerr << " [numberOfIterations=10] ";
+    std::cerr << " outputImageFile ";
+    std::cerr << " [numberOfIterations=200] ] ";
     //std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
     return EXIT_FAILURE;
     }
@@ -84,14 +84,12 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   unsigned int numberOfIterations = 200;
   //double scalarScale = 1.0;
   //double learningRate = 100;
-  //if( argc >= 7 )
-  //  {
-  //  numberOfIterations = atoi( argv[4] );
-  //  scalarScale = atof( argv[5] );
-  //  learningRate = atof( argv[6] );
-  //  }
+  if( argc >= 5 )
+    {
+    numberOfIterations = atoi( argv[4] );
+    }
 
-  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
+  //itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
 
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
@@ -125,8 +123,8 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
     FixedImageReaderType::Pointer fixedImageReader   = FixedImageReaderType::New();
     MovingImageReaderType::Pointer movingImageReader = MovingImageReaderType::New();
 
-    fixedImageReader->SetFileName( argv[2] );
-    movingImageReader->SetFileName( argv[3] );
+    fixedImageReader->SetFileName( argv[1] );
+    movingImageReader->SetFileName( argv[2] );
     fixedImageReader->Update();
     movingImageReader->Update();
 
@@ -161,8 +159,8 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   matcher->SetNumberOfMatchPoints( 10 );
   matcher->ThresholdAtMeanIntensityOn();
 
-  matcher->Update();
-  movingImage = matcher->GetOutput();
+  //matcher->Update();
+  //movingImage = matcher->GetOutput();
 
   //create a deformation field transform
   //typedef TranslationTransform<double, Dimension>
@@ -268,31 +266,67 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   //
   // results
   //
-  ParametersType actualParameters = imageSource->GetActualParameters();
   ParametersType finalParameters  = movingTransform->GetParameters();
-
-  const unsigned int numbeOfParameters = actualParameters.Size();
-
-  // We know that for the Affine transform the Translation parameters are at
-  // the end of the list of parameters.
-  const unsigned int offsetOrder = finalParameters.Size()-actualParameters.Size();
-
-  const double tolerance = 1.0;  // equivalent to 1 pixel.
+  ParametersType fixedParameters  = movingTransform->GetFixedParameters();
   std::cout << "Estimated scales = " << optimizer->GetScales() << std::endl;
   std::cout << "finalParameters = " << finalParameters << std::endl;
-  std::cout << "actualParameters = " << actualParameters << std::endl;
-
+  std::cout << "fixedParameters = " << fixedParameters << std::endl;
   bool pass = true;
-  for(unsigned int i=0; i<numbeOfParameters; i++)
+  if( argc <= 3 ) //using synthetic data
     {
-    // the parameters are negated in order to get the inverse transformation.
-    // this only works for comparing translation parameters....
-    std::cout << finalParameters[i+offsetOrder] << " == " << -actualParameters[i] << std::endl;
-    if( vnl_math_abs ( finalParameters[i+offsetOrder] - (-actualParameters[i]) ) > tolerance )
+    ParametersType actualParameters = imageSource->GetActualParameters();
+    std::cout << "actualParameters = " << actualParameters << std::endl;
+    const unsigned int numbeOfParameters = actualParameters.Size();
+
+    // We know that for the Affine transform the Translation parameters are at
+    // the end of the list of parameters.
+    const unsigned int offsetOrder = finalParameters.Size()-actualParameters.Size();
+
+    const double tolerance = 1.0;  // equivalent to 1 pixel.
+
+    for(unsigned int i=0; i<numbeOfParameters; i++)
       {
-      std::cout << "Tolerance exceeded at component " << i << std::endl;
-      pass = false;
+      // the parameters are negated in order to get the inverse transformation.
+      // this only works for comparing translation parameters....
+      std::cout << finalParameters[i+offsetOrder] << " == " << -actualParameters[i] << std::endl;
+      if( vnl_math_abs ( finalParameters[i+offsetOrder] - (-actualParameters[i]) ) > tolerance )
+        {
+        std::cout << "Tolerance exceeded at component " << i << std::endl;
+        pass = false;
+        }
       }
+    }
+  else //using image files
+    {
+    /** define a resample filter that will ultimately be used to deform the image */
+    typedef itk::ResampleImageFilter<
+                              MovingImageType,
+                              FixedImageType >    ResampleFilterType;
+    ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+    //warp the image with the displacement field
+    resample->SetTransform( movingTransform );
+    resample->SetInput( movingImage );
+    resample->SetSize(    fixedImage->GetLargestPossibleRegion().GetSize() );
+    resample->SetOutputOrigin(  fixedImage->GetOrigin() );
+    resample->SetOutputSpacing( fixedImage->GetSpacing() );
+    resample->SetOutputDirection( fixedImage->GetDirection() );
+    resample->SetDefaultPixelValue( 0 );
+    resample->Update();
+
+    //write the warped image into a file
+    typedef double                              OutputPixelType;
+    typedef Image< OutputPixelType, Dimension > OutputImageType;
+    typedef CastImageFilter<
+                          MovingImageType,
+                          OutputImageType >     CastFilterType;
+    typedef ImageFileWriter< OutputImageType >  WriterType;
+    WriterType::Pointer      writer =  WriterType::New();
+    CastFilterType::Pointer  caster =  CastFilterType::New();
+    writer->SetFileName( argv[3] );
+    caster->SetInput( resample->GetOutput() );
+    writer->SetInput( caster->GetOutput() );
+    writer->Update();
     }
 
   if( !pass )

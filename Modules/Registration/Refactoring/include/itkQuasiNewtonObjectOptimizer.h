@@ -69,7 +69,7 @@ public:
 
   /** Type for Hessian matrix in the Quasi-Newton method */
   typedef itk::Array2D<double>                      HessianType;
-
+  typedef unsigned int                              UnInt;
   /** Pointer of OptimizerParameterEstimatorBase. */
   typedef OptimizerParameterEstimatorBase::Pointer  OptimizerParameterEstimatorBasePointer;
 
@@ -89,6 +89,7 @@ public:
 
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
+  void AdvanceDebugSteps(void);
 
   void AdvanceWithBacktrackingLineSearch(ParametersType direction, double maxStepSize);
   double AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize);
@@ -119,6 +120,10 @@ protected:
   double          m_PreviousValue;
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
+
+  // for debug
+  std::vector<ParametersType>     m_HistoryPositions;
+  std::vector<double>             m_HistoryValues;
 
   /** The Quasi-Newton step */
   ParametersType  m_NewtonStep;
