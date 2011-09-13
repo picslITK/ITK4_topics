@@ -1,6 +1,9 @@
 itk_module_test()
 set(ITKHighDimensionalMetricsTests
   itkObjectToObjectMetricTest.cxx
+  itkImageToImageObjectMetricTest.cxx
+  itkDemonsImageToImageObjectMetricTest.cxx
+  itkMattesMutualInformationImageToImageObjectMetricTest.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -11,3 +14,15 @@ CreateTestDriver(ITKHighDimensionalMetrics  "${ITKHighDimensionalMetrics-Test_LI
 
 itk_add_test(NAME itkObjectToObjectMetricTest
       COMMAND ITKHighDimensionalMetricsTestDriver itkObjectToObjectMetricTest)
+
+itk_add_test(NAME itkImageToImageObjectMetricTest
+      COMMAND ITKHighDimensionalMetricsTestDriver
+              itkImageToImageObjectMetricTest)
+
+itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
+      COMMAND ITKHighDimensionalMetricsTestDriver
+      itkDemonsImageToImageObjectMetricTest)
+
+itk_add_test(NAME itkMattesMutualInformationImageToImageObjectMetricTest
+      COMMAND ITKHighDimensionalMetricsTestDriver
+      itkMattesMutualInformationImageToImageObjectMetricTest)

@@ -24,7 +24,8 @@ namespace itk
 ObjectToObjectMetric
 ::ObjectToObjectMetric()
 {
-  SetGradientSource( this->GRADIENT_SOURCE_MOVING );
+  // Don't call SetGradientSource, to avoid valgrind warning.
+  this->m_GradientSource = this->GRADIENT_SOURCE_MOVING;
 }
 
 //-------------------------------------------------------------------
@@ -39,6 +40,24 @@ ObjectToObjectMetric
 {
   MeasureType value;
   this->GetValueAndDerivative(value, derivative);
+}
+
+//-------------------------------------------------------------------
+bool
+ObjectToObjectMetric
+::GetGradientSourceIncludesFixed()
+{
+  return m_GradientSource == GRADIENT_SOURCE_FIXED ||
+         m_GradientSource == GRADIENT_SOURCE_BOTH;
+}
+
+//-------------------------------------------------------------------
+bool
+ObjectToObjectMetric
+::GetGradientSourceIncludesMoving()
+{
+  return m_GradientSource == GRADIENT_SOURCE_MOVING ||
+         m_GradientSource == GRADIENT_SOURCE_BOTH;
 }
 
 //-------------------------------------------------------------------

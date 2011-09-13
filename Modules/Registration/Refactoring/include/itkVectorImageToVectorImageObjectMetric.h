@@ -208,7 +208,7 @@ public:
   typedef typename MovingTransformType::ParametersType
                                                 MovingTransformParametersType;
   typedef typename MovingTransformType::JacobianType
-                                                MovingTransformJacobianType;
+                                                JacobianType;
 
   /**  Type for the mask of the fixed image. Only pixels that are "inside"
        this mask will be considered for the computation of the metric */
@@ -777,7 +777,7 @@ protected:
   std::vector< SizeValueType >               m_NumberOfValidPointsPerThread;
   /** Pre-allocated transform jacobian objects, for use as needed by dervied
    * classes for efficiency. */
-  std::vector< MovingTransformJacobianType>  m_MovingTransformJacobianPerThread;
+  std::vector< JacobianType>  m_MovingTransformJacobianPerThread;
 
   VectorImageToVectorImageObjectMetric();
   virtual ~VectorImageToVectorImageObjectMetric() {}

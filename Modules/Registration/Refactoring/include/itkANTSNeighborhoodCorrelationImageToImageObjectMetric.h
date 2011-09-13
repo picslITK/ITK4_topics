@@ -110,10 +110,10 @@ public:
     typedef typename Superclass::MovingImagePixelType MovingImagePixelType;
     typedef typename Superclass::MovingImageGradientType
                                                      MovingImageGradientType;
-    typedef typename Superclass::MovingTransformType MovingTransformType;
+    typedef typename Superclass::MovingTransformType  MovingTransformType;
 //    typedef typename MovingTransformType::JacobianType MovingImageJacobianType;
-    typedef typename Superclass::MovingTransformJacobianType
-                                                    MovingTransformJacobianType;
+    typedef typename Superclass::JacobianType
+                                                    JacobianType;
 
     typedef typename Superclass::VirtualImageGradientType
                                                     VirtualImageGradientType;
@@ -152,10 +152,12 @@ public:
     virtual void Initialize(void) throw (itk::ExceptionObject);
 
     /** Evaluate and return the value and derivative */
+    using Superclass::GetValueAndDerivative;
     void GetValueAndDerivative(MeasureType & value,
             DerivativeType & derivative);
 
     /** Evaluate and return the metric value */
+    using Superclass::GetValue;
     MeasureType GetValue() {
         itkExceptionMacro("GetValue not yet implemented.");
     }
@@ -215,8 +217,7 @@ protected:
 
       void InitializeScanning(const ImageRegionType &scan_region,
             ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-            ScanParaType &scan_para,
-            const ThreadIdType threadID);
+            ScanParaType &scan_para );
 
       void UpdateQueuesAtBeginingOfLine(
             const ScanningIteratorType &scan_it, ScanMemType &scan_mem,

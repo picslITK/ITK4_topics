@@ -42,41 +42,12 @@
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
 
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
-
-// #include "itkMinimumMaximumImageCalculator.h"
-
-using namespace itk;
-
-namespace{
-// The following class is used to support callbacks
-// on the filter in the pipeline that follows later
-template<typename TRegistration>
-class ShowProgressObject
-{
-public:
-  ShowProgressObject(TRegistration* o)
-    {m_Process = o;}
-  void ShowProgress()
-    {
-    std::cout << "Progress: " << m_Process->GetProgress() << "  ";
-    std::cout << "Iter: " << m_Process->GetElapsedIterations() << "  ";
-    std::cout << "Metric: "   << m_Process->GetMetric()   << "  ";
-    std::cout << "RMSChange: " << m_Process->GetRMSChange() << "  ";
-    std::cout << std::endl;
-    if ( m_Process->GetElapsedIterations() == 10 )
-      { m_Process->StopRegistration(); }
-    }
-  typename TRegistration::Pointer m_Process;
-};
-}
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
 {
-
   if( argc < 4 || argc > 7)
     {
     std::cerr << "Missing Parameters " << std::endl;
@@ -101,11 +72,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   const unsigned int Dimension = 2;
   typedef double PixelType; //I assume png is unsigned short
 
-  typedef Image< PixelType, Dimension >  FixedImageType;
-  typedef Image< PixelType, Dimension >  MovingImageType;
+  typedef itk::Image< PixelType, Dimension >  FixedImageType;
+  typedef itk::Image< PixelType, Dimension >  MovingImageType;
 
-  typedef ImageFileReader< FixedImageType  > FixedImageReaderType;
-  typedef ImageFileReader< MovingImageType > MovingImageReaderType;
+  typedef itk::ImageFileReader< FixedImageType  > FixedImageReaderType;
+  typedef itk::ImageFileReader< MovingImageType > MovingImageReaderType;
 
   FixedImageReaderType::Pointer fixedImageReader   = FixedImageReaderType::New();
   MovingImageReaderType::Pointer movingImageReader = MovingImageReaderType::New();
@@ -114,7 +85,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   movingImageReader->SetFileName( argv[2] );
 
   //matching intensity histogram
-  typedef HistogramMatchingImageFilter<
+  typedef itk::HistogramMatchingImageFilter<
                                     MovingImageType,
                                     MovingImageType >   MatchingFilterType;
   MatchingFilterType::Pointer matcher = MatchingFilterType::New();
@@ -134,13 +105,13 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   // MovingImageType::Pointer movingImage = movingImageReader->GetOutput();
 
   //create a displacement field transform
-  typedef TranslationTransform<double, Dimension>
+  typedef itk::TranslationTransform<double, Dimension>
                                                     TranslationTransformType;
   TranslationTransformType::Pointer translationTransform =
                                                   TranslationTransformType::New();
   translationTransform->SetIdentity();
 
-  typedef GaussianSmoothingOnUpdateDisplacementFieldTransform<
+  typedef itk::GaussianSmoothingOnUpdateDisplacementFieldTransform<
                                                     double, Dimension>
                                                      DisplacementTransformType;
   DisplacementTransformType::Pointer displacementTransform =
@@ -152,6 +123,9 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   //set the field to be the same as the fixed image region, which will
   // act by default as the virtual domain in this example.
   field->SetRegions( fixedImage->GetLargestPossibleRegion() );
+  //Make sure the field has the same spatial information as the image.
+  //But why isn't this also copying LargestPossibleRegion?
+  field->CopyInformation( fixedImage );
   std::cout << "fixedImage->GetLargestPossibleRegion(): "
             << fixedImage->GetLargestPossibleRegion() << std::endl
             << "fixedImage->GetBufferedRegion(): "
@@ -166,13 +140,13 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   displacementTransform->SetGaussianSmoothingSigma( 6 );
 
   //identity transform for fixed image
-  typedef IdentityTransform<double, Dimension> IdentityTransformType;
+  typedef itk::IdentityTransform<double, Dimension> IdentityTransformType;
   IdentityTransformType::Pointer identityTransform =
                                                   IdentityTransformType::New();
   identityTransform->SetIdentity();
 
   // The metric
-  typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
+  typedef itk::DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
 
@@ -184,17 +158,20 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
   metric->SetMovingTransform( displacementTransform );
-  //  metric->SetMovingTransform( translationTransform );
+  //metric->SetMovingTransform( translationTransform );
 
-  metric->SetPreWarpImages( true );
-  metric->SetPrecomputeImageGradient( ! metric->GetPreWarpImages() );
-  //metric->SetPrecomputeImageGradient( false );
+  bool prewarp = false;
+  metric->SetPreWarpMovingImage( prewarp );
+  metric->SetPreWarpFixedImage( prewarp );
+  bool gaussian = false;
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( gaussian );
+  metric->SetUseFixedGradientRecursiveGaussianImageFilter( gaussian );
 
   //Initialize the metric to prepare for use
   metric->Initialize();
 
   // Optimizer
-  typedef GradientDescentObjectOptimizer  OptimizerType;
+  typedef itk::GradientDescentObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
@@ -203,12 +180,20 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpImages() << std::endl;
+            << "PreWarpMovingImage: " << metric->GetPreWarpMovingImage() << std::endl
+            << "PreWarpFixedImage: " << metric->GetPreWarpFixedImage() << std::endl
+            << "Use_Moving_GradientRecursiveGaussianImageFilter: "
+            << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
+            << std::endl
+            << "Use_Fixed_GradientRecursiveGaussianImageFilter: "
+            << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
+            << std::endl;
+
   try
     {
     optimizer->StartOptimization();
     }
-  catch( ExceptionObject & e )
+  catch( itk::ExceptionObject & e )
     {
     std::cout << "Exception thrown ! " << std::endl;
     std::cout << "An error ocurred during Optimization:" << std::endl;
@@ -229,7 +214,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   field = displacementTransform->GetDisplacementField();
   std::cout << "LargestPossibleRegion: " << field->GetLargestPossibleRegion()
             << std::endl;
-  ImageRegionIteratorWithIndex< DisplacementFieldType > it( field, field->GetLargestPossibleRegion() );
+  itk::ImageRegionIteratorWithIndex< DisplacementFieldType > it( field, field->GetLargestPossibleRegion() );
   /* print out a few displacement field vectors */
   /*std::cout
       << "First few elements of first few rows of final displacement field:"
@@ -253,11 +238,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   //
   //  std::cout << " result " << translationTransform->GetParameters() << std::endl;
   //warp the image with the displacement field
-  typedef WarpImageFilter<
+  typedef itk::WarpImageFilter<
                           MovingImageType,
                           MovingImageType,
                           DisplacementFieldType  >     WarperType;
-  typedef LinearInterpolateImageFunction<
+  typedef itk::LinearInterpolateImageFunction<
                                    MovingImageType,
                                    double          >  InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
@@ -271,7 +256,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   warper->SetDisplacementField( displacementTransform->GetDisplacementField() );
 
   //write out the displacement field
-  typedef ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
+  typedef itk::ImageFileWriter< DisplacementFieldType >  DisplacementWriterType;
   DisplacementWriterType::Pointer      displacementwriter =  DisplacementWriterType::New();
   std::string outfilename( argv[3] );
   std::string ext = itksys::SystemTools::GetFilenameExtension( outfilename );
@@ -282,12 +267,12 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   displacementwriter->Update();
 
   //write the warped image into a file
-  typedef double                              OutputPixelType;
-  typedef Image< OutputPixelType, Dimension > OutputImageType;
-  typedef CastImageFilter<
+  typedef double                                    OutputPixelType;
+  typedef itk::Image< OutputPixelType, Dimension >  OutputImageType;
+  typedef itk::CastImageFilter<
                         MovingImageType,
-                        OutputImageType >     CastFilterType;
-  typedef ImageFileWriter< OutputImageType >  WriterType;
+                        OutputImageType >           CastFilterType;
+  typedef itk::ImageFileWriter< OutputImageType >   WriterType;
 
   WriterType::Pointer      writer =  WriterType::New();
   CastFilterType::Pointer  caster =  CastFilterType::New();

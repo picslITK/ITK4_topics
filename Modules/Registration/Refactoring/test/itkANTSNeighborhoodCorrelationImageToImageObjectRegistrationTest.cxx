@@ -40,10 +40,9 @@
 #include "itkCommand.h"
 #include "itksys/SystemTools.hxx"
 
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 using namespace itk;
 
@@ -192,8 +191,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
   metric->SetRadius(radSize);
 
 
-  metric->SetPreWarpImages( preWarp );
-  metric->SetPrecomputeImageGradient( false );
+  metric->SetPreWarpMovingImage( preWarp );
+  metric->SetUseMovingGradientRecursiveGaussianImageFilter( false );
 
 
   //Initialize the metric to prepare for use
@@ -210,7 +209,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest(int argc, c
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
             << "CC radius: " << metric->GetRadius() << std::endl
-            << "CC prewarp: " << metric->GetPreWarpImages() << std::endl
+            << "CC prewarp: " << metric->GetPreWarpMovingImage() << std::endl
             << "CC number of threads: " << metric->GetNumberOfThreads() << std::endl;
 
 

@@ -87,10 +87,10 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   //  << (int)(256-virtualPoint[1]) << ")=" << diff << ";" << std::endl; //tmpdbg
   //tmpcount++;
   /* Use a pre-allocated jacobian object for efficiency */
-  MovingTransformJacobianType & movingJacobian =
+  JacobianType & movingJacobian =
                             this->m_MovingTransformJacobianPerThread[threadID];
   //FIXME: we may optimize the fixed transform as well
-  //MovingTransformJacobianType & fixedJacobian =
+  //JacobianType & fixedJacobian =
   //                          this->m_FixedTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */

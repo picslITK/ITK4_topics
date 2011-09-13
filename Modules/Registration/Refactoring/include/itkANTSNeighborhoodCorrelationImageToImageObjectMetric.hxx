@@ -110,7 +110,7 @@ ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
   /* Create an iterator over the virtual sub region */
   dataHolder->InitializeScanning(virtualImageSubRegion, scan_it, scan_mem,
-          scan_para, threadID);
+          scan_para );
 
   /* Iterate over the sub region */
   scan_it.GoToBegin();
@@ -127,7 +127,7 @@ ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                   scan_mem, scan_para, threadID);
           dataHolder->ComputeMovingTransformDerivative(scan_it, scan_mem,
                   scan_para, localDerivativeResult, metricValueResult,
-                  threadID);
+                  threadID );
 
       } catch (ExceptionObject & exc) {
           //NOTE: there must be a cleaner way to do this:
@@ -159,8 +159,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::InitializeScanning(
         const ImageRegionType &scan_region, ScanningIteratorType &scan_it,
-        ScanMemType &, ScanParaType &scan_para,
-        const ThreadIdType )
+        ScanMemType &, ScanParaType &scan_para )
 {
 
     scan_para.scan_region = scan_region;
@@ -185,7 +184,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueuesAtBeginingOfLine(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &scan_para, const ThreadIdType threadID) {
+        const ScanParaType &scan_para, const ThreadIdType ) {
 
     int nb_fill_zero = scan_para.number_of_fill_zero;
     unsigned int hoodlen = scan_para.window_length;
@@ -236,73 +235,47 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
             this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
                     virtualPoint);
 
-//            if (0) {
-             if (this->m_PreWarpImages) {
-                try {
-                    this->EvaluatePreWarpedImagesAtIndex(index,
-                            false, /* compute gradient */
-                            fixedImageValue, movingImageValue,
-                            fixedImageGradient, movingImageGradient,
-                            pointIsValid, threadID);
-//                    /* Get the point in moving and fixed space for use below */
-//                    mappedFixedPoint = self->m_FixedTransform->TransformPoint(
-//                            virtualPoint);
-//                    mappedMovingPoint = self->m_MovingTransform->TransformPoint(
-//                            virtualPoint);
-                } catch (ExceptionObject & exc) {
-                    //NOTE: there must be a cleaner way to do this. We want to add
-                    // the this filename and line number to give user more useful
-                    // information about where the exception was generated.
-                    std::string msg("Caught exception: \n");
-                    msg += exc.what();
-                    ExceptionObject err(__FILE__, __LINE__, msg);
-                    throw err;
+            try
+              {
+              this->TransformAndEvaluateFixedPoint( index,
+                                                    virtualPoint,
+                                                    false/*compute gradient*/,
+                                                    mappedFixedPoint,
+                                                    fixedImageValue,
+                                                    fixedImageGradient,
+                                                    pointIsValid );
+              if (pointIsValid)
+                {
+                this->TransformAndEvaluateMovingPoint(index,
+                                                      virtualPoint,
+                                                      false/*compute gradient*/,
+                                                      mappedMovingPoint,
+                                                      movingImageValue,
+                                                      movingImageGradient,
+                                                      pointIsValid );
                 }
-            } else {
+              }
+            catch (ExceptionObject & exc)
+              {
+              //NOTE: there must be a cleaner way to do this:
+              std::string msg("Caught exception: \n");
+              msg += exc.what();
+              ExceptionObject err(__FILE__, __LINE__, msg);
+              throw err;
+              }
 
-                try {
-                    this->TransformAndEvaluateFixedPoint( //
-                            index,
-                            virtualPoint, //
-                            mappedFixedPoint, //
-                            pointIsValid, //
-                            fixedImageValue, //
-                            false/*compute gradient*/, // true /*compute gradient*/,
-                            fixedImageGradient, //
-                            threadID);
-                    if (pointIsValid) {
-                        this->TransformAndEvaluateMovingPoint( //
-                                index,
-                                virtualPoint, //
-                                mappedMovingPoint, //
-                                pointIsValid, //
-                                movingImageValue, //
-                                false/*compute gradient*/, // true /*compute gradient*/,
-                                movingImageGradient, //
-                                threadID);
-                    }
 
-                } catch (ExceptionObject & exc) {
-                    //NOTE: there must be a cleaner way to do this:
-                    std::string msg("Caught exception: \n");
-                    msg += exc.what();
-                    ExceptionObject err(__FILE__, __LINE__, msg);
-                    throw err;
-                }
-            }
-
-            if (pointIsValid) {
-
+            if (pointIsValid)
+              {
                 LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
                 LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
-
                 suma2 += a * a;
                 sumb2 += b * b;
                 suma += a;
                 sumb += b;
                 sumab += a * b;
                 count += 1.0;
-            }
+              }
 
         }
 
@@ -321,7 +294,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::UpdateQueuesToNextScanWindow(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &scan_para, const ThreadIdType threadID) {
+        const ScanParaType &scan_para, const ThreadIdType ) {
 
     const unsigned int hoodlen = scan_para.window_length;
 
@@ -335,96 +308,74 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     LocalRealType count = 0.0;
 
     for (unsigned int indct = 2 * scan_para.r[0]; indct < hoodlen;
-            indct += (2 * scan_para.r[0] + 1)) {
-        bool isInBounds = true;
+            indct += (2 * scan_para.r[0] + 1))
+      {
+      bool isInBounds = true;
 
-        scan_it.GetPixel(indct, isInBounds);
-        typename VirtualImageType::IndexType index = scan_it.GetIndex(indct);
+      scan_it.GetPixel(indct, isInBounds);
+      typename VirtualImageType::IndexType index = scan_it.GetIndex(indct);
 
-        //GS: this is a weird notation: force prob mask < 0.25 to be zero
-        // if ( !isInBounds || ( this->m_FixedImageMask && this->m_FixedImageMask->GetPixel( index ) < 0.25 ) )
-        if (!isInBounds) {
-            continue;
+      //GS: this is a weird notation: force prob mask < 0.25 to be zero
+      // if ( !isInBounds || ( this->m_FixedImageMask && this->m_FixedImageMask->GetPixel( index ) < 0.25 ) )
+      if (!isInBounds)
+        {
+        continue;
         }
 
-        VirtualPointType virtualPoint;
-        FixedOutputPointType mappedFixedPoint;
-        FixedImagePixelType fixedImageValue;
-        FixedImageGradientType fixedImageGradient;
-        MovingOutputPointType mappedMovingPoint;
-        MovingImagePixelType movingImageValue;
-        MovingImageGradientType movingImageGradient;
-        bool pointIsValid;
+      VirtualPointType virtualPoint;
+      FixedOutputPointType mappedFixedPoint;
+      FixedImagePixelType fixedImageValue;
+      FixedImageGradientType fixedImageGradient;
+      MovingOutputPointType mappedMovingPoint;
+      MovingImagePixelType movingImageValue;
+      MovingImageGradientType movingImageGradient;
+      bool pointIsValid;
 
-        this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
-                virtualPoint);
+      this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(index,
+              virtualPoint);
 
-//        if (0) {
-        if (this->m_PreWarpImages) {
-            try {
-                this->EvaluatePreWarpedImagesAtIndex(index, false, /* compute gradient */
-                fixedImageValue, movingImageValue, fixedImageGradient,
-                        movingImageGradient, pointIsValid, threadID);
-                //                    /* Get the point in moving and fixed space for use below */
-                //                    mappedFixedPoint = self->m_FixedTransform->TransformPoint(
-                //                            virtualPoint);
-                //                    mappedMovingPoint = self->m_MovingTransform->TransformPoint(
-                //                            virtualPoint);
-            } catch (ExceptionObject & exc) {
-                //NOTE: there must be a cleaner way to do this. We want to add
-                // the this filename and line number to give user more useful
-                // information about where the exception was generated.
-                std::string msg("Caught exception: \n");
-                msg += exc.what();
-                ExceptionObject err(__FILE__, __LINE__, msg);
-                throw err;
-            }
-        } else {
-            try {
-                this->TransformAndEvaluateFixedPoint( //
-                        index,
-                        virtualPoint, //
-                        mappedFixedPoint, //
-                        pointIsValid, //
-                        fixedImageValue, //
-                        false/*compute gradient*/, // true /*compute gradient*/,
-                        fixedImageGradient, //
-                        threadID);
-                if (pointIsValid) {
-                    this->TransformAndEvaluateMovingPoint( //
-                            index,
-                            virtualPoint, //
-                            mappedMovingPoint, //
-                            pointIsValid, //
-                            movingImageValue, //
-                            false/*compute gradient*/, // true /*compute gradient*/,
-                            movingImageGradient, //
-                            threadID);
-                }
-            } catch (ExceptionObject & exc) {
-                //NOTE: there must be a cleaner way to do this:
-                std::string msg("Caught exception: \n");
-                msg += exc.what();
-                ExceptionObject err(__FILE__, __LINE__, msg);
-                throw err;
-            }
-
+      try
+        {
+        this->TransformAndEvaluateFixedPoint( index,
+                                              virtualPoint,
+                                              false/*compute gradient*/,
+                                              mappedFixedPoint,
+                                              fixedImageValue,
+                                              fixedImageGradient,
+                                              pointIsValid );
+        if (pointIsValid)
+          {
+          this->TransformAndEvaluateMovingPoint( index,
+                                                 virtualPoint,
+                                                 false/*compute gradient*/,
+                                                 mappedMovingPoint,
+                                                 movingImageValue,
+                                                 movingImageGradient,
+                                                 pointIsValid );
+          }
+        }
+      catch (ExceptionObject & exc)
+        {
+        //NOTE: there must be a cleaner way to do this:
+        std::string msg("Caught exception: \n");
+        msg += exc.what();
+        ExceptionObject err(__FILE__, __LINE__, msg);
+        throw err;
         }
 
-        if (pointIsValid) {
+      if (pointIsValid)
+        {
+        LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
+        LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
 
-            LocalRealType a = fixedImageValue; //scan_para.I->GetPixel(index);
-            LocalRealType b = movingImageValue; // scan_para.J->GetPixel(index);
-
-            suma2 += a * a;
-            sumb2 += b * b;
-            suma += a;
-            sumb += b;
-            sumab += a * b;
-            count += 1.0;
+        suma2 += a * a;
+        sumb2 += b * b;
+        suma += a;
+        sumb += b;
+        sumab += a * b;
+        count += 1.0;
         }
-
-    }
+      }
 
     scan_mem.Qsuma2.push_back(suma2);
     scan_mem.Qsumb2.push_back(sumb2);
@@ -460,7 +411,7 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ComputeInformationFromQueues(
         const ScanningIteratorType &scan_it, ScanMemType &scan_mem,
-        const ScanParaType &, const ThreadIdType threadID) {
+        const ScanParaType &, const ThreadIdType ) {
 
     // Test to see if there are any voxels we need to handle in the current
     // window.
@@ -530,75 +481,52 @@ bool ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
     this->m_VirtualDomainImage->TransformIndexToPhysicalPoint(oindex,
             virtualPoint);
 
-//    if (0) {
-    if (this->m_PreWarpImages) {
-        try {
-            this->EvaluatePreWarpedImagesAtIndex(oindex, true, /* compute gradient */
-            fixedImageValue, movingImageValue, fixedImageGradient,
-                    movingImageGradient, pointIsValid, threadID);
-            //                    /* Get the point in moving and fixed space for use below */
-//                       mappedFixedPoint = self->m_FixedTransform->TransformPoint(
-//                               virtualPoint);
-            mappedMovingPoint = this->m_MovingTransform->TransformPoint(
-                    virtualPoint);
-        } catch (ExceptionObject & exc) {
-            //NOTE: there must be a cleaner way to do this. We want to add
-            // the this filename and line number to give user more useful
-            // information about where the exception was generated.
-            std::string msg("Caught exception: \n");
-            msg += exc.what();
-            ExceptionObject err(__FILE__, __LINE__, msg);
-            throw err;
+    try
+      {
+      this->TransformAndEvaluateFixedPoint( oindex,
+                                            virtualPoint,
+                                            true/*compute gradient*/,
+                                            mappedFixedPoint,
+                                            fixedImageValue,
+                                            fixedImageGradient,
+                                            pointIsValid );
+      if (pointIsValid)
+        {
+        this->TransformAndEvaluateMovingPoint( oindex,
+                                               virtualPoint,
+                                               true/*compute gradient*/,
+                                               mappedMovingPoint,
+                                               movingImageValue,
+                                               movingImageGradient,
+                                               pointIsValid );
         }
-    } else {
-        try {
-            this->TransformAndEvaluateFixedPoint(
-                    oindex,
-                    virtualPoint, //
-                    mappedFixedPoint, //
-                    pointIsValid, //
-                    fixedImageValue, //
-                    true/*compute gradient*/, // true /*compute gradient*/,
-                    fixedImageGradient, threadID);
-            if (pointIsValid) {
-                this->TransformAndEvaluateMovingPoint(
-                        oindex,
-                        virtualPoint, //
-                        mappedMovingPoint, //
-                        pointIsValid, //
-                        movingImageValue, //
-                        true/*compute gradient*/, // true /*compute gradient*/,
-                        movingImageGradient, threadID);
-            }
-        } catch (ExceptionObject & exc) {
-            //NOTE: there must be a cleaner way to do this:
-            std::string msg("Caught exception: \n");
-            msg += exc.what();
-            ExceptionObject err(__FILE__, __LINE__, msg);
-            throw err;
-        }
+      }
+    catch (ExceptionObject & exc)
+      {
+          //NOTE: there must be a cleaner way to do this:
+          std::string msg("Caught exception: \n");
+          msg += exc.what();
+          ExceptionObject err(__FILE__, __LINE__, msg);
+          throw err;
+      }
 
-    }
+    if (pointIsValid)
+      {
+      float val = fixedImageValue - fixedMean; // scan_para.I->GetPixel(oindex) - fixedMean;
+      float val1 = movingImageValue - movingMean; // scan_para.J->GetPixel(oindex) - movingMean;
+      scan_mem.Ia = val;
+      scan_mem.Ja = val1;
+      scan_mem.sfm = sfm;
+      scan_mem.sff = sff;
+      scan_mem.smm = smm;
 
-    if (pointIsValid) {
+      scan_mem.gradI = fixedImageGradient;
+      scan_mem.gradJ = movingImageGradient;
 
-        float val = fixedImageValue - fixedMean; // scan_para.I->GetPixel(oindex) - fixedMean;
-        float val1 = movingImageValue - movingMean; // scan_para.J->GetPixel(oindex) - movingMean;
-        scan_mem.Ia = val;
-        scan_mem.Ja = val1;
-        scan_mem.sfm = sfm;
-        scan_mem.sff = sff;
-        scan_mem.smm = smm;
-
-        scan_mem.gradI = fixedImageGradient;
-        scan_mem.gradJ = movingImageGradient;
-
-        scan_mem.mappedMovingPoint = mappedMovingPoint;
-
-    }
+      scan_mem.mappedMovingPoint = mappedMovingPoint;
+      }
 
     return true;
-
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
@@ -647,7 +575,7 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         local_cc = sfm * sfm / (sff * smm);
 
     /* Use a pre-allocated jacobian object for efficiency */
-    MovingTransformJacobianType & jacobian =
+    JacobianType & jacobian =
             this->m_MovingTransformJacobianPerThread[threadID];
 
     /** For dense transforms, this returns identity */

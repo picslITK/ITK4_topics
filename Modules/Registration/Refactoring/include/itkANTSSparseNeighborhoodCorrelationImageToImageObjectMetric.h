@@ -123,8 +123,8 @@ public:
                                                     MovingImageGradientType;
 
   typedef typename Superclass::MovingTransformType     MovingTransformType;
-  typedef typename Superclass::MovingTransformJacobianType
-                                                  MovingTransformJacobianType;
+  typedef typename Superclass::JacobianType
+                                                  JacobianType;
 
 
   typedef typename Superclass::ThreaderInputObjectType ThreaderInputObjectType;
@@ -134,8 +134,8 @@ public:
   typedef typename Superclass::FixedOutputPointType    FixedOutputPointType;
   typedef typename Superclass::MovingOutputPointType   MovingOutputPointType;
 
-  typedef typename VirtualImageType::RegionType VirtualImageRegionType;
-  typedef typename VirtualImageType::SizeType RadiusType;
+  typedef typename VirtualImageType::RegionType        VirtualImageRegionType;
+  typedef typename VirtualImageType::SizeType          RadiusType;
 
 
   itkStaticConstMacro(VirtualImageDimension, unsigned int,
@@ -148,9 +148,11 @@ public:
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
   /** Evaluate and return the value and derivative */
+  using Superclass::GetValueAndDerivative;
   void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative);
 
   /** Evaluate and return the metric value */
+  using Superclass::GetValue;
   MeasureType GetValue()
   { itkExceptionMacro("GetValue not yet implemented."); }
 

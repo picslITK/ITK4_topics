@@ -89,7 +89,6 @@ itkTransformToDisplacementFieldSourceTest1.cxx
 itkValuedRegionalMaximaImageFilterTest.cxx
 itkValuedRegionalMinimaImageFilterTest.cxx
 itkVectorCentralDifferenceImageFunctionTest.cxx
-itkVectorLinearInterpolateNearestNeighborExtrapolateImageFunctionTest.cxx
 itkVoxBoCUBImageIOTest.cxx
 itkWarpHarmonicEnergyCalculatorTest.cxx
 itkWarpJacobianDeterminantFilterTest.cxx
@@ -797,8 +796,6 @@ itk_add_test(NAME itkValuedRegionalMinimaImageFilterTest2
     itkValuedRegionalMinimaImageFilterTest 0 ${ITK_DATA_ROOT}/Input/cthead1.png ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal2.png ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal-ref2.png)
 itk_add_test(NAME itkVectorCentralDifferenceImageFunctionTest
       COMMAND ITKReviewTestDriver itkVectorCentralDifferenceImageFunctionTest)
-itk_add_test(NAME itkVectorLinearInterpolateNearestNeighborExtrapolateImageFunctionTest
-      COMMAND ITKReviewTestDriver itkVectorLinearInterpolateNearestNeighborExtrapolateImageFunctionTest)
 itk_add_test(NAME itkVoxBoCUBImageIOTest1
       COMMAND ITKReviewTestDriver itkVoxBoCUBImageIOTest
               ${ITK_DATA_ROOT}/Input/HeadMRVolume.mhd ${ITK_TEST_OUTPUT_DIR}/HeadMRVolume.cub)

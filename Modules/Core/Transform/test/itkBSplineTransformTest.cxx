@@ -488,8 +488,7 @@ int itkBSplineTransformTest2()
   // Set up the transform
   const unsigned int SplineOrder = 3;
   typedef double CoordRep;
-  typedef itk::BSplineTransform<CoordRep, Dimension, SplineOrder>
-  TransformType;
+  typedef itk::BSplineTransform<CoordRep, Dimension, SplineOrder> TransformType;
   TransformType::InputPointType  inputPoint;
   TransformType::OutputPointType outputPoint;
 

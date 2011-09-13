@@ -40,10 +40,9 @@
 #include "itkImageRegistrationMethodImageSource.h"
 #include "itkAffineTransform.h"
 
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
+//We need this as long as we have to define ImageToData as a fwd-declare
+// in itkImageToImageObjectMetric.h
+#include "itkImageToData.h"
 
 using namespace itk;
 
@@ -187,8 +186,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
 
     metric->SetRadius(radSize);
 
-    metric->SetPreWarpImages(usePreWarp);
-    metric->SetPrecomputeImageGradient(false);
+    metric->SetPreWarpMovingImage(usePreWarp);
+    metric->SetUseMovingGradientRecursiveGaussianImageFilter(false);
 
     //Initialize the metric to prepare for use
     metric->Initialize();
@@ -204,7 +203,7 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2(int argc,
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
             << "CC radius: " << metric->GetRadius()
-            << std::endl << "CC prewarp: " << metric->GetPreWarpImages()
+            << std::endl << "CC prewarp: " << metric->GetPreWarpMovingImage()
             << std::endl << "CC number of threads: "
             << metric->GetNumberOfThreads() << std::endl;
 

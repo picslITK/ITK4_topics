@@ -1,24 +1,22 @@
 itk_module_test()
 set(ITKRegistrationRefactoringTests
 # itkTransformVirtualDomainCalculatorTest.cxx
-  itkDemonsImageToImageObjectMetricTest.cxx
-  itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
-  itkImageToImageObjectMetricTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-  itkMattesMutualInformationImageToImageObjectMetricTest.cxx
   itkMattesMutualInformationImageToImageObjectRegistrationTest.cxx
   itkQuasiNewtonRegistrationTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkPolyAffineTransformTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
+  # On hold until class is updated
+  #itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
+  #itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -33,25 +31,14 @@ CreateTestDriver(ITKRegistrationRefactoring  "${ITKRegistrationRefactoring-Test_
 #itk_add_test(NAME itkTransformVirtualDomainCalculatorTest3D
 #      COMMAND ITKRegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd)
 
-itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkDemonsImageToImageObjectMetricTest)
-
-itk_add_test(NAME itkMattesMutualInformationImageToImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkMattesMutualInformationImageToImageObjectMetricTest)
-
 itk_add_test(NAME itkMattesMutualInformationImageToImageObjectRegistrationTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkMattesMutualInformationImageToImageObjectRegistrationTest)
 
-itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkDemonsVectorImageToVectorImageObjectMetricTest)
-
-itk_add_test(NAME itkImageToImageObjectMetricTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkImageToImageObjectMetricTest)
+# On hold until class is updated
+#itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
+#      COMMAND ITKRegistrationRefactoringTestDriver
+#      itkDemonsVectorImageToVectorImageObjectMetricTest)
 
 itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
       COMMAND ITKRegistrationRefactoringTestDriver
