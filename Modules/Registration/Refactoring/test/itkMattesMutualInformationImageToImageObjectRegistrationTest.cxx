@@ -182,13 +182,13 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   // The metric
   Size<Dimension> radSize;
   radSize.Fill(4);
-  typedef MattesMutualInformationImageToImageObjectMetric < FixedImageType, MovingImageType >
-  //typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric < FixedImageType, MovingImageType >
+  //typedef MattesMutualInformationImageToImageObjectMetric < FixedImageType, MovingImageType >
+  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric < FixedImageType, MovingImageType >
   //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType >
                                                                   MetricType;
   MetricType::Pointer metric = MetricType::New();
-  metric->SetNumberOfHistogramBins(20);
-  //metric->SetRadius(radSize);//antscc
+  //metric->SetNumberOfHistogramBins(20);
+  metric->SetRadius(radSize);//antscc
 
   // Assign images and transforms.
   // By not setting a virtual domain image or virtual domain settings,
@@ -197,6 +197,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
+
   compositeTransform->AddTransform( affineTransform );
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
@@ -204,18 +205,24 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   bool prewarp = false;
   metric->SetPreWarpMovingImage( prewarp );
   metric->SetPreWarpFixedImage( prewarp );
+
+//  metric->SetPreWarpImages( false );
+//  metric->SetPrecomputeImageGradient( false );
+
   bool gaussian = false;
   metric->SetUseMovingGradientRecursiveGaussianImageFilter( gaussian );
   metric->SetUseFixedGradientRecursiveGaussianImageFilter( gaussian );
   metric->Initialize();
 
+/*
   typedef GradientDescentObjectOptimizer  OptimizerType;
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetLearningRate( learningRate );
   optimizer->SetNumberOfIterations( numberOfIterations );
   optimizer->StartOptimization();
-  /*
+  */
+
   // Optimizer with parameter estimator
   typedef QuasiNewtonObjectOptimizer  QOptimizerType;
   QOptimizerType::Pointer  qoptimizer = QOptimizerType::New();
@@ -228,7 +235,6 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   parameterEstimator->SetTransformForward(true);
   parameterEstimator->SetScaleStrategy(OptimizerParameterEstimatorType::ScalesFromShift);
   qoptimizer->SetOptimizerParameterEstimator( parameterEstimator );
-
 
   std::cout << "Start optimization..." << std::endl
             << "Number of threads: " << metric->GetNumberOfThreads() << std::endl
@@ -251,7 +257,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
     }
   std::cout << " parameters "  << std::endl;
   std::cout <<  compositeTransform->GetParameters() << std::endl;
-*/
+
 
   // now add the displacement field to the composite transform
   compositeTransform->AddTransform( displacementTransform );

@@ -836,6 +836,13 @@ void QuasiNewtonObjectOptimizer
   vnl_matrix<double> minus = outer_product(edg, edg) / dot_edg_dx;
   vnl_matrix<double> newHessian = m_Hessian + plus - minus;
 
+  if (this->GetDebug() && this->GetCurrentIteration()+1 == 10)
+    {
+    std::cout << "dg=" << dg << std::endl;
+    std::cout << "edg=" << edg << std::endl;
+    std::cout << "plus=" << plus << std::endl;
+    std::cout << "minus=" << minus << std::endl;
+    }
   m_Hessian         = newHessian;
 
   if ( vcl_abs(vnl_determinant(newHessian)) == 0 )
