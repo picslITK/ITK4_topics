@@ -22,6 +22,10 @@
 #include "itkPixelTraits.h"
 #include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
+#include "itkLinearInterpolateImageFunction.h"
+#include "itkIdentityTransform.h"
+#include "itkGradientRecursiveGaussianImageFilter.h"
+#include "itkCentralDifferenceImageFunction.h"
 
 namespace itk
 {
@@ -49,32 +53,49 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_VirtualDomainRegionHasBeenSet = false;
 
   /* Both transforms default to an identity transform */
+  typedef IdentityTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingIdentityTransformType;
+  typedef IdentityTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          FixedIdentityTransformType;
   this->m_FixedTransform = FixedIdentityTransformType::New();
   this->m_MovingTransform = MovingIdentityTransformType::New();
 
   /* Interpolators. Default to linear. */
+  typedef LinearInterpolateImageFunction< FixedImageType,
+                                          CoordinateRepresentationType >
+                                                  FixedLinearInterpolatorType;
+  typedef LinearInterpolateImageFunction< MovingImageType,
+                                          CoordinateRepresentationType >
+                                                  MovingLinearInterpolatorType;
   this->m_FixedInterpolator = FixedLinearInterpolatorType::New();
   this->m_MovingInterpolator = MovingLinearInterpolatorType::New();
 
-  /* These will be instantiated if needed in Initialize */
-  this->m_FixedGaussianGradientImage = NULL;
-  this->m_MovingGaussianGradientImage = NULL;
-  this->m_MovingGradientCalculator = NULL;
-  this->m_FixedGradientCalculator = NULL;
+  /* Setup default gradient filter */
+  typedef GradientRecursiveGaussianImageFilter< FixedImageType,
+                                                FixedGradientImageType >
+                                                  FixedRecursiveGaussianFilter;
+  typedef GradientRecursiveGaussianImageFilter< MovingImageType,
+                                                MovingGradientImageType >
+                                                  MovingRecursiveGaussianFilter;
+  this->m_FixedGradientFilter = FixedRecursiveGaussianFilter::New();
+  this->m_MovingGradientFilter = MovingRecursiveGaussianFilter::New();
 
-  this->m_FixedWarpedImage = NULL;
-  this->m_MovingWarpedImage = NULL;
+  Set filter settings...
 
-  this->m_FixedImageMask = NULL;
-  this->m_MovingImageMask = NULL;
-
-  this->m_DerivativeResult = NULL;
+  /* Setup default gradient image function */
+  typedef ... CentralDifferenceCalculatorType
+  this->m_FixedGradientCalculator = CentralDifferenceCalculatorType::New();
+  this->m_FixedGradientCalculator->UseImageDirectionOn();
+  this->m_MovingGradientCalculator = CentralDifferenceCalculatorType::New();
+  this->m_MovingGradientCalculator->UseImageDirectionOn();
 
   /* Setup default options assuming dense-sampling */
-  this->m_PreWarpFixedImage = true;
-  this->m_PreWarpMovingImage = true;
-  this->m_UseFixedGradientRecursiveGaussianImageFilter = true;
-  this->m_UseMovingGradientRecursiveGaussianImageFilter = true;
+  this->m_DoFixedImagePreWarp = true;
+  this->m_DoMovingImagePreWarp = true;
+  this->m_UseFixedGradientFilter = true;
+  this->m_UseMovingGradientFilter = true;
 }
 
 /*
@@ -192,20 +213,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_MovingInterpolator->SetInputImage( this->m_MovingImage );
 
   /* Setup for image gradient calculations.
-   * Instantiate a central difference derivative calculator
-   * if appropriate. If pre-warping is enabled, the
+   * If pre-warping is enabled, the
    * calculator will be pointed to the warped image at time of warping. */
-  if( !this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseFixedGradientFilter )
     {
-    this->m_FixedGaussianGradientImage = NULL;
-    this->m_FixedGradientCalculator = FixedGradientCalculatorType::New();
+    this->m_FixedGradientImage = NULL;
     this->m_FixedGradientCalculator->UseImageDirectionOn();
     this->m_FixedGradientCalculator->SetInputImage(this->m_FixedImage);
     }
-  if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseMovingGradientFilter )
     {
-    this->m_MovingGaussianGradientImage = NULL;
-    this->m_MovingGradientCalculator = MovingGradientCalculatorType::New();
+    this->m_MovingGradientImage = NULL;
     this->m_MovingGradientCalculator->UseImageDirectionOn();
     this->m_MovingGradientCalculator->SetInputImage(this->m_MovingImage);
     }
@@ -213,7 +231,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* Initialize resample image filters for pre-warping images if
    * option is set.
    * The proper number of threads is required. */
-  if( this->m_PreWarpFixedImage )
+  if( this->m_DoFixedImagePreWarp )
     {
     this->m_FixedWarpResampleImageFilter = FixedWarpResampleImageFilterType::New();
     this->m_FixedWarpResampleImageFilter->SetUseReferenceImage( true );
@@ -226,11 +244,11 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     this->m_FixedWarpResampleImageFilter->SetInput( this->GetFixedImage() );
 
     /* Pre-warp the fixed image now so it's available below if
-     * m_UseMovingGradientRecursiveGaussianImageFilter is enabled.
+     * m_UseMovingGradientFilter is enabled.
      * Also, fixed images are currently never optimized, so we only
      * have to prewarp once, so do it here. */
-    itkDebugMacro("Init: PreWarpFixedImage.");
-    this->PreWarpFixedImage();
+    itkDebugMacro("Init: DoFixedImagePreWarp.");
+    this->DoFixedImagePreWarp();
     }
   else
     {
@@ -238,7 +256,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     this->m_FixedWarpedImage = NULL;
     }
 
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
     this->m_MovingWarpResampleImageFilter =
                                       MovingWarpResampleImageFilterType::New();
@@ -253,7 +271,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
     /* Pre-warp the moving image, for use when a derived class needs it
      * before InitiateForIteration is called. */
-    this->PreWarpMovingImage();
+    this->DoMovingImagePreWarp();
     }
   else
     {
@@ -266,19 +284,19 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * We only need to compute once since the fixed transform isn't
    * optimized.
    * Do this *after* setting up above for pre-warping. */
-  if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseFixedGradientFilter )
     {
-    itkDebugMacro("Initialize: ComputeFixedGaussianGradientImage");
-    ComputeFixedGaussianGradientImage();
+    itkDebugMacro("Initialize: ComputeFixedGradientImage");
+    this->ComputeFixedGradientImage();
     }
 
-  /* Compute GaussianGradientImage for moving image. Needed now for
+  /* Compute gradient image for moving image. Needed now for
    * derived classes that use it before InitializeForIteration is called.
    * It's also computed at begin of every iteration. */
-  if( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if( this->m_UseMovingGradientFilter )
     {
-    itkDebugMacro("Initialize: ComputeMovingGaussianGradientImage");
-    this->ComputeMovingGaussianGradientImage();
+    itkDebugMacro("Initialize: ComputeMovingGradientImage");
+    this->ComputeMovingGradientImage();
     }
 }
 
@@ -409,17 +427,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_DerivativeResult->Fill( 0 );
 
   /* Pre-warp the moving image if set to do so. Then we have
-   * to recompute the image gradients if GaussianImageFilter option is set.
+   * to recompute the image gradients if ImageFilter option is set.
    * Otherwise the moving image gradients only need be calculated
    * once, during initialize.
    * In contrast, the fixed image is not optimized so we only pre-warp
    * once, during Initialize. */
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
-    this->PreWarpMovingImage();
-    if( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+    this->DoMovingImagePreWarp();
+    if( this->m_UseMovingGradientFilter )
       {
-      this->ComputeMovingGaussianGradientImage();
+      this->ComputeMovingGradientImage();
       }
     }
 }
@@ -701,7 +719,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     return;
     }
 
-  if( this->m_PreWarpFixedImage )
+  if( this->m_DoFixedImagePreWarp )
     {
     /* Get the pixel values at this index */
     mappedFixedPixelValue = this->m_FixedWarpedImage->GetPixel( index );
@@ -767,7 +785,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     return;
     }
 
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
    /* Get the pixel values at this index */
     mappedMovingPixelValue = this->m_MovingWarpedImage->GetPixel( index );
@@ -804,14 +822,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::ComputeFixedImageGradient( const FixedImagePointType & mappedPoint,
                              FixedImageGradientType & gradient ) const
 {
-  if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseFixedGradientFilter )
     {
     ContinuousIndex< double, FixedImageDimension > tempIndex;
     this->m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
                                                            tempIndex);
     FixedImageIndexType mappedIndex;
     mappedIndex.CopyWithRound(tempIndex);
-    gradient = this->m_FixedGaussianGradientImage->GetPixel(mappedIndex);
+    gradient = this->m_FixedGradientImage->GetPixel(mappedIndex);
     }
   else
     {
@@ -830,14 +848,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                               const MovingImagePointType & mappedPoint,
                               MovingImageGradientType & gradient ) const
 {
-  if ( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseMovingGradientFilter )
     {
     ContinuousIndex< double, MovingImageDimension > tempIndex;
     this->m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
                                                            tempIndex);
     MovingImageIndexType mappedIndex;
     mappedIndex.CopyWithRound(tempIndex);
-    gradient = this->m_MovingGaussianGradientImage->GetPixel(mappedIndex);
+    gradient = this->m_MovingGradientImage->GetPixel(mappedIndex);
     }
   else
     {
@@ -858,9 +876,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                               const VirtualIndexType & index,
                               FixedImageGradientType & gradient ) const
 {
-  if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseFixedGradientFilter )
     {
-    gradient = this->m_FixedGaussianGradientImage->GetPixel(index);
+    gradient = this->m_FixedGradientImage->GetPixel(index);
     }
   else
     {
@@ -879,9 +897,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                               const VirtualIndexType & index,
                               MovingImageGradientType & gradient ) const
 {
-  if ( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseMovingGradientFilter )
     {
-    gradient = this->m_MovingGaussianGradientImage->GetPixel(index);
+    gradient = this->m_MovingGradientImage->GetPixel(index);
     }
   else
     {
@@ -896,7 +914,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::PreWarpFixedImage()
+::DoFixedImagePreWarp()
 {
   /* Call Modified to make sure the filter recalculates the output. We haven't
    * changed any settings, but we assume the transform parameters have changed,
@@ -912,7 +930,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * ResampleImageFilter always returns the same image pointer after
    * its first update, or if it can be set to allocate output during init. */
   /* No need to call Modified here on the calculators */
-  if( ! this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseFixedGradientFilter )
     {
     this->m_FixedGradientCalculator->SetInputImage( this->m_FixedWarpedImage );
     }
@@ -924,7 +942,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::PreWarpMovingImage()
+::DoMovingImagePreWarp()
 {
   /* Call Modified to make sure the filter recalculates the output. We haven't
    * changed any settings, but we assume the transform parameters have changed,
@@ -935,25 +953,25 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   /* Point the interpolator and calculator to the warped images. */
   /* No need to call Modified here on the calculators */
-  if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseMovingGradientFilter )
     {
     this->m_MovingGradientCalculator->SetInputImage( this->m_MovingWarpedImage );
     }
 }
 
 /*
- * ComputeFixedGaussianGradientImage
+ * ComputeFixedGradientImage
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedGaussianGradientImage()
+::ComputeFixedGradientImage()
 {
-  typename FixedGradientImageFilterType::Pointer
-    gradientFilter = FixedGradientImageFilterType::New();
+  typename FixedGradientFilterType::Pointer
+    gradientFilter = FixedGradientFilterType::New();
   FixedImageConstPointer  image;
 
-  if( this->m_PreWarpFixedImage )
+  if( this->m_DoFixedImagePreWarp )
     {
     image = this->m_FixedWarpedImage;
     }
@@ -978,23 +996,23 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   gradientFilter->SetUseImageDirection(true);
   gradientFilter->Update();
 
-  this->m_FixedGaussianGradientImage = gradientFilter->GetOutput();
+  this->m_FixedGradientImage = gradientFilter->GetOutput();
 }
 
 /*
- * ComputeMovingGaussianGradientImage
+ * ComputeMovingGradientImage
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeMovingGaussianGradientImage()
+::ComputeMovingGradientImage()
 {
-  typename MovingGradientImageFilterType::Pointer
-    gradientFilter = MovingGradientImageFilterType::New();
+  typename MovingGradientFilterType::Pointer
+    gradientFilter = MovingGradientFilterType::New();
 
   MovingImageConstPointer  image;
 
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
     image = this->m_MovingWarpedImage;
     }
@@ -1020,7 +1038,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   gradientFilter->SetUseImageDirection(true);
   gradientFilter->Update();
 
-  this->m_MovingGaussianGradientImage = gradientFilter->GetOutput();
+  this->m_MovingGradientImage = gradientFilter->GetOutput();
 }
 
 /*
@@ -1357,15 +1375,15 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   os << indent << "ImageToImageObjectMetric: " << std::endl
                << "GetNumberOfThreads: " << this->GetNumberOfThreads()
                << std::endl
-               << "GetUseFixedGradientRecursiveGaussianImageFilter: "
-               << this->GetUseFixedGradientRecursiveGaussianImageFilter()
+               << "GetUseFixedGradientFilter: "
+               << this->GetUseFixedGradientFilter()
                << std::endl
-               << "GetUseMovingGradientRecursiveGaussianImageFilter: "
-               << this->GetUseMovingGradientRecursiveGaussianImageFilter()
+               << "GetUseMovingGradientFilter: "
+               << this->GetUseMovingGradientFilter()
                << std::endl
-               << "PreWarpFixedImage: " << this->GetPreWarpFixedImage()
+               << "DoFixedImagePreWarp: " << this->GetDoFixedImagePreWarp()
                << std::endl
-               << "PreWarpMovingImage: " << this->GetPreWarpMovingImage()
+               << "DoMovingImagePreWarp: " << this->GetDoMovingImagePreWarp()
                << std::endl
                << "GetNumberOfThreads: " << this->GetNumberOfThreads()
                << std::endl;

@@ -1,31 +1,30 @@
 /*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkDemonsImageToImageMetric.h,v $
-  Language:  C++
-  Date:      $Date: $
-  Version:   $Revision: $
-
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 #ifndef __itkImageToImageObjectMetric_h
 #define __itkImageToImageObjectMetric_h
 
 #include "itkCovariantVector.h"
-#include "itkCentralDifferenceImageFunction.h"
-#include "itkGradientRecursiveGaussianImageFilter.h"
+#include "itkImageFunction.h"
 #include "itkObjectToObjectMetric.h"
-#include "itkLinearInterpolateImageFunction.h"
+#include "itkInterpolateImageFunction.h"
 #include "itkSpatialObject.h"
-//#include "itkImageToData.h"
-#include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
+#include "itkImageToImageFilter.h"
 
 namespace itk
 {
@@ -63,29 +62,31 @@ class ImageToData;
  *
  * At a minimum, the user must:
  *  1) Set images using \c SetFixedImage and \c SetMovingImage.
- *  3) Call \c Initialize.
+ *  2) Call \c Initialize.
  *
  * Pre-warping:
- * The \c SetPreWarpFixedImage and \c SetPreWarpMovingImage options can be set
+ * The \c SetDoFixedImagePreWarp and \c SetDoMovingImagePreWarp options can be set
  * for better speed. When set, these create a warped version for each image at
- * the begin of each iteration, warping each image into the virtual domain.
+ * the beginning of each iteration, warping each image into the virtual domain.
  * However the cost is more memory usage (VirtualDomain size for each image).
  * The fixed image is only pre-warped once, during the call to \c Initialize,
  * because it is assumed the fixed transform is not changing. The moving image
- * is pre-warped at the begin of every iteration, because it is assumed the
+ * is pre-warped at the beginning of every iteration, because it is assumed the
  * moving transform is changing (e.g. during registration).
  * By default, pre-warping is enabled for both fixed and moving images.
  *
- * Image gradient caclulations:
+ * Image gradient calculations:
  * Image gradients can be calculated in one of two ways:
- * 1) Using GradientRecursiveGaussianImageFilter, by setting
- *  \c Use[Fixed|Moving]GradientRecursiveGaussianImageFilter to true. This is a
- *  smoothed gradient filter. This filter uses more memory, because it
+ * 1) Using a gradient image filter, by setting
+ *  \c Use[Fixed|Moving]GradientFilter to true. By default this is set
+ *  as an itkGradientRecursiveGaussianImageFilter, a
+ *  smoothed gradient filter. A filter uses more memory, because it
  *  calculates all gradients at once and stores them in an image. The advantage
  *  of pre-calculation is for the fixed image gradients, since they only need be
  *  calculated once, and for metrics that need to access image gradients more
  *  than once for a particular point. The fixed image gradients are only
  *  calculated once when this option is set, during \c Initialize.
+ *TODO: Update:
  * 2) Otherwise, the CentralDifferenceImageFunction is used. This calculation
  *  is not smoothed and gives different results than
  *  GradientRecursiveGaussianImageFilter. The advantage is that less memory is
@@ -100,10 +101,12 @@ class ImageToData;
  * Image masks are supported using SetMovingImageMask or SetFixedImageMask.
  *
  * Random sampling or user-supplied point lists are not yet supported, except
- * via an image mask. If the mask is at all sparse, the
- * SetPreWarp[Fixed|Moving]Image and
- * Use[Fixed|Moving]GradientRecursiveGaussianImageFilter options should be
- * disabled.
+ * via an image mask. If the mask is sparse, the
+ * SetPreWarp[Fixed|Moving]Image and Use[Fixed|Moving]GradientFilter
+ * options typically should be disabled to avoid excessive computation. However,
+ * depending on the number of iterations and the level of sparsity, it may
+ * be more efficient to pre-warp the fixed image and use a gradient image filter
+ * for it because they will only be calculated once.
  *
  * This class is threaded.
  *
@@ -197,14 +200,6 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( VirtualImageDimension )> FixedTransformType;
 
-  /** Identity transform typedef's for convenience */
-  typedef IdentityTransform<CoordinateRepresentationType,
-    itkGetStaticConstMacro( MovingImageDimension ) >
-                                          MovingIdentityTransformType;
-  typedef IdentityTransform<CoordinateRepresentationType,
-    itkGetStaticConstMacro( MovingImageDimension ) >
-                                          FixedIdentityTransformType;
-
   typedef typename FixedTransformType::Pointer         FixedTransformPointer;
   typedef typename FixedTransformType::InputPointType  FixedInputPointType;
   typedef typename FixedTransformType::OutputPointType FixedOutputPointType;
@@ -246,14 +241,6 @@ public:
   typedef typename FixedInterpolatorType::Pointer     FixedInterpolatorPointer;
   typedef typename MovingInterpolatorType::Pointer    MovingInterpolatorPointer;
 
-  /** Type of the default linear interpolators. */
-  typedef LinearInterpolateImageFunction< FixedImageType,
-                                          CoordinateRepresentationType >
-                                                  FixedLinearInterpolatorType;
-  typedef LinearInterpolateImageFunction< MovingImageType,
-                                          CoordinateRepresentationType >
-                                                  MovingLinearInterpolatorType;
-
   /** Image derivatives types */
   typedef   CovariantVector< CoordinateRepresentationType,
                              itkGetStaticConstMacro(FixedImageDimension) >
@@ -266,9 +253,7 @@ public:
                              itkGetStaticConstMacro(VirtualImageDimension) >
                                                       VirtualImageGradientType;
 
-  /** Gaussian filter types to compute the gradient of the images.
-   * This is used by default to compute image gradients. See comments
-   * in main documentation */
+  /** Type of the filter used to calculate the gradients. */
   typedef typename NumericTraits< FixedImagePixelType >::RealType
                                                     FixedRealType;
   typedef CovariantVector< FixedRealType,
@@ -277,31 +262,37 @@ public:
   typedef Image< FixedGradientPixelType,
                  itkGetStaticConstMacro(FixedImageDimension) >
                                                     FixedGradientImageType;
-  typedef GradientRecursiveGaussianImageFilter< FixedImageType,
-                                                FixedGradientImageType >
-                                                 FixedGradientImageFilterType;
+  typedef typename FixedGradientImageType::Pointer  FixedGradientImagePointer;
+
+  typedef ImageToImageFilter< FixedImageType, FixedGradientImageType >
+                                                 FixedGradientFilterType;
 
   typedef typename NumericTraits< MovingImagePixelType >::RealType
-                                                    MovingRealType;
+                                                 MovingRealType;
   typedef CovariantVector< MovingRealType,
                            itkGetStaticConstMacro(MovingImageDimension) >
-                                                    MovingGradientPixelType;
+                                                 MovingGradientPixelType;
   typedef Image< MovingGradientPixelType,
                  itkGetStaticConstMacro(MovingImageDimension) >
                                                     MovingGradientImageType;
-  typedef GradientRecursiveGaussianImageFilter< MovingImageType,
-                                                MovingGradientImageType >
-                                                 MovingGradientImageFilterType;
+  typedef typename MovingGradientImageType::Pointer MovingGradientImagePointer;
+                                                 
+  typedef ImageToImageFilter< MovingImageType, MovingGradientImageType >
+                                                 MovingGradientFilterType;
+  typename typename FixedGradientFilterType::Pointer
+                                              FixedGradientFilterPointer; 
+  typename typename MovingGradientFilterType::Pointer
+                                              MovingGradientFilterPointer; 
 
   /** Image gradient calculator types. */
-  typedef CentralDifferenceImageFunction<
-                                FixedImageType,
-                                CoordinateRepresentationType>
-                                               FixedGradientCalculatorType;
-  typedef CentralDifferenceImageFunction<
-                                MovingImageType,
-                                CoordinateRepresentationType>
-                                               MovingGradientCalculatorType;
+  typedef ImageFunction<FixedImageType, CoordinateRepresentationType>
+                                                 FixedGradientCalculatorType;
+  typedef ImageFunction< MovingImageType, CoordinateRepresentationType>
+                                                 MovingGradientCalculatorType;
+  typedef typename FixedGradientCalculatorType::Pointer
+                                                 FixedGradientCalculatorPointer; 
+  typedef typename MovingGradientCalculatorType::Pointer
+                                                 MovingGradientCalculatorPointer; 
 
   /** ResampleImageFilter types for image pre-warping */
   typedef ResampleImageFilter< MovingImageType,
@@ -416,26 +407,39 @@ public:
   itkSetConstObjectMacro(FixedImageMask, FixedImageMaskType);
   itkGetConstObjectMacro(FixedImageMask, FixedImageMaskType);
 
-  /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter
-   * for fixed image. */
-  itkSetMacro(UseFixedGradientRecursiveGaussianImageFilter, bool);
-  itkGetConstReferenceMacro(UseFixedGradientRecursiveGaussianImageFilter, bool);
-  itkBooleanMacro(UseFixedGradientRecursiveGaussianImageFilter);
+  /** Set/Get the gradient filter */
+  itkSetObjectMacro( FixedGradientFilter, FixedGradientFilterType );
+  itkGetObjectMacro( FixedGradientFilter, FixedGradientFilterType );
+  itkSetObjectMacro( MovingGradientFilter, MovingGradientFilterType );
+  itkGetObjectMacro( MovingGradientFilter, MovingGradientFilterType );
 
-  /** Set/Get gradient computation via GradientRecursiveGaussianImageFilter. */
-  itkSetMacro(UseMovingGradientRecursiveGaussianImageFilter, bool);
-  itkGetConstReferenceMacro(UseMovingGradientRecursiveGaussianImageFilter, bool);
-  itkBooleanMacro(UseMovingGradientRecursiveGaussianImageFilter);
+  /** Set/Get gradient calculators */
+  /** Get the gradient calculators */
+  itkSetObjectMacro( FixedGradientCalculator, FixedGradientCalculatorType);
+  itkGetObjectMacro( FixedGradientCalculator, FixedGradientCalculatorType);
+  itkSetObjectMacro( MovingGradientCalculator, MovingGradientCalculatorType);
+  itkGetObjectMacro( MovingGradientCalculator, MovingGradientCalculatorType);
+
+  /** Set/Get gradient computation via an image filter,
+   * for fixed image. */
+  itkSetMacro(UseFixedGradientFilter, bool);
+  itkGetConstReferenceMacro(UseFixedGradientFilter, bool);
+  itkBooleanMacro(UseFixedGradientFilter);
+
+  /** Set/Get gradient computation via an image filter. */
+  itkSetMacro(UseMovingGradientFilter, bool);
+  itkGetConstReferenceMacro(UseMovingGradientFilter, bool);
+  itkBooleanMacro(UseMovingGradientFilter);
 
   /** Set/Get pre-warping of fixed image option. */
-  itkSetMacro(PreWarpFixedImage, bool);
-  itkGetConstReferenceMacro(PreWarpFixedImage, bool);
-  itkBooleanMacro(PreWarpFixedImage);
+  itkSetMacro(DoFixedImagePreWarp, bool);
+  itkGetConstReferenceMacro(DoFixedImagePreWarp, bool);
+  itkBooleanMacro(DoFixedImagePreWarp);
 
   /** Set/Get pre-warping of Moving image option. */
-  itkSetMacro(PreWarpMovingImage, bool);
-  itkGetConstReferenceMacro(PreWarpMovingImage, bool);
-  itkBooleanMacro(PreWarpMovingImage);
+  itkSetMacro(DoMovingImagePreWarp, bool);
+  itkGetConstReferenceMacro(DoMovingImagePreWarp, bool);
+  itkBooleanMacro(DoMovingImagePreWarp);
 
   /** Get pre-warped images */
   itkGetConstObjectMacro( MovingWarpedImage, MovingImageType );
@@ -457,27 +461,23 @@ public:
   void SetNumberOfThreads( ThreadIdType );
 
   /** Computes the gradients of the fixed image, using the
-   * GradientRecursiveGaussianImageFilter, assigning the output to
-   * to m_FixedGaussianGradientImage. It will use either the original
+   * GradientFilter, assigning the output to
+   * to m_FixedGradientImage. It will use either the original
    * fixed image, or the pre-warped version, depending on the setting
-   * of PreWarpFixedImage. */
-  virtual void ComputeFixedGaussianGradientImage(void);
+   * of DoFixedImagePreWarp. */
+  virtual void ComputeFixedGradientImage(void);
 
   /** Computes the gradients of the moving image, using the
-   * GradientRecursiveGaussianImageFilter, assigning the output to
-   * to m_MovingGaussianGradientImage. It will use either the original
+   * GradientFilter, assigning the output to
+   * to m_MovingGradientImage. It will use either the original
    * moving image, or the pre-warped version, depending on the setting
-   * of PreWarpMovingImage. */
-  virtual void ComputeMovingGaussianGradientImage(void);
+   * of DoMovingImagePreWarp. */
+  virtual void ComputeMovingGradientImage(void);
 
   /** Get Fixed Gradient Image. */
-  itkGetConstObjectMacro(FixedGaussianGradientImage, FixedGradientImageType);
+  itkGetConstObjectMacro(FixedGradientImage, FixedGradientImageType);
   /** Get Moving Gradient Image. */
-  itkGetConstObjectMacro(MovingGaussianGradientImage, MovingGradientImageType);
-
-  /** Get the gradient calculators */
-  itkGetConstObjectMacro( FixedGradientCalculator, FixedGradientCalculatorType);
-  itkGetConstObjectMacro( MovingGradientCalculator, MovingGradientCalculatorType);
+  itkGetConstObjectMacro(MovingGradientImage, MovingGradientImageType);
 
   /** Get number of valid points from most recent update */
   itkGetConstMacro( NumberOfValidPoints, SizeValueType );
@@ -648,24 +648,28 @@ protected:
   FixedInterpolatorPointer                        m_FixedInterpolator;
   MovingInterpolatorPointer                       m_MovingInterpolator;
 
-  /** Flag to control use of precomputed Gaussian gradient filter or gradient
+  /** Flag to control use of precomputed gradient filter image or gradient
    * calculator for image gradient calculations. */
-  bool                          m_UseFixedGradientRecursiveGaussianImageFilter;
-  bool                          m_UseMovingGradientRecursiveGaussianImageFilter;
+  bool                          m_UseFixedGradientFilter;
+  bool                          m_UseMovingGradientFilter;
 
-  /** Gradient images to store Gaussian gradient filter output. */
-  typename FixedGradientImageType::Pointer    m_FixedGaussianGradientImage;
-  typename MovingGradientImageType::Pointer   m_MovingGaussianGradientImage;
+  /** Gradient filters */
+  typename FixedGradientFilterPointer   m_FixedGradientFilter;
+  typename MovingGradientFiltePointer   m_MovingGradientFilter;
+
+  /** Gradient images to store gradient filter output. */
+  typename FixedGradientImagePointer    m_FixedGradientImage;
+  typename MovingGradientImagePointer   m_MovingGradientImage;
 
   /** Image gradient calculators */
-  typename FixedGradientCalculatorType::Pointer   m_FixedGradientCalculator;
-  typename MovingGradientCalculatorType::Pointer  m_MovingGradientCalculator;
+  typename FixedGradientCalculatorPointer   m_FixedGradientCalculator;
+  typename MovingGradientCalculatorPointer  m_MovingGradientCalculator;
 
   /** Flag to control pre-warping of fixed image. */
-  bool                               m_PreWarpFixedImage;
+  bool                               m_DoFixedImagePreWarp;
 
   /** Flag to control pre-warping of moving image. */
-  bool                               m_PreWarpMovingImage;
+  bool                               m_DoMovingImagePreWarp;
 
   /** Pre-warped images. */
   FixedImagePointer   m_FixedWarpedImage;
@@ -781,8 +785,8 @@ private:
                           Self * dataHolder);
 
   /** Pre-warp the images for efficiency and computational stability. */
-  void PreWarpFixedImage( void );
-  void PreWarpMovingImage( void );
+  void DoFixedImagePreWarp( void );
+  void DoMovingImagePreWarp( void );
 
   /** Flag to track if threading memory has been initialized since last
    * call to Initialize. */

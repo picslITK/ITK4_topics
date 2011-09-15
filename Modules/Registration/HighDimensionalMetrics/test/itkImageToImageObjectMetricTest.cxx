@@ -239,11 +239,11 @@ void ImageToImageObjectMetricTestComputeIdentityTruthValues(
                                                           movingImageDerivative;
     ImageToImageObjectMetricTestMetricType::FixedImageGradientType
                                                           fixedImageDerivative;
-    if( metric->GetUseFixedGradientRecursiveGaussianImageFilter() )
+    if( metric->GetUseFixedGradientFilter() )
       {
       ImageToImageObjectMetricTestMetricType::
         FixedGradientImageType::ConstPointer
-                   fixedGradientImage = metric->GetFixedGaussianGradientImage();
+                   fixedGradientImage = metric->GetFixedGradientImage();
       fixedImageDerivative = fixedGradientImage->GetPixel( itFixed.GetIndex() );
       }
     else
@@ -258,11 +258,11 @@ void ImageToImageObjectMetricTestComputeIdentityTruthValues(
       // We can skip the call to TransformCovariantVector since we're
       // working with identity transforms only.
       }
-    if( metric->GetUseMovingGradientRecursiveGaussianImageFilter() )
+    if( metric->GetUseMovingGradientFilter() )
       {
       ImageToImageObjectMetricTestMetricType::
         MovingGradientImageType::ConstPointer
-              movingGradientImage = metric->GetMovingGaussianGradientImage();
+              movingGradientImage = metric->GetMovingGradientImage();
       movingImageDerivative =
                         movingGradientImage->GetPixel( itMoving.GetIndex() );
       }
@@ -334,10 +334,10 @@ int ImageToImageObjectMetricTestRunSingleTest(
   std::cout << "Pre-warp image: fixed, moving: "
             << metric->GetPreWarpFixedImage() << ", "
             << metric->GetPreWarpMovingImage() << std::endl
-            << "Use RecursiveGaussian filter for: fixed, moving: "
-            << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
+            << "Use gradient filter for: fixed, moving: "
+            << metric->GetUseFixedGradientFilter()
             << ", "
-            << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
+            << metric->GetUseMovingGradientFilter()
             << std::endl;
 
   // Initialize.
@@ -526,11 +526,9 @@ int itkImageToImageObjectMetricTest(int, char ** const)
           for( char preWarpMoving = 1; preWarpMoving >= 0; preWarpMoving-- )
             {
             metric->SetPreWarpFixedImage( preWarpFixed == 1 );
-            metric->SetPreWarpMovingImage( preWarpMoving == 1);
-            metric->SetUseFixedGradientRecursiveGaussianImageFilter(
-                                                       useGaussianFixed == 1);
-            metric->SetUseMovingGradientRecursiveGaussianImageFilter(
-                                                       useGaussianMoving == 1 );
+            metric->SetPreWarpMovingImage( preWarpMoving == 1 );
+            metric->SetUseFixedGradientFilter( useGaussianFixed == 1 );
+            metric->SetUseMovingGradientFilter( useGaussianMoving == 1 );
             if( computeNewTruthValues )
               {
               ImageToImageObjectMetricTestComputeIdentityTruthValues(
@@ -590,8 +588,8 @@ int itkImageToImageObjectMetricTest(int, char ** const)
 
   metric->SetPreWarpFixedImage( true );
   metric->SetPreWarpMovingImage( true );
-  metric->SetUseFixedGradientRecursiveGaussianImageFilter( true );
-  metric->SetUseMovingGradientRecursiveGaussianImageFilter( true );
+  metric->SetUseFixedGradientFilter( true );
+  metric->SetUseMovingGradientFilter( true );
   // Tell the metric to compute image gradients for both fixed and moving.
   metric->SetGradientSource(
                 ImageToImageObjectMetricTestMetricType::GRADIENT_SOURCE_BOTH );
