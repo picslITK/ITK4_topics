@@ -80,19 +80,34 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
     std::cerr << "Usage: " << argv[0];
     std::cerr << " [fixedImageFile movingImageFile ";
     std::cerr << " outputImageFile ";
-    std::cerr << " [numberOfIterations=200] ] ";
+    std::cerr << " [numberOfIterations=200 [maxNewtonShift [optimizerAlgorithm]]] ] ";
+    std::cerr << std::endl;
     //std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
+    std::cerr << " optimizerAlgorithm = 'qn|gd|lqn|cg' with default qn" << std::endl;
+    std::cerr << "   qn: quasi-newton with bfgs" << std::endl;
+    std::cerr << "   gd: gradient descent" << std::endl;
+    std::cerr << "   lqn: bfgs with limited memory" << std::endl;
+    std::cerr << "   cg: conjugate gradient with Fletcher-Reeves Algorithm" << std::endl;
     return EXIT_FAILURE;
     }
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 200;
+  std::string optimizerAlgorithm("qn");
+  double maxNewtonShift = 10;
   //double scalarScale = 1.0;
   //double learningRate = 100;
   if( argc >= 5 )
     {
     numberOfIterations = atoi( argv[4] );
     }
-
+  if (argc >= 6)
+    {
+    maxNewtonShift = atof( argv[5] );
+    }
+  if (argc >= 7)
+    {
+    optimizerAlgorithm = argv[6];
+    }
   //itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); //debug easier
 
   const unsigned int Dimension = 2;
@@ -219,6 +234,8 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   OptimizerType::Pointer  optimizer = OptimizerType::New();
   optimizer->SetMetric( metric );
   optimizer->SetNumberOfIterations( numberOfIterations );
+  optimizer->SetAlgorithmOption(optimizerAlgorithm);
+  optimizer->SetMaximumNewtonVoxelShift(maxNewtonShift);
   /*ParametersType scales(6);
   for (int s=0; s<4; s++) scales[s] = 9801;
   for (int s=4; s<6; s++) scales[s] = 1;

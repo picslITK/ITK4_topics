@@ -79,6 +79,9 @@ public:
 
   /** Set the flag for line search */
   itkSetMacro(LineSearchEnabled, bool);
+  itkSetMacro(MaximumVoxelShift, double);
+  itkSetMacro(MaximumNewtonVoxelShift, double);
+  itkSetStringMacro(AlgorithmOption);
 
   /** Start and run the optimization */
   virtual void StartOptimization();
@@ -89,10 +92,11 @@ public:
 
   /** Advance one step following the Quasi-Newton direction. */
   void AdvanceOneStep(void);
-  void AdvanceDebugSteps(void);
+  void AdvanceWithNeighborhood(void);
+  void AdvanceWithConjugateGradient(void);
 
-  void AdvanceWithBacktrackingLineSearch(ParametersType direction, double maxStepSize);
-  double AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize);
+  void AdvanceWithBacktrackingLineSearch(ParametersType direction, double maxStepSize, double &learningRate);
+  void AdvanceWithStrongWolfeLineSearch(ParametersType direction, double maxStepSize, double &learningRate);
   double LineSearchZoom(ParametersType initPosition, double f0, double g0, ParametersType direction, double tlow, double thigh);
 
 protected:
@@ -103,6 +107,9 @@ protected:
   /** m_MaximumVoxelShift is used  to estimated the largest step size */
   double                                  m_MaximumVoxelShift;
 
+  /** m_MaximumVoxelShift is used  to estimated the largest step size */
+  double                                  m_MaximumNewtonVoxelShift;
+
   /** m_MinimumGradientNorm is used to stop optimization at a very small gradient */
   double                                  m_MinimumGradientNorm;
 
@@ -112,6 +119,8 @@ protected:
   /** Switch for doing line search */
   bool            m_LineSearchEnabled;
 
+  std::string     m_AlgorithmOption;
+
   /** A flag to show if GetValueAndDerivate() is evaluated after applying a change.
    *  This happens when line search is done. */
   bool            m_ValueAndDerivateEvaluated;
@@ -120,6 +129,16 @@ protected:
   double          m_PreviousValue;
   ParametersType  m_PreviousPosition;
   DerivativeType  m_PreviousGradient;
+
+  // best values so far
+  double          m_BestValue;
+  int             m_BestIteration;
+  ParametersType  m_BestPosition;
+
+  /** More historical information */
+  std::vector<double>         m_PastValues;
+  std::vector<ParametersType> m_PastPositions;
+  std::vector<DerivativeType> m_PastGradients;
 
   // for debug
   std::vector<ParametersType>     m_HistoryPositions;
@@ -141,6 +160,7 @@ protected:
   /** Estimate the Newton step that minimizes the local 2nd
    * order approximation */
   void EstimateNewtonStep();
+  void EstimateNewtonStepWithLBFGS();
 
   /** Estimate the Hessian with BFGS method */
   void EstimateHessian();
@@ -149,12 +169,17 @@ protected:
   void ResetNewtonStep();
 
   /** Function to compute the learning rate. */
-  virtual double EstimateLearningRate(ParametersType step);
+  virtual double EstimateLearningRate(ParametersType step, double maxshift = 1);
 
   /** This method is used to watch the turning angles between steps. */
   void DebugStepSizeAndAngles(const char *debugLabel,
                               ParametersType lastStep,
                               ParametersType thisStep) const;
+
+  void ScalePosition(const ParametersType p1, ParametersType &p2);
+  void ScaleBackPosition(const ParametersType p1, ParametersType &p2);
+  void ScaleDerivative(const DerivativeType g1, DerivativeType &g2);
+  void ScaleBackDerivative(const DerivativeType g1, DerivativeType &g2);
 
   QuasiNewtonObjectOptimizer();
   virtual ~QuasiNewtonObjectOptimizer()

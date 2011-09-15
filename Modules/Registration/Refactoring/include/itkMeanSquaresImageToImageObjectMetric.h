@@ -92,7 +92,7 @@ protected:
                     const MovingImageGradientType & movingImageDerivatives,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID);
+                    const ThreadIdType                       threadID);
 
   MeanSquaresImageToImageObjectMetric();
   virtual ~MeanSquaresImageToImageObjectMetric();
