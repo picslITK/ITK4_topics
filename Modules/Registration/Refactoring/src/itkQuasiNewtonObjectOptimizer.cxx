@@ -38,7 +38,7 @@ QuasiNewtonObjectOptimizer
   itkDebugMacro("Constructor");
 
   m_MaximumVoxelShift = 1.0;
-  m_MaximumNewtonVoxelShift = 10.0;
+  m_MaximumNewtonVoxelShift = 5.0;
 
   m_MinimumGradientNorm = 1e-15;
   m_MinimumValueChange = 1e-15;
@@ -225,7 +225,7 @@ QuasiNewtonObjectOptimizer
     }
   else
     {
-    if ( this->GetCurrentIteration() >= m_BestIteration + 10)
+    if ( this->GetCurrentIteration() >= m_BestIteration + 50)
       {
       ParametersType backStep;
       backStep = m_BestPosition - this->m_Metric->GetParameters();

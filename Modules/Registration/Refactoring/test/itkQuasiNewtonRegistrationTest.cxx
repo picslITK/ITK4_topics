@@ -78,12 +78,12 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
     {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
-    std::cerr << " [fixedImageFile movingImageFile ";
-    std::cerr << " outputImageFile ";
-    std::cerr << " [numberOfIterations=200 [maxNewtonShift [optimizerAlgorithm]]] ] ";
+    std::cerr << " [fixedImageFile movingImageFile";
+    std::cerr << " outputImageFile";
+    std::cerr << " [numberOfIterations=200 [maxNewtonShift=5 [optimizerAlgorithm=qn]]]] ";
     std::cerr << std::endl;
     //std::cerr << " [scalarScale=1] [learningRate=100] " << std::endl;
-    std::cerr << " optimizerAlgorithm = 'qn|gd|lqn|cg' with default qn" << std::endl;
+    std::cerr << " optimizerAlgorithm = 'qn|gd|lqn|cg' " << std::endl;
     std::cerr << "   qn: quasi-newton with bfgs" << std::endl;
     std::cerr << "   gd: gradient descent" << std::endl;
     std::cerr << "   lqn: bfgs with limited memory" << std::endl;
@@ -93,7 +93,7 @@ int itkQuasiNewtonRegistrationTest(int argc, char *argv[])
   std::cout << argc << std::endl;
   unsigned int numberOfIterations = 200;
   std::string optimizerAlgorithm("qn");
-  double maxNewtonShift = 10;
+  double maxNewtonShift = 5;
   //double scalarScale = 1.0;
   //double learningRate = 100;
   if( argc >= 5 )
