@@ -160,7 +160,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   metric->SetMovingTransform( displacementTransform );
   //metric->SetMovingTransform( translationTransform );
 
-  bool prewarp = false;
+  bool prewarp = true;
   metric->SetPreWarpMovingImage( prewarp );
   metric->SetPreWarpFixedImage( prewarp );
   bool gaussian = false;

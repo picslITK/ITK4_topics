@@ -216,9 +216,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   if( this->m_PreWarpFixedImage )
     {
     this->m_FixedWarpResampleImageFilter = FixedWarpResampleImageFilterType::New();
-    this->m_FixedWarpResampleImageFilter->SetUseReferenceImage( true );
-    this->m_FixedWarpResampleImageFilter->SetReferenceImage(
-                                               this->GetVirtualDomainImage() );
+    this->m_FixedWarpResampleImageFilter->SetOutputParametersFromImage(
+                                                this->GetVirtualDomainImage() );
     this->m_FixedWarpResampleImageFilter->SetNumberOfThreads(
                                                     this->m_NumberOfThreads );
     this->m_FixedWarpResampleImageFilter->SetTransform(
@@ -242,9 +241,8 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     this->m_MovingWarpResampleImageFilter =
                                       MovingWarpResampleImageFilterType::New();
-    this->m_MovingWarpResampleImageFilter->SetUseReferenceImage( true );
-    this->m_MovingWarpResampleImageFilter->SetReferenceImage(
-                                               this->GetVirtualDomainImage() );
+    this->m_MovingWarpResampleImageFilter->SetOutputParametersFromImage(
+                                                this->GetVirtualDomainImage() );
     this->m_MovingWarpResampleImageFilter->SetNumberOfThreads(
                                                this->m_NumberOfThreads );
     this->m_MovingWarpResampleImageFilter->SetTransform(
