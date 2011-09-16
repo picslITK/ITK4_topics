@@ -327,7 +327,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   /* Point our results object to the object provided by user. */
   this->m_DerivativeResult = &derivativeReturn;
-
+  std::cout << "this->m_NumberOfThreads=" << this->m_NumberOfThreads << std::endl;//tmpdbg
   /* Per-thread results */
   this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
   this->m_NumberOfValidPointsPerThread.resize( this->m_NumberOfThreads );

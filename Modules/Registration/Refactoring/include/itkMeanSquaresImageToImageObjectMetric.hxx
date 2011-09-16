@@ -78,7 +78,14 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = movingImageValue - fixedImageValue;
   metricValueReturn = - diff * diff; //always assuming a maximizing function
-
+  //if (virtualPoint[0]==188 && virtualPoint[1]==155)
+  //if (virtualPoint[0]==256-142 && virtualPoint[1]==256-176)
+  //  int tmpdbg=0;
+  //static int tmpcount=0;
+  //if (tmpcount < 256*256)
+  //  std::cout << "diffImage(" << (int)(256-virtualPoint[0]) << ","
+  //  << (int)(256-virtualPoint[1]) << ")=" << diff << ";" << std::endl; //tmpdbg
+  //tmpcount++;
   /* Use a pre-allocated jacobian object for efficiency */
   JacobianType & movingJacobian =
                             this->m_MovingTransformJacobianPerThread[threadID];

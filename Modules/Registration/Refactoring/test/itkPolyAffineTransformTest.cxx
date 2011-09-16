@@ -208,9 +208,8 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
 
   // The metric
   //typedef DemonsImageToImageObjectMetric< FixedImageType, MovingImageType > MetricType;
-  //typedef MeanSquaresImageToImageObjectMetric<FixedImageType, MovingImageType> MetricType;
-  typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType>
-      MetricType;
+  typedef MeanSquaresImageToImageObjectMetric<FixedImageType, MovingImageType> MetricType;
+  //typedef ANTSNeighborhoodCorrelationImageToImageObjectMetric< FixedImageType, MovingImageType> MetricType;
 
   MetricType::Pointer metric = MetricType::New();
 
@@ -225,7 +224,7 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
 
   Size<Dimension> radSize;
   radSize.Fill(2);
-  metric->SetRadius(radSize);
+  //metric->SetRadius(radSize);
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -330,7 +329,7 @@ int itkPolyAffineTransformTest(int argc, char *argv[])
   //Write out the deformation field
   typedef ImageFileWriter< DisplacementFieldType >  DeformationWriterType;
   DeformationWriterType::Pointer      deformationwriter =  DeformationWriterType::New();
-  std::string defout( "tmpdef.mha" );
+  std::string defout( "tmpdef.nii.gz" );
   deformationwriter->SetFileName( defout.c_str() );
   deformationwriter->SetInput( deformationTransform->GetDisplacementField() );
   deformationwriter->Update();
