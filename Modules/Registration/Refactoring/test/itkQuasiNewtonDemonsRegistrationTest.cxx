@@ -167,7 +167,7 @@ int itkQuasiNewtonDemonsRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothingSigma( 6 );
+  displacementTransform->SetGaussianSmoothingVarianceForTheTotalField( 6 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;

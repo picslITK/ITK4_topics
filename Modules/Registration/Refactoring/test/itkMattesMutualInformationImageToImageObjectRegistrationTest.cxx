@@ -171,7 +171,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothingSigma( 5 );
+  displacementTransform->SetGaussianSmoothingVarianceForTheTotalField( 5 );
 
   //identity transform for fixed image
   typedef IdentityTransform<double, Dimension> IdentityTransformType;
@@ -201,7 +201,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   compositeTransform->SetAllTransformsToOptimizeOn(); //Set back to optimize all.
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   metric->SetMovingTransform( compositeTransform );
-  bool prewarp = false;
+  bool prewarp = true;
   metric->SetPreWarpMovingImage( prewarp );
   metric->SetPreWarpFixedImage( prewarp );
   bool gaussian = false;
