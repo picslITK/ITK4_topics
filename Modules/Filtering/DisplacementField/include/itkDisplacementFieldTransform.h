@@ -166,10 +166,11 @@ public:
   itkStaticConstMacro( Dimension, unsigned int, NDimensions );
 
   /** Define the displacement field type and corresponding interpolator type. */
-  typedef Image<OutputVectorType,
-                itkGetStaticConstMacro( Dimension )> DisplacementFieldType;
+  typedef Image<OutputVectorType,  Dimension>          DisplacementFieldType;
+  typedef typename DisplacementFieldType::Pointer      DisplacementFieldPointer;
+
   typedef VectorInterpolateImageFunction
-  <DisplacementFieldType, ScalarType> InterpolatorType;
+    <DisplacementFieldType, ScalarType> InterpolatorType;
 
   /** Standard Index type for Displacement Field */
   typedef typename DisplacementFieldType::IndexType IndexType;
@@ -178,7 +179,7 @@ public:
   typedef ImageVectorTransformParametersHelper<
     ScalarType,
     OutputVectorType::Dimension,
-    itkGetStaticConstMacro( Dimension )>
+    Dimension>
   TransformParametersHelperType;
 
   typedef typename Superclass::RegionType                 RegionType;
