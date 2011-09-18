@@ -137,7 +137,7 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   field->FillBuffer( zeroVector );
   // Assign to transform
   displacementTransform->SetDisplacementField( field );
-  displacementTransform->SetGaussianSmoothingVarianceForTheTotalField( 6 );
+  displacementTransform->SetGaussianSmoothingSigma( 6 );
 
   //identity transform for fixed image
   typedef itk::IdentityTransform<double, Dimension> IdentityTransformType;

@@ -3,17 +3,17 @@ set(ITKRegistrationRefactoringTests
 # itkTransformVirtualDomainCalculatorTest.cxx
 #  itkPointSetToPointSetMetricTest.cxx
   itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
+#  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
 #  itkDemonsImageToImageObjectRegistrationTest2.cxx
-  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
-  itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
-  itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
+#  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
+#  itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
+#  itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
   itkMattesMutualInformationImageToImageObjectRegistrationTest.cxx
-  itkQuasiNewtonRegistrationTest.cxx
-  itkQuasiNewtonDemonsRegistrationTest.cxx
-  itkQuasiNewtonObjectOptimizerTest.cxx
-  itkPolyAffineTransformTest.cxx
-  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
+#  itkQuasiNewtonRegistrationTest.cxx
+#  itkQuasiNewtonDemonsRegistrationTest.cxx
+#  itkQuasiNewtonObjectOptimizerTest.cxx
+#  itkPolyAffineTransformTest.cxx
+#  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
   # On hold until class is updated
   #itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   #itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
