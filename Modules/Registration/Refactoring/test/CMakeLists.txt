@@ -15,6 +15,7 @@ set(ITKRegistrationRefactoringTests
   itkPolyAffineTransformTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest4.cxx
   # On hold until class is updated
   #itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   #itkDemonsVectorImageToVectorImageObjectMetricTest.cxx

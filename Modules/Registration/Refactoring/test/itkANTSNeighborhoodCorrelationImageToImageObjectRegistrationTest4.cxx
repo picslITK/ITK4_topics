@@ -18,7 +18,7 @@
 
 /**
  * Test program for ANTSNeighborhoodCorrelationImageToImageObjectMetric and
- * GradientDescentObjectOptimizer classes, and translation transform
+ * GradientDescentObjectOptimizer classes, and displacement field transform
  * using a pair of input images. The
  * input needs to be a pair of 3D images
  *
@@ -186,8 +186,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3(int argc, 
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  // metric->SetMovingTransform( displacementTransform );
-  metric->SetMovingTransform( translationTransform );
+  metric->SetMovingTransform( displacementTransform );
+  // metric->SetMovingTransform( translationTransform );
 
   Size<Dimension> radSize;
   radSize.Fill(2);
