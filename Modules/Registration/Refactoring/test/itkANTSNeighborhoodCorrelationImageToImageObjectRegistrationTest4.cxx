@@ -71,7 +71,7 @@ public:
 };
 }
 
-int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3(int argc, char *argv[])
+int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest4(int argc, char *argv[])
 {
 
   if( argc < 4 )
