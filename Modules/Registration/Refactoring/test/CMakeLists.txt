@@ -14,6 +14,7 @@ set(ITKRegistrationRefactoringTests
   itkQuasiNewtonObjectOptimizerTest.cxx
   itkPolyAffineTransformTest.cxx
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3.cxx
   # On hold until class is updated
   #itkDemonsVectorImageToVectorImageObjectRegistrationTest.cxx
   #itkDemonsVectorImageToVectorImageObjectMetricTest.cxx
@@ -60,6 +61,11 @@ itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
  itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITKRegistrationRefactoringTestDriver
       itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest)
+
+# itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3
+#      COMMAND ITKRegistrationRefactoringTestDriver
+#      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3)
+
 
 itk_add_test(NAME itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest
       COMMAND ITKRegistrationRefactoringTestDriver
