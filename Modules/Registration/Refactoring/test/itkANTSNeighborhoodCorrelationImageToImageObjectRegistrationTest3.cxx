@@ -185,8 +185,8 @@ int itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3(int argc, 
   metric->SetFixedImage( fixedImage );
   metric->SetMovingImage( movingImage );
   metric->SetFixedTransform( identityTransform );
-  metric->SetMovingTransform( displacementTransform );
-  // metric->SetMovingTransform( translationTransform );
+  // metric->SetMovingTransform( displacementTransform );
+  metric->SetMovingTransform( translationTransform );
 
   Size<Dimension> radSize;
   radSize.Fill(2);
