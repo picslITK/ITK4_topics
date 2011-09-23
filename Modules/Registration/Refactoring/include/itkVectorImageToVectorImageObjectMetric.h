@@ -574,7 +574,7 @@ protected:
    * value and derivative. This is distinct from Initialize, which
    * is called only once before a number of iterations, e.g. before
    * a registration loop.
-   * Called from \c GetValueAndDerivativeMultiThreadedInitiate before
+   * Called from \c GetValueAndDerivativeThreadedExecute before
    * threading starts. */     //NOTE: make this private?
   virtual void InitializeForIteration(void);
 
@@ -646,7 +646,7 @@ protected:
                                         const VirtualIndexType & virtualIndex,
                                         ThreadIdType threadID );
 
-  /** Called from \c GetValueAndDerivativeMultiThreadedInitiate after
+  /** Called from \c GetValueAndDerivativeThreadedExecute after
    * threading is complete, to count the total number of valid points
    * used during calculations, storing it in \c m_NumberOfValidPoints */
   virtual void CollectNumberOfValidPoints(void);
@@ -733,14 +733,14 @@ protected:
    * VirtualDomainRegion.
    * Pass in \c derivativeReturn from user. Results are written directly
    * into this parameter.
-   * \sa GetValueAndDerivativeMultiThreadedPostProcess
+   * \sa GetValueAndDerivativeThreadedPostProcess
    */
-  virtual void GetValueAndDerivativeMultiThreadedInitiate( DerivativeType &
+  virtual void GetValueAndDerivativeThreadedExecute( DerivativeType &
                                                             derivativeReturn );
 
   /** Default post-processing after multi-threaded calculation of
    * value and derivative. Typically called by derived classes after
-   * GetValueAndDerivativeMultiThreadedInitiate. Collects the results
+   * GetValueAndDerivativeThreadedExecute. Collects the results
    * from each thread and sums them.
    * Results are stored in \c m_Value and \c m_DerivativeResult.
    * \c m_DerivativeResult is set during initialization to point to the
@@ -751,7 +751,7 @@ protected:
    * sums for global transforms only (i.e. transforms without local support).
    * Derived classes need not call this if they require special handling.
    */
-  virtual void GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage );
+  virtual void GetValueAndDerivativeThreadedPostProcess( bool doAverage );
 
   /** Type of the default threader used for GetValue and GetDerivative.
    * This splits an image region in per-thread sub-regions over the outermost
@@ -797,7 +797,7 @@ private:
    * define a static method with a different name, and assign it to the
    * threader in the class' constructor by calling
    * \c m_ValueAndDerivativeThreader->SetThreadedGenerateData( mycallback ) */
-  static void GetValueAndDerivativeMultiThreadedCallback(
+  static void GetValueAndDerivativeThreadedCallback(
                           const ThreaderInputObjectType& virtualImageSubRegion,
                           ThreadIdType threadId,
                           Self * dataHolder);

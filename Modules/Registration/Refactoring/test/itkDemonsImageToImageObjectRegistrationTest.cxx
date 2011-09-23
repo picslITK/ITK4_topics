@@ -161,11 +161,11 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   //metric->SetMovingTransform( translationTransform );
 
   bool prewarp = true;
-  metric->SetPreWarpMovingImage( prewarp );
-  metric->SetPreWarpFixedImage( prewarp );
+  metric->SetDoMovingImagePreWarp( prewarp );
+  metric->SetDoFixedImagePreWarp( prewarp );
   bool gaussian = false;
-  metric->SetUseMovingGradientRecursiveGaussianImageFilter( gaussian );
-  metric->SetUseFixedGradientRecursiveGaussianImageFilter( gaussian );
+  metric->SetUseMovingImageGradientFilter( gaussian );
+  metric->SetUseFixedImageGradientFilter( gaussian );
 
   //Initialize the metric to prepare for use
   metric->Initialize();
@@ -180,13 +180,13 @@ int itkDemonsImageToImageObjectRegistrationTest(int argc, char *argv[])
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpMovingImage: " << metric->GetPreWarpMovingImage() << std::endl
-            << "PreWarpFixedImage: " << metric->GetPreWarpFixedImage() << std::endl
+            << "PreWarpMovingImage: " << metric->GetDoMovingImagePreWarp() << std::endl
+            << "PreWarpFixedImage: " << metric->GetDoFixedImagePreWarp() << std::endl
             << "Use_Moving_GradientRecursiveGaussianImageFilter: "
-            << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
+            << metric->GetUseMovingImageGradientFilter()
             << std::endl
             << "Use_Fixed_GradientRecursiveGaussianImageFilter: "
-            << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
+            << metric->GetUseFixedImageGradientFilter()
             << std::endl;
 
   try

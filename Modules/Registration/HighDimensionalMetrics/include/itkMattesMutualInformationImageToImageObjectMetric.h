@@ -250,18 +250,18 @@ private:
     // threading, you can use ImageToData or Array1DToData classes,
     // or derive your own from ObjectToData.
 
-    //2) Call GetValueAndDerivativeMultiThreadedInitiate.
+    //2) Call GetValueAndDerivativeThreadedExecute.
     //This will iterate over virtual image region and call your
     // GetValueAndDerivativeProcessPoint method, see definition in
     // base.
-    this->GetValueAndDerivativeMultiThreadedInitiate( derivativeReturn );
+    this->GetValueAndDerivativeThreadedExecute( derivativeReturn );
 
-    //3) Optionally call GetValueAndDerivativeMultiThreadedPostProcess for
+    //3) Optionally call GetValueAndDerivativeThreadedPostProcess for
     // default post-processing, which sums up results from each thread,
     // and optionally averages them. It then assigns the results to
     // 'value' and 'derivative', without copying in the case of 'derivative'.
     //Do your own post-processing as needed.
-    this->GetValueAndDerivativeMultiThreadedPostProcess( true  );//doAverage
+    this->GetValueAndDerivativeThreadedPostProcess( true  );//doAverage
 
     //4) Return the value result. The derivative result has already been
     // written to derivativeReturn.

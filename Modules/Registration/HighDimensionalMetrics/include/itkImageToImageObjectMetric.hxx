@@ -22,6 +22,9 @@
 #include "itkPixelTraits.h"
 #include "itkDisplacementFieldTransform.h"
 #include "itkCompositeTransform.h"
+#include "itkLinearInterpolateImageFunction.h"
+#include "itkIdentityTransform.h"
+#include "itkCentralDifferenceImageFunction.h"
 
 namespace itk
 {
@@ -37,44 +40,60 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * holder for threading */
   this->m_ValueAndDerivativeThreader = ValueAndDerivativeThreaderType::New();
   this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
-    Self::GetValueAndDerivativeMultiThreadedCallback );
+    Self::GetValueAndDerivativeThreadedCallback );
   this->m_ValueAndDerivativeThreader->SetHolder( this );
-  this->m_NumberOfThreads =
-      this->m_ValueAndDerivativeThreader->GetNumberOfThreads();
   this->m_ThreadingMemoryHasBeenInitialized = false;
 
-  this->m_FixedImage = NULL;
-  this->m_MovingImage = NULL;
-  this->m_VirtualDomainImage = NULL;
-  this->m_VirtualDomainRegionHasBeenSet = false;
-
   /* Both transforms default to an identity transform */
+  typedef IdentityTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          MovingIdentityTransformType;
+  typedef IdentityTransform<CoordinateRepresentationType,
+    itkGetStaticConstMacro( MovingImageDimension ) >
+                                          FixedIdentityTransformType;
   this->m_FixedTransform = FixedIdentityTransformType::New();
   this->m_MovingTransform = MovingIdentityTransformType::New();
 
   /* Interpolators. Default to linear. */
+  typedef LinearInterpolateImageFunction< FixedImageType,
+                                          CoordinateRepresentationType >
+                                                  FixedLinearInterpolatorType;
+  typedef LinearInterpolateImageFunction< MovingImageType,
+                                          CoordinateRepresentationType >
+                                                  MovingLinearInterpolatorType;
   this->m_FixedInterpolator = FixedLinearInterpolatorType::New();
   this->m_MovingInterpolator = MovingLinearInterpolatorType::New();
 
-  /* These will be instantiated if needed in Initialize */
-  this->m_FixedGaussianGradientImage = NULL;
-  this->m_MovingGaussianGradientImage = NULL;
-  this->m_MovingGradientCalculator = NULL;
-  this->m_FixedGradientCalculator = NULL;
+  /* Setup default gradient filter. It gets initialized with default
+   * parameters during Initialize. */
+  this->m_DefaultFixedImageGradientFilter = DefaultFixedImageGradientFilter::New();
+  this->m_DefaultMovingImageGradientFilter = DefaultMovingImageGradientFilter::New();
+  this->m_FixedImageGradientFilter = this->m_DefaultFixedImageGradientFilter;
+  this->m_MovingImageGradientFilter = this->m_DefaultMovingImageGradientFilter;
 
-  this->m_FixedWarpedImage = NULL;
-  this->m_MovingWarpedImage = NULL;
-
-  this->m_FixedImageMask = NULL;
-  this->m_MovingImageMask = NULL;
-
-  this->m_DerivativeResult = NULL;
+  /* Setup default gradient image function */
+  typedef CentralDifferenceImageFunction<FixedImageType,
+                                         CoordinateRepresentationType>
+                                          FixedCentralDifferenceCalculatorType;
+  typedef CentralDifferenceImageFunction<MovingImageType,
+                                         CoordinateRepresentationType>
+                                          MovingCentralDifferenceCalculatorType;
+  typename FixedCentralDifferenceCalculatorType::Pointer
+                  fixedCalculator = FixedCentralDifferenceCalculatorType::New();
+  fixedCalculator->UseImageDirectionOn();
+  this->m_FixedImageGradientCalculator = fixedCalculator;
+  typename MovingCentralDifferenceCalculatorType::Pointer
+                  movingCalculator = MovingCentralDifferenceCalculatorType::New();
+  movingCalculator->UseImageDirectionOn();
+  this->m_MovingImageGradientCalculator = movingCalculator;
 
   /* Setup default options assuming dense-sampling */
-  this->m_PreWarpFixedImage = true;
-  this->m_PreWarpMovingImage = true;
-  this->m_UseFixedGradientRecursiveGaussianImageFilter = true;
-  this->m_UseMovingGradientRecursiveGaussianImageFilter = true;
+  this->m_DoFixedImagePreWarp = true;
+  this->m_DoMovingImagePreWarp = true;
+  this->m_UseFixedImageGradientFilter = true;
+  this->m_UseMovingImageGradientFilter = true;
+
+  this->m_NumberOfThreadsHasBeenInitialized = false;
 }
 
 /*
@@ -133,15 +152,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     /* This instantiation will fail at compilation if user has provided
      * a different type for VirtualImage in the template parameters. */
     this->m_VirtualDomainImage = FixedImageType::New();
-    /* Graft the virtual image onto the fixed, to conserve memory. */
+    /* Graft the virtual image onto the fixed, to conserve memory. This
+     * copies the image information and shares the data buffer. */
     this->m_VirtualDomainImage->Graft( this->m_FixedImage );
-    /* If user hasn't already provided a region, get the buffered region
-     * from fixed image. */
-    if( ! this->m_VirtualDomainRegionHasBeenSet )
-      {
-      /* Make sure we set this before assigning it to threader below */
-      this->SetVirtualDomainRegion( this->m_VirtualDomainImage->GetBufferedRegion());
-      }
     }
 
   /* Special checks for when the moving transform is dense/high-dimensional */
@@ -173,63 +186,62 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   /* Assign the virtual image region to the threader. Do this before
    * calling DetermineNumberOfThreasToUse. */
   this->m_ValueAndDerivativeThreader->SetOverallRegion(
-                                            this->m_VirtualDomainRegion );
+                                            this->GetVirtualDomainRegion() );
 
   /* Determine how many threads will be used, given the set OveralRegion.
    * The threader uses
    * its SplitRequestedObject method to split the image region over threads,
    * and it may decide to that using fewer than the number of available
    * threads is more effective. */
-  this->m_NumberOfThreads = this->m_ValueAndDerivativeThreader->
-                                      DetermineNumberOfThreadsToUse();
+  this->SetNumberOfThreads( this->m_ValueAndDerivativeThreader->
+                                      DetermineNumberOfThreadsToUse() );
+  this->m_NumberOfThreadsHasBeenInitialized = true;
 
   /* Clear this flag to force initialization of threading memory
-   * in GetValueAndDerivativeMultiThreadedInitiate. */
+   * in GetValueAndDerivativeThreadedExecute. */
   this->m_ThreadingMemoryHasBeenInitialized = false;
 
   /* Inititialize interpolators. */
+  itkDebugMacro("Initialize Interpolators");
   this->m_FixedInterpolator->SetInputImage( this->m_FixedImage );
   this->m_MovingInterpolator->SetInputImage( this->m_MovingImage );
 
   /* Setup for image gradient calculations.
-   * Instantiate a central difference derivative calculator
-   * if appropriate. If pre-warping is enabled, the
+   * If pre-warping is enabled, the
    * calculator will be pointed to the warped image at time of warping. */
-  if( !this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseFixedImageGradientFilter )
     {
-    this->m_FixedGaussianGradientImage = NULL;
-    this->m_FixedGradientCalculator = FixedGradientCalculatorType::New();
-    this->m_FixedGradientCalculator->UseImageDirectionOn();
-    this->m_FixedGradientCalculator->SetInputImage(this->m_FixedImage);
+    itkDebugMacro("Initialize FixedImageGradientCalculator");
+    this->m_FixedImageGradientImage = NULL;
+    this->m_FixedImageGradientCalculator->SetInputImage(this->m_FixedImage);
     }
-  if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseMovingImageGradientFilter )
     {
-    this->m_MovingGaussianGradientImage = NULL;
-    this->m_MovingGradientCalculator = MovingGradientCalculatorType::New();
-    this->m_MovingGradientCalculator->UseImageDirectionOn();
-    this->m_MovingGradientCalculator->SetInputImage(this->m_MovingImage);
+    itkDebugMacro("Initialize MovingImageGradientCalculator");
+    this->m_MovingImageGradientImage = NULL;
+    this->m_MovingImageGradientCalculator->SetInputImage(this->m_MovingImage);
     }
 
   /* Initialize resample image filters for pre-warping images if
    * option is set.
    * The proper number of threads is required. */
-  if( this->m_PreWarpFixedImage )
+  if( this->m_DoFixedImagePreWarp )
     {
     this->m_FixedWarpResampleImageFilter = FixedWarpResampleImageFilterType::New();
     this->m_FixedWarpResampleImageFilter->SetOutputParametersFromImage(
                                                 this->GetVirtualDomainImage() );
     this->m_FixedWarpResampleImageFilter->SetNumberOfThreads(
-                                                    this->m_NumberOfThreads );
+                                                    this->GetNumberOfThreads() );
     this->m_FixedWarpResampleImageFilter->SetTransform(
                                                     this->GetFixedTransform() );
     this->m_FixedWarpResampleImageFilter->SetInput( this->GetFixedImage() );
 
     /* Pre-warp the fixed image now so it's available below if
-     * m_UseMovingGradientRecursiveGaussianImageFilter is enabled.
+     * m_UseMovingImageGradientFilter is enabled.
      * Also, fixed images are currently never optimized, so we only
      * have to prewarp once, so do it here. */
-    itkDebugMacro("Init: PreWarpFixedImage.");
-    this->PreWarpFixedImage();
+    itkDebugMacro("Init: DoFixedImagePreWarp.");
+    this->DoFixedImagePreWarp();
     }
   else
     {
@@ -237,21 +249,21 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     this->m_FixedWarpedImage = NULL;
     }
 
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
     this->m_MovingWarpResampleImageFilter =
                                       MovingWarpResampleImageFilterType::New();
     this->m_MovingWarpResampleImageFilter->SetOutputParametersFromImage(
                                                 this->GetVirtualDomainImage() );
     this->m_MovingWarpResampleImageFilter->SetNumberOfThreads(
-                                               this->m_NumberOfThreads );
+                                               this->GetNumberOfThreads() );
     this->m_MovingWarpResampleImageFilter->SetTransform(
                                                this->GetMovingTransform() );
     this->m_MovingWarpResampleImageFilter->SetInput( this->GetMovingImage() );
 
     /* Pre-warp the moving image, for use when a derived class needs it
      * before InitiateForIteration is called. */
-    this->PreWarpMovingImage();
+    this->DoMovingImagePreWarp();
     }
   else
     {
@@ -259,24 +271,31 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     this->m_MovingWarpedImage = NULL;
     }
 
+  /* Initialize default gradient image filters.
+   * Do this after any pre-warping above. */
+  itkDebugMacro("InitializeDefaultFixedImageGradientFilter");
+  this->InitializeDefaultFixedImageGradientFilter();
+  itkDebugMacro("InitializeDefaultMovingImageGradientFilter");
+  this->InitializeDefaultMovingImageGradientFilter();
+
   /* If user set to use a pre-calculated fixed gradient image,
    * then we need to calculate the gradient image.
    * We only need to compute once since the fixed transform isn't
    * optimized.
    * Do this *after* setting up above for pre-warping. */
-  if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseFixedImageGradientFilter )
     {
-    itkDebugMacro("Initialize: ComputeFixedGaussianGradientImage");
-    ComputeFixedGaussianGradientImage();
+    itkDebugMacro("Initialize: ComputeFixedImageGradientFilterImage");
+    this->ComputeFixedImageGradientFilterImage();
     }
 
-  /* Compute GaussianGradientImage for moving image. Needed now for
+  /* Compute gradient image for moving image. Needed now for
    * derived classes that use it before InitializeForIteration is called.
    * It's also computed at begin of every iteration. */
-  if( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if( this->m_UseMovingImageGradientFilter )
     {
-    itkDebugMacro("Initialize: ComputeMovingGaussianGradientImage");
-    this->ComputeMovingGaussianGradientImage();
+    itkDebugMacro("Initialize: ComputeMovingImageGradientFilterImage");
+    this->ComputeMovingImageGradientFilterImage();
     }
 }
 
@@ -286,7 +305,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedInitiate( DerivativeType & derivativeReturn )
+::GetValueAndDerivativeThreadedExecute( DerivativeType & derivativeReturn )
 {
   //Initialize threading memory if this is the first time
   // in here since a call to Initialize, or if user has passed
@@ -301,7 +320,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   InitializeForIteration();
 
   // Do the threaded evaluation. This will
-  // call GetValueAndDerivativeMultiThreadedCallback, which
+  // call GetValueAndDerivativeThreadedCallback, which
   // iterates over virtual domain region and calls derived class'
   // GetValueAndDerivativeProcessPoint.
   this->m_ValueAndDerivativeThreader->StartThreadedExecution();
@@ -310,7 +329,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   CollectNumberOfValidPoints();
 
   // To collect the results from each thread into final values
-  // the derived class can call GetValueAndDerivativeMultiThreadedPostProcess,
+  // the derived class can call GetValueAndDerivativeThreadedPostProcess,
   // or do their own processing.
 }
 
@@ -327,18 +346,18 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   /* Point our results object to the object provided by user. */
   this->m_DerivativeResult = &derivativeReturn;
-  std::cout << "this->m_NumberOfThreads=" << this->m_NumberOfThreads << std::endl;//tmpdbg
+
   /* Per-thread results */
-  this->m_MeasurePerThread.resize( this->m_NumberOfThreads );
-  this->m_NumberOfValidPointsPerThread.resize( this->m_NumberOfThreads );
-  this->m_DerivativesPerThread.resize( this->m_NumberOfThreads );
+  this->m_MeasurePerThread.resize( this->GetNumberOfThreads() );
+  this->m_NumberOfValidPointsPerThread.resize( this->GetNumberOfThreads() );
+  this->m_DerivativesPerThread.resize( this->GetNumberOfThreads() );
   /* This one is intermediary, for getting per-point results. */
-  this->m_LocalDerivativesPerThread.resize( this->m_NumberOfThreads );
+  this->m_LocalDerivativesPerThread.resize( this->GetNumberOfThreads() );
   /* Per-thread pre-allocated Jacobian objects for efficiency */
-  this->m_MovingTransformJacobianPerThread.resize( this->m_NumberOfThreads );
+  this->m_MovingTransformJacobianPerThread.resize( this->GetNumberOfThreads() );
 
   /* This size always comes from the moving image */
-  unsigned long globalDerivativeSize =
+  unsigned int globalDerivativeSize =
     this->m_MovingTransform->GetNumberOfParameters();
   itkDebugMacro("ImageToImageObjectMetric::Initialize: deriv size  "
                   << globalDerivativeSize << std::endl);
@@ -347,7 +366,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     this->m_DerivativeResult->SetSize( globalDerivativeSize );
     }
-  for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
+  for (ThreadIdType i=0; i<this->GetNumberOfThreads(); i++)
     {
     /* Allocate intermediary per-thread storage used to get results from
      * derived classes */
@@ -389,7 +408,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   /* Initialize some threading values that require per-iteration
    * initialization. */
-  for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
+  for (ThreadIdType i=0; i<this->GetNumberOfThreads(); i++)
     {
     this->m_NumberOfValidPointsPerThread[i] = 0;
     this->m_MeasurePerThread[i] = 0;
@@ -407,17 +426,17 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_DerivativeResult->Fill( 0 );
 
   /* Pre-warp the moving image if set to do so. Then we have
-   * to recompute the image gradients if GaussianImageFilter option is set.
+   * to recompute the image gradients if ImageFilter option is set.
    * Otherwise the moving image gradients only need be calculated
    * once, during initialize.
    * In contrast, the fixed image is not optimized so we only pre-warp
    * once, during Initialize. */
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
-    this->PreWarpMovingImage();
-    if( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+    this->DoMovingImagePreWarp();
+    if( this->m_UseMovingImageGradientFilter )
       {
-      this->ComputeMovingGaussianGradientImage();
+      this->ComputeMovingImageGradientFilterImage();
       }
     }
 }
@@ -432,10 +451,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   /* Count number of valid points.
    * Other post-processing can be done by calling
-   * GetValueAndDerivativeMultiThreadedPostProcess, or direclty
+   * GetValueAndDerivativeThreadedPostProcess, or direclty
    * in the derived class. */
   this->m_NumberOfValidPoints = 0;
-  for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
+  for (ThreadIdType i=0; i<this->GetNumberOfThreads(); i++)
     {
     this->m_NumberOfValidPoints += this->m_NumberOfValidPointsPerThread[i];
     }
@@ -450,12 +469,12 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage )
+::GetValueAndDerivativeThreadedPostProcess( bool doAverage )
 {
   /* For global transforms, sum the derivatives from each region. */
   if ( ! this->m_MovingTransform->HasLocalSupport() )
     {
-    for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
+    for (ThreadIdType i=0; i<this->GetNumberOfThreads(); i++)
       {
       *(this->m_DerivativeResult) += this->m_DerivativesPerThread[i];
       }
@@ -486,7 +505,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedCallback(
+::GetValueAndDerivativeThreadedCallback(
                 const ThreaderInputObjectType& virtualImageSubRegion,
                 ThreadIdType threadID,
                 Self * self)
@@ -513,8 +532,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                    self->m_LocalDerivativesPerThread[threadID];
 
   /* Iterate over the sub region */
-  //ItV.GoToBegin();
-  //while( !ItV.IsAtEnd() )
   for( ItV.GoToBegin(); !ItV.IsAtEnd(); ++ItV )
   {
     /* Get the virtual point */
@@ -699,7 +716,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     return;
     }
 
-  if( this->m_PreWarpFixedImage )
+  if( this->m_DoFixedImagePreWarp )
     {
     /* Get the pixel values at this index */
     mappedFixedPixelValue = this->m_FixedWarpedImage->GetPixel( index );
@@ -713,7 +730,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     mappedFixedPixelValue = this->m_FixedInterpolator->Evaluate(mappedFixedPoint);
     if( computeImageGradient )
       {
-      this->ComputeFixedImageGradient( mappedFixedPoint,
+      this->ComputeFixedImageGradientAtPoint( mappedFixedPoint,
                                        mappedFixedImageGradient );
       //Transform the gradient into the virtual domain. We compute gradient
       // in the fixed and moving domains and then transform to virtual.
@@ -765,7 +782,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     return;
     }
 
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
    /* Get the pixel values at this index */
     mappedMovingPixelValue = this->m_MovingWarpedImage->GetPixel( index );
@@ -781,7 +798,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       this->m_MovingInterpolator->Evaluate(mappedMovingPoint);
     if( computeImageGradient )
       {
-      this->ComputeMovingImageGradient( mappedMovingPoint,
+      this->ComputeMovingImageGradientAtPoint( mappedMovingPoint,
                                         mappedMovingImageGradient );
       mappedMovingImageGradient =
         this->m_MovingTransform->TransformCovariantVector(
@@ -799,22 +816,22 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedImageGradient( const FixedImagePointType & mappedPoint,
+::ComputeFixedImageGradientAtPoint( const FixedImagePointType & mappedPoint,
                              FixedImageGradientType & gradient ) const
 {
-  if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseFixedImageGradientFilter )
     {
     ContinuousIndex< double, FixedImageDimension > tempIndex;
     this->m_FixedImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
                                                            tempIndex);
     FixedImageIndexType mappedIndex;
     mappedIndex.CopyWithRound(tempIndex);
-    gradient = this->m_FixedGaussianGradientImage->GetPixel(mappedIndex);
+    gradient = this->m_FixedImageGradientImage->GetPixel(mappedIndex);
     }
   else
     {
     // if not using the gradient image
-    gradient = this->m_FixedGradientCalculator->Evaluate(mappedPoint);
+    gradient = this->m_FixedImageGradientCalculator->Evaluate(mappedPoint);
     }
 }
 
@@ -824,23 +841,23 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeMovingImageGradient(
+::ComputeMovingImageGradientAtPoint(
                               const MovingImagePointType & mappedPoint,
                               MovingImageGradientType & gradient ) const
 {
-  if ( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseMovingImageGradientFilter )
     {
     ContinuousIndex< double, MovingImageDimension > tempIndex;
     this->m_MovingImage->TransformPhysicalPointToContinuousIndex(mappedPoint,
                                                            tempIndex);
     MovingImageIndexType mappedIndex;
     mappedIndex.CopyWithRound(tempIndex);
-    gradient = this->m_MovingGaussianGradientImage->GetPixel(mappedIndex);
+    gradient = this->m_MovingImageGradientImage->GetPixel(mappedIndex);
     }
   else
     {
     // if not using the gradient image
-    gradient = this->m_MovingGradientCalculator->Evaluate(mappedPoint);
+    gradient = this->m_MovingImageGradientCalculator->Evaluate(mappedPoint);
     }
 }
 
@@ -856,14 +873,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                               const VirtualIndexType & index,
                               FixedImageGradientType & gradient ) const
 {
-  if ( this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseFixedImageGradientFilter )
     {
-    gradient = this->m_FixedGaussianGradientImage->GetPixel(index);
+    gradient = this->m_FixedImageGradientImage->GetPixel(index);
     }
   else
     {
     // if not using the gradient image
-    gradient = this->m_FixedGradientCalculator->EvaluateAtIndex(index);
+    gradient = this->m_FixedImageGradientCalculator->EvaluateAtIndex(index);
     }
 }
 
@@ -877,14 +894,14 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                               const VirtualIndexType & index,
                               MovingImageGradientType & gradient ) const
 {
-  if ( this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if ( this->m_UseMovingImageGradientFilter )
     {
-    gradient = this->m_MovingGaussianGradientImage->GetPixel(index);
+    gradient = this->m_MovingImageGradientImage->GetPixel(index);
     }
   else
     {
     // if not using the gradient image
-    gradient = this->m_MovingGradientCalculator->EvaluateAtIndex(index);
+    gradient = this->m_MovingImageGradientCalculator->EvaluateAtIndex(index);
     }
 }
 
@@ -894,7 +911,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::PreWarpFixedImage()
+::DoFixedImagePreWarp()
 {
   /* Call Modified to make sure the filter recalculates the output. We haven't
    * changed any settings, but we assume the transform parameters have changed,
@@ -910,9 +927,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * ResampleImageFilter always returns the same image pointer after
    * its first update, or if it can be set to allocate output during init. */
   /* No need to call Modified here on the calculators */
-  if( ! this->m_UseFixedGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseFixedImageGradientFilter )
     {
-    this->m_FixedGradientCalculator->SetInputImage( this->m_FixedWarpedImage );
+    this->m_FixedImageGradientCalculator->SetInputImage( this->m_FixedWarpedImage );
     }
 }
 
@@ -922,7 +939,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::PreWarpMovingImage()
+::DoMovingImagePreWarp()
 {
   /* Call Modified to make sure the filter recalculates the output. We haven't
    * changed any settings, but we assume the transform parameters have changed,
@@ -933,25 +950,22 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 
   /* Point the interpolator and calculator to the warped images. */
   /* No need to call Modified here on the calculators */
-  if( ! this->m_UseMovingGradientRecursiveGaussianImageFilter )
+  if( ! this->m_UseMovingImageGradientFilter )
     {
-    this->m_MovingGradientCalculator->SetInputImage( this->m_MovingWarpedImage );
+    this->m_MovingImageGradientCalculator->SetInputImage( this->m_MovingWarpedImage );
     }
 }
 
 /*
- * ComputeFixedGaussianGradientImage
+ * ComputeFixedImageGradientFilterImage
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeFixedGaussianGradientImage()
+::ComputeFixedImageGradientFilterImage()
 {
-  typename FixedGradientImageFilterType::Pointer
-    gradientFilter = FixedGradientImageFilterType::New();
   FixedImageConstPointer  image;
-
-  if( this->m_PreWarpFixedImage )
+  if( this->m_DoFixedImagePreWarp )
     {
     image = this->m_FixedWarpedImage;
     }
@@ -960,7 +974,52 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     image = this->m_FixedImage;
     }
 
-  gradientFilter->SetInput( image );
+  this->m_FixedImageGradientFilter->SetInput( image );
+  this->m_FixedImageGradientFilter->Update();
+  this->m_FixedImageGradientImage = this->m_FixedImageGradientFilter->GetOutput();
+}
+
+/*
+ * ComputeMovingImageGradientFilterImage
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::ComputeMovingImageGradientFilterImage()
+{
+  MovingImageConstPointer  image;
+  if( this->m_DoMovingImagePreWarp )
+    {
+    image = this->m_MovingWarpedImage;
+    }
+  else
+    {
+    image = this->m_MovingImage;
+    }
+
+  this->m_MovingImageGradientFilter->SetInput( image );
+  this->m_MovingImageGradientFilter->Update();
+  this->m_MovingImageGradientImage = this->m_MovingImageGradientFilter->GetOutput();
+}
+
+/*
+ * Initialize the default fixed image gradient filter.
+ */
+template<class TFixedImage,class TMovingImage,class TVirtualImage>
+void
+ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
+::InitializeDefaultFixedImageGradientFilter()
+{
+  FixedImageConstPointer  image;
+  if( this->m_DoFixedImagePreWarp )
+    {
+    image = this->m_FixedWarpedImage;
+    }
+  else
+    {
+    image = this->m_FixedImage;
+    }
+
   const typename FixedImageType::SpacingType & spacing = image->GetSpacing();
   double maximumSpacing = 0.0;
   for ( unsigned int i = 0; i < FixedImageDimension; i++ )
@@ -970,29 +1029,22 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       maximumSpacing = spacing[i];
       }
     }
-  gradientFilter->SetSigma(maximumSpacing);
-  gradientFilter->SetNormalizeAcrossScale(true);
-  gradientFilter->SetNumberOfThreads(this->m_NumberOfThreads);
-  gradientFilter->SetUseImageDirection(true);
-  gradientFilter->Update();
-
-  this->m_FixedGaussianGradientImage = gradientFilter->GetOutput();
+  this->m_DefaultFixedImageGradientFilter->SetSigma(maximumSpacing);
+  this->m_DefaultFixedImageGradientFilter->SetNormalizeAcrossScale( true );
+  this->m_DefaultFixedImageGradientFilter->SetNumberOfThreads(this->GetNumberOfThreads());
+  this->m_DefaultFixedImageGradientFilter->SetUseImageDirection( true );
 }
 
 /*
- * ComputeMovingGaussianGradientImage
+ * Initialize the default moving image gradient filter.
  */
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::ComputeMovingGaussianGradientImage()
+::InitializeDefaultMovingImageGradientFilter()
 {
-  typename MovingGradientImageFilterType::Pointer
-    gradientFilter = MovingGradientImageFilterType::New();
-
   MovingImageConstPointer  image;
-
-  if( this->m_PreWarpMovingImage )
+  if( this->m_DoMovingImagePreWarp )
     {
     image = this->m_MovingWarpedImage;
     }
@@ -1000,8 +1052,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     image = this->m_MovingImage;
     }
-
-  gradientFilter->SetInput( image );
 
   const typename MovingImageType::SpacingType & spacing = image->GetSpacing();
   double maximumSpacing = 0.0;
@@ -1012,13 +1062,10 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
       maximumSpacing = spacing[i];
       }
     }
-  gradientFilter->SetSigma(maximumSpacing);
-  gradientFilter->SetNormalizeAcrossScale(true);
-  gradientFilter->SetNumberOfThreads(this->m_NumberOfThreads);
-  gradientFilter->SetUseImageDirection(true);
-  gradientFilter->Update();
-
-  this->m_MovingGaussianGradientImage = gradientFilter->GetOutput();
+  this->m_DefaultMovingImageGradientFilter->SetSigma(maximumSpacing);
+  this->m_DefaultMovingImageGradientFilter->SetNormalizeAcrossScale(true);
+  this->m_DefaultMovingImageGradientFilter->SetNumberOfThreads(this->GetNumberOfThreads());
+  this->m_DefaultMovingImageGradientFilter->SetUseImageDirection(true);
 }
 
 /*
@@ -1037,7 +1084,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
         const MovingImageGradientType &   itkNotUsed(mappedMovingImageGradient),
         MeasureType &                     itkNotUsed(metricValueReturn),
         DerivativeType &                  itkNotUsed(localDerivativeReturn),
-        const ThreadIdType                itkNotUsed(threadID) )
+        const ThreadIdType                itkNotUsed(threadID) ) const
 {
   return false;
 }
@@ -1083,27 +1130,25 @@ void
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 ::SetNumberOfThreads( ThreadIdType number )
 {
-  if( number != this->m_NumberOfThreads )
+  if( number != this->m_ValueAndDerivativeThreader->GetNumberOfThreads() )
     {
-    this->m_NumberOfThreads = number;
     this->m_ValueAndDerivativeThreader->SetNumberOfThreads( number );
     this->Modified();
     }
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
-void
+ThreadIdType
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::CreateVirtualDomainImage( VirtualSpacingType & spacing,
-                            VirtualOriginType & origin,
-                            VirtualDirectionType & direction,
-                            VirtualSizeType & size,
-                            VirtualIndexType & index )
+::GetNumberOfThreads( void ) const
 {
-  VirtualRegionType region;
-  region.SetSize( size );
-  region.SetIndex( index );
-  CreateVirtualDomainImage( spacing, origin, direction, region );
+  if( ! this->m_NumberOfThreadsHasBeenInitialized )
+    {
+    itkExceptionMacro("m_NumberOfThreadsHasBeenInitialized is false. "
+                      "Initialize must be called to initialize the number "
+                      "of threads first.");
+    }
+  return this->m_ValueAndDerivativeThreader->GetNumberOfThreads();
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
@@ -1121,13 +1166,13 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   this->m_VirtualDomainImage->SetRegions( region );
   this->m_VirtualDomainImage->Allocate();
   this->m_VirtualDomainImage->FillBuffer( 0 );
-  this->SetVirtualDomainRegion(region);
+  this->Modified();
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 const typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >::VirtualSpacingType
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetVirtualDomainSpacing( void )
+::GetVirtualDomainSpacing( void ) const
 {
   if( this->m_VirtualDomainImage )
     {
@@ -1143,7 +1188,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 const typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >::VirtualDirectionType
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetVirtualDomainDirection( void )
+::GetVirtualDomainDirection( void ) const
 {
   if( this->m_VirtualDomainImage )
     {
@@ -1159,7 +1204,7 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 const typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >::VirtualOriginType
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetVirtualDomainOrigin( void )
+::GetVirtualDomainOrigin( void ) const
 {
   if( this->m_VirtualDomainImage )
     {
@@ -1173,39 +1218,25 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
-void
+const typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >::VirtualRegionType
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::SetVirtualDomainImage(VirtualImageType* image)
+::GetVirtualDomainRegion( void ) const
 {
-  this->m_VirtualDomainImage = image;
-  this->SetVirtualDomainRegion( image->GetBufferedRegion() );
-}
-
-template<class TFixedImage,class TMovingImage,class TVirtualImage>
-void
-ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::SetVirtualDomainRegion( VirtualRegionType & region )
-{
-  SetVirtualDomainRegion( static_cast<const VirtualRegionType& >(region) );
-}
-
-template<class TFixedImage,class TMovingImage,class TVirtualImage>
-void
-ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::SetVirtualDomainRegion( const VirtualRegionType & region )
-{
-  if( region != m_VirtualDomainRegion || ! m_VirtualDomainRegionHasBeenSet )
+  if( this->m_VirtualDomainImage )
     {
-    m_VirtualDomainRegionHasBeenSet = true;
-    m_VirtualDomainRegion = region;
-    this->Modified();
+    return this->m_VirtualDomainImage->GetBufferedRegion();
+    }
+  else
+    {
+    itkExceptionMacro("m_VirtualDomainImage is undefined. Cannot "
+                      " return region. ");
     }
 }
 
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 typename ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>::MeasureType
 ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
-::GetValueResult()
+::GetValueResult() const
 {
   return m_Value;
 }
@@ -1338,7 +1369,9 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                       << ", DisplacementField Direction: "
                       << field->GetDirection() << std::endl;
       itkExceptionMacro(<< "m_VirtualDomainImage and DisplacementField do not "
-                        << "occupy the same physical space! "
+                        << "occupy the same physical space! You may be able to "
+                        << "simply call displacementField->CopyInformation( "
+                        << "m_VirtualDomainImage ) to align them. "
                         << std::endl
                         << originString.str() << spacingString.str()
                         << directionString.str() );
@@ -1355,18 +1388,26 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   os << indent << "ImageToImageObjectMetric: " << std::endl
                << "GetNumberOfThreads: " << this->GetNumberOfThreads()
                << std::endl
-               << "GetUseFixedGradientRecursiveGaussianImageFilter: "
-               << this->GetUseFixedGradientRecursiveGaussianImageFilter()
+               << "GetUseFixedImageGradientFilter: "
+               << this->GetUseFixedImageGradientFilter()
                << std::endl
-               << "GetUseMovingGradientRecursiveGaussianImageFilter: "
-               << this->GetUseMovingGradientRecursiveGaussianImageFilter()
+               << "GetUseMovingImageGradientFilter: "
+               << this->GetUseMovingImageGradientFilter()
                << std::endl
-               << "PreWarpFixedImage: " << this->GetPreWarpFixedImage()
+               << "DoFixedImagePreWarp: " << this->GetDoFixedImagePreWarp()
                << std::endl
-               << "PreWarpMovingImage: " << this->GetPreWarpMovingImage()
-               << std::endl
-               << "GetNumberOfThreads: " << this->GetNumberOfThreads()
+               << "DoMovingImagePreWarp: " << this->GetDoMovingImagePreWarp()
                << std::endl;
+
+  if( this->m_NumberOfThreadsHasBeenInitialized )
+    {
+    os << indent << "GetNumberOfThreads: " << this->GetNumberOfThreads()
+                 << std::endl;
+    }
+  else
+    {
+    os << indent << "Number of threads not yet initialized." << std::endl;
+    }
 
   if( this->GetVirtualDomainImage() != NULL )
     {
@@ -1427,12 +1468,6 @@ ImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
     {
     os << indent << "MovingImageMask is NULL." << std::endl;
     }
-
-
-  //os << indent <<
-  //os << indent <<
-  //os << indent <<
-  //os << indent <<
 }
 
 }//namespace itk

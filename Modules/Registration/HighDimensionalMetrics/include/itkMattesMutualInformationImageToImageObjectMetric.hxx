@@ -522,10 +522,10 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 
   // Multithreaded initiate and process sample.
   // This will put results in 'derivative'.
-  this->GetValueAndDerivativeMultiThreadedInitiate( derivative );
+  this->GetValueAndDerivativeThreadedExecute( derivative );
 
   // Post processing
-  this->GetValueAndDerivativeMultiThreadedPostProcess( true /*doAverage*/ );
+  this->GetValueAndDerivativeThreadedPostProcess( true /*doAverage*/ );
 
   // Return value.
   value = this->m_Value;

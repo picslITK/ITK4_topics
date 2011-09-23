@@ -48,11 +48,11 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 {
   // This starts threading, and will iterate over virtual image region and
   // call GetValueAndDerivativeProcessPoint.
-  this->GetValueAndDerivativeMultiThreadedInitiate( derivative );
+  this->GetValueAndDerivativeThreadedExecute( derivative );
 
   // Sums up results from each thread, and optionally averages them.
   // Derivative results are written directly to \c derivative.
-  this->GetValueAndDerivativeMultiThreadedPostProcess( true /*doAverage*/ );
+  this->GetValueAndDerivativeThreadedPostProcess( true /*doAverage*/ );
 
   value = this->GetValueResult();
 }

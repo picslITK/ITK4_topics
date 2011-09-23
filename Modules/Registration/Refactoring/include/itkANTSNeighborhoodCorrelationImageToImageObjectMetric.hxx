@@ -31,7 +31,7 @@ ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage, TMovingImage,
 
     //modify the callback function.
     this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
-            Self::NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback);
+            Self::NeighborhoodScanningWindowGetValueAndDerivativeThreadedCallback);
 
 }
 
@@ -57,11 +57,11 @@ void ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 {
   // This starts threading, and will iterate over virtual image region and
   // call GetValueAndDerivativeProcessPoint.
-  this->GetValueAndDerivativeMultiThreadedInitiate(derivative);
+  this->GetValueAndDerivativeThreadedExecute(derivative);
 
   // Sums up results from each thread, and optionally averages them.
   // Derivative results are written directly to \c derivative.
-  this->GetValueAndDerivativeMultiThreadedPostProcess(true /*doAverage*/);
+  this->GetValueAndDerivativeThreadedPostProcess(true /*doAverage*/);
 
   value = this->GetValueResult();
 }
@@ -80,7 +80,7 @@ void
 ANTSNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
                                                     TMovingImage,
                                                     TVirtualImage>
-::NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback(
+::NeighborhoodScanningWindowGetValueAndDerivativeThreadedCallback(
                       const ThreaderInputObjectType& virtualImageSubRegion,
                       ThreadIdType threadID, Superclass * dataHolderA)
 {

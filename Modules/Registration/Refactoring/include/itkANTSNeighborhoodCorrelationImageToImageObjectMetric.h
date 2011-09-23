@@ -259,7 +259,7 @@ private:
     //purposely not implemented
     void operator=(const Self &);
 
-    static void NeighborhoodScanningWindowGetValueAndDerivativeMultiThreadedCallback(
+    static void NeighborhoodScanningWindowGetValueAndDerivativeThreadedCallback(
             const ThreaderInputObjectType& virtualImageSubRegion,
             ThreadIdType threadID, Superclass * dataHolder);
 

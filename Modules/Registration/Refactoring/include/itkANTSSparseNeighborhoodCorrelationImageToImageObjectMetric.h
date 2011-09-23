@@ -210,7 +210,7 @@ private:
    * define a static method with a different name, and assign it to the
    * threader in the class' constructor by calling
    * \c m_ValueAndDerivativeThreader->SetThreadedGenerateData( mycallback ) */
-  static void SparseSamplingGetValueAndDerivativeMultiThreadedCallback(
+  static void SparseSamplingGetValueAndDerivativeThreadedCallback(
                           const ThreaderInputObjectType& virtualImageSubRegion,
                           ThreadIdType threadID,
                           MetricBaseclass * self);

@@ -36,7 +36,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
    * holder for threading */
   this->m_ValueAndDerivativeThreader = ValueAndDerivativeThreaderType::New();
   this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
-    Self::GetValueAndDerivativeMultiThreadedCallback );
+    Self::GetValueAndDerivativeThreadedCallback );
   this->m_ValueAndDerivativeThreader->SetHolder( this );
   this->m_NumberOfThreads =
       this->m_ValueAndDerivativeThreader->GetNumberOfThreads();
@@ -201,7 +201,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
                                       DetermineNumberOfThreadsToUse();
 
   /* Clear this flag to force initialization of threading memory
-   * in GetValueAndDerivativeMultiThreadedInitiate. */
+   * in GetValueAndDerivativeThreadedExecute. */
   this->m_ThreadingMemoryHasBeenInitialized = false;
 
   /*
@@ -353,7 +353,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedInitiate( DerivativeType & derivativeReturn )
+::GetValueAndDerivativeThreadedExecute( DerivativeType & derivativeReturn )
 {
   //Initialize threading memory if this is the first time
   // in here since a call to Initialize, or if user has passed
@@ -368,7 +368,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   InitializeForIteration();
 
   // Do the threaded evaluation. This will
-  // call GetValueAndDerivativeMultiThreadedCallback, which
+  // call GetValueAndDerivativeThreadedCallback, which
   // iterates over virtual domain region and calls derived class'
   // GetValueAndDerivativeProcessPoint.
   this->m_ValueAndDerivativeThreader->StartThreadedExecution();
@@ -376,7 +376,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
   CollectNumberOfValidPoints();
 
   // To collect the results from each thread into final values
-  // the derived class can call GetValueAndDerivativeMultiThreadedPostProcess,
+  // the derived class can call GetValueAndDerivativeThreadedPostProcess,
   // or do their own processing.
 }
 
@@ -489,7 +489,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 {
   /* Count number of valid points.
    * Other post-processing can be done by calling
-   * GetValueAndDerivativeMultiThreadedPostProcess, or direclty
+   * GetValueAndDerivativeThreadedPostProcess, or direclty
    * in the derived class. */
   this->m_NumberOfValidPoints = 0;
   for (ThreadIdType i=0; i<this->m_NumberOfThreads; i++)
@@ -506,7 +506,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedPostProcess( bool doAverage )
+::GetValueAndDerivativeThreadedPostProcess( bool doAverage )
 {
   /* For global transforms, sum the derivatives from each region. */
   if ( ! this->m_MovingTransform->HasLocalSupport() )
@@ -542,7 +542,7 @@ VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
 template<class TFixedImage,class TMovingImage,class TVirtualImage>
 void
 VectorImageToVectorImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage >
-::GetValueAndDerivativeMultiThreadedCallback(
+::GetValueAndDerivativeThreadedCallback(
                 const ThreaderInputObjectType& virtualImageSubRegion,
                 ThreadIdType threadID,
                 Self * self)

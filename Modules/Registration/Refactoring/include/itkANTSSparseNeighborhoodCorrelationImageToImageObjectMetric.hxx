@@ -33,7 +33,7 @@ ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
     //modify the callback function.
     this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
-            Self::SparseSamplingGetValueAndDerivativeMultiThreadedCallback);
+            Self::SparseSamplingGetValueAndDerivativeThreadedCallback);
 
     this->m_NumberOfSampling = 1;
 
@@ -53,11 +53,11 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         DerivativeType & derivative) {
     // This starts threading, and will iterate over virtual image region and
     // call GetValueAndDerivativeProcessPoint.
-    this->GetValueAndDerivativeMultiThreadedInitiate(derivative);
+    this->GetValueAndDerivativeThreadedExecute(derivative);
 
     // Sums up results from each thread, and optionally averages them.
     // Derivative results are written directly to \c derivative.
-    this->GetValueAndDerivativeMultiThreadedPostProcess(true /*doAverage*/);
+    this->GetValueAndDerivativeThreadedPostProcess(true /*doAverage*/);
 
     value = this->GetValueResult();
 }
@@ -125,7 +125,7 @@ void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
-        TMovingImage, TVirtualImage>::SparseSamplingGetValueAndDerivativeMultiThreadedCallback(
+        TMovingImage, TVirtualImage>::SparseSamplingGetValueAndDerivativeThreadedCallback(
         const ThreaderInputObjectType& virtualImageSubRegion,
         ThreadIdType threadID, MetricBaseclass * self) {
 

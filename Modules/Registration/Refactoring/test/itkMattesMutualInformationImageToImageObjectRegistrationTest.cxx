@@ -202,11 +202,11 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   compositeTransform->SetOnlyMostRecentTransformToOptimizeOn(); //set to optimize the displacement field
   metric->SetMovingTransform( compositeTransform );
   bool prewarp = false;
-  metric->SetPreWarpMovingImage( prewarp );
-  metric->SetPreWarpFixedImage( prewarp );
+  metric->SetDoMovingImagePreWarp( prewarp );
+  metric->SetDoFixedImagePreWarp( prewarp );
   bool gaussian = false;
-  metric->SetUseMovingGradientRecursiveGaussianImageFilter( gaussian );
-  metric->SetUseFixedGradientRecursiveGaussianImageFilter( gaussian );
+  metric->SetUseMovingImageGradientFilter( gaussian );
+  metric->SetUseFixedImageGradientFilter( gaussian );
   metric->Initialize();
 
   typedef GradientDescentObjectOptimizer  OptimizerType;
@@ -234,7 +234,7 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
             << "Number of threads: " << metric->GetNumberOfThreads() << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Learning rate: " << learningRate << std::endl
-            << "PreWarpImages: " << metric->GetPreWarpMovingImage() << std::endl;
+            << "PreWarpImages: " << metric->GetDoMovingImagePreWarp() << std::endl;
   try
     {
     qoptimizer->StartOptimization();
@@ -268,13 +268,13 @@ int itkMattesMutualInformationImageToImageObjectRegistrationTest(int argc, char 
   std::cout << "Start optimization..." << std::endl
             << "Number of iterations: " << numberOfIterations << std::endl
             << "Deformation learning rate: " << deformationLearningRate << std::endl
-            << "PreWarpMovingImage: " << metric->GetPreWarpMovingImage() << std::endl
-            << "PreWarpFixedImage: " << metric->GetPreWarpFixedImage() << std::endl
+            << "PreWarpMovingImage: " << metric->GetDoMovingImagePreWarp() << std::endl
+            << "PreWarpFixedImage: " << metric->GetDoFixedImagePreWarp() << std::endl
             << "Use_Moving_GradientRecursiveGaussianImageFilter: "
-            << metric->GetUseMovingGradientRecursiveGaussianImageFilter()
+            << metric->GetUseMovingImageGradientFilter()
             << std::endl
             << "Use_Fixed_GradientRecursiveGaussianImageFilter: "
-            << metric->GetUseFixedGradientRecursiveGaussianImageFilter()
+            << metric->GetUseFixedImageGradientFilter()
             << std::endl;
   try
     {
