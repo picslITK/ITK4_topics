@@ -550,7 +550,7 @@ ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVi
                     const MovingImageGradientsType &   movingImageGradients,
                     MeasureType &,
                     DerivativeType &                   localDerivativeReturn,
-                    const ThreadIdType                 threadID)
+                    const ThreadIdType                 threadID) const
 {
   // check that the moving image sample is within the range of the true min
   // and max, hence being within the moving image mask
@@ -601,8 +601,9 @@ ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVi
     }
 
   /* Use a pre-allocated jacobian object for efficiency */
-  typename Superclass::JacobianType & jacobian =
-                            this->m_MovingTransformJacobianPerThread[threadID];
+  typedef typename Superclass::JacobianType &   JacobianReferenceType;
+  JacobianReferenceType jacobian = const_cast<JacobianReferenceType>(
+    this->m_MovingTransformJacobianPerThread[threadID]);
 
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
@@ -683,7 +684,7 @@ ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVi
 ::ComputeJointPDFPoint( const FixedImagePixelType fixedImageValue,
                         const MovingImagePixelType movingImageValue,
                         JointPDFPointType& jointPDFpoint,
-                        const ThreadIdType threadID )
+                        const ThreadIdType threadID ) const
 {
     InternalComputationValueType a =
         ( fixedImageValue - this->m_FixedImageTrueMin ) /
@@ -733,7 +734,7 @@ typename ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingI
 ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 ::ComputeMovingImageMarginalPDFDerivative(
                                         const MarginalPDFPointType margPDFpoint,
-                                        const ThreadIdType threadID )
+                                        const ThreadIdType threadID ) const
 {
   InternalComputationValueType offset = 0.5*this->m_JointPDFSpacing[0];
   InternalComputationValueType eps = this->m_JointPDFSpacing[0];
@@ -776,7 +777,7 @@ typename ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingI
 ThevenazMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 ::ComputeJointPDFDerivative( const JointPDFPointType jointPDFpoint,
                              const ThreadIdType threadID,
-                             const SizeValueType ind )
+                             const SizeValueType ind ) const
 {
   InternalComputationValueType offset = 0.5*this->m_JointPDFSpacing[ind];
   InternalComputationValueType eps = this->m_JointPDFSpacing[ind];

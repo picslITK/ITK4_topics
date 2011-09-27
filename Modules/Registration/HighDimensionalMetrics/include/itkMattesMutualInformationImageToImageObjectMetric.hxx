@@ -518,7 +518,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtua
 
   // Calculate value
   this->m_Value = this->GetValue();
-  std::cout <<" Mutual information value " << this->m_Value << std::endl;
+  itkDebugMacro("Mutual information value " << this->m_Value);
 
   // Multithreaded initiate and process sample.
   // This will put results in 'derivative'.
@@ -546,7 +546,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
                     const MovingImageGradientsType &   movingImageGradients,
                     MeasureType &,
                     DerivativeType &                   localDerivativeReturn,
-                    const ThreadIdType                 threadID)
+                    const ThreadIdType                 threadID) const
 {
   // check that the moving image sample is within the range of the true min
   // and max, hence being within the moving image mask
@@ -597,8 +597,9 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
     }
 
   /* Use a pre-allocated jacobian object for efficiency */
-  typename Superclass::JacobianType & jacobian =
-                            this->m_MovingTransformJacobianPerThread[threadID];
+  typedef typename Superclass::JacobianType &   JacobianReferenceType;
+  JacobianReferenceType jacobian = const_cast<JacobianReferenceType>(
+    this->m_MovingTransformJacobianPerThread[threadID]);
 
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
@@ -679,7 +680,7 @@ MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirt
 ::ComputeJointPDFPoint( const FixedImagePixelType fixedImageValue,
                         const MovingImagePixelType movingImageValue,
                         JointPDFPointType& jointPDFpoint,
-                        const ThreadIdType threadID )
+                        const ThreadIdType threadID ) const
 {
     InternalComputationValueType a =
         ( fixedImageValue - this->m_FixedImageTrueMin ) /
@@ -729,7 +730,7 @@ typename MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingIma
 MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 ::ComputeMovingImageMarginalPDFDerivative(
                                         const MarginalPDFPointType margPDFpoint,
-                                        const ThreadIdType threadID )
+                                        const ThreadIdType threadID ) const
 {
   InternalComputationValueType offset = 0.5*this->m_JointPDFSpacing[0];
   InternalComputationValueType eps = this->m_JointPDFSpacing[0];
@@ -772,7 +773,7 @@ typename MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingIma
 MattesMutualInformationImageToImageObjectMetric<TFixedImage, TMovingImage, TVirtualImage>
 ::ComputeJointPDFDerivative( const JointPDFPointType jointPDFpoint,
                              const ThreadIdType threadID,
-                             const SizeValueType ind )
+                             const SizeValueType ind ) const
 {
   InternalComputationValueType offset = 0.5*this->m_JointPDFSpacing[ind];
   InternalComputationValueType eps = this->m_JointPDFSpacing[ind];

@@ -73,7 +73,7 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                     const MovingImageGradientType & movingImageDerivatives,
                     MeasureType &                      metricValueReturn,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID)
+                    ThreadIdType                       threadID) const
 {
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = movingImageValue - fixedImageValue;
@@ -86,9 +86,12 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
   //  std::cout << "diffImage(" << (int)(256-virtualPoint[0]) << ","
   //  << (int)(256-virtualPoint[1]) << ")=" << diff << ";" << std::endl; //tmpdbg
   //tmpcount++;
+
   /* Use a pre-allocated jacobian object for efficiency */
-  JacobianType & movingJacobian =
-                            this->m_MovingTransformJacobianPerThread[threadID];
+  typedef typename Superclass::JacobianType &   JacobianReferenceType;
+  JacobianReferenceType movingJacobian = const_cast<JacobianReferenceType>(
+    this->m_MovingTransformJacobianPerThread[threadID]);
+
   //FIXME: we may optimize the fixed transform as well
   //JacobianType & fixedJacobian =
   //                          this->m_FixedTransformJacobianPerThread[threadID];

@@ -84,7 +84,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                     const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueReturn,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID)
+                    ThreadIdType                       threadID) const
 {
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = fixedImageValue - movingImageValue;
@@ -92,7 +92,9 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
     vcl_fabs( diff  ) / static_cast<MeasureType>( this->FixedImageDimension );
 
   /* Use a pre-allocated jacobian object for efficiency */
-  JacobianType & jacobian = this->m_MovingTransformJacobianPerThread[threadID];
+  typedef typename Superclass::JacobianType &   JacobianReferenceType;
+  JacobianReferenceType jacobian = const_cast<JacobianReferenceType>(
+    this->m_MovingTransformJacobianPerThread[threadID]);
 
   /** For dense transforms, this returns identity */
   this->m_MovingTransform->ComputeJacobianWithRespectToParameters(

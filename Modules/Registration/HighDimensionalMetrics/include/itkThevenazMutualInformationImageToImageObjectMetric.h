@@ -151,7 +151,7 @@ protected:
   bool ComputeJointPDFPoint( const FixedImagePixelType fixedImageValue,
                              const MovingImagePixelType movingImageValue,
                              JointPDFPointType& jointPDFpoint,
-                             const ThreadIdType threadID );
+                             const ThreadIdType threadID ) const;
 
   inline InternalComputationValueType ComputeFixedImageMarginalPDFDerivative(
                                         const MarginalPDFPointType margPDFpoint,
@@ -159,12 +159,12 @@ protected:
 
   inline InternalComputationValueType ComputeMovingImageMarginalPDFDerivative(
                                         const MarginalPDFPointType margPDFpoint,
-                                        const ThreadIdType threadID );
+                                        const ThreadIdType threadID ) const;
 
   inline InternalComputationValueType ComputeJointPDFDerivative(
                                           const JointPDFPointType jointPDFpoint,
                                           const ThreadIdType threadID,
-                                          const SizeValueType ind );
+                                          const SizeValueType ind ) const;
 
   bool GetValueAndDerivativeProcessPoint(
                     const VirtualPointType &           virtualPoint,
@@ -176,7 +176,7 @@ protected:
                     const MovingImageGradientsType &   movingImageGradients,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
-                    const ThreadIdType                 threadID);
+                    const ThreadIdType                 threadID) const;
 
   void EnforceJointHistogramBoundaryConditions();
 

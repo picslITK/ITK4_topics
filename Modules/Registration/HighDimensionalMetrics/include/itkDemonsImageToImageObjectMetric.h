@@ -93,7 +93,7 @@ protected:
                     const MovingImageGradientType & movingImageGradient,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID);
+                    ThreadIdType                       threadID) const;
 
   DemonsImageToImageObjectMetric();
   virtual ~DemonsImageToImageObjectMetric();
