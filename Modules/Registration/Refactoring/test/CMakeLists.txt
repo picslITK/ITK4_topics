@@ -8,7 +8,6 @@ set(ITKRegistrationRefactoringTests
   itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-  itkMattesMutualInformationImageToImageObjectRegistrationTest.cxx
   itkThevenazMutualInformationImageToImageObjectRegistrationTest.cxx
   itkQuasiNewtonRegistrationTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
@@ -33,10 +32,6 @@ CreateTestDriver(ITKRegistrationRefactoring  "${ITKRegistrationRefactoring-Test_
 
 #itk_add_test(NAME itkTransformVirtualDomainCalculatorTest3D
 #      COMMAND ITKRegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd)
-
-itk_add_test(NAME itkMattesMutualInformationImageToImageObjectRegistrationTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkMattesMutualInformationImageToImageObjectRegistrationTest)
 
 # On hold until class is updated
 #itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
