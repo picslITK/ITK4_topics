@@ -24,8 +24,8 @@
 #include "itkImageToImageFilter.h"
 #include "itkExtrapolateImageFunction.h"
 #include "itkLinearInterpolateImageFunction.h"
-#include "itkBSplineInterpolateImageFunction.h"
 #include "itkSize.h"
+#include "itkDefaultConvertPixelTraits.h"
 
 namespace itk
 {
@@ -127,15 +127,16 @@ public:
                                     TInterpolatorPrecisionType >     InterpolatorType;
   typedef typename InterpolatorType::Pointer InterpolatorPointerType;
 
+  typedef typename InterpolatorType::OutputType InterpolatorOutputType;
+
+  typedef DefaultConvertPixelTraits< InterpolatorOutputType >        InterpolatorConvertType;
+
+  typedef typename InterpolatorConvertType::ComponentType            ComponentType;
+
   typedef LinearInterpolateImageFunction< InputImageType,
                                           TInterpolatorPrecisionType >   LinearInterpolatorType;
   typedef typename LinearInterpolatorType::Pointer
   LinearInterpolatorPointerType;
-
-  typedef BSplineInterpolateImageFunction< InputImageType,
-                                           TInterpolatorPrecisionType >   BSplineInterpolatorType;
-  typedef typename BSplineInterpolatorType::Pointer
-  BSplineInterpolatorPointerType;
 
   /** Extrapolator typedef. */
   typedef ExtrapolateImageFunction< InputImageType,
@@ -155,6 +156,10 @@ public:
   /** Image pixel value typedef. */
   typedef typename TOutputImage::PixelType PixelType;
   typedef typename TInputImage::PixelType  InputPixelType;
+
+  typedef DefaultConvertPixelTraits<PixelType> PixelConvertType;
+
+  typedef typename PixelConvertType::ComponentType PixelComponentType;
 
   /** Input pixel continous index typdef */
   typedef ContinuousIndex< TInterpolatorPrecisionType, ImageDimension >
@@ -282,13 +287,21 @@ public:
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
   itkConceptMacro( OutputHasNumericTraitsCheck,
-                   ( Concept::HasNumericTraits< PixelType > ) );
+                   ( Concept::HasNumericTraits< PixelComponentType > ) );
   /** End concept checking */
 #endif
 protected:
   ResampleImageFilter();
   ~ResampleImageFilter() {}
   void PrintSelf(std::ostream & os, Indent indent) const;
+
+
+  /** Override VeriyInputInformation() since this filter's inputs do
+   * not need to occoupy the same physical space.
+   *
+   * \sa ProcessObject::VerifyInputInformation
+   */
+  virtual void VerifyInputInformation() {}
 
   /** ResampleImageFilter can be implemented as a multithreaded filter.
    * Therefore, this implementation provides a ThreadedGenerateData()
@@ -299,27 +312,25 @@ protected:
    * specified by the parameter "outputRegionForThread"
    * \sa ImageToImageFilter::ThreadedGenerateData(),
    *     ImageToImageFilter::GenerateData() */
-  void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
+  virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
                             ThreadIdType threadId);
 
   /** Default implementation for resampling that works for any
    * transformation type. */
-  void NonlinearThreadedGenerateData(const OutputImageRegionType &
+  virtual void NonlinearThreadedGenerateData(const OutputImageRegionType &
                                      outputRegionForThread,
                                      ThreadIdType threadId);
 
   /** Implementation for resampling that works for with linear
    *  transformation types.
    */
-  void LinearThreadedGenerateData(const OutputImageRegionType &
+  virtual void LinearThreadedGenerateData(const OutputImageRegionType &
                                   outputRegionForThread,
                                   ThreadIdType threadId);
 
-  /** Determine if the assigned transform is capable of using its
-   * TransformIndex method instead of TransformPoint. For speed efficiency.
-   * Must be run after outputs have been allocated, so in
-   * BeforeThreadedGeneateData */
-  virtual bool CanUseTransformIndex();
+  virtual PixelType CastPixelWithBoundsChecking( const InterpolatorOutputType value,
+                                                 const ComponentType minComponent,
+                                                 const ComponentType maxComponent) const;
 
 private:
   ResampleImageFilter(const Self &); //purposely not implemented
@@ -340,13 +351,6 @@ private:
   IndexType       m_OutputStartIndex;          // output image start index
   bool            m_UseReferenceImage;
 
-  bool                           m_InterpolatorIsBSpline;
-  BSplineInterpolatorPointerType m_BSplineInterpolator;
-
-  /** This flag tracks whether the transform supports the use of
-   * TransformIndex rather than TransformPoint, given the settings
-   * of the output. TransformIndex is faster than TransformPoint. */
-  bool                           m_TransformCanUseTransformIndex;
 };
 } // end namespace itk
 

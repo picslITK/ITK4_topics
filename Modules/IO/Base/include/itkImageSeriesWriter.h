@@ -29,7 +29,7 @@ namespace itk
  *  \brief Base exception class for IO problems during writing.
  * \ingroup ITKIOBase
  */
-class ImageSeriesWriterException:public ExceptionObject
+class ITK_ABI_EXPORT ImageSeriesWriterException:public ExceptionObject
 {
 public:
   /** Run-time information. */
@@ -105,6 +105,7 @@ public:
   typedef const DictionaryArrayType *         DictionaryArrayRawPointer;
 
   /** Set/Get the image input of this writer.  */
+  using Superclass::SetInput;
   void SetInput(const InputImageType *input);
 
   const InputImageType * GetInput(void);

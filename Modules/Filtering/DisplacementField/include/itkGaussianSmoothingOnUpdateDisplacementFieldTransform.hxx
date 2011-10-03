@@ -20,9 +20,13 @@
 
 #include "itkGaussianSmoothingOnUpdateDisplacementFieldTransform.h"
 
-#include "itkImageRegionIteratorWithIndex.h"
-#include "vnl/algo/vnl_symmetric_eigensystem.h"
-#include "vnl/algo/vnl_matrix_inverse.h"
+#include "itkAddImageFilter.h"
+#include "itkGaussianOperator.h"
+#include "itkImageDuplicator.h"
+#include "itkImageLinearIteratorWithIndex.h"
+#include "itkImportImageFilter.h"
+#include "itkMultiplyImageFilter.h"
+#include "itkVectorNeighborhoodOperatorImageFilter.h"
 
 namespace itk
 {
@@ -31,15 +35,11 @@ namespace itk
  * Constructor
  */
 template<class TScalar, unsigned int NDimensions>
-GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>::
-GaussianSmoothingOnUpdateDisplacementFieldTransform()
+GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
+::GaussianSmoothingOnUpdateDisplacementFieldTransform()
 {
-  m_GaussianSmoothingSigma = 3;
-  m_GaussianSmoothingTempFieldModifiedTime = 0;
-  /** These are init'ed when SmoothDeformatFieldGauss is called, either for
-   * the first time, or after a new displacement field has been assigned. */
-  m_GaussianSmoothingTempField = NULL;
-  m_GaussianSmoothingSmoother = NULL;
+  this->m_GaussianSmoothingVarianceForTheUpdateField = 3.0;
+  this->m_GaussianSmoothingVarianceForTheTotalField = 0.5;
 }
 
 /**
@@ -56,32 +56,97 @@ void
 GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
 ::UpdateTransformParameters( DerivativeType & update, ScalarType factor)
 {
-  //This simply adds the values.
-  //TODO: This should be multi-threaded probably, via image add filter.
+  DisplacementFieldPointer displacementField = this->GetDisplacementField();
+
+  const typename DisplacementFieldType::RegionType & bufferedRegion = displacementField->GetBufferedRegion();
+  const SizeValueType numberOfPixels = bufferedRegion.GetNumberOfPixels();
+
+  typedef ImportImageFilter<DisplacementVectorType, NDimensions> ImporterType;
+  const bool importFilterWillReleaseMemory = false;
+
+  //
+  // Smooth the update field
+  //
+  bool smoothUpdateField = true;
+  if( this->m_GaussianSmoothingVarianceForTheUpdateField <= 0.0 )
+    {
+    itkDebugMacro( "Not smooothing the update field." );
+    smoothUpdateField = false;
+    }
+  if( smoothUpdateField )
+    {
+    itkDebugMacro( "Smooothing the update field." );
+
+    DisplacementVectorType *updateFieldPointer = reinterpret_cast<DisplacementVectorType *>( update.data_block() );
+
+    typename ImporterType::Pointer importer = ImporterType::New();
+    importer->SetImportPointer( updateFieldPointer, numberOfPixels, importFilterWillReleaseMemory );
+    importer->SetRegion( displacementField->GetBufferedRegion() );
+    importer->SetOrigin( displacementField->GetOrigin() );
+    importer->SetSpacing( displacementField->GetSpacing() );
+    importer->SetDirection( displacementField->GetDirection() );
+
+    DisplacementFieldPointer updateField = importer->GetOutput();
+    updateField->Update();
+    updateField->DisconnectPipeline();
+
+    DisplacementFieldPointer updateSmoothField = this->GaussianSmoothDisplacementField( updateField, this->m_GaussianSmoothingVarianceForTheUpdateField );
+
+    DerivativeValueType *updatePointer = reinterpret_cast<DerivativeValueType *>( updateSmoothField->GetBufferPointer() );
+
+    memcpy( update.data_block(), updatePointer, sizeof( DisplacementVectorType ) * numberOfPixels );
+    }
+
+  //
+  // Add the update field to the current total field before (optionally)
+  // smoothing the total field
+  //
   Superclass::UpdateTransformParameters( update, factor );
 
-  //Now we smooth the result. Not thread safe. Does it's own
-  // threading.
-  GaussianSmoothDisplacementField();
+  //
+  // Smooth the total field
+  //
+  bool smoothTotalField = true;
+  if( this->m_GaussianSmoothingVarianceForTheTotalField <= 0.0 )
+    {
+    itkDebugMacro( "Not smooothing the total field." );
+    smoothTotalField = false;
+    }
+  if( smoothTotalField )
+    {
+    itkDebugMacro( "Smooothing the total field." );
+
+    typename ImporterType::Pointer importer = ImporterType::New();
+    importer->SetImportPointer( displacementField->GetBufferPointer(), numberOfPixels, importFilterWillReleaseMemory );
+    importer->SetRegion( displacementField->GetBufferedRegion() );
+    importer->SetOrigin( displacementField->GetOrigin() );
+    importer->SetSpacing( displacementField->GetSpacing() );
+    importer->SetDirection( displacementField->GetDirection() );
+
+    DisplacementFieldPointer totalField = importer->GetOutput();
+    totalField->Update();
+    totalField->DisconnectPipeline();
+
+    DisplacementFieldPointer totalSmoothField = this->GaussianSmoothDisplacementField( totalField, this->m_GaussianSmoothingVarianceForTheTotalField );
+
+    memcpy( displacementField->GetBufferPointer(), totalSmoothField->GetBufferPointer(), sizeof( DisplacementVectorType ) * numberOfPixels );
+    }
 }
 
 template<class TScalar, unsigned int NDimensions>
-void GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
-::GaussianSmoothDisplacementField()
+typename GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>::DisplacementFieldPointer
+GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
+::GaussianSmoothDisplacementField( DisplacementFieldType *field, ScalarType variance )
 {
-  itkDebugMacro(" enter gauss smooth. m_GaussianSmoothingSigma: "
-                << m_GaussianSmoothingSigma);
-  if( this->m_GaussianSmoothingSigma <= 0 )
+  if( variance <= 0 )
     {
-    return;
+    return field;
     }
-
-  typename DisplacementFieldType::Pointer field = this->GetDisplacementField();
 
   /* Allocate temp field if new displacement field has been set.
    * We only want to allocate this field if this method is used */
   if( this->GetDisplacementFieldSetTime() >
-      this->m_GaussianSmoothingTempFieldModifiedTime )
+      this->m_GaussianSmoothingTempFieldModifiedTime ||  m_GaussianSmoothingTempField.IsNull()  )
     {
     this->m_GaussianSmoothingTempFieldModifiedTime = this->GetMTime();
     m_GaussianSmoothingTempField = DisplacementFieldType::New();
@@ -121,7 +186,7 @@ void GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
     {
     // smooth along this dimension
     m_GaussianSmoothingOperator.SetDirection( j );
-    m_GaussianSmoothingOperator.SetVariance( m_GaussianSmoothingSigma );
+    m_GaussianSmoothingOperator.SetVariance( variance );
     m_GaussianSmoothingOperator.SetMaximumError(0.001 );
     m_GaussianSmoothingOperator.SetMaximumKernelWidth( 256 );
     m_GaussianSmoothingOperator.CreateDirectional();
@@ -167,9 +232,9 @@ void GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
 
   //make sure boundary does not move
   ScalarType weight = 1.0;
-  if (m_GaussianSmoothingSigma < 0.5)
+  if (variance < 0.5)
     {
-    weight=1.0 - 1.0 * ( this->m_GaussianSmoothingSigma / 0.5);
+    weight=1.0 - 1.0 * ( variance / 0.5);
     }
   ScalarType weight2 = 1.0 - weight;
   typedef ImageRegionIteratorWithIndex<DisplacementFieldType> Iterator;
@@ -202,6 +267,7 @@ void GaussianSmoothingOnUpdateDisplacementFieldTransform<TScalar, NDimensions>
   }
 
   itkDebugMacro("done gauss smooth ");
+  return field;
 }
 
 template <class TScalar, unsigned int NDimensions>
@@ -212,15 +278,10 @@ PrintSelf( std::ostream& os, Indent indent ) const
   Superclass::PrintSelf( os,indent );
 
   os << indent << "Gaussian smoothing parameters: " << std::endl
-     << indent << "m_GaussianSmoothingSigma: " << m_GaussianSmoothingSigma
+     << indent << "m_GaussianSmoothingVarianceForTheUpdateField: " << this->m_GaussianSmoothingVarianceForTheUpdateField
      << std::endl
-     << "m_GaussianSmoothingTempFieldModifiedTime: "
-     << m_GaussianSmoothingTempFieldModifiedTime
-     << std::endl
-     << "m_GaussianSmoothingTempField: " << m_GaussianSmoothingTempField
-     << std::endl
-     << "m_GaussianSmoothingSmoother: "
-     << m_GaussianSmoothingSmoother << std::endl;
+     << indent << "m_GaussianSmoothingVarianceForTheTotalField: " << this->m_GaussianSmoothingVarianceForTheTotalField
+     << std::endl;
 }
 } // namespace itk
 

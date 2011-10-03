@@ -65,9 +65,8 @@ public:
 
   void Initialize(void) throw ( itk::ExceptionObject ) {}
 
-  using Superclass::GetValueAndDerivative;
   void GetValueAndDerivative( MeasureType & value,
-                              DerivativeType & derivative )
+                              DerivativeType & derivative ) const
   {
     if( derivative.Size() != 2 )
       derivative.SetSize(2);
@@ -93,8 +92,7 @@ public:
     std::cout << "derivative: " << derivative << std::endl;
   }
 
-  using Superclass::GetValue;
-  MeasureType  GetValue()
+  MeasureType  GetValue() const
   {
     return 0.0;
   }
@@ -214,6 +212,10 @@ int itkGradientDescentObjectOptimizerTest(int, char* [] )
     std::cout << "Test failed." << std::endl;
     return EXIT_FAILURE;
     }
+
+  std::cout <<  "Printing self.. " << std::endl;
+  std::cout << itkOptimizer  << std::endl;
+
 
   std::cout << "Test passed." << std::endl;
   return EXIT_SUCCESS;

@@ -19,7 +19,7 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "itkBinaryImageToMalcolmSparseLevelSetAdaptor.h"
+#include "itkBinaryImageToSparseLevelSetImageAdaptor.h"
 
 int itkBinaryImageToMalcolmSparseLevelSetAdaptorTest( int argc, char* argv[] )
 {
@@ -50,19 +50,20 @@ int itkBinaryImageToMalcolmSparseLevelSetAdaptorTest( int argc, char* argv[] )
   InputImageType::Pointer input = reader->GetOutput();
   std::cout << "Input image read" << std::endl;
 
-  typedef itk::BinaryImageToMalcolmSparseLevelSetAdaptor< InputImageType > BinaryToSparseAdaptorType;
+  typedef itk::MalcolmSparseLevelSetImage< Dimension >  LevelSetType;
+  typedef itk::BinaryImageToSparseLevelSetImageAdaptor<
+      InputImageType, LevelSetType >                    BinaryToSparseAdaptorType;
 
   BinaryToSparseAdaptorType::Pointer adaptor = BinaryToSparseAdaptorType::New();
   adaptor->SetInputImage( input );
   adaptor->Initialize();
   std::cout << "Finished converting to sparse format" << std::endl;
 
-  typedef BinaryToSparseAdaptorType::LevelSetType     SparseLevelSetType;
-  SparseLevelSetType::Pointer sparseLevelSet = adaptor->GetSparseLevelSet();
+  LevelSetType::Pointer sparseLevelSet = adaptor->GetLevelSet();
 
   typedef BinaryToSparseAdaptorType::LevelSetOutputType LevelSetOutputType;
 
-  typedef itk::Image< LevelSetOutputType, Dimension >   StatusImageType;
+  typedef itk::Image< char, Dimension >   StatusImageType;
   StatusImageType::Pointer statusImage = StatusImageType::New();
   statusImage->SetRegions( input->GetLargestPossibleRegion() );
   statusImage->CopyInformation( input );
@@ -79,6 +80,7 @@ int itkBinaryImageToMalcolmSparseLevelSetAdaptorTest( int argc, char* argv[] )
     {
     idx = sIt.GetIndex();
     sIt.Set( sparseLevelSet->Evaluate( idx ) );
+    std::cout << int(sparseLevelSet->Evaluate( idx )) << std::endl;
     ++sIt;
     }
 
@@ -97,12 +99,12 @@ int itkBinaryImageToMalcolmSparseLevelSetAdaptorTest( int argc, char* argv[] )
     return EXIT_FAILURE;
     }
 
-  SparseLevelSetType::LayerType layer = sparseLevelSet->GetLayer( 0 );
-  SparseLevelSetType::LayerIterator lIt = layer.begin();
+  LevelSetType::LayerType layer = sparseLevelSet->GetLayer( LevelSetType::ZeroLayer() );
+  LevelSetType::LayerIterator lIt = layer.begin();
 
   while( lIt != layer.end() )
     {
-    std::cout << lIt->first << std::endl;
+    std::cout << lIt->first << ' ' << int(lIt->second) << std::endl;
     ++lIt;
     }
 

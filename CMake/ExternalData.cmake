@@ -98,6 +98,13 @@
 # scope of this module).  The data fetch rule created for the content link
 # will use the staged object if it cannot be found using any URL template.
 #
+# The variable ExternalData_OBJECT_STORES may be set to a list of local
+# directories that store objects using the layout <dir>/%(algo)/%(hash).
+# These directories will be searched first for a needed object.  If the object
+# is not available in any store then it will be fetched remotely using the URL
+# templates and added to the first local store listed.  If no stores are
+# specified the default is a location inside the build tree.
+#
 # The variable ExternalData_SOURCE_ROOT may be set to the highest source
 # directory containing any path named by a DATA{} reference.  The default is
 # CMAKE_SOURCE_DIR.  ExternalData_SOURCE_ROOT and CMAKE_SOURCE_DIR must refer
@@ -152,6 +159,9 @@ function(ExternalData_add_target target)
   if(NOT ExternalData_URL_TEMPLATES)
     message(FATAL_ERROR "ExternalData_URL_TEMPLATES is not set!")
   endif()
+  if(NOT ExternalData_OBJECT_STORES)
+    set(ExternalData_OBJECT_STORES ${CMAKE_BINARY_DIR}/ExternalData/Objects)
+  endif()
   set(config ${CMAKE_CURRENT_BINARY_DIR}/${target}_config.cmake)
   configure_file(${_ExternalData_SELF_DIR}/ExternalData_config.cmake.in ${config} @ONLY)
 
@@ -200,8 +210,7 @@ function(ExternalData_add_target target)
         # make tool that a symlink target may not be newer than the input.
         OUTPUT "${file}${ext}" "${file}"
         # Run the data fetch/update script.
-        COMMAND ${CMAKE_COMMAND} -DExternalData_OBJECT_DIR=${CMAKE_BINARY_DIR}/ExternalData/Objects
-                                 -Drelative_top=${CMAKE_BINARY_DIR}
+        COMMAND ${CMAKE_COMMAND} -Drelative_top=${CMAKE_BINARY_DIR}
                                  -Dfile=${file} -Dname=${name} -Dext=${ext}
                                  -DExternalData_ACTION=fetch
                                  -DExternalData_CONFIG=${config}
@@ -252,13 +261,24 @@ function(_ExternalData_compute_hash var_hash algo file)
   endif()
 endfunction()
 
+function(_ExternalData_random var)
+  if(NOT ${CMAKE_VERSION} VERSION_LESS 2.8.5)
+    string(RANDOM LENGTH 6 random)
+  elseif(EXISTS /dev/urandom)
+    file(READ /dev/urandom random LIMIT 4 HEX)
+  else()
+    message(FATAL_ERROR "CMake >= 2.8.5 required in this environment")
+  endif()
+  set("${var}" "${random}" PARENT_SCOPE)
+endfunction()
+
 function(_ExternalData_exact_regex regex_var string)
   string(REGEX REPLACE "([][+.*()^])" "\\\\\\1" regex "${string}")
   set("${regex_var}" "${regex}" PARENT_SCOPE)
 endfunction()
 
 function(_ExternalData_atomic_write file content)
-  string(RANDOM LENGTH 6 random)
+  _ExternalData_random(random)
   set(tmp "${file}.tmp${random}")
   file(WRITE "${tmp}" "${content}")
   file(RENAME "${tmp}" "${file}")
@@ -485,7 +505,7 @@ function(_ExternalData_link_or_copy src dst)
   # Create a temporary file first.
   get_filename_component(dst_dir "${dst}" PATH)
   file(MAKE_DIRECTORY "${dst_dir}")
-  string(RANDOM LENGTH 6 random)
+  _ExternalData_random(random)
   set(tmp "${dst}.tmp${random}")
   if(UNIX)
     # Create a symbolic link.
@@ -535,10 +555,19 @@ function(_ExternalData_download_file url file err_var msg_var)
     else()
       set(absolute_timeout "")
     endif()
-    file(DOWNLOAD "${url}" "${file}" STATUS status ${inactivity_timeout} ${absolute_timeout} SHOW_PROGRESS)
+    file(DOWNLOAD "${url}" "${file}" STATUS status LOG log ${inactivity_timeout} ${absolute_timeout} SHOW_PROGRESS)
     list(GET status 0 err)
     list(GET status 1 msg)
-    if(NOT err OR NOT "${msg}" MATCHES "partial|timeout")
+    if(err)
+      if("${msg}" MATCHES "HTTP response code said error" AND
+          "${log}" MATCHES "error: 503")
+        set(msg "temporarily unavailable")
+      endif()
+    elseif("${log}" MATCHES "\nHTTP[^\n]* 503")
+      set(err TRUE)
+      set(msg "temporarily unavailable")
+    endif()
+    if(NOT err OR NOT "${msg}" MATCHES "partial|timeout|temporarily")
       break()
     elseif(retry)
       message(STATUS "[download terminated: ${msg}, retries left: ${retry}]")
@@ -549,14 +578,21 @@ function(_ExternalData_download_file url file err_var msg_var)
 endfunction()
 
 function(_ExternalData_download_object name hash algo var_obj)
-  set(obj "${ExternalData_OBJECT_DIR}/${algo}/${hash}")
-  if(EXISTS "${obj}")
-    message(STATUS "Found object: \"${obj}\"")
-    set("${var_obj}" "${obj}" PARENT_SCOPE)
-    return()
-  endif()
+  # Search all object stores for an existing object.
+  foreach(dir ${ExternalData_OBJECT_STORES})
+    set(obj "${dir}/${algo}/${hash}")
+    if(EXISTS "${obj}")
+      message(STATUS "Found object: \"${obj}\"")
+      set("${var_obj}" "${obj}" PARENT_SCOPE)
+      return()
+    endif()
+  endforeach()
 
-  string(RANDOM LENGTH 6 random)
+  # Download object to the first store.
+  list(GET ExternalData_OBJECT_STORES 0 store)
+  set(obj "${store}/${algo}/${hash}")
+
+  _ExternalData_random(random)
   set(tmp "${obj}.tmp${random}")
   set(found 0)
   set(tried "")
@@ -577,7 +613,7 @@ function(_ExternalData_download_object name hash algo var_obj)
       else()
         set(tried "${tried} (wrong hash ${algo}=${dl_hash})")
         if("$ENV{ExternalData_DEBUG_DOWNLOAD}" MATCHES ".")
-          file(RENAME "${tmp}" "${ExternalData_OBJECT_DIR}/${algo}/${dl_hash}")
+          file(RENAME "${tmp}" "${store}/${algo}/${dl_hash}")
         endif()
       endif()
     endif()
@@ -601,7 +637,7 @@ function(_ExternalData_download_object name hash algo var_obj)
 endfunction()
 
 if("${ExternalData_ACTION}" STREQUAL "fetch")
-  foreach(v ExternalData_OBJECT_DIR file name ext)
+  foreach(v ExternalData_OBJECT_STORES file name ext)
     if(NOT DEFINED "${v}")
       message(FATAL_ERROR "No \"-D${v}=\" value provided!")
     endif()

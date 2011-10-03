@@ -45,6 +45,10 @@ namespace itk
  * \ingroup IOFilters
  *
  * \ingroup ITKIOBase
+ *
+ * \wiki
+ * \wikiexample{Utilities/NumericSeriesFileNames,Create a list of file names}
+ * \endwiki
  */
 class ITK_EXPORT NumericSeriesFileNames:public Object
 {
@@ -79,7 +83,8 @@ public:
   /** The format string used to generate the series. Different subclasses
    * require different characteristics of this string. For example, the
    * subclass NumericSeriesFileNames requires a "%d" or some integral
-   * format specified to be embedded in the string. Default is "%d". */
+   * format specified to be embedded in the string. Default is "%d".
+   */
   itkSetStringMacro(SeriesFormat);
   itkGetStringMacro(SeriesFormat);
 

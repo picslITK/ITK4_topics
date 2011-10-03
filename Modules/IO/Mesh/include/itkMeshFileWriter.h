@@ -29,7 +29,7 @@ namespace itk
  *
  * \ingroup ITKIOMesh
  */
-class MeshFileWriterException:public ExceptionObject
+class ITK_ABI_EXPORT MeshFileWriterException:public ExceptionObject
 {
 public:
   /** Run-time information. */
@@ -97,6 +97,7 @@ public:
   typedef typename MeshIOBase::SizeValueType SizeValueType;
 
   /** Set/Get the mesh input of this writer.  */
+  using Superclass::SetInput;
   void  SetInput(const InputMeshType *input);
 
   const InputMeshType * GetInput(void);

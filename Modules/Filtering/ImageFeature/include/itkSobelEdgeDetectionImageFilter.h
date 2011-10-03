@@ -40,6 +40,10 @@ namespace itk
  * \ingroup ImageFeatureExtraction
  *
  * \ingroup ITKImageFeature
+ *
+ * \wiki
+ * \wikiexample{EdgesAndGradients/SobelEdgeDetectionImageFilter,SobelEdgeDetectionImageFilter}
+ * \endwiki
  */
 
 template< class TInputImage, class TOutputImage >
@@ -118,8 +122,6 @@ public:
 protected:
   SobelEdgeDetectionImageFilter() {}
   virtual ~SobelEdgeDetectionImageFilter() {}
-  SobelEdgeDetectionImageFilter(const Self &) {}
-  //void operator=(const Self&) {}
 
   /**
    * Standard pipeline method. While this class does not implement a
@@ -135,6 +137,9 @@ protected:
     Superclass::PrintSelf(os, indent);
   }
 private:
+  SobelEdgeDetectionImageFilter(const Self &); //purposely not implemented
+  void operator=(const Self&); //purposely not implemented
+
 };
 } // end namespace itk
 

@@ -15,67 +15,44 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
 
 #include "itkImage.h"
 #include "itkTimeVaryingVelocityFieldIntegrationImageFilter.h"
 #include "itkTimeVaryingVelocityFieldTransform.h"
 #include "itkVector.h"
 
-//These two are needed as long as we're using fwd-declarations in
-//DisplacementFieldTransfor:
-#include "itkVectorInterpolateImageFunction.h"
-#include "itkVectorLinearInterpolateImageFunction.h"
-
 int itkTimeVaryingVelocityFieldTransformTest( int, char* [] )
 {
-  typedef itk::Vector<double, 3>    VectorType;
-  typedef itk::Image<VectorType, 3> DeformationFieldType;
-  typedef itk::Image<VectorType, 4> TimeVaryingVelocityFieldType;
+  typedef itk::Vector<double, 3>      VectorType;
+  typedef itk::Image<VectorType, 3>   DisplacementFieldType;
+  typedef itk::Image<VectorType, 4>   TimeVaryingVelocityFieldType;
 
   TimeVaryingVelocityFieldType::PointType origin;
   origin.Fill( 0.0 );
+
   TimeVaryingVelocityFieldType::SpacingType spacing;
   spacing.Fill( 2.0 );
+
   TimeVaryingVelocityFieldType::SizeType size;
   size.Fill( 25 );
-  VectorType velocity;
-  velocity.Fill( 0.1 );
+
+  VectorType displacement1;
+  displacement1.Fill( 0.1 );
 
   TimeVaryingVelocityFieldType::Pointer timeVaryingVelocityField =
     TimeVaryingVelocityFieldType::New();
+
   timeVaryingVelocityField->SetOrigin( origin );
   timeVaryingVelocityField->SetSpacing( spacing );
   timeVaryingVelocityField->SetRegions( size );
   timeVaryingVelocityField->Allocate();
-  timeVaryingVelocityField->FillBuffer( velocity );
-
-
-  DeformationFieldType::PointType df_origin;
-  df_origin.Fill( 0.0 );
-  DeformationFieldType::SpacingType df_spacing;
-  df_spacing.Fill( 2.0 );
-  DeformationFieldType::SizeType df_size;
-  df_size.Fill( 25 );
-  VectorType zeroVector;
-  zeroVector.Fill( 0.0 );
-
-  DeformationFieldType::Pointer initialDiffeomorphism =
-    DeformationFieldType::New();
-  initialDiffeomorphism->SetOrigin( df_origin );
-  initialDiffeomorphism->SetSpacing( df_spacing );
-  initialDiffeomorphism->SetRegions( df_size );
-  initialDiffeomorphism->Allocate();
-  initialDiffeomorphism->FillBuffer( zeroVector );
+  timeVaryingVelocityField->FillBuffer( displacement1 );
 
   typedef itk::TimeVaryingVelocityFieldIntegrationImageFilter
-    <TimeVaryingVelocityFieldType, DeformationFieldType> IntegratorType;
+    <TimeVaryingVelocityFieldType, DisplacementFieldType> IntegratorType;
 
   IntegratorType::Pointer integrator = IntegratorType::New();
   integrator->SetInput( timeVaryingVelocityField );
-  integrator->SetInitialDiffeomorphism( initialDiffeomorphism );
   integrator->SetLowerTimeBound( 0.3 );
   integrator->SetUpperTimeBound( 0.75 );
   integrator->SetNumberOfIntegrationSteps( 10 );
@@ -83,19 +60,21 @@ int itkTimeVaryingVelocityFieldTransformTest( int, char* [] )
 
   integrator->Print( std::cout, 3 );
 
-  DeformationFieldType::IndexType index;
+  DisplacementFieldType::IndexType index;
   index.Fill( 0 );
-  VectorType displacement;
+  VectorType displacementPixel;
 
   // This integration should result in a constant image of value
   // 0.75 * 0.1 - 0.3 * 0.1 = 0.045 with ~epsilon deviation
   // due to numerical computations
-  displacement = integrator->GetOutput()->GetPixel( index );
-  if( vnl_math_abs( displacement[0] - 0.045 ) > 0.0001 )
+  const DisplacementFieldType * displacementField = integrator->GetOutput();
+
+  displacementPixel = displacementField->GetPixel( index );
+
+  std::cout << "Estimated forward displacement vector: " << displacementPixel << std::endl;
+  if( vnl_math_abs( displacementPixel[0] - 0.045 ) > 0.0001 )
     {
-    std::cerr << "Failed to produce the correct forward integration."
-      << std::endl;
-    std::cerr << "  instead of 0.045, we got " << displacement[0] << std::endl;
+    std::cerr << "Failed to produce the correct forward integration." << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -109,12 +88,11 @@ int itkTimeVaryingVelocityFieldTransformTest( int, char* [] )
   // This integration should result in a constant image of value
   // -( 0.1 * 1.0 - ( 0.1 * 0.0 ) ) = -0.1 with ~epsilon deviation
   // due to numerical computations
-  displacement = inverseIntegrator->GetOutput()->GetPixel( index );
-  if( vnl_math_abs( displacement[0] + 0.1 ) > 0.0001 )
+  const DisplacementFieldType * inverseField = inverseIntegrator->GetOutput();
+  displacementPixel = inverseField->GetPixel( index );
+  if( vnl_math_abs( displacementPixel[0] + 0.1 ) > 0.0001 )
     {
-    std::cerr << "Failed to produce the correct inverse integration."
-      << std::endl;
-    std::cerr << "  instead of -0.1, we got " << displacement[0] << std::endl;
+    std::cerr << "Failed to produce the correct inverse integration." << std::endl;
     return EXIT_FAILURE;
     }
 
@@ -125,30 +103,36 @@ int itkTimeVaryingVelocityFieldTransformTest( int, char* [] )
   transform->SetLowerTimeBound( 0.0 );
   transform->SetUpperTimeBound( 1.0 );
   transform->SetTimeVaryingVelocityField( timeVaryingVelocityField );
+  transform->IntegrateVelocityField();
 
   TransformType::InputPointType point;
   point.Fill( 1.3 );
 
-  TransformType::OutputPointType transformedPoint =
-    transform->TransformPoint( point );
+  typedef TransformType::OutputPointType OutputPointType;
+  OutputPointType transformedPoint = transform->TransformPoint( point );
 
-  point += velocity;
+  VectorType displacement;
+  displacement.Fill( 0.1 );
+
+  point += displacement;
   if( point.EuclideanDistanceTo( transformedPoint ) > 0.001 )
     {
-    std::cerr << "Failed to produce the expected transformed point."
-      << std::endl;
+    std::cerr << "Failed to produce the expected transformed point." << std::endl;
     return EXIT_FAILURE;
     }
-  point -= velocity;
+  point -= displacement;
 
   TransformType::InputPointType point2;
   point2.CastFrom( transformedPoint );
-  transformedPoint = transform->GetInverseTransform()->TransformPoint( point2 );
+
+  typedef TransformType::InverseTransformBasePointer InverseTransformBasePointer;
+  InverseTransformBasePointer inverseTransform = transform->GetInverseTransform();
+
+  transformedPoint = inverseTransform->TransformPoint( point2 );
 
   if( point.EuclideanDistanceTo( transformedPoint ) > 0.001 )
     {
-    std::cerr << "Failed to produce the expected inverse transformed point."
-      << std::endl;
+    std::cerr << "Failed to produce the expected inverse transformed point." << std::endl;
     return EXIT_FAILURE;
     }
 

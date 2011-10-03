@@ -1,9 +1,10 @@
 itk_module_test()
+
 set(ITKLevelSetsv4Tests
-itkLevelSetImageBaseTest.cxx
-itkWhitakerSparseLevelSetBaseTest.cxx
-itkShiSparseLevelSetBaseTest.cxx
-itkMalcolmSparseLevelSetBaseTest.cxx
+itkLevelSetDenseImageBaseTest.cxx
+itkWhitakerSparseLevelSetImageTest.cxx
+itkShiSparseLevelSetImageTest.cxx
+itkMalcolmSparseLevelSetImageTest.cxx
 # binary image to sparse level set adaptors
 itkBinaryImageToWhitakerSparseLevelSetAdaptorTest.cxx
 itkBinaryImageToMalcolmSparseLevelSetAdaptorTest.cxx
@@ -21,18 +22,37 @@ itkLevelSetDomainPartitionBaseTest.cxx
 itkLevelSetDomainMapImageFilterTest.cxx
 # level set container
 itkSparseLevelSetContainerTest.cxx
+# single level set
+itkSingleLevelSetDenseImage2DTest.cxx
+itkSingleLevelSetWhitakerImage2DTest.cxx
+itkSingleLevelSetMalcolmImage2DTest.cxx
+itkSingleLevelSetShiImage2DTest.cxx
+itkSingleLevelSetWhitakerImage2DWithCurvatureTest.cxx
+itkSingleLevelSetWhitakerImage2DWithLaplacianTest.cxx
+itkSingleLevelSetWhitakerImage2DWithPropagationTest.cxx
+# two level set
+itkTwoLevelSetDenseImage2DTest.cxx
+itkTwoLevelSetWhitakerImage2DTest.cxx
+itkTwoLevelSetMalcolmImage2DTest.cxx
+itkTwoLevelSetShiImage2DTest.cxx
+# multi level set
+itkMultiLevelSetDenseImageTest.cxx
+itkMultiLevelSetChanAndVeseInternalTermTest.cxx
+itkMultiLevelSetEvolutionTest.cxx
+# stopping criterion
+itkLevelSetEvolutionNumberOfIterationsStoppingCriterionTest.cxx
 )
 
 CreateTestDriver(ITKLevelSetsv4  "${ITKLevelSetsv4-Test_LIBRARIES}" "${ITKLevelSetsv4Tests}")
 
-itk_add_test(NAME itkLevelSetsv4ImageBaseTest
-      COMMAND ITKLevelSetsv4TestDriver itkLevelSetImageBaseTest)
+itk_add_test(NAME itkLevelSetDenseImageBaseTest
+      COMMAND ITKLevelSetsv4TestDriver itkLevelSetDenseImageBaseTest)
 itk_add_test(NAME itkWhitakerSparseLevelSetsv4BaseTest
-      COMMAND ITKLevelSetsv4TestDriver itkWhitakerSparseLevelSetBaseTest)
+      COMMAND ITKLevelSetsv4TestDriver itkWhitakerSparseLevelSetImageTest)
 itk_add_test(NAME itkShiSparseLevelSetsv4BaseTest
-      COMMAND ITKLevelSetsv4TestDriver itkShiSparseLevelSetBaseTest)
+      COMMAND ITKLevelSetsv4TestDriver itkShiSparseLevelSetImageTest)
 itk_add_test(NAME itkMalcolmSparseLevelSetsv4BaseTest
-      COMMAND ITKLevelSetsv4TestDriver itkMalcolmSparseLevelSetBaseTest)
+      COMMAND ITKLevelSetsv4TestDriver itkMalcolmSparseLevelSetImageTest)
 # binary image to sparse level set adaptors
 itk_add_test(NAME itkBinaryImageToWhitakerSparseLevelSetsv4AdaptorTest
       COMMAND ITKLevelSetsv4TestDriver
@@ -59,5 +79,116 @@ itk_add_test(NAME itkLevelSetsv4DomainPartitionBaseTest
 itk_add_test(NAME itkLevelSetsv4DomainMapImageFilterTest
       COMMAND ITKLevelSetsv4TestDriver itkLevelSetDomainMapImageFilterTest)
 # level set container
-itk_add_test(NAME itkLevelSetsv4ContainerBaseTest
+itk_add_test(NAME itkLevelSetsv4SparseLevelSetContainerTest
       COMMAND ITKLevelSetsv4TestDriver itkSparseLevelSetContainerTest)
+# single level set
+itk_add_test(NAME itkSingleLevelSetsv4DenseImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_dense_single.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_dense_single.mha
+      itkSingleLevelSetDenseImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png 25 25 25
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_dense_single.mha
+)
+
+itk_add_test(NAME itkSingleLevelSetsv4WhitakerImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_sparse_single.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_sparse_single.mha
+      itkSingleLevelSetWhitakerImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+      50
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_sparse_single.mha
+)
+itk_add_test(NAME itkSingleLevelSetsv4MalcolmImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_malcolm_single.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_malcolm_single.mha
+      itkSingleLevelSetMalcolmImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+      15
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_malcolm_single.mha
+ )
+itk_add_test(NAME itkSingleLevelSetsv4ShiImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_shi_single.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_shi_single.mha
+      itkSingleLevelSetShiImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+      15
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_shi_single.mha
+)
+itk_add_test(NAME itkSingleLevelSetsv4WhitakerImage2DWithCurvatureTest
+      COMMAND ITKLevelSetsv4TestDriver
+      itkSingleLevelSetWhitakerImage2DWithCurvatureTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+)
+itk_add_test(NAME itkSingleLevelSetsv4WhitakerImage2DWithLaplacianTest
+      COMMAND ITKLevelSetsv4TestDriver
+      itkSingleLevelSetWhitakerImage2DWithLaplacianTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+)
+itk_add_test(NAME itkSingleLevelSetsv4WhitakerImage2DWithPropagationTest
+      COMMAND ITKLevelSetsv4TestDriver
+      itkSingleLevelSetWhitakerImage2DWithPropagationTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+)
+
+itk_add_test(NAME LevelSetEquationCurvatureTermTest
+      COMMAND ITKLevelSetsv4TestDriver itkLevelSetEquationCurvatureTermTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png )
+
+itk_add_test(NAME itkLevelSetEquationPropagationTermTest
+      COMMAND ITKLevelSetsv4TestDriver itkLevelSetEquationPropagationTermTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png )
+
+itk_add_test(NAME itkLevelSetEquationLaplacianTermTest
+      COMMAND ITKLevelSetsv4TestDriver itkLevelSetEquationLaplacianTermTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png )
+
+# two level sets
+itk_add_test(NAME itkTwoLevelSetsv4DenseImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      itkTwoLevelSetDenseImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png 25 25 10
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_dense_two.mha
+)
+
+itk_add_test(NAME itkTwoLevelSetsv4WhitakerImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_sparse_two.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_sparse_two.mha
+      itkTwoLevelSetWhitakerImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+      1
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_sparse_two.mha
+)
+
+itk_add_test(NAME itkTwoLevelSetsv4MalcolmImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_malcolm_two.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_malcolm_two.mha
+      itkTwoLevelSetMalcolmImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+      1
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_malcolm_two.mha
+)
+
+itk_add_test(NAME itkTwoLevelSetsv4ShiImage2DTest
+      COMMAND ITKLevelSetsv4TestDriver
+      --compare DATA{Baseline/solution_whiteSpot_output_shi_two.mha}
+                ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_shi_two.mha
+      itkTwoLevelSetShiImage2DTest
+      ${ITK_DATA_ROOT}/Input/whiteSpot.png
+      1
+      ${ITK_TEST_OUTPUT_DIR}/whiteSpot_output_shi_two.mha
+)
+
+itk_add_test(NAME itkLevelSetEvolutionNumberOfIterationsStoppingCriterionTest
+      COMMAND ITKLevelSetsv4TestDriver itkLevelSetEvolutionNumberOfIterationsStoppingCriterionTest)
+itk_add_test(NAME itkMultiLevelSetDenseImageTest
+      COMMAND ITKLevelSetsv4TestDriver itkMultiLevelSetDenseImageTest)
+itk_add_test(NAME itkMultiLevelSetsv4ChanAndVeseInternalTermTest
+      COMMAND ITKLevelSetsv4TestDriver itkMultiLevelSetChanAndVeseInternalTermTest)
+itk_add_test(NAME itkMultiLevelsv4SetEvolutionTest
+      COMMAND ITKLevelSetsv4TestDriver itkMultiLevelSetEvolutionTest)

@@ -40,6 +40,10 @@ namespace itk
  *
  * \ingroup MathematicalStatisticsImageFilters
  * \ingroup ITKImageStatistics
+ *
+ * \wiki
+ * \wikiexample{Statistics/StatisticsImageFilter,Compute min\, max\, variance and mean of an Image.}
+ * \endwiki
  */
 template< class TInputImage >
 class ITK_EXPORT StatisticsImageFilter:
@@ -124,6 +128,7 @@ public:
 
   /** Make a DataObject of the correct type to be used as the specified
    * output. */
+  using Superclass::MakeOutput;
   virtual DataObjectPointer MakeOutput(unsigned int idx);
 
 #ifdef ITK_USE_CONCEPT_CHECKING

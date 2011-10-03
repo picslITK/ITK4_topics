@@ -25,7 +25,7 @@
 #include "itkCompositeTransform.h"
 #include "itkTranslationTransform.h"
 
-//We need this as long as we have to define ImageToData as a fwd-declare
+// FIXME We need this as long as we have to define ImageToData as a fwd-declare
 // in itkImageToImageObjectMetric.h
 #include "itkImageToData.h"
 
@@ -82,9 +82,12 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
     count++;
     ++itFixed;
     }
+
   itk::ImageRegionIteratorWithIndex<ImageType> itMoving( movingImage, region );
+
   itMoving.GoToBegin();
   count = 1;
+
   while( !itMoving.IsAtEnd() )
     {
     itMoving.Set( 1.0/(count*count) );
@@ -93,18 +96,18 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
     }
 
   /* Transforms */
-  typedef itk::TranslationTransform<double,imageDimensionality>
-                                                            FixedTransformType;
-  typedef itk::TranslationTransform<double,imageDimensionality>
-                                                            MovingTransformType;
+  typedef itk::TranslationTransform<double,imageDimensionality> FixedTransformType;
+  typedef itk::TranslationTransform<double,imageDimensionality> MovingTransformType;
+
   FixedTransformType::Pointer fixedTransform = FixedTransformType::New();
   MovingTransformType::Pointer movingTransform = MovingTransformType::New();
+
   fixedTransform->SetIdentity();
   movingTransform->SetIdentity();
 
   /* The metric */
-  typedef itk::DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType >
-                                                                     MetricType;
+  typedef itk::DemonsImageToImageObjectMetric< ImageType, ImageType, ImageType > MetricType;
+
   MetricType::Pointer metric = MetricType::New();
 
   /* Assign images and transforms.
@@ -123,14 +126,14 @@ int itkDemonsImageToImageObjectMetricTest(int, char ** const)
     }
   catch( itk::ExceptionObject & exc )
     {
-    std::cout << "Caught unexpected exception during Initialize: "
-              << exc;
+    std::cerr << "Caught unexpected exception during Initialize: " << exc << std::endl;
     return EXIT_FAILURE;
     }
 
   // Evaluate
   MetricType::MeasureType valueReturn;
   MetricType::DerivativeType derivativeReturn;
+
   try
     {
     std::cout << "Calling GetValueAndDerivative..." << std::endl;

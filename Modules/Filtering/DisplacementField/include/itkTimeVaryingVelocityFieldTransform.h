@@ -30,7 +30,7 @@ namespace itk
  * field.
  *
  * Diffeomorphisms are topology-preserving mappings that are useful for
- * describing biologically plausible displacements.  Mathematically, a
+ * describing biologically plausible deformations.  Mathematically, a
  * diffeomorphism, \phi, is generated from a time-varying velocity field, v, as
  * described by the first-order differential equation:
  *
@@ -39,14 +39,16 @@ namespace itk
  * In this class, the input is the time-varying velocity field.  The output
  * diffeomorphism is produced using fourth order Runge-Kutta.
  *
- * \warning The output displacement field needs to have dimensionality of 1
- * less than the input time-varying velocity field.
+ * \warning The output deformation field needs to have dimensionality of 1
+ * less than the input time-varying velocity field. It is assumed that the
+ * last dimension of the time-varying velocity field corresponds to Time,
+ * and the other dimensions represent Space.
  *
  * \author Nick Tustison
  * \author Brian Avants
  *
  * \ingroup Transforms
- * \ingroup ITKTransform
+ * \ingroup ITKDisplacementField
  *
  * \wiki
  * \wikiexample{}
@@ -69,24 +71,18 @@ public:
   /** New macro for creation of through a Smart Pointer */
   itkSimpleNewMacro( Self );
 
-  /** Leave CreateAnother undefined. To fully implement here, it must be
-   * sure to copy all members. It may be called from transform-cloning
-   * that only copies parameters, so override here to prevent
-   * its use without copying full members. */
-  virtual::itk::LightObject::Pointer CreateAnother(void) const
-    {
-    itkExceptionMacro( "CreateAnother unimplemented. See source comments." );
-    }
+  /** Create another transform of the same type. */
+  virtual::itk::LightObject::Pointer CreateAnother(void) const;
 
   /** InverseTransform type. */
-  typedef typename Superclass::
-    InverseTransformBasePointer                    InverseTransformBasePointer;
+  typedef typename Superclass:: InverseTransformBasePointer InverseTransformBasePointer;
 
   /** Scalar type. */
   typedef typename Superclass::ScalarType          ScalarType;
 
   /** Type of the input parameters. */
-  typedef  typename Superclass::ParametersType     ParametersType;
+  typedef  typename Superclass::ParametersType          ParametersType;
+  typedef  typename Superclass::NumberOfParametersType  NumberOfParametersType;
 
   /** Jacobian type. */
   typedef typename Superclass::JacobianType        JacobianType;
@@ -106,8 +102,7 @@ public:
   itkStaticConstMacro( Dimension, unsigned int, NDimensions );
 
   /** Dimension of the time varying velocity field. */
-  itkStaticConstMacro( TimeVaryingVelocityFieldDimension,
-    unsigned int, NDimensions+1 );
+  itkStaticConstMacro( TimeVaryingVelocityFieldDimension, unsigned int, NDimensions+1 );
 
   /**
    * Define the time-varying velocity field type and corresponding interpolator
@@ -130,7 +125,7 @@ public:
     <ScalarType, OutputVectorType::Dimension,
     itkGetStaticConstMacro( Dimension ) + 1>      TransformParametersHelperType;
 
-  /** Get the time-varying displacement field. */
+  /** Get the time-varying deformation field. */
   itkGetObjectMacro( TimeVaryingVelocityField, TimeVaryingVelocityFieldType );
 
   /** Set the time-varying field.  */
@@ -144,12 +139,12 @@ public:
   itkGetConstObjectMacro( TimeVaryingVelocityFieldInterpolator,
     TimeVaryingVelocityFieldInterpolatorType );
 
-  /** Get the modification time of displacement field */
+  /** Get the modification time of deformation field */
   itkGetConstMacro( TimeVaryingVelocityFieldSetTime, unsigned long );
 
   /**
-   * Set the displacement field. We want to override the base class
-   * implementation since we don't want to optimize over the displacement
+   * Set the deformation field. We want to override the base class
+   * implementation since we don't want to optimize over the deformation
    * field for this class but rather the time-varying velocity field
    */
   itkSetObjectMacro( DisplacementField, DisplacementFieldType );
@@ -179,21 +174,11 @@ public:
    * Set the transformation parameters. This sets the time-varying velocity
    * field image directly.
    */
-  virtual void SetParameters(const ParametersType & params)
-    {
-    if( &(this->m_Parameters) != &params )
-      {
-      if( params.Size() != this->m_Parameters.Size() )
-        {
-        itkExceptionMacro( "Input parameters size (" << params.Size()
-          << ") does not match internal size ("
-          << this->m_Parameters.Size() << ")." );
-        }
-      /* copy into existing object */
-      this->m_Parameters = params;
-      this->Modified();
-      }
-    }
+  virtual void SetParameters(const ParametersType & params);
+
+  /** Trigger the computation of the displacement field by integrating
+   * the time-varying velocity field. */
+  virtual void IntegrateVelocityField();
 
   /** Set the fixed parameters and update internal transformation. */
   virtual void SetFixedParameters( const ParametersType & )
@@ -220,7 +205,7 @@ public:
   virtual bool IsLinear() const { return false; }
 
   /** Get the number of local parameters */
-  virtual unsigned int GetNumberOfLocalParameters() const
+  NumberOfParametersType GetNumberOfLocalParameters() const
     {
     return Dimension;
     }
@@ -276,7 +261,7 @@ private:
   TimeVaryingVelocityFieldTransform( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
-  /** The displacement field and its inverse (if it exists). */
+  /** The deformation field and its inverse (if it exists). */
   typename TimeVaryingVelocityFieldType::Pointer    m_TimeVaryingVelocityField;
 
   TimeVaryingVelocityFieldInterpolatorPointer

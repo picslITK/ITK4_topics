@@ -18,18 +18,17 @@
 
 #include <string>
 #include "itkImage.h"
-#include "itkLevelSetImageBase.h"
-#include "itkSparseLevelSetContainer.h"
+#include "itkWhitakerSparseLevelSetImage.h"
+#include "itkLevelSetContainer.h"
 
 int itkSparseLevelSetContainerTest( int , char* [] )
 {
   const unsigned int Dimension = 2;
-  typedef itk::Image< float, Dimension > ImageType;
 
-  typedef itk::LevelSetImageBase< ImageType > LevelSetType;
+  typedef itk::WhitakerSparseLevelSetImage< float, Dimension > LevelSetType;
 
   typedef std::string NameType;
-  typedef itk::SparseLevelSetContainer< NameType, LevelSetType >
+  typedef itk::LevelSetContainer< NameType, LevelSetType >
       NamedLevelSetContainerType;
 
   NamedLevelSetContainerType::Pointer name_container =
@@ -53,8 +52,7 @@ int itkSparseLevelSetContainerTest( int , char* [] )
     return EXIT_FAILURE;
     }
 
-  typedef itk::SparseLevelSetContainer< unsigned int, LevelSetType >
-      LevelSetContainerType;
+  typedef itk::LevelSetContainer< unsigned int, LevelSetType > LevelSetContainerType;
   LevelSetContainerType::Pointer container = LevelSetContainerType::New();
 
   container->AddLevelSet( 1, LevelSetType::New() );

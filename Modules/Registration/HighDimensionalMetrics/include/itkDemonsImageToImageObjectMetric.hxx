@@ -18,7 +18,6 @@
 #define __itkDemonsImageToImageObjectMetric_hxx
 
 #include "itkDemonsImageToImageObjectMetric.h"
-#include "vnl/vnl_math.h"
 
 namespace itk
 {
@@ -44,7 +43,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
 typename DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>::MeasureType
 DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
-::GetValue()
+::GetValue() const
 {
   itkExceptionMacro("GetValue not yet implemented.");
 }
@@ -55,7 +54,7 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
 void
 DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
-::GetValueAndDerivative( MeasureType & value, DerivativeType & derivative)
+::GetValueAndDerivative( MeasureType & value, DerivativeType & derivative) const
 {
   // This starts threading, and will iterate over virtual image region and
   // call GetValueAndDerivativeProcessPoint.
@@ -81,10 +80,10 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
                     const FixedImageGradientType &,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageGradientType & movingImageGradient,
+                    const MovingImageGradientType &    movingImageGradient,
                     MeasureType &                      metricValueReturn,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID) const
+                    const ThreadIdType                 threadID) const
 {
   /** Only the voxelwise contribution given the point pairs. */
   FixedImagePixelType diff = fixedImageValue - movingImageValue;
@@ -93,17 +92,14 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 
   /* Use a pre-allocated jacobian object for efficiency */
   typedef typename Superclass::JacobianType &   JacobianReferenceType;
-  JacobianReferenceType jacobian = const_cast<JacobianReferenceType>(
-    this->m_MovingTransformJacobianPerThread[threadID]);
+  JacobianReferenceType jacobian = this->m_MovingTransformJacobianPerThread[threadID];
 
   /** For dense transforms, this returns identity */
-  this->m_MovingTransform->ComputeJacobianWithRespectToParameters(
-                                                            mappedMovingPoint,
-                                                            jacobian);
+  this->m_MovingTransform->ComputeJacobianWithRespectToParameters( mappedMovingPoint, jacobian);
+
   typedef typename DerivativeType::ValueType    DerivativeValueType;
   DerivativeValueType floatingpointcorrectionresolution = 10000.0;
-  // NOTE: change 'unsigned int' here when we have NumberOfParametersType
-  // defined in metric base.
+
   for ( unsigned int par = 0; par < this->GetNumberOfLocalParameters(); par++ )
     {
     double sum = 0.0;
@@ -111,9 +107,12 @@ DemonsImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
       {
       sum += 2.0 * diff * jacobian(dim, par) * movingImageGradient[dim];
       }
+
     localDerivativeReturn[par] = sum;
+
     intmax_t test = static_cast<intmax_t>
             ( localDerivativeReturn[par] * floatingpointcorrectionresolution );
+
     localDerivativeReturn[par] = static_cast<DerivativeValueType>
                                   ( test / floatingpointcorrectionresolution );
     }

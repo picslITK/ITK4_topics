@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-if( "${CMAKE_GENERATOR}" MATCHES "Visual Studio 10" )
-  cmake_minimum_required(VERSION 2.8.4)
+if(WIN32 OR NOT EXISTS /dev/urandom)
+  cmake_minimum_required(VERSION 2.8.5)
 endif()
 
 project(ITK)
@@ -545,7 +545,7 @@ foreach(itk-module ${ITK_MODULES_ENABLED})
 endforeach()
 
 #----------------------------------------------------------------------------
-configure_file(CMake/CTestCustom.cmake.in CTestCustom.cmake)
+configure_file(CMake/CTestCustom.cmake.in CTestCustom.cmake @ONLY)
 
 #-----------------------------------------------------------------------------
 

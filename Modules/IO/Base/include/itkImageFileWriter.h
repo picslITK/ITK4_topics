@@ -29,7 +29,7 @@ namespace itk
  * \class ImageFileWriterException
  * \ingroup ITKIOBase
  */
-class ImageFileWriterException:public ExceptionObject
+class ITK_ABI_EXPORT ImageFileWriterException:public ExceptionObject
 {
 public:
   /** Run-time information. */
@@ -99,6 +99,7 @@ public:
   typedef typename InputImageType::PixelType  InputImagePixelType;
 
   /** Set/Get the image input of this writer.  */
+  using Superclass::SetInput;
   void SetInput(const InputImageType *input);
 
   const InputImageType * GetInput(void);

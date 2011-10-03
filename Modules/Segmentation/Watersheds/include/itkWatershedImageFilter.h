@@ -190,6 +190,7 @@ public:
 
   /** Overloaded to link the input to this filter with the input of the
       mini-pipeline */
+  using Superclass::SetInput;
   void SetInput(const InputImageType *input)
   {
     // if the input is changed, we'll need to clear the cached tree
@@ -257,8 +258,6 @@ public:
 protected:
   WatershedImageFilter();
   virtual ~WatershedImageFilter() {}
-  WatershedImageFilter(const Self &) {}
-  void operator=(const Self &) {}
   void PrintSelf(std::ostream & os, Indent indent) const;
 
   /** An opportunity to Allocate/Deallocate bulk data.
@@ -266,6 +265,9 @@ protected:
   virtual void PrepareOutputs();
 
 private:
+  WatershedImageFilter(const Self &);  //purposely not implemented
+  void operator=(const Self &); //purposely not implemented
+
   /** A Percentage of the maximum depth (max - min pixel value) in the input
    *  image.  This percentage will be used to threshold the minimum values in
    *  the image. */

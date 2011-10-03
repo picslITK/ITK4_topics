@@ -21,7 +21,7 @@
 #include "itkTimeVaryingVelocityFieldTransform.h"
 
 #include "itkTimeVaryingVelocityFieldIntegrationImageFilter.h"
-//#include "itkVectorLinearInterpolateImageFunction.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
 
 namespace itk
 {
@@ -31,28 +31,27 @@ namespace itk
  */
 template<class TScalar, unsigned int NDimensions>
 TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
-::TimeVaryingVelocityFieldTransform() :
-  Superclass(),
-  m_LowerTimeBound( 0.0 ),
-  m_UpperTimeBound( 1.0 ),
-  m_NumberOfIntegrationSteps( 10 ),
-  m_IntegrateTimeVaryingVelocityField( true ),
-  m_TimeVaryingVelocityFieldSetTime( 0 )
+::TimeVaryingVelocityFieldTransform()
 {
+  this->m_LowerTimeBound = 0.0;
+  this->m_UpperTimeBound = 1.0;
+  this->m_NumberOfIntegrationSteps = 10;
+  this->m_IntegrateTimeVaryingVelocityField = true;
+  this->m_TimeVaryingVelocityFieldSetTime = 0;
+
   this->m_TimeVaryingVelocityField = NULL;
 
   // Setup and assign parameter helper. This will hold the time varying velocity
   // field for access through the common TransformParameters interface.
-  TransformParametersHelperType* helper = new TransformParametersHelperType;
+  TransformParametersHelperType * helper = new TransformParametersHelperType;
 
   // After assigning this, parameters will manage this deleting when appropriate.
   this->m_Parameters.SetHelper( helper );
-  std::cout <<" WARNING!! interpolator is not set ---- waiting until module situation is fixed !! " <<std::endl;
-  //  typedef VectorLinearInterpolateImageFunction
-  //    <TimeVaryingVelocityFieldType, ScalarType> DefaultInterpolatorType;
-  //  typename DefaultInterpolatorType::Pointer interpolator
-  //   = DefaultInterpolatorType::New();
-  // this->m_TimeVaryingVelocityFieldInterpolator = interpolator;
+
+  typedef VectorLinearInterpolateImageFunction
+    <TimeVaryingVelocityFieldType, ScalarType> DefaultInterpolatorType;
+
+  this->m_TimeVaryingVelocityFieldInterpolator = DefaultInterpolatorType::New();
 }
 
 /**
@@ -62,6 +61,18 @@ template<class TScalar, unsigned int NDimensions>
 TimeVaryingVelocityFieldTransform<TScalar, NDimensions>::
 ~TimeVaryingVelocityFieldTransform()
 {
+}
+
+/** Leave CreateAnother undefined. To fully implement here, it must be
+ * sure to copy all members. It may be called from transform-cloning
+ * that only copies parameters, so override here to prevent
+ * its use without copying full members. */
+template<class TScalar, unsigned int NDimensions>
+::itk::LightObject::Pointer
+TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
+::CreateAnother() const
+{
+  itkExceptionMacro( "CreateAnother unimplemented. See source comments." );
 }
 
 /**
@@ -82,8 +93,7 @@ TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
     inverse->SetTimeVaryingVelocityField( this->m_TimeVaryingVelocityField );
     inverse->SetUpperTimeBound( this->m_LowerTimeBound );
     inverse->SetLowerTimeBound( this->m_UpperTimeBound );
-    inverse->SetTimeVaryingVelocityFieldInterpolator(
-      this->m_TimeVaryingVelocityFieldInterpolator );
+    inverse->SetTimeVaryingVelocityFieldInterpolator( this->m_TimeVaryingVelocityFieldInterpolator );
     inverse->SetDisplacementField( this->m_InverseDisplacementField );
     inverse->SetInverseDisplacementField( this->m_DisplacementField );
     inverse->SetInterpolator( this->m_Interpolator );
@@ -113,6 +123,75 @@ TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
 template<class TScalar, unsigned int NDimensions>
 void
 TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
+::IntegrateVelocityField()
+{
+  if( this->m_IntegrateTimeVaryingVelocityField )
+    {
+    typedef TimeVaryingVelocityFieldIntegrationImageFilter
+      <TimeVaryingVelocityFieldType, DisplacementFieldType> IntegratorType;
+
+    typename IntegratorType::Pointer integrator = IntegratorType::New();
+    integrator->SetInput( this->m_TimeVaryingVelocityField );
+    integrator->SetLowerTimeBound( this->m_LowerTimeBound );
+    integrator->SetUpperTimeBound( this->m_UpperTimeBound );
+
+    if( !this->m_TimeVaryingVelocityFieldInterpolator.IsNull() )
+      {
+      integrator->SetVelocityFieldInterpolator( this->m_TimeVaryingVelocityFieldInterpolator );
+      }
+
+    integrator->SetNumberOfIntegrationSteps( this->m_NumberOfIntegrationSteps );
+    integrator->Update();
+
+    DisplacementFieldType * deformationField = integrator->GetOutput();
+
+    deformationField->DisconnectPipeline();
+
+    this->SetDisplacementField( deformationField );
+    this->GetInterpolator()->SetInputImage( deformationField );
+
+    typename IntegratorType::Pointer inverseIntegrator = IntegratorType::New();
+    inverseIntegrator->SetInput( this->m_TimeVaryingVelocityField );
+    inverseIntegrator->SetLowerTimeBound( this->m_UpperTimeBound );
+    inverseIntegrator->SetUpperTimeBound( this->m_LowerTimeBound );
+    if( !this->m_TimeVaryingVelocityFieldInterpolator.IsNull() )
+      {
+      integrator->SetVelocityFieldInterpolator( this->m_TimeVaryingVelocityFieldInterpolator );
+      }
+
+    inverseIntegrator->SetNumberOfIntegrationSteps( this->m_NumberOfIntegrationSteps );
+    inverseIntegrator->Update();
+
+    DisplacementFieldType * inverseDisplacementField = inverseIntegrator->GetOutput();
+    inverseDisplacementField->DisconnectPipeline();
+
+    this->SetInverseDisplacementField( inverseDisplacementField );
+    }
+}
+
+template<class TScalar, unsigned int NDimensions>
+void
+TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
+::SetParameters(const ParametersType & params)
+{
+  if( &(this->m_Parameters) != &params )
+    {
+    if( params.Size() != this->m_Parameters.Size() )
+      {
+      itkExceptionMacro( "Input parameters size (" << params.Size()
+        << ") does not match internal size ("
+        << this->m_Parameters.Size() << ")." );
+      }
+    /* copy into existing object */
+    this->m_Parameters = params;
+    this->Modified();
+    }
+}
+
+
+template<class TScalar, unsigned int NDimensions>
+void
+TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
 ::UpdateTransformParameters( DerivativeType & update, ScalarType factor )
 {
   //This simply adds the values.
@@ -122,7 +201,7 @@ TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
 
 template<class TScalar, unsigned int NDimensions>
 void TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
-::SetTimeVaryingVelocityField( TimeVaryingVelocityFieldType* field )
+::SetTimeVaryingVelocityField( TimeVaryingVelocityFieldType * field )
 {
   itkDebugMacro( "Setting TimeVaryingVelocityField to " << field );
   if ( this->m_TimeVaryingVelocityField != field )
@@ -138,48 +217,7 @@ void TimeVaryingVelocityFieldTransform<TScalar, NDimensions>
     // Assign to parameters object
     this->m_Parameters.SetParametersObject( this->m_TimeVaryingVelocityField );
 
-    if( this->m_IntegrateTimeVaryingVelocityField == true )
-      {
-      typedef TimeVaryingVelocityFieldIntegrationImageFilter
-        <TimeVaryingVelocityFieldType, DisplacementFieldType> IntegratorType;
 
-      typename IntegratorType::Pointer integrator = IntegratorType::New();
-      integrator->SetInput( this->m_TimeVaryingVelocityField );
-      integrator->SetLowerTimeBound( this->m_LowerTimeBound );
-      integrator->SetUpperTimeBound( this->m_UpperTimeBound );
-      if( !this->m_TimeVaryingVelocityFieldInterpolator.IsNull() )
-        {
-        integrator->SetVelocityFieldInterpolator(
-          this->m_TimeVaryingVelocityFieldInterpolator );
-        }
-      integrator->SetNumberOfIntegrationSteps(
-        this->m_NumberOfIntegrationSteps );
-      typename DisplacementFieldType::Pointer displacementField =
-        integrator->GetOutput();
-      displacementField->Update();
-      displacementField->DisconnectPipeline();
-
-      this->SetDisplacementField( displacementField );
-      this->GetInterpolator()->SetInputImage( displacementField );
-
-      typename IntegratorType::Pointer inverseIntegrator = IntegratorType::New();
-      inverseIntegrator->SetInput( this->m_TimeVaryingVelocityField );
-      inverseIntegrator->SetLowerTimeBound( this->m_UpperTimeBound );
-      inverseIntegrator->SetUpperTimeBound( this->m_LowerTimeBound );
-      if( !this->m_TimeVaryingVelocityFieldInterpolator.IsNull() )
-        {
-        integrator->SetVelocityFieldInterpolator(
-          this->m_TimeVaryingVelocityFieldInterpolator );
-        }
-      inverseIntegrator->SetNumberOfIntegrationSteps(
-        this->m_NumberOfIntegrationSteps );
-      typename DisplacementFieldType::Pointer inverseDisplacementField =
-        inverseIntegrator->GetOutput();
-      inverseDisplacementField->Update();
-      inverseDisplacementField->DisconnectPipeline();
-
-      this->SetInverseDisplacementField( inverseDisplacementField );
-      }
     }
 }
 

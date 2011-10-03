@@ -19,6 +19,7 @@
 #define __itkVnlForwardFFTImageFilter_h
 
 #include "itkForwardFFTImageFilter.h"
+#include "vnl/algo/vnl_fft_base.h"
 
 namespace itk
 {
@@ -73,11 +74,6 @@ public:
   itkStaticConstMacro(OutputImageDimension, unsigned int,
                       TOutputImage::ImageDimension);
 
-  /** These should be defined in every FFT filter class. */
-  virtual void GenerateData();
-
-  virtual bool FullMatrix();
-
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
   itkConceptMacro( ImageDimensionsMatchCheck,
@@ -89,21 +85,13 @@ protected:
   VnlForwardFFTImageFilter() {}
   ~VnlForwardFFTImageFilter() {}
 
-  /** Method to check if an array dimension is legal for prime factor
-   * FFT algorithm. */
-  bool IsDimensionSizeLegal(InputSizeValueType n);
+  virtual void GenerateData();
 
 private:
-  // compile time choice of fft solver instead of runtime
-  template <unsigned VDim> struct DimDiscriminator { };
-  typedef vnl_vector< vcl_complex< InputPixelType > > SignalVectorType;
-  /** call proper vnl_fft transform function */
-  void FFTND_transform(SignalVectorType &signal, const InputSizeType &inputSize, DimDiscriminator<1> *);
-  void FFTND_transform(SignalVectorType &signal, const InputSizeType &inputSize, DimDiscriminator<2> *);
-  void FFTND_transform(SignalVectorType &signal, const InputSizeType &inputSize, DimDiscriminator<3> *);
-
   VnlForwardFFTImageFilter(const Self &); //purposely not implemented
   void operator=(const Self &);                          //purposely not implemented
+
+  typedef vnl_vector< vcl_complex< InputPixelType > > SignalVectorType;
 };
 }
 

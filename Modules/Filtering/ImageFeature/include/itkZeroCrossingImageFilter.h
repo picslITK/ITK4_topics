@@ -54,6 +54,10 @@ namespace itk
  *  \sa NeighborhoodIterator
  *  \ingroup ImageFeatureExtraction
  * \ingroup ITKImageFeature
+ *
+ * \wiki
+ * \wikiexample{ImageProcessing/ZeroCrossingImageFilter,Find zero crossings in a signed image}
+ * \endwiki
  */
 template< class TInputImage, class TOutputImage >
 class ITK_EXPORT ZeroCrossingImageFilter:
@@ -132,7 +136,6 @@ protected:
   ~ZeroCrossingImageFilter(){}
   void PrintSelf(std::ostream & os, Indent indent) const;
 
-  ZeroCrossingImageFilter(const Self &) {}
   OutputImagePixelType m_BackgroundValue;
   OutputImagePixelType m_ForegroundValue;
 
@@ -149,6 +152,10 @@ protected:
    */
   void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
                             ThreadIdType threadId);
+private:
+  ZeroCrossingImageFilter(const Self &); //purposely not implemented
+  void operator=(const Self &); //purposely not implemented
+
 };
 } //end of namespace itk
 

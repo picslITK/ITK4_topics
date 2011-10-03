@@ -32,10 +32,14 @@ namespace itk
  * Constructor
  */
 template <class TScalar, unsigned int NDimensions>
-DisplacementFieldTransform<TScalar, NDimensions>::DisplacementFieldTransform() : Superclass( 0 )
+DisplacementFieldTransform<TScalar, NDimensions>::DisplacementFieldTransform()
+: Superclass( 0 )
 {
   this->m_DisplacementField = NULL;
   this->m_InverseDisplacementField = NULL;
+
+  this->m_FixedParameters.SetSize( NDimensions * ( NDimensions + 3 ) );
+  this->m_FixedParameters.Fill( 0.0 );
 
   // Setup and assign default interpolator
   typedef VectorLinearInterpolateImageFunction<
@@ -108,28 +112,6 @@ DisplacementFieldTransform<TScalar, NDimensions>
   // else
   // simply return inputPoint
 
-  return outputPoint;
-}
-
-/**
- * Transfrom a point given its index
- */
-
-template<class TScalar, unsigned int NDimensions>
-typename DisplacementFieldTransform<TScalar, NDimensions>::OutputPointType
-DisplacementFieldTransform<TScalar, NDimensions>
-::TransformIndex(const InputIndexType & index) const
-{
-
-  if( !this->m_DisplacementField )
-    {
-    itkExceptionMacro( "No deformation field is specified." );
-    }
-  InputPointType inputPoint;
-  this->m_DisplacementField->TransformIndexToPhysicalPoint( index, inputPoint );
-  inputPoint += this->m_DisplacementField->GetPixel( index );
-  OutputPointType outputPoint;
-  outputPoint.CastFrom( inputPoint );
   return outputPoint;
 }
 
@@ -713,6 +695,10 @@ void DisplacementFieldTransform<TScalar, NDimensions>
   if( this->m_DisplacementField != field )
     {
     this->m_DisplacementField = field;
+    if( !this->m_InverseDisplacementField.IsNull() )
+      {
+      this->VerifyFixedParametersInformation();
+      }
     this->Modified();
     /* Store this separately for use in smoothing because we only want
      * to know when the displacement field object has changed, not just
@@ -725,10 +711,99 @@ void DisplacementFieldTransform<TScalar, NDimensions>
     // Assign to parameters object
     this->m_Parameters.SetParametersObject( this->m_DisplacementField );
     }
+  this->SetFixedParametersFromDisplacementField();
 }
 
 template <class TScalar, unsigned int NDimensions>
 void DisplacementFieldTransform<TScalar, NDimensions>
+::SetInverseDisplacementField( DisplacementFieldType* inverseField )
+{
+  itkDebugMacro( "setting InverseDisplacementField to " << inverseField );
+  if( this->m_InverseDisplacementField != inverseField )
+    {
+    this->m_InverseDisplacementField = inverseField;
+    if( !this->m_DisplacementField.IsNull() )
+      {
+      this->VerifyFixedParametersInformation();
+      }
+    this->Modified();
+    }
+}
+
+template <class TScalar, unsigned int NDimensions>
+void
+DisplacementFieldTransform<TScalar, NDimensions>
+::VerifyFixedParametersInformation()
+{
+  if( !this->m_DisplacementField.IsNull() && !this->m_InverseDisplacementField.IsNull() )
+    {
+    // check to see if the candidate inverse displacement field has the
+    // same fixed parameters as the displacement field.
+
+    SizeType inverseFieldSize = this->m_InverseDisplacementField->GetLargestPossibleRegion().GetSize();
+    PointType inverseFieldOrigin = this->m_InverseDisplacementField->GetOrigin();
+    SpacingType inverseFieldSpacing = this->m_InverseDisplacementField->GetSpacing();
+    DirectionType inverseFieldDirection = this->m_InverseDisplacementField->GetDirection();
+
+    SizeType fieldSize = this->m_DisplacementField->GetLargestPossibleRegion().GetSize();
+    PointType fieldOrigin = this->m_DisplacementField->GetOrigin();
+    SpacingType fieldSpacing = this->m_DisplacementField->GetSpacing();
+    DirectionType fieldDirection = this->m_DisplacementField->GetDirection();
+
+    // tolerance for origin and spacing depends on the size of pixel
+    // tolerance for directions a fraction of the unit cube.
+    const double coordinateTolerance = 1.0e-6 * fieldSpacing[0];
+    const double directionTolerance = 1.0e-6;
+
+    std::ostringstream sizeString;
+    std::ostringstream originString;
+    std::ostringstream spacingString;
+    std::ostringstream directionString;
+
+    bool unequalSizes = false;
+    bool unequalOrigins = false;
+    bool unequalSpacings = false;
+    bool unequalDirections = false;
+
+    if( inverseFieldSize != fieldSize )
+      {
+      unequalSizes = true;
+      sizeString << "InverseDisplacementField Size: " << inverseFieldSize
+                   << ", DisplacementField Size: " << fieldSize << std::endl;
+
+      }
+    if( !inverseFieldOrigin.GetVnlVector().is_equal( fieldOrigin.GetVnlVector(), coordinateTolerance ) )
+      {
+      unequalOrigins = true;
+      originString << "InverseDisplacementField Origin: " << inverseFieldOrigin
+                   << ", DisplacementField Origin: " << fieldOrigin << std::endl;
+
+      }
+    if( !inverseFieldSpacing.GetVnlVector().is_equal( fieldSpacing.GetVnlVector(), coordinateTolerance ) )
+      {
+      unequalSpacings = false;
+      originString << "InverseDisplacementField Spacing: " << inverseFieldSpacing
+                   << ", DisplacementField Spacing: " << fieldSpacing << std::endl;
+
+      }
+    if( !inverseFieldDirection.GetVnlMatrix().as_ref().is_equal( fieldDirection.GetVnlMatrix(), directionTolerance ) )
+      {
+      unequalDirections = true;
+      originString << "InverseDisplacementField Direction: " << inverseFieldDirection
+                   << ", DisplacementField Direction: " << fieldDirection << std::endl;
+
+      }
+    if( unequalSizes || unequalOrigins || unequalSpacings || unequalDirections )
+      {
+      itkExceptionMacro( "The inverse and displacement fields do not have the same fixed parameters: "
+                        << std::endl << sizeString.str() << originString.str() << spacingString.str() << directionString.str() );
+      }
+    }
+}
+
+template <class TScalar, unsigned int NDimensions>
+void
+DisplacementFieldTransform<TScalar, NDimensions>
 ::SetInterpolator( InterpolatorType* interpolator )
 {
   itkDebugMacro("setting Interpolator to " << interpolator);
@@ -743,53 +818,117 @@ void DisplacementFieldTransform<TScalar, NDimensions>
     }
 }
 
-/*
- * CanUseTrasnformIndex
- */
-
-template<class TScalar, unsigned int NDimensions>
-bool
+template <class TScalar, unsigned int NDimensions>
+void
 DisplacementFieldTransform<TScalar, NDimensions>
-::CanUseTransformIndex( RegionType & region, OriginType & origin,
-                        SpacingType & spacing, DirectionType & direction )
-                                                                          const
+::SetFixedParameters( const ParametersType & fixedParameters )
 {
-  typename DisplacementFieldType::Pointer field = this->GetDisplacementField();
-  typename DisplacementFieldType::RegionType
-                                      fieldRegion = field->GetBufferedRegion();
-
-  if( region.GetSize() != fieldRegion.GetSize() ||
-      region.GetIndex() != fieldRegion.GetIndex() )
+  if( fixedParameters.Size() != NDimensions * ( NDimensions + 3 ) )
     {
-    return false;
+    itkExceptionMacro( "The fixed parameters are not the right size." );
     }
 
-  /* check that the image occupy the same physical space, and that
-   * each index is at the same physical location.
-   * this code is from ImageToImageFilter */
-
-  /* tolerance for origin and spacing depends on the size of pixel
-   * tolerance for directions a fraction of the unit cube. */
-  const TScalar coordinateTol = 1.0e-6 * spacing[0];
-      // use first dimension spacing
-  const TScalar directionTol = 1.0e-6;
-
-  if ( ! origin.GetVnlVector().
-             is_equal( field->GetOrigin().GetVnlVector(), coordinateTol ) ||
-       ! spacing.GetVnlVector().
-             is_equal( field->GetSpacing().GetVnlVector(), coordinateTol ) ||
-       ! direction.GetVnlMatrix().as_ref().
-             is_equal( field->GetDirection().GetVnlMatrix(), directionTol ) )
+  SizeType size;
+  for( unsigned int d = 0; d < NDimensions; d++ )
     {
-    return false;
+    size[d] = fixedParameters[d];
     }
 
-  return true;
+  PointType origin;
+  for( unsigned int d = 0; d < NDimensions; d++ )
+    {
+    origin[d] = fixedParameters[d + NDimensions];
+    }
+
+  SpacingType spacing;
+  for( unsigned int d = 0; d < NDimensions; d++ )
+    {
+    spacing[d] = fixedParameters[d + 2 * NDimensions];
+    }
+
+  DirectionType direction;
+  for( unsigned int di = 0; di < NDimensions; di++ )
+    {
+    for( unsigned int dj = 0; dj < NDimensions; dj++ )
+      {
+      direction[di][dj] = fixedParameters[3 * NDimensions + ( di * NDimensions + dj )];
+      }
+    }
+
+  PixelType zeroDisplacement;
+  zeroDisplacement.Fill( 0.0 );
+
+  typename DisplacementFieldType::Pointer displacementField = DisplacementFieldType::New();
+  displacementField->SetSpacing( spacing );
+  displacementField->SetOrigin( origin );
+  displacementField->SetDirection( direction );
+  displacementField->SetRegions( size );
+  displacementField->Allocate();
+  displacementField->FillBuffer( zeroDisplacement );
+
+  this->SetDisplacementField( displacementField );
+
+  if( !this->m_InverseDisplacementField.IsNull() )
+    {
+    typename DisplacementFieldType::Pointer inverseDisplacementField = DisplacementFieldType::New();
+    inverseDisplacementField->SetSpacing( spacing );
+    inverseDisplacementField->SetOrigin( origin );
+    inverseDisplacementField->SetDirection( direction );
+    inverseDisplacementField->SetRegions( size );
+    inverseDisplacementField->Allocate();
+    inverseDisplacementField->FillBuffer( zeroDisplacement );
+
+    this->SetInverseDisplacementField( inverseDisplacementField );
+    }
 }
 
 template <class TScalar, unsigned int NDimensions>
 void
-DisplacementFieldTransform<TScalar, NDimensions>::PrintSelf( std::ostream& os, Indent indent ) const
+DisplacementFieldTransform<TScalar, NDimensions>
+::SetFixedParametersFromDisplacementField() const
+  {
+  this->m_FixedParameters.SetSize( NDimensions * ( NDimensions + 3 ) );
+
+  const typename DisplacementFieldType::RegionType & fieldRegion =
+    this->m_DisplacementField->GetLargestPossibleRegion();
+
+  // Set the field size parameters
+  SizeType fieldSize = fieldRegion.GetSize();
+  for( unsigned int i = 0; i < NDimensions; i++ )
+    {
+    this->m_FixedParameters[i] = static_cast<ParametersValueType>( fieldSize[i] );
+    }
+
+  // Set the origin parameters
+  PointType fieldOrigin = this->m_DisplacementField->GetOrigin();
+  for( unsigned int i = 0; i < NDimensions; i++ )
+    {
+    this->m_FixedParameters[NDimensions + i] = fieldOrigin[i];
+    }
+
+  // Set the spacing parameters
+  SpacingType fieldSpacing = this->m_DisplacementField->GetSpacing();
+  for( unsigned int i = 0; i < NDimensions; i++ )
+    {
+    this->m_FixedParameters[2 * NDimensions + i] = static_cast<ParametersValueType>( fieldSpacing[i] );
+    }
+
+  // Set the direction parameters
+  DirectionType fieldDirection = this->m_DisplacementField->GetDirection();
+  for( unsigned int di = 0; di < NDimensions; di++ )
+    {
+    for( unsigned int dj = 0; dj < NDimensions; dj++ )
+      {
+      this->m_FixedParameters[3 * NDimensions + ( di * NDimensions + dj )] =
+        static_cast<ParametersValueType>( fieldDirection[di][dj] );
+      }
+    }
+}
+
+template <class TScalar, unsigned int NDimensions>
+void
+DisplacementFieldTransform<TScalar, NDimensions>
+::PrintSelf( std::ostream& os, Indent indent ) const
 {
   Superclass::PrintSelf( os, indent );
 

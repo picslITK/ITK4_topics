@@ -107,8 +107,8 @@ public:
   itkGetConstMacro(BoundaryCondition, BoundaryConditionPointerType);
 
   /** Set/get the image kernel. */
-  itkSetInputMacro(ImageKernel, KernelImageType, 1);
-  itkGetInputMacro(ImageKernel, KernelImageType, 1);
+  itkSetInputMacro(KernelImage, KernelImageType);
+  itkGetInputMacro(KernelImage, KernelImageType);
 
   /** Normalize the output image by the sum of the kernel
    * components. Defaults to off. */

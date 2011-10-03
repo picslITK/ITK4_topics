@@ -116,7 +116,8 @@ public:
   typedef typename Superclass::ScalarType ScalarType;
 
   /** Type of the input parameters. */
-  typedef  typename Superclass::ParametersType ParametersType;
+  typedef typename Superclass::ParametersType          ParametersType;
+  typedef typename Superclass::ParametersValueType     ParametersValueType;
 
   /** Jacobian type. */
   typedef typename Superclass::JacobianType JacobianType;
@@ -127,9 +128,6 @@ public:
   /** Standard coordinate point type for this class. */
   typedef typename Superclass::InputPointType  InputPointType;
   typedef typename Superclass::OutputPointType OutputPointType;
-
-  /** Input index type for this class */
-  typedef typename Superclass::InputIndexType   InputIndexType;
 
   /** Standard vector type for this class. */
   typedef typename Superclass::InputVectorType  InputVectorType;
@@ -166,25 +164,27 @@ public:
   itkStaticConstMacro( Dimension, unsigned int, NDimensions );
 
   /** Define the displacement field type and corresponding interpolator type. */
-  typedef Image<OutputVectorType,
-                itkGetStaticConstMacro( Dimension )> DisplacementFieldType;
-  typedef VectorInterpolateImageFunction
-  <DisplacementFieldType, ScalarType> InterpolatorType;
+  typedef Image<OutputVectorType,  Dimension>          DisplacementFieldType;
+  typedef typename DisplacementFieldType::Pointer      DisplacementFieldPointer;
 
-  /** Standard Index type for Displacement Field */
-  typedef typename DisplacementFieldType::IndexType IndexType;
+  typedef VectorInterpolateImageFunction
+    <DisplacementFieldType, ScalarType> InterpolatorType;
+
+  /** Standard types for the displacement Field */
+  typedef typename DisplacementFieldType::IndexType      IndexType;
+  typedef typename DisplacementFieldType::RegionType     RegionType;
+  typedef typename DisplacementFieldType::SizeType       SizeType;
+  typedef typename DisplacementFieldType::SpacingType    SpacingType;
+  typedef typename DisplacementFieldType::DirectionType  DirectionType;
+  typedef typename DisplacementFieldType::PointType      PointType;
+  typedef typename DisplacementFieldType::PixelType      PixelType;
 
   /** Define the internal parameter helper used to access the field */
   typedef ImageVectorTransformParametersHelper<
     ScalarType,
     OutputVectorType::Dimension,
-    itkGetStaticConstMacro( Dimension )>
+    Dimension>
   TransformParametersHelperType;
-
-  typedef typename Superclass::RegionType                 RegionType;
-  typedef typename Superclass::SpacingType                SpacingType;
-  typedef typename Superclass::OriginType                 OriginType;
-  typedef typename Superclass::DirectionType              DirectionType;
 
   /** Get/Set the displacement field. */
   itkGetObjectMacro( DisplacementField, DisplacementFieldType );
@@ -195,7 +195,7 @@ public:
 
   /** Get/Set the inverse displacement field. */
   itkGetObjectMacro( InverseDisplacementField, DisplacementFieldType );
-  itkSetObjectMacro( InverseDisplacementField, DisplacementFieldType );
+  virtual void SetInverseDisplacementField( DisplacementFieldType * inverseDisplacementField );
 
   /** Get/Set the interpolator. */
   itkGetObjectMacro( Interpolator, InterpolatorType );
@@ -209,11 +209,6 @@ public:
    * be returned with zero displacemnt. */
   virtual OutputPointType TransformPoint( const InputPointType& thisPoint )
   const;
-
-  virtual OutputPointType TransformIndex(const InputIndexType &) const;
-
-  bool CanUseTransformIndex( RegionType&, OriginType&,
-                             SpacingType&, DirectionType& ) const;
 
   /**  Method to transform a vector. */
   virtual OutputVectorType TransformVector(const InputVectorType &) const
@@ -301,17 +296,16 @@ public:
       }
   }
 
-  /** Set the fixed parameters and update internal transformation. */
-  virtual void SetFixedParameters(const ParametersType &)
-  {
-    itkExceptionMacro("SetFixedParameters unimplemented.");
-  }
-
-  /** Get the Fixed Parameters. */
-  virtual const ParametersType & GetFixedParameters(void) const
-  {
-    itkExceptionMacro("GetFixedParameters unimplemented.");
-  }
+  /**
+   * This method sets the fixed parameters of the transform.
+   * For a displacement field transform, the fixed parameters are the
+   * following: field size, field origin, field spacing, and field direction.
+   *
+   * Note:  If a displacement field already exists, this function
+   * creates a new one with zero displacement (identity transform).  If
+   * an inverse displacement field exists, a new one is also created.
+   */
+  virtual void SetFixedParameters( const ParametersType & );
 
   /**
    * Compute the jacobian with respect to the parameters at a point.
@@ -424,11 +418,11 @@ protected:
   void PrintSelf( std::ostream& os, Indent indent ) const;
 
   /** The displacement field and its inverse (if it exists). */
-  typename DisplacementFieldType::Pointer   m_DisplacementField;
-  typename DisplacementFieldType::Pointer   m_InverseDisplacementField;
+  typename DisplacementFieldType::Pointer      m_DisplacementField;
+  typename DisplacementFieldType::Pointer      m_InverseDisplacementField;
 
   /** The interpolator. */
-  typename InterpolatorType::Pointer        m_Interpolator;
+  typename InterpolatorType::Pointer          m_Interpolator;
 
   /** Track when the displacement field was last set/assigned, as
    * distinct from when it may have had its contents modified. */
@@ -451,6 +445,18 @@ private:
    */
   virtual void ComputeJacobianWithRespectToPositionInternal(const IndexType & index, JacobianType & jacobian,
                                                             bool doInverseJacobian) const;
+
+  /**
+   * Internal method to check that the inverse and forward displacement fields have the
+   * same fixed parameters.
+   */
+  virtual void VerifyFixedParametersInformation();
+
+  /**
+   * Convenience method which reads the information from the current
+   * displacement field into m_FixedParameters.
+   */
+  virtual void SetFixedParametersFromDisplacementField() const;
 
 };
 

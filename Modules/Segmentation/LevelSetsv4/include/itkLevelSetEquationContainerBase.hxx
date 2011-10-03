@@ -54,7 +54,7 @@ LevelSetEquationContainerBase< TTermContainer >
 template< class TTermContainer >
 void
 LevelSetEquationContainerBase< TTermContainer >
-::AddEquation( LevelSetIdentifierType iId,
+::AddEquation( const LevelSetIdentifierType& iId,
                TermContainerType * iEquation )
 {
   if ( iEquation )
@@ -77,12 +77,45 @@ typename LevelSetEquationContainerBase< TTermContainer >::TermContainerType*
 LevelSetEquationContainerBase< TTermContainer >
 ::GetEquation( const LevelSetIdentifierType& iId ) const
 {
-  MapContainerIterator it = this->m_Container.find( iId );
+  if( this->m_Container.empty() )
+    {
+    itkGenericExceptionMacro( << "m_Container is empty" );
+    }
+
+  MapContainerConstIterator it = this->m_Container.find( iId );
   if( it == this->m_Container.end() )
     {
     itkGenericExceptionMacro( <<"this equation " << iId << " does not exist" );
     }
   return it->second;
+}
+
+template< class TTermContainer >
+typename LevelSetEquationContainerBase< TTermContainer >::Iterator
+LevelSetEquationContainerBase< TTermContainer >::Begin()
+{
+  return Iterator( m_Container.begin() );
+}
+
+template< class TTermContainer >
+typename LevelSetEquationContainerBase< TTermContainer >::Iterator
+LevelSetEquationContainerBase< TTermContainer >::End()
+{
+  return Iterator( m_Container.end() );
+}
+
+template< class TTermContainer >
+typename LevelSetEquationContainerBase< TTermContainer >::ConstIterator
+LevelSetEquationContainerBase< TTermContainer >::Begin() const
+{
+  return ConstIterator( m_Container.begin() );
+}
+
+template< class TTermContainer >
+typename LevelSetEquationContainerBase< TTermContainer >::ConstIterator
+LevelSetEquationContainerBase< TTermContainer >::End() const
+{
+  return ConstIterator( m_Container.end() );
 }
 
 template< class TTermContainer >

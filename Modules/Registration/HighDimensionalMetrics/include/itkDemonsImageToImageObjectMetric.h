@@ -1,19 +1,20 @@
 /*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkDemonsImageToImageObjectMetric.h,v $
-  Language:  C++
-  Date:      $Date: $
-  Version:   $Revision: $
-
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+ *
+ *  Copyright Insight Software Consortium
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
 #ifndef __itkDemonsImageToImageObjectMetric_h
 #define __itkDemonsImageToImageObjectMetric_h
 
@@ -28,7 +29,7 @@ namespace itk
  *
  *  See \c GetValueAndDerivativeProcessPoint for algorithm implementation.
  *
- * \ingroup ITKHighDimensionalMetric
+ * \ingroup ITKHighDimensionalMetrics
  */
 template <class TFixedImage,
           class TMovingImage,
@@ -58,12 +59,12 @@ public:
   typedef typename Superclass::FixedImagePointType     FixedImagePointType;
   typedef typename Superclass::FixedImagePixelType     FixedImagePixelType;
   typedef typename Superclass::FixedImageGradientType
-                                                     FixedImageGradientType;
+                                                       FixedImageGradientType;
 
   typedef typename Superclass::MovingImagePointType    MovingImagePointType;
   typedef typename Superclass::MovingImagePixelType    MovingImagePixelType;
   typedef typename Superclass::MovingImageGradientType
-                                                    MovingImageGradientType;
+                                                       MovingImageGradientType;
 
   typedef typename Superclass::MovingTransformType     MovingTransformType;
   typedef typename Superclass::JacobianType            JacobianType;
@@ -72,13 +73,11 @@ public:
    *  GetValueAndDerivative, after metric settings are changed. */
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
-  using Superclass::GetValueAndDerivative;
-  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative);
+  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative) const;
 
   /** Evaluate and return the metric value.
    * \warning Not yet implemented. */
-  using Superclass::GetValue;
-  MeasureType GetValue();
+  MeasureType GetValue() const;
 
 protected:
 
@@ -87,13 +86,13 @@ protected:
                     const VirtualPointType &           virtualPoint,
                     const FixedImagePointType &        mappedFixedPoint,
                     const FixedImagePixelType &        fixedImageValue,
-                    const FixedImageGradientType &  fixedImageGradient,
+                    const FixedImageGradientType &     fixedImageGradient,
                     const MovingImagePointType &       mappedMovingPoint,
                     const MovingImagePixelType &       movingImageValue,
-                    const MovingImageGradientType & movingImageGradient,
+                    const MovingImageGradientType &    movingImageGradient,
                     MeasureType &                      metricValueResult,
                     DerivativeType &                   localDerivativeReturn,
-                    ThreadIdType                       threadID) const;
+                    const ThreadIdType                 threadID) const;
 
   DemonsImageToImageObjectMetric();
   virtual ~DemonsImageToImageObjectMetric();

@@ -40,6 +40,10 @@ namespace itk
  * \sa ShapeLabelObject, BinaryShapeOpeningImageFilter, LabelStatisticsOpeningImageFilter
  * \ingroup ImageEnhancement  MathematicalMorphologyImageFilters
  * \ingroup ITKLabelMap
+ *
+ * \wiki
+ * \wikiexample{ImageProcessing/ShapeOpeningLabelMapFilter,Keep only regions that meet a specified threshold of a specified property}
+ * \endwiki
  */
 template< class TImage >
 class ITK_EXPORT ShapeOpeningLabelMapFilter:
@@ -123,7 +127,7 @@ protected:
 
     ImageType *output = this->GetOutput();
     ImageType *output2 = this->GetOutput(1);
-    itkAssertInDebugAndIgnoreInReleaseMacro(this->GetNumberOfOutputs() == 2);
+    itkAssertInDebugAndIgnoreInReleaseMacro(this->GetNumberOfIndexedOutputs() == 2);
     itkAssertInDebugAndIgnoreInReleaseMacro(output2 != NULL);
 
     // set the background value for the second output - this is not done in the

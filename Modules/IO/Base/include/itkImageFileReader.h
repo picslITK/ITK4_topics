@@ -23,6 +23,7 @@
 #include "itkMacro.h"
 #include "itkImageRegion.h"
 #include "itkDefaultConvertPixelTraits.h"
+#include "itkSimpleDataObjectDecorator.h"
 
 namespace itk
 {
@@ -31,7 +32,7 @@ namespace itk
  * \brief Base exception class for IO conflicts.
  * \ingroup ITKIOBase
  */
-class ImageFileReaderException:public ExceptionObject
+class ITK_ABI_EXPORT ImageFileReaderException:public ExceptionObject
 {
 public:
   /** Run-time information. */
@@ -121,8 +122,7 @@ public:
   typedef typename TOutputImage::InternalPixelType OutputImagePixelType;
 
   /** Specify the file to read. This is forwarded to the IO instance. */
-  itkSetStringMacro(FileName);
-  itkGetStringMacro(FileName);
+  itkSetGetDecoratedInputMacro(FileName, std::string);
 
   /** Set/Get the ImageIO helper class. Often this is created via the object
    * factory mechanism that determines whether a particular ImageIO can
@@ -171,8 +171,6 @@ protected:
 
   bool m_UserSpecifiedImageIO; // keep track whether the
                                // ImageIO is user specified
-
-  std::string m_FileName; // The file to be read
 
   bool m_UseStreaming;
 private:

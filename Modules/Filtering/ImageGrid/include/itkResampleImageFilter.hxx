@@ -25,6 +25,7 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkSpecialCoordinatesImage.h"
+#include "itkDefaultConvertPixelTraits.h"
 
 namespace itk
 {
@@ -49,17 +50,13 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
   m_Transform =
     IdentityTransform< TInterpolatorPrecisionType, ImageDimension >::New();
 
-  m_InterpolatorIsBSpline = false;
-  m_BSplineInterpolator = NULL;
-
   m_Interpolator = dynamic_cast< InterpolatorType * >
                    ( LinearInterpolatorType::New().GetPointer() );
 
   m_Extrapolator = NULL;
 
-  m_DefaultPixelValue = 0;
-
-  m_TransformCanUseTransformIndex = false;
+  m_DefaultPixelValue
+    = NumericTraits<PixelType>::ZeroValue( m_DefaultPixelValue );
 }
 
 /**
@@ -169,23 +166,22 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     m_Extrapolator->SetInputImage( this->GetInput() );
     }
 
-  // Test for a BSpline interpolator
-  BSplineInterpolatorType *testPtr =
-    dynamic_cast< BSplineInterpolatorType * > ( m_Interpolator.GetPointer() );
-  if ( testPtr )
-    {
-    m_InterpolatorIsBSpline = true;
-    m_BSplineInterpolator = testPtr;
-    m_BSplineInterpolator->SetNumberOfThreads( this->GetNumberOfThreads() );
-    }
-  else
-    {
-    m_InterpolatorIsBSpline = false;
-    }
+  unsigned int nComponents
+    = DefaultConvertPixelTraits<PixelType>::GetNumberOfComponents(
+      m_DefaultPixelValue );
 
-  // Check if we can use Transform::TransformIndex for speed optimization.
-  // Call this here because outputs must be allocated.
-  m_TransformCanUseTransformIndex = this->CanUseTransformIndex();
+  if (nComponents == 0)
+    {
+    PixelComponentType zeroComponent
+      = NumericTraits<PixelComponentType>::ZeroValue( zeroComponent );
+    nComponents = this->GetInput()->GetNumberOfComponentsPerPixel();
+    NumericTraits<PixelType>::SetLength(m_DefaultPixelValue, nComponents );
+    for (unsigned int n=0; n<nComponents; n++)
+      {
+      PixelConvertType::SetNthComponent( n, m_DefaultPixelValue,
+                                         zeroComponent );
+      }
+    }
 }
 
 /**
@@ -249,6 +245,45 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 }
 
 /**
+ * Cast from interpolotor output to pixel type
+ */
+template< class TInputImage,
+          class TOutputImage,
+          class TInterpolatorPrecisionType >
+typename ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
+::PixelType
+ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
+::CastPixelWithBoundsChecking(const InterpolatorOutputType value,
+                              const ComponentType minComponent,
+                              const ComponentType maxComponent ) const
+{
+  const unsigned int nComponents = InterpolatorConvertType::GetNumberOfComponents(value);
+  PixelType outputValue;
+  NumericTraits<PixelType>::SetLength( outputValue, nComponents );
+
+  for (unsigned int n=0; n<nComponents; n++)
+    {
+    ComponentType component = InterpolatorConvertType::GetNthComponent( n, value );
+
+    if ( component < minComponent )
+      {
+      PixelConvertType::SetNthComponent( n, outputValue, minComponent );
+      }
+    else if ( component > maxComponent )
+      {
+      PixelConvertType::SetNthComponent( n, outputValue, maxComponent );
+      }
+    else
+      {
+      PixelConvertType::SetNthComponent(n, outputValue,
+                                        static_cast<PixelComponentType>( component ) );
+      }
+    }
+
+  return outputValue;
+}
+
+/**
  * NonlinearThreadedGenerateData
  */
 template< class TInputImage,
@@ -284,30 +319,23 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 
   // Min/max values of the output pixel type AND these values
   // represented as the output type of the interpolator
-  const PixelType minValue =  NumericTraits< PixelType >::NonpositiveMin();
-  const PixelType maxValue =  NumericTraits< PixelType >::max();
+  const PixelComponentType minValue =  NumericTraits< PixelComponentType >::NonpositiveMin();
+  const PixelComponentType maxValue =  NumericTraits< PixelComponentType >::max();
 
   typedef typename InterpolatorType::OutputType OutputType;
-  const OutputType minOutputValue = static_cast< OutputType >( minValue );
-  const OutputType maxOutputValue = static_cast< OutputType >( maxValue );
+  const ComponentType minOutputValue = static_cast< ComponentType >( minValue );
+  const ComponentType maxOutputValue = static_cast< ComponentType >( maxValue );
 
   // Walk the output region
   outIt.GoToBegin();
 
   while ( !outIt.IsAtEnd() )
     {
+    // Determine the index of the current output pixel
+    outputPtr->TransformIndexToPhysicalPoint(outIt.GetIndex(), outputPoint);
 
     // Compute corresponding input pixel position
-    if( this->m_TransformCanUseTransformIndex )
-      {
-      inputPoint = this->m_Transform->TransformIndex( outIt.GetIndex() );
-      }
-    else
-      {
-      // Determine the index of the current output pixel
-      outputPtr->TransformIndexToPhysicalPoint(outIt.GetIndex(), outputPoint);
-      inputPoint = this->m_Transform->TransformPoint(outputPoint);
-      }
+    inputPoint = this->m_Transform->TransformPoint(outputPoint);
     inputPtr->TransformPhysicalPointToContinuousIndex(inputPoint, inputIndex);
 
     PixelType        pixval;
@@ -315,28 +343,8 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     // Evaluate input at right position and copy to the output
     if ( m_Interpolator->IsInsideBuffer(inputIndex) )
       {
-      if ( m_InterpolatorIsBSpline )
-        {
-        value = m_BSplineInterpolator
-                 ->EvaluateAtContinuousIndex(inputIndex, threadId);
-        }
-      else
-        {
-        value = m_Interpolator ->EvaluateAtContinuousIndex(inputIndex);
-        }
-      // Check boundaries and assign
-      if ( value < minOutputValue )
-        {
-        pixval = minValue;
-        }
-      else if ( value > maxOutputValue )
-        {
-        pixval = maxValue;
-        }
-      else
-        {
-        pixval = static_cast< PixelType >( value );
-        }
+      value = m_Interpolator ->EvaluateAtContinuousIndex(inputIndex);
+      pixval = this->CastPixelWithBoundsChecking( value, minOutputValue, maxOutputValue );
       outIt.Set(pixval);
       }
     else
@@ -348,19 +356,7 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
       else
         {
         value = m_Extrapolator->EvaluateAtContinuousIndex( inputIndex );
-        // Check boundaries and assign
-        if ( value < minOutputValue )
-          {
-          pixval = minValue;
-          }
-        else if ( value > maxOutputValue )
-          {
-          pixval = maxValue;
-          }
-        else
-          {
-          pixval = static_cast< PixelType >( value );
-          }
+        pixval = this->CastPixelWithBoundsChecking( value, minOutputValue, maxOutputValue );
         outIt.Set(pixval);
         }
       }
@@ -423,11 +419,12 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 
   // Min/max values of the output pixel type AND these values
   // represented as the output type of the interpolator
-  const PixelType minValue =  NumericTraits< PixelType >::NonpositiveMin();
-  const PixelType maxValue =  NumericTraits< PixelType >::max();
+  const PixelComponentType minValue =  NumericTraits< PixelComponentType >::NonpositiveMin();
+  const PixelComponentType maxValue =  NumericTraits< PixelComponentType >::max();
 
-  const OutputType minOutputValue = static_cast< OutputType >( minValue );
-  const OutputType maxOutputValue = static_cast< OutputType >( maxValue );
+  typedef typename InterpolatorType::OutputType OutputType;
+  const ComponentType minOutputValue = static_cast< ComponentType >( minValue );
+  const ComponentType maxOutputValue = static_cast< ComponentType >( maxValue );
 
   // Determine the position of the first pixel in the scanline
   index = outIt.GetIndex();
@@ -466,20 +463,13 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
     // scanline when mapped to the input coordinate frame.
     //
 
+    // First get the position of the pixel in the output coordinate frame
     index = outIt.GetIndex();
+    outputPtr->TransformIndexToPhysicalPoint(index, outputPoint);
 
     // Compute corresponding input pixel continuous index, this index
     // will incremented in the scanline loop
-    if( this->m_TransformCanUseTransformIndex )
-      {
-      inputPoint = this->m_Transform->TransformIndex( index );
-      }
-    else
-      {
-      // First get the position of the pixel in the output coordinate frame
-      outputPtr->TransformIndexToPhysicalPoint(index, outputPoint);
-      inputPoint = this->m_Transform->TransformPoint(outputPoint);
-      }
+    inputPoint = this->m_Transform->TransformPoint(outputPoint);
     inputPtr->TransformPhysicalPointToContinuousIndex(inputPoint, inputIndex);
 
     while ( !outIt.IsAtEndOfLine() )
@@ -489,29 +479,8 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
       // Evaluate input at right position and copy to the output
       if ( m_Interpolator->IsInsideBuffer(inputIndex) )
         {
-        if ( m_InterpolatorIsBSpline )
-          {
-          value = m_BSplineInterpolator->EvaluateAtContinuousIndex(
-            inputIndex,
-            threadId);
-          }
-        else
-          {
-          value = m_Interpolator->EvaluateAtContinuousIndex(inputIndex);
-          }
-        //Check for value min/max
-        if ( value <  minOutputValue )
-          {
-          pixval = minValue;
-          }
-        else if ( value > maxOutputValue )
-          {
-          pixval = maxValue;
-          }
-        else
-          {
-          pixval = static_cast< PixelType >( value );
-          }
+        value = m_Interpolator->EvaluateAtContinuousIndex(inputIndex);
+        pixval = this->CastPixelWithBoundsChecking( value, minOutputValue, maxOutputValue );
         outIt.Set(pixval);
         }
       else
@@ -523,19 +492,7 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
         else
           {
           value = m_Extrapolator->EvaluateAtContinuousIndex( inputIndex );
-          // Check boundaries and assign
-          if ( value < minOutputValue )
-            {
-            pixval = minValue;
-            }
-          else if ( value > maxOutputValue )
-            {
-            pixval = maxValue;
-            }
-          else
-            {
-            pixval = static_cast< PixelType >( value );
-            }
+          pixval = this->CastPixelWithBoundsChecking( value, minOutputValue, maxOutputValue );
           outIt.Set(pixval);
           }
         }
@@ -705,71 +662,6 @@ ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
 
   return latestTime;
 }
-
-/**
- * Check if the transform supports TransformIndex
- */
-template< class TInputImage,
-          class TOutputImage,
-          class TInterpolatorPrecisionType >
-bool
-ResampleImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType >
-::CanUseTransformIndex()
-{
-  /* For DisplacementFieldTransform and derived classes with local support.
-   * Need to investigate if will work with new BSplineTransform which has local
-   * support.
-   * Verify that the filter's requested region is within the displacement field's
-   * BufferedRegion, and are in the same physical space.
-   * If so, we can use Transform::TransformIndex
-   * instead of Transform::TransformPoint, for speed optimization.
-   * If it's a composite transform and the displacement field is the first
-   * to be applied (i.e. the most recently added), then it has to be
-   * of the same size, otherwise not. But actually at this point, if
-   * a CompositeTransform has local support, it means all its sub-transforms
-   * have local support. So they should all be displacement fields, so just
-   * verify that the first one is at least.
-   * Eventually we'll want a method in Transform something like a
-   * GetInputDomainSize to check this cleanly. */
-//  TransformType* transform;
-//  transform = const_cast<TransformType*>( this->m_Transform.GetPointer() );
-  /* If it's a CompositeTransform, get the last transform (1st applied). */
-/*  typedef CompositeTransform< TInterpolatorPrecisionType,
-                     itkGetStaticConstMacro(ImageDimension) >
-                                                        CompositeTransformType;
-  CompositeTransformType* comptx =
-                        dynamic_cast< CompositeTransformType * > ( transform );
-  if( comptx != NULL )
-    {
-    transform = comptx->GetBackTransform().GetPointer();
-    } */
-
-  /* Check each possible output. For simplicity, return false if any one of
-   * them do not match. */
-  for ( unsigned int i = 0; i < this->GetNumberOfOutputs(); i++ )
-    {
-    OutputImagePointer outputPtr = this->GetOutput(i);
-    if ( outputPtr )
-      {
-      OutputImageRegionType outputRegion = outputPtr->GetRequestedRegion();
-      /*
-        Disabled for now while working it out in another branch.
-
-        if( !this->m_Transform->CanUseTransformIndex( outputRegion,
-                                                   outputPtr->GetOrigin(),
-                                                   outputPtr->GetSpacing(),
-                                                   outputPtr->GetDirection() ) )
-        {
-        return false;
-        }
-      */
-      return false;
-      }
-    }
-
-  return true;
-}
-
 } // end namespace itk
 
 #endif
