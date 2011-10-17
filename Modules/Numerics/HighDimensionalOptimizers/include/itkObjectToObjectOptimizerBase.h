@@ -38,10 +38,14 @@ namespace itk
  * appropriate, typically by passing it to its transform that is
  * being optimized.
  *
- * \c SetScales allows setting of a per-parameter scaling array. If
- * unset, the \c m_Scales array will be left empty (size 0) and ignored.
- * This conserves memory when the optimizer is used with high-dimensional
- * transforms without scaling.
+ * \c SetScales allows setting of a per-local-parameter scaling array. If
+ * unset, the \c m_Scales array will be initialized to all 1's.
+ * Note that when used with transforms with local support, these scales
+ * correspond to each _local_ parameter, and not to each parameter. For
+ * example, in a DisplacementFieldTransform of dimensionality N, the Scales
+ * is size N, with each element corresponding to a dimension within the
+ * transform's displacement field, and is applied to each vector in the
+ * displacement field.
  *
  * Threading of some optimizer operations may be handled within
  * derived classes, for example in GradientDescentOptimizer.
@@ -73,8 +77,13 @@ public:
   /** Metric function type */
   typedef ObjectToObjectMetric                      MetricType;
   typedef MetricType::Pointer                       MetricTypePointer;
+
+  /** Number of parameters type */
+  typedef MetricType::NumberOfParametersType        NumberOfParametersType;
+
   /** Measure type */
   typedef MetricType::MeasureType                   MeasureType;
+
   /** Internal computation value type */
   typedef MetricType::InternalComputationValueType
                                                 InternalComputationValueType;
@@ -95,8 +104,10 @@ public:
   /** Set the number of threads to use when threading. */
   virtual void SetNumberOfThreads( ThreadIdType number );
 
-  /** Get current position of the optimization. */
-  itkGetConstReferenceMacro(CurrentPosition, ParametersType);
+  /** Get a reference to the current position of the optimization.
+   * This returns the parameters from the assigned metric, since the optimizer
+   * itself does not store a position. */
+  const ParametersType & GetCurrentPosition();
 
   /** Run the optimization.
    * \note Derived classes must override and call this superclass method, then
@@ -115,15 +126,13 @@ protected:
   /** Metric measure value at a given iteration */
   MeasureType                   m_Value;
 
-  /** Scales. If left unset, it will not be used. This is useful
-   * for avoiding memory allocation of creating a scale array full
-   * of 1, which could be costly when used with high-dimensional transforms. */
+  /** Scales. Size is expected to be == metric->GetNumberOfLocalParameters().
+   * See the main documentation for more details. */
   ScalesType                    m_Scales;
 
-  // Keep m_CurrentPosition as a protected var so that subclasses can
-  // have fast access.  This is important when optimizing high-dimensional
-  // spaces, e.g. bspline transforms.
-  ParametersType                m_CurrentPosition;
+
+  /** Flag to avoid unnecessary arithmetic when scales are identity. */
+  bool                          m_ScalesAreIdentity;
 
   virtual void PrintSelf(std::ostream & os, Indent indent) const;
 

@@ -8,6 +8,8 @@ set(ITKHighDimensionalMetricsTests
   itkJointHistogramMutualInformationImageToImageObjectMetricTest.cxx
   itkJointHistogramMutualInformationImageToImageObjectRegistrationTest.cxx
   itkDemonsImageToImageObjectMetricTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
+  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
 )
 
 set(INPUTDATA ${ITK_DATA_ROOT}/Input)
@@ -40,6 +42,27 @@ itk_add_test(NAME itkJointHistogramMutualInformationImageToImageObjectRegistrati
               ${ITK_SOURCE_DIR}/Examples/Data/BrainProtonDensitySliceBSplined10.png
               ${TEMP}/itkJointHistogramMutualInformationImageToImageObjectRegistrationTest.nii.gz
               10 1 0.25 )
+
+itk_add_test(NAME itkJointHistogramMutualInformationImageToImageObjectRegistrationTest2
+      COMMAND ITKHighDimensionalMetricsTestDriver
+              itkJointHistogramMutualInformationImageToImageObjectRegistrationTest
+              DATA{Input/face_b.jpg}
+              DATA{Baseline/face_avg.jpg}
+              ${TEMP}/itkJointHistogramMutualInformationImageToImageObjectRegistrationTest2.nii.gz
+              10 1 0.25 )
+
 itk_add_test(NAME itkDemonsImageToImageObjectMetricTest
       COMMAND ITKHighDimensionalMetricsTestDriver
       itkDemonsImageToImageObjectMetricTest)
+
+itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
+      COMMAND ITKHighDimensionalMetricsTestDriver
+              itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest)
+
+itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
+      COMMAND ITKHighDimensionalMetricsTestDriver
+              itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
+              ${ITK_SOURCE_DIR}/Examples/Data/BrainProtonDensitySliceBorder20.png
+              ${ITK_SOURCE_DIR}/Examples/Data/BrainProtonDensitySliceBSplined10.png
+             ${TEMP}/itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.nii.gz
+              10 1 0.25 )

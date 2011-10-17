@@ -120,8 +120,8 @@ CSVNumericObjectFileWriter<TValueType,NRows,NColumns>
   if ( !this->m_RowHeaders.empty()
        && (this->m_RowHeaders.size() != this->m_Rows) )
     {
-    std::cerr << "Warning: The number of row headers and the number of rows in"
-              << " the input object is not consistent." << std::endl;
+    itkWarningMacro(<< "Warning: The number of row headers and the number of rows in"
+              << " the input object is not consistent.");
     }
 
   // output a warning if the number of column headers and number of columns in
@@ -131,16 +131,14 @@ CSVNumericObjectFileWriter<TValueType,NRows,NColumns>
     if ( !this->m_RowHeaders.empty()
          && this->m_ColumnHeaders.size() != (this->m_Columns+1) )
       {
-      std::cerr << "Warning: The number of column headers and the number of"
-                << " columns in the input object is not consistent."
-                << std::endl;
+      itkWarningMacro(<< "Warning: The number of column headers and the number of"
+                      << " columns in the input object is not consistent.");
       }
     if ( this->m_RowHeaders.empty()
          && this->m_ColumnHeaders.size() != this->m_Columns )
       {
-      std::cerr << "Warning: The number of column headers and the number of"
-                << " columns in the input object is not consistent."
-                << std::endl;
+      itkWarningMacro(<< "Warning: The number of column headers and the number of"
+                      << " columns in the input object is not consistent.");
       }
     }
 }
@@ -171,7 +169,7 @@ CSVNumericObjectFileWriter<TValueType,NRows,NColumns>
         outputStream << this->m_ColumnHeaders[i];
         if ( i < this->m_ColumnHeaders.size() - 1 )
           {
-          outputStream << this->m_FieldDelimiterCharacter ;
+          outputStream << this->m_FieldDelimiterCharacter;
           }
         }
       outputStream << std::endl;

@@ -27,6 +27,7 @@ itkImageRandomNonRepeatingIteratorWithIndexTest2.cxx
 itkImageSliceIteratorTest.cxx
 itkTreeContainerTest2.cxx
 itkTriangleCellTest.cxx
+itkQuadrilateralCellTest.cxx
 itkRGBPixelTest.cxx
 itkLightObjectTest.cxx
 itkBoundingBoxTest.cxx
@@ -191,7 +192,12 @@ itk_add_test(NAME itkFilterDispatchTest COMMAND ITKCommon1TestDriver itkFilterDi
 itk_add_test(NAME itkFloodFilledSpatialFunctionTest COMMAND ITKCommon1TestDriver itkFloodFilledSpatialFunctionTest)
 itk_add_test(NAME itkFloodFillIteratorTest COMMAND ITKCommon1TestDriver itkFloodFillIteratorTest)
 itk_add_test(NAME itkAnnulusOperatorTest COMMAND ITKCommon1TestDriver itkAnnulusOperatorTest)
-itk_add_test(NAME itkColorTableTest COMMAND ITKCommon1TestDriver itkColorTableTest)
+
+itk_add_test(NAME itkColorTableTest COMMAND
+             ITKCommon1TestDriver --redirectOutput ${TEMP}/itkColorTableTest.txt
+             itkColorTableTest)
+set_tests_properties(itkColorTableTest PROPERTIES ATTACHED_FILES_ON_FAIL ${TEMP}/itkColorTableTest.txt)
+
 itk_add_test(NAME itkDirectoryTest COMMAND ITKCommon1TestDriver itkDirectoryTest ${TEMP})
 itk_add_test(NAME itkDerivativeOperatorTest COMMAND ITKCommon1TestDriver itkDerivativeOperatorTest)
 itk_add_test(NAME itkMultipleLogOutputTest COMMAND ITKCommon1TestDriver itkMultipleLogOutputTest ${TEMP}/test_multi.txt)
@@ -213,8 +219,18 @@ itk_add_test(NAME itkBoundaryConditionTest COMMAND ITKCommon1TestDriver itkBound
 itk_add_test(NAME itkByteSwapTest COMMAND ITKCommon1TestDriver itkByteSwapTest)
 itk_add_test(NAME itkBSplineInterpolationWeightFunctionTest COMMAND ITKCommon2TestDriver itkBSplineInterpolationWeightFunctionTest)
 itk_add_test(NAME itkBSplineKernelFunctionTest COMMAND ITKCommon1TestDriver itkBSplineKernelFunctionTest)
-itk_add_test(NAME itkConstNeighborhoodIteratorTest COMMAND ITKCommon2TestDriver itkConstNeighborhoodIteratorTest)
-itk_add_test(NAME itkShapedNeighborhoodIteratorTest COMMAND ITKCommon2TestDriver itkShapedNeighborhoodIteratorTest)
+
+itk_add_test(NAME itkConstNeighborhoodIteratorTest
+      COMMAND ITKCommon2TestDriver --redirectOutput ${TEMP}/itkConstNeighborhoodIteratorTest.txt
+    itkConstNeighborhoodIteratorTest)
+set_tests_properties(itkConstNeighborhoodIteratorTest PROPERTIES ATTACHED_FILES_ON_FAIL ${ITK_TEST_OUTPUT_DIR}/itkConstNeighborhoodIteratorTest.txt)
+
+itk_add_test(NAME itkShapedNeighborhoodIteratorTest
+      COMMAND ITKCommon2TestDriver  --redirectOutput ${TEMP}/itkShapedNeighborhoodIteratorTest.txt
+    itkShapedNeighborhoodIteratorTest)
+set_tests_properties(itkShapedNeighborhoodIteratorTest PROPERTIES ATTACHED_FILES_ON_FAIL ${ITK_TEST_OUTPUT_DIR}/itkShapedNeighborhoodIteratorTest.txt)
+
+
 itk_add_test(NAME itkConstShapedNeighborhoodIteratorTest COMMAND ITKCommon2TestDriver itkConstShapedNeighborhoodIteratorTest)
 itk_add_test(NAME itkConstShapedNeighborhoodIteratorTest2 COMMAND ITKCommon2TestDriver itkConstShapedNeighborhoodIteratorTest2)
 itk_add_test(NAME itkEventObjectTest COMMAND ITKCommon1TestDriver itkEventObjectTest)
@@ -257,7 +273,7 @@ itk_add_test(NAME itkImageSliceIteratorTest
       COMMAND ITKCommon1TestDriver itkImageSliceIteratorTest)
 itk_add_test(NAME itkImageTest COMMAND ITKCommon1TestDriver itkImageTest)
 itk_add_test(NAME itkLightObjectTest COMMAND ITKCommon1TestDriver itkLightObjectTest)
-itk_add_test(NAME itkLineIteratorTest COMMAND ITKCommon1TestDriver itkLineIteratorTest ${BASELINE}/itkLineIteratorTest.txt )
+itk_add_test(NAME itkLineIteratorTest COMMAND ITKCommon1TestDriver itkLineIteratorTest DATA{${BASELINE}/itkLineIteratorTest.txt} )
 itk_add_test(NAME itkLoggerTest COMMAND ITKCommon1TestDriver itkLoggerTest ${TEMP}/test_logger.txt)
 itk_add_test(NAME itkLoggerOutputTest COMMAND ITKCommon2TestDriver itkLoggerOutputTest ${TEMP}/test_loggerOutput.txt)
 itk_add_test(NAME itkLoggerManagerTest COMMAND ITKCommon2TestDriver itkLoggerManagerTest ${TEMP}/test_LoggerManager.txt)
@@ -305,7 +321,7 @@ itk_add_test(NAME itkNeighborhoodIteratorTest COMMAND ITKCommon2TestDriver itkNe
 itk_add_test(NAME itkNeighborhoodOperatorTest COMMAND ITKCommon1TestDriver itkNeighborhoodOperatorTest)
 itk_add_test(NAME itkNewTest COMMAND ITKCommon1TestDriver itkNewTest)
 itk_add_test(NAME itkNumericsTest COMMAND ITKCommon1TestDriver itkNumericsTest)
-itk_add_test(NAME itkNumericTraitsTest COMMAND ITKCommon1TestDriver itkNumericTraitsTest)
+itk_add_test(NAME itkNumericTraitsTest COMMAND  ITKCommon1TestDriver --full-output itkNumericTraitsTest)
 itk_add_test(NAME itkIntTypesTest COMMAND ITKCommon1TestDriver itkIntTypesTest)
 itk_add_test(NAME itkOctreeTest COMMAND ITKCommon2TestDriver itkOctreeTest)
 
@@ -323,11 +339,13 @@ itk_add_test(NAME itkRealTimeClockTest COMMAND ITKCommon1TestDriver itkRealTimeC
 itk_add_test(NAME itkRealTimeStampTest COMMAND ITKCommon1TestDriver itkRealTimeStampTest)
 itk_add_test(NAME itkRealTimeIntervalTest COMMAND ITKCommon1TestDriver itkRealTimeIntervalTest)
 itk_add_test(NAME itkTriangleCellTest COMMAND ITKCommon1TestDriver itkTriangleCellTest)
+itk_add_test(NAME itkQuadrilateralCellTest COMMAND ITKCommon1TestDriver itkQuadrilateralCellTest)
 itk_add_test(NAME itkRGBPixelTest COMMAND ITKCommon1TestDriver itkRGBPixelTest)
 itk_add_test(NAME itkSparseImageTest COMMAND ITKCommon1TestDriver itkSparseImageTest)
 itk_add_test(NAME itkSimpleFilterWatcherTest COMMAND ITKCommon1TestDriver itkSimpleFilterWatcherTest)
 itk_add_test(NAME itkSizeTest COMMAND ITKCommon2TestDriver itkSizeTest)
-itk_add_test(NAME itkSliceIteratorTest COMMAND ITKCommon2TestDriver itkSliceIteratorTest)
+itk_add_test(NAME itkSliceIteratorTest COMMAND ITKCommon2TestDriver --redirectOutput ${TEMP}/itkSliceIteratorTest.txt itkSliceIteratorTest)
+set_tests_properties(itkSliceIteratorTest PROPERTIES ATTACHED_FILES_ON_FAIL ${TEMP}/itkSliceIteratorTest.txt)
 itk_add_test(NAME itkSmartPointerTest COMMAND ITKCommon2TestDriver itkSmartPointerTest)
 itk_add_test(NAME itkSpatialFunctionTest COMMAND ITKCommon2TestDriver itkSpatialFunctionTest)
 itk_add_test(NAME itkSTLContainerAdaptorTest COMMAND ITKCommon2TestDriver itkSTLContainerAdaptorTest)
@@ -350,14 +368,14 @@ itk_add_test(NAME itkSTLThreadTest COMMAND ITKCommon1TestDriver itkSTLThreadTest
 itk_add_test(NAME itkStreamingImageFilterTest COMMAND ITKCommon1TestDriver itkStreamingImageFilterTest)
 itk_add_test(NAME itkStreamingImageFilterTest2 COMMAND ITKCommon1TestDriver itkStreamingImageFilterTest2)
 itk_add_test(NAME itkStreamingImageFilterTest3_1 COMMAND ITKCommon1TestDriver
-    --compare ${ITK_DATA_ROOT}/Input/CellsFluorescence1.png
+    --compare DATA{${ITK_DATA_ROOT}/Input/CellsFluorescence1.png}
               ${ITK_TEST_OUTPUT_DIR}/itkStreamingImageFilterTest3_1.png
-    itkStreamingImageFilterTest3 ${ITK_DATA_ROOT}/Input/CellsFluorescence1.png ${ITK_TEST_OUTPUT_DIR}/itkStreamingImageFilterTest3_1.png 10)
+    itkStreamingImageFilterTest3 DATA{${ITK_DATA_ROOT}/Input/CellsFluorescence1.png} ${ITK_TEST_OUTPUT_DIR}/itkStreamingImageFilterTest3_1.png 10)
 itk_add_test(NAME itkStreamingImageFilterTest3_2
       COMMAND ITKCommon1TestDriver
-    --compare ${ITK_DATA_ROOT}/Input/CellsFluorescence1.png
+    --compare DATA{${ITK_DATA_ROOT}/Input/CellsFluorescence1.png}
               ${ITK_TEST_OUTPUT_DIR}/itkStreamingImageFilterTest3_2.png
-    itkStreamingImageFilterTest3 ${ITK_DATA_ROOT}/Input/CellsFluorescence1.png ${ITK_TEST_OUTPUT_DIR}/itkStreamingImageFilterTest3_2.png 1000)
+    itkStreamingImageFilterTest3 DATA{${ITK_DATA_ROOT}/Input/CellsFluorescence1.png} ${ITK_TEST_OUTPUT_DIR}/itkStreamingImageFilterTest3_2.png 1000)
 itk_add_test(NAME itkVariableLengthVectorTest COMMAND ITKCommon2TestDriver itkVariableLengthVectorTest)
 itk_add_test(NAME itkVariableSizeMatrixTest COMMAND ITKCommon2TestDriver itkVariableSizeMatrixTest)
 #itk_add_test(NAME itkQuaternionOrientationAdapterTest COMMAND ITKCommon2TestDriver itkQuaternionOrientationAdapterTest)
