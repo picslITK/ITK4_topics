@@ -127,7 +127,7 @@ public:
                                                   JacobianType;
 
 
-  typedef typename Superclass::ThreaderInputObjectType ThreaderInputObjectType;
+  typedef typename Superclass::DenseThreaderInputObjectType DenseThreaderInputObjectType;
   typedef typename Superclass::FixedImageType          FixedImageType;
   typedef typename Superclass::MovingImageType         MovingImageType;
   typedef typename Superclass::VirtualImageType        VirtualImageType;
@@ -211,9 +211,9 @@ private:
    * threader in the class' constructor by calling
    * \c m_ValueAndDerivativeThreader->SetThreadedGenerateData( mycallback ) */
   static void SparseSamplingGetValueAndDerivativeThreadedCallback(
-                          const ThreaderInputObjectType& virtualImageSubRegion,
-                          ThreadIdType threadID,
-                          MetricBaseclass * self);
+                     const DenseThreaderInputObjectType& virtualImageSubRegion,
+                     ThreadIdType threadID,
+                     MetricBaseclass * self);
 
   // Number of samples used in computing metric.
   unsigned int m_NumberOfSampling;

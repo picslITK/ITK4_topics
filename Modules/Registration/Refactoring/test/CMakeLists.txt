@@ -1,14 +1,7 @@
 itk_module_test()
 set(ITKRegistrationRefactoringTests
-# itkTransformVirtualDomainCalculatorTest.cxx
-#  itkPointSetToPointSetMetricTest.cxx
-  itkDemonsImageToImageObjectRegistrationTest.cxx
-  itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-#  itkDemonsImageToImageObjectRegistrationTest2.cxx
-  itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectRegistrationTest.cxx
   itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetricTest.cxx
-  itkThevenazMutualInformationImageToImageObjectRegistrationTest.cxx
   itkQuasiNewtonRegistrationTest.cxx
   itkQuasiNewtonDemonsRegistrationTest.cxx
   itkQuasiNewtonObjectOptimizerTest.cxx
@@ -26,12 +19,6 @@ set(BASELINE_ROOT ${ITK_DATA_ROOT}/Baseline)
 set(TEMP ${ITK_TEST_OUTPUT_DIR})
 
 CreateTestDriver(ITKRegistrationRefactoring  "${ITKRegistrationRefactoring-Test_LIBRARIES}" "${ITKRegistrationRefactoringTests}")
-
-#itk_add_test(NAME itkTransformVirtualDomainCalculatorTest2D
-#      COMMAND ITKRegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 2 ${ITK_DATA_ROOT}/Input/#itkGDCMImageIOTest3.dcm ${ITK_DATA_ROOT}/Input/itkGDCMImageIOTest3.dcm)
-
-#itk_add_test(NAME itkTransformVirtualDomainCalculatorTest3D
-#      COMMAND ITKRegistrationRefactoringTestDriver #itkTransformVirtualDomainCalculatorTest 3 ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd ${ITK_DATA_ROOT}/Input/#HeadMRVolumeWithDirection002.mhd)
 
 # On hold until class is updated
 #itk_add_test(NAME itkDemonsVectorImageToVectorImageObjectMetricTest
@@ -54,10 +41,6 @@ itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectMetricTest
 #itk_add_test(NAME itkDemonsImageToImageObjectRegistrationTest2
 #      COMMAND ITKRegistrationRefactoringTestDriver
 #      itkDemonsImageToImageObjectRegistrationTest2)
-
- itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest)
 
 # itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest3
 #      COMMAND ITKRegistrationRefactoringTestDriver
@@ -94,25 +77,10 @@ itk_add_test(NAME itkPolyAffineTransformTest
       )
 
 itk_add_test(NAME itkQuasiNewtonObjectOptimizerTest
-      COMMAND ITKHighDimensionalOptimizersTestDriver
+      COMMAND ITKRegistrationRefactoringTestDriver
       itkQuasiNewtonObjectOptimizerTest)
 
 #TODO
 # itk_add_test(NAME itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2
 #      COMMAND ITKRegistrationRefactoringTestDriver
 #      itkANTSNeighborhoodCorrelationImageToImageObjectRegistrationTest2)
-
-
-
-#itk_add_test(NAME itkEuclideanDistancePointSetMetricTest
-#      COMMAND ITKRegistrationRefactoringTestDriver itkPointSetToPointSetMetricTest 1)
-
-#itk_add_test(NAME itkExpectationBasedPointSetMetricTest
-#      COMMAND ITKRegistrationRefactoringTestDriver itkPointSetToPointSetMetricTest 2)
-
-#itk_add_test(NAME itkJensenHavrdaCharvatTsallisPointSetMetricTest
-#      COMMAND ITKRegistrationRefactoringTestDriver itkPointSetToPointSetMetricTest 3)
-
-itk_add_test(NAME itkThevenazMutualInformationImageToImageObjectRegistrationTest
-      COMMAND ITKRegistrationRefactoringTestDriver
-      itkThevenazMutualInformationImageToImageObjectRegistrationTest)

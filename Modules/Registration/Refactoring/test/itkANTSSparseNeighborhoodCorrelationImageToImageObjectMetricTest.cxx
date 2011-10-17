@@ -30,9 +30,10 @@
 
 #include "itkANTSSparseNeighborhoodCorrelationImageToImageObjectMetric.h"
 
-//We need this as long as we have to define ImageToData as a fwd-declare
-// in itkImageToImageObjectMetric.h
+//FIXME We need these as long as we have to define ImageToData and
+// Array1DToData as a fwd-declare in itkImageToImageObjectMetric.h
 #include "itkImageToData.h"
+#include "itkArray1DToData.h"
 
 /**
  * Test program for ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric,

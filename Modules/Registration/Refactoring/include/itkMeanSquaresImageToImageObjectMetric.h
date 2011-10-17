@@ -73,10 +73,10 @@ public:
   virtual void Initialize(void) throw ( itk::ExceptionObject );
 
   /** Evaluate and return the value and derivative */
-  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative);
+  void GetValueAndDerivative( MeasureType & value, DerivativeType & derivative) const;
 
   /** Evaluate and return the metric value */
-  MeasureType GetValue()
+  MeasureType GetValue() const
   { itkExceptionMacro("GetValue not yet implemented."); }
 
 protected:

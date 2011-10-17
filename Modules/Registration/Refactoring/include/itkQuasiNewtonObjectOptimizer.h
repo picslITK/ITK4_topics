@@ -125,6 +125,8 @@ protected:
    *  This happens when line search is done. */
   bool            m_ValueAndDerivateEvaluated;
 
+  ParametersType  m_CurrentPosition;
+
   /** The information about the previous step */
   double          m_PreviousValue;
   ParametersType  m_PreviousPosition;

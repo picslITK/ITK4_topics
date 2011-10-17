@@ -44,7 +44,7 @@ MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
 template < class TFixedImage, class TMovingImage, class TVirtualImage >
 void
 MeanSquaresImageToImageObjectMetric<TFixedImage,TMovingImage,TVirtualImage>
-::GetValueAndDerivative( MeasureType & value, DerivativeType & derivative)
+::GetValueAndDerivative( MeasureType & value, DerivativeType & derivative) const
 {
   // This starts threading, and will iterate over virtual image region and
   // call GetValueAndDerivativeProcessPoint.

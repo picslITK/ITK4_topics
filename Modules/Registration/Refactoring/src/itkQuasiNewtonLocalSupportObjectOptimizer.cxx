@@ -75,8 +75,8 @@ QuasiNewtonLocalSupportObjectOptimizer
     if (m_OptimizerParameterEstimator.IsNotNull())
       {
       // initialize scales
-      m_CurrentPosition = this->m_Metric->GetParameters();
-      if (m_CurrentPosition[0] != m_CurrentPosition[0]) //checking NaN or #IND
+      ParametersType currentPosition = this->m_Metric->GetParameters();
+      if (currentPosition[0] != currentPosition[0]) //checking NaN or #IND
         {
         itkExceptionMacro("QuasiNewtonLocalSupportObjectOptimizer: metric parameters are not defined.");
         }

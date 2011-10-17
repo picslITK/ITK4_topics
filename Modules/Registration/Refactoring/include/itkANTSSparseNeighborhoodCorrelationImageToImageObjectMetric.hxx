@@ -32,7 +32,7 @@ ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric() {
 
     //modify the callback function.
-    this->m_ValueAndDerivativeThreader->SetThreadedGenerateData(
+    this->m_DenseValueAndDerivativeThreader->SetThreadedGenerateData(
             Self::SparseSamplingGetValueAndDerivativeThreadedCallback);
 
     this->m_NumberOfSampling = 1;
@@ -121,12 +121,17 @@ template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::Initialize(void) throw (ExceptionObject) {
     this->Superclass::Initialize();
+    
+    if( this->GetUseFixedSampledPointSet() )
+      {
+      itkExceptionMacro("Sampled point set evaulation not yet supported.");
+      }
 }
 
 template<class TFixedImage, class TMovingImage, class TVirtualImage>
 void ANTSSparseNeighborhoodCorrelationImageToImageObjectMetric<TFixedImage,
         TMovingImage, TVirtualImage>::SparseSamplingGetValueAndDerivativeThreadedCallback(
-        const ThreaderInputObjectType& virtualImageSubRegion,
+        const DenseThreaderInputObjectType& virtualImageSubRegion,
         ThreadIdType threadID, MetricBaseclass * self) {
 
     Self *dataHolder = dynamic_cast<Self *>(self);

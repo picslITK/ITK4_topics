@@ -68,7 +68,7 @@ public:
   void Initialize(void) throw ( itk::ExceptionObject ) {}
 
   void GetValueAndDerivative( MeasureType & value,
-                              DerivativeType & derivative )
+                              DerivativeType & derivative ) const
   {
     this->SetDebug(true);
 
@@ -102,7 +102,7 @@ public:
       }
   }
 
-  MeasureType  GetValue()
+  MeasureType  GetValue() const
   {
     return 0.0;
   }

@@ -77,12 +77,7 @@ QuasiNewtonObjectOptimizer
     if (m_OptimizerParameterEstimator.IsNotNull())
       {
       // initialize scales
-      m_CurrentPosition = this->m_Metric->GetParameters();
-      if (m_CurrentPosition[0] != m_CurrentPosition[0]) //checking NaN or #IND
-        {
-        itkExceptionMacro("QuasiNewtonObjectOptimizer: metric parameters are not defined.");
-        }
-      ScalesType scales(this->m_Metric->GetNumberOfParameters());
+      ScalesType scales(this->m_Metric->GetNumberOfLocalParameters());
 
       m_OptimizerParameterEstimator->EstimateScales(scales);
       //for (int s=0; s<4; s++) scales[s] = 9801;
@@ -284,7 +279,7 @@ QuasiNewtonObjectOptimizer
     }
   /** Save for the next iteration */
   m_PreviousValue = this->GetValue();
-  m_PreviousPosition = this->GetCurrentPosition();
+  m_PreviousPosition = this->m_CurrentPosition;
   m_PreviousGradient = this->GetGradient();
 
   /** If a Newton step is on the opposite direction of a gradient step, we'd
@@ -1101,7 +1096,7 @@ double QuasiNewtonObjectOptimizer
     return 1;
     }
 
-  ParametersType parameters = this->GetCurrentPosition();
+  ParametersType parameters = this->m_CurrentPosition;
 
   ScalesType     scales = this->GetScales();
 
