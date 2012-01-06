@@ -265,7 +265,7 @@ MatrixOffsetTransformBase<TScalarType, NInputDimensions, NOutputDimensions>
     result[i] = NumericTraits<ScalarType>::Zero;
     for( unsigned int j = 0; j < NInputDimensions; j++ )
       {
-      result[i] += this->GetInverseMatrix()[j][i] * vec[j]; // Inverse
+      result[i] += this->GetInverseMatrix()[i][j] * vec[j]; // Inverse
                                                             // transposed
       }
     }
@@ -293,7 +293,7 @@ MatrixOffsetTransformBase<TScalarType, NInputDimensions, NOutputDimensions>
       {
       if( (i < NInputDimensions) && (j < NInputDimensions) )
         {
-        vnl_mat(i, j) = this->GetInverseMatrix() (j, i);
+        vnl_mat(i, j) = this->GetInverseMatrix() (i, j);
         }
       else if( i == j )
         {

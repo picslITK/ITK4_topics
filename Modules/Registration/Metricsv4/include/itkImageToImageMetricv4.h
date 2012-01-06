@@ -718,6 +718,14 @@ protected:
    * of DoMovingImagePreWarp. */
   virtual void ComputeMovingImageGradientFilterImage() const;
 
+  /** Perform the actual threaded processing, using the appropriate
+   * GetValueAndDerivativeThreader. Results get written to
+   * member vars. This is available as a separate method so it
+   * can be used by dervied classes that implement their own
+   * GetValueAndDerivative, and/or need to run the processing loop
+   * more than once.*/
+  virtual void GetValueAndDerivativeExecute() const;
+
   /** Initialize the default image gradient filters. This must only
    * be called once the fixed and moving images have been set. */
   virtual void InitializeDefaultFixedImageGradientFilter(void);

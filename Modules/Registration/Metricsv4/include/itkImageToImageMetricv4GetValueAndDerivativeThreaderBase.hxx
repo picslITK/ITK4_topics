@@ -205,6 +205,14 @@ ImageToImageMetricv4GetValueAndDerivativeThreaderBase< TDomainPartitioner, TImag
    * calculations for value and derivative. */
   try
     {
+/*
+if( (virtualPoint[0] == 0 && virtualPoint[1] == 0) ||
+    (virtualPoint[0] == 48 && virtualPoint[1] == 8) ||
+    (virtualPoint[0] == 249 && virtualPoint[1] == 140) )
+  {
+  std::cout << "PVP: fixedPt: " << mappedFixedPoint << " fixedVal: " << static_cast<int>(mappedFixedPixelValue) << " movingPt: " << mappedMovingPoint << " movingVal: " << static_cast<int>(mappedMovingPixelValue) << " movingGrad: " << mappedMovingImageGradient << std::endl;
+  }
+*/
     pointIsValid = this->ProcessPoint(
                                    virtualPoint,
                                    mappedFixedPoint, mappedFixedPixelValue,

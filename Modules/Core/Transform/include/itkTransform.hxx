@@ -272,7 +272,7 @@ Transform<TScalarType, NInputDimensions, NOutputDimensions>
     result[i] = NumericTraits<ScalarType>::Zero;
     for( unsigned int j = 0; j < NInputDimensions; j++ )
       {
-      result[i] += jacobian[j][i] * vector[j];
+      result[i] += jacobian[i][j] * vector[j];
       }
     }
 
@@ -306,7 +306,7 @@ Transform<TScalarType, NInputDimensions, NOutputDimensions>
     result[i] = NumericTraits<ScalarType>::Zero;
     for( unsigned int j = 0; j < NInputDimensions; j++ )
       {
-      result[i] += jacobian[j][i] * vector[j];
+      result[i] += jacobian[i][j] * vector[j];
       }
     }
 
